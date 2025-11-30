@@ -1,0 +1,72 @@
+\documentclass[]{ctexbook}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+
+\usepackage{xcolor}
+
+\usepackage{amsmath,amssymb,amsfonts,mathrsfs}
+\usepackage{bm}
+
+%画图
+\usepackage{pgfplots}
+\usepackage{tikz}
+
+
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\dd}{d}
+
+\usepackage[thmmarks,amsmath]{ntheorem} %%放在 amsmath 之后
+\qedsymbol{\ensuremath{\square}} %%在如无需证明的推论等定理类环境中使用 \qed 以显示证明结束符, 此处使用 \ensuremath{\square} 而不是 $\square$ 以便在以数学环境结束的证明中也可以正常使用.
+{   % 利用分组，格式设置只作用于证明环境  不出现证明结束符查看ntheorem的thmmarks参数加了没
+   \theoremstyle{nonumberplain}
+   \theoremheaderfont{\bfseries}
+   \theorembodyfont{\normalfont}
+   \theoremsymbol{\ensuremath{\blacksquare}} %%\square 需要 amssymb 的支持
+   \newtheorem{proof}{证明}
+}
+% \newtheorem{proof}{证明}
+\newtheorem{theorem}{定理}
+\newtheorem{remark}{注}
+\newtheorem{assumption}{假设}
+\newtheorem{lemma}{引理}
+
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+\newcommand{\sig}[1]{\left\lfloor#1\right\rceil}
+\newcommand{\normt}[1]{\left\Vert#1\right\Vert_2}
+\newcommand{\NN}{\ensuremath{\mathbb{N}}}
+\newcommand{\RR}{\ensuremath{\mathbb{R}}}
+\newcommand{\normx}[2]{\left\Vert#1\right\Vert_{#2}}
+
+\usepackage[backend=biber,autolang=hyphen,style=gb7714-2015,
+gbtype=true,gbalign=gb7714-2015,
+doi=false,url=false,isbn=false,refsection=chapter]{biblatex}
+\addbibresource[location=local]{observer/ref.bib}
+\addbibresource[location=local]{short/comment.bib}
+
+\newcommand{\tR}{\textcolor{red}}
+
+\usepackage[]{graphicx}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{float}
+\usepackage{cases}
+
+\title{硕士攻读期间的零散文档}
+\author{liuch586}
+
+
+
+\begin{document}
+   \maketitle
+   \tableofcontents
+
+   \chapter{匀速目标的分布式观测器}
+   \input{observer/observer.tex}
+
+   \chapter{无人飞行器围捕控制}
+   \input{uav/uav.tex}
+
+   \appendix
+   \chapter{分布式微分器参数优化}
+   \input{short/comment_on_distributed_differentiator.tex}
+
+   
+\end{document}

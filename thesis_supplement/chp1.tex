@@ -1,0 +1,109 @@
+\chapter{预备知识}  
+
+\section{控制对象}
+
+\subsection{二阶无人小车模型}\label{subsec:car2}
+
+参考文献\cite{renDistributedConsensusMultivehicle2008}（198页）中的移动机器人运动学模型以及
+文献\cite{chenMultiMobileRobot2020}中的动力学模型，
+记机器人重心为$\bm{p}_i=[x_i,y_i]^T$，机器人几何中心为
+\begin{equation}
+    \bm{r}_i=\bm{p}_i+\delta \begin{bmatrix}
+        \cos\theta_i \\\sin\theta_i
+    \end{bmatrix},
+    \label{car:offset}
+\end{equation}
+其中$\theta_i$为机器人$i$的朝向角，$\delta$为机器人重心与几何中心的距离。
+
+
+合围机器人的运动学模型为\(\dot{p}_i=v_i[\cos \theta_i,\sin \theta_i]^T\)，
+合围机器人的动力学模型为\(f_i=m_i \dot{v}_i,\tau_i=J_i \ddot{\theta}_i \)。
+于是合围机器人的数学模型可以表示为
+\begin{equation}
+    \begin{cases}
+        \dot{x}_i=v_i \cos \theta_i , \quad \dot{y}_i=v_i \cos \theta_i \\
+        \dot{v}_i=f_i/m_i,~\dot{\theta}_i=\omega_i,~\dot\omega_i=\tau_i/J_i
+    ,
+    \end{cases}
+    \label{car:model}
+\end{equation}
+其中$f_i,\tau_i$分别为小车受到的合外力和合外力矩。
+由于移动机器人受到非完整的运动学约束，合外力的方向必须与小车朝向一致。
+
+对\eqref{car:offset}求导，并带入\eqref{car:model}可得
+
+\begin{equation}
+    \begin{aligned}
+        \dot{\bm{r}}_i
+         & =v_i \begin{bmatrix}\cos\theta_i \\ \sin\theta_i\end{bmatrix}
+        +\delta \begin{bmatrix}-\sin\theta_i \\ \cos\theta_i\end{bmatrix}\dot{\theta}_i
+        \\
+        \ddot{\bm{r}}_i
+         & =\dot{v}_i \begin{bmatrix} \cos\theta_i \\ \sin\theta_i\end{bmatrix}
+        +v_i \begin{bmatrix} -\sin\theta_i \\ \cos\theta_i\end{bmatrix} \omega_i
+        +\delta \begin{bmatrix}-\sin\theta_i \\ \cos\theta_i\end{bmatrix}\ddot{\theta}_i
+        +\delta \begin{bmatrix}-\cos\theta_i \\ -\sin\theta_i\end{bmatrix}\dot{\theta}_i
+        \\
+         & =\begin{bmatrix}
+                \cos\theta_i & -\sin\theta_i \\
+                \sin\theta_i & \cos\theta_i
+            \end{bmatrix}
+        \begin{bmatrix}
+            1/m_i &            \\
+                  & \delta/J_i
+        \end{bmatrix}
+        \begin{bmatrix}
+            f_i \\
+            \tau_i
+        \end{bmatrix}
+        + \begin{bmatrix}
+              -v_i \omega_i \sin \theta_i - \delta \omega_i^2 \sin \theta_i \\
+              v_i \omega_i \cos\theta_i - \delta \omega_i^2 \cos \theta_i
+          \end{bmatrix}
+        .
+    \end{aligned}
+    \label{car:linearization1}
+\end{equation}
+记
+\begin{equation}
+    R(\theta_i)=\begin{bmatrix}
+        \cos\theta_i & -\sin\theta_i \\
+        \sin\theta_i & \cos\theta_i
+    \end{bmatrix},
+    Q=  \begin{bmatrix}
+        1/m_i &            \\
+              & \delta/J_i
+    \end{bmatrix},
+    P(v_i,\omega_i,\omega_i)=\begin{bmatrix}
+        -v_i \omega_i \sin \theta_i - \delta \omega_i^2 \sin \theta_i \\
+        v_i \omega_i \cos\theta_i - \delta \omega_i^2 \cos \theta_i
+    \end{bmatrix}.
+\end{equation}
+同时，选择控制输入为$u_i=[f_i,\tau_i]^T$,
+于是\eqref{car:linearization1}可以写作
+\begin{equation}
+    \ddot{\bm{r}}_i=R(\theta_i) Q \bm{u} + P(v_i,\omega_i,\omega_i)
+    .
+\end{equation}
+
+
+利用线性化的结论，可以对控制输入进行变换，
+\begin{equation}
+    \bm{u}_i=Q^{-1} \bm{r}^{-1}(\theta_i)[
+            \bm{u}_i^0
+            -P(v_i,\omega_i,\omega_i)
+        ].
+    \label{car:linearizationInput}
+\end{equation}
+于是合围机器人的模型可以写为
+\begin{equation}
+    \begin{cases}
+        \dot{\bm{r}}_i=\bm{v}_i \\
+        \dot{\bm{v}}_i=\bm{u}^0_i .
+    \end{cases}
+    \label{eq: double integrator}
+\end{equation}
+  
+\begin{refsection}  
+\printbibliography[heading=subbibliography]  
+\end{refsection}  

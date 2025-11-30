@@ -1,0 +1,78 @@
+
+\tB{
+	\begin{assumption}	\label{assump initially_no_collision}
+		(Assumption 2 in the revised manuscript)
+	    $\| p_{ij}(0) \| > d$, $\forall ~ i \in \NN$ and $ j \in \NN_i(0)$.
+	\end{assumption}
+}
+
+\tB{
+	\begin{proposition}
+	    \label{proposition bounded}
+	    Consider the following multi-agent system with $N$ double-integrator agents:
+	    \[
+	        \dot{p}_i = v_i, \quad \dot{v}_i = u_i, \quad i \in \NN \triangleq \{1, \dots, N\},
+	    \]
+	    where $u_i$ is constrained by $\sup_t \lVert u_i(t) \rVert \leq \bar{u}$.
+	    If there exists some time $t \in (0, \infty)$ and two agents $i$ and $j$ ($i, j \in \NN$, $i \neq j$) with $\| p_{ij}(t) \| \leq d$, we say agents $i$ and $j$ collide at time $t$. 
+	    For any $\bar{u} > 0$, there always exists an initial state $p(0) = [p_1^T(0), \dots, p_N^T(0)]^T$ and $v (0) = [ v_1^T(0), \dots, v_N^T(0) ]^T$ under \cref{assump initially_no_collision}, such that collision will occur between agents
+	\end{proposition}
+}
+
+\color{blue}
+\begin{proof}
+	For simplicity, consider two agents $i$ and $j$ ($i, j \in \mathbb{N},\, i \neq j$) with the initial conditions 
+	\[
+	\|p_{ij}(0)\| = d + \bar{d}, \quad 
+	v_{ij}(0) = -\sgn(p_{ij}(0))\, \bar{v},
+	\]
+	where $\bar{d} > 0$ and 
+	\[
+	\bar{v} \geq \max\!\left\{
+	\sqrt{2\bar{u}\bar{d}},\,
+	\sqrt{\frac{\bar{u}}{2d}}(d+\bar{d})
+	\right\}.
+	\]
+	% This indicates that the two agents are \tR{very close in position} %没有说\bar{d}多大，怎么就能说very close？
+	% and \tR{moving toward each other with a relatively high velocity.}%哪里看出来的？
+
+	The relative position between agents $i$ and $j$ evolves as
+	\[
+	\begin{aligned}
+	p_{ij}(t)
+	&= p_{ij}(0) + \int_0^t v_{ij}(\tau)\, \mathrm{d}\tau
+	= p_{ij}(0) + \int_0^t v_{ij}(0)\, \mathrm{d}\tau
+	+ \int_0^t\!\!\int_0^{\tau} u_{ij}(s)\, \mathrm{d}s\, \mathrm{d}\tau \\
+	&= \sgn(p_{ij}(0)) \big(\|p_{ij}(0)\| - \bar{v} t \big)
+	+ \int_0^t\!\!\int_0^{\tau} u_{ij}(s)\, \mathrm{d}s\, \mathrm{d}\tau.
+	\end{aligned}
+	\]
+
+	The norm of the second term on the right-hand side satisfies
+	\[
+	\begin{aligned}
+	\left\| \int_0^t\!\!\int_0^{\tau} u_{ij}(s)\, \mathrm{d}s\, \mathrm{d}\tau \right\|
+	&\leq \int_0^t \!\left\| \int_0^{\tau} u_{ij}(s)\, \mathrm{d}s \right\|\mathrm{d}\tau
+	\leq \int_0^t \int_0^{\tau} \|u_{ij}(s)\|\, \mathrm{d}s\, \mathrm{d}\tau
+	\leq \tfrac{1}{2} \bar{u} t^2.
+	\end{aligned}
+	\]
+
+	For $t \in [0, (d+\bar{d})/\bar{v}]$, we have
+	\[
+	\|p_{ij}(t)\|
+	\leq \left\|p_{ij}(0) + \int_0^t v_{ij}(0)\, \mathrm{d}\tau\right\|
+	+ \left\|\!\int_0^t\!\!\int_0^{\tau} u_{ij}(s)\, \mathrm{d}s\, \mathrm{d}\tau\!\right\|
+	\leq d + \bar{d} - \bar{v}t + \tfrac{1}{2}\bar{u}t^2.
+	\]
+
+	Since $\bar{v} \geq \sqrt{2\bar{u}\bar{d}}$, we can select
+	$
+	T = \frac{\bar{v} - \sqrt{\bar{v}^2 - 2\bar{u}\bar{d}}}{\bar{u}},
+	$
+	which satisfies $T \leq (d+\bar{d})/\bar{v}$ under the condition 
+	$\bar{v} \geq \sqrt{\bar{u}/(2d)}(d+\bar{d})$.
+	Consequently, $\|p_{ij}(T)\| \leq d$, implying that a collision occurs.
+
+	Therefore, there exists an initial condition under which a collision occurs in constrained multi-agent systems, regardless of the chosen bounded control input.
+\end{proof}

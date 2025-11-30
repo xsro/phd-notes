@@ -1,0 +1,6 @@
+{
+    "latex-workshop.latex.recipe.default": "xe->biber->xe->xe",
+    // "latex-workshop.texcount.autorun": "onSave",
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    // "latex-workshop.latex.recipe.default": "xelatex",
+}

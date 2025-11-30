@@ -1,0 +1,83 @@
+文献\parencite{chenDistributedFinitetimeDifferentiator2024}
+中的不等式(18)可以优化为：
+\begin{equation}\label{eq a:result +}
+    \sig{v_i}^2 \left(
+        -\sig{y_i}^0
+        +\sig{v_i}^0\right)
+    \leq
+    |v_i-\sig{y_i}^\frac12|^2 
+\end{equation}
+相应的可以优化参数选取为：
+\begin{equation*}
+    k_1 \geq \left(\frac{\tR{\gamma_0+2\gamma_1}+1}{\lambda_1}\right)^\frac{1}{2}
+    k_2^\frac{1}{2}
+\end{equation*}
+
+\textbf{具体步骤如下}：回顾不等式(17)
+\begin{equation*}
+\begin{aligned}
+    \dot{V}_2
+    &=\sum_{i=1}^n 
+    \sig{v_i}^2 k 
+    \left(
+        \sig{v_i}^0-\sig{y_i}^0
+        -\sig{v_i}^0 + \frac{d_i}{k_2}
+        \right)\\
+    &\leq -k (1-\rho) \sum_{i=1}^n |{v_i}|^2 
+    + k \sum_{i=1}^n  \sig{v_i}^2 \left(
+        -\sig{y_i}^0
+        +\sig{v_i}^0
+    \right)
+\end{aligned}
+\end{equation*}
+令不等式右边的第二项为$f_1$，将该项展开得：
+\begin{equation*}
+    f_1=\sig{v_i}^2 \left(
+        -\sig{y_i}^0
+        +\sig{v_i}^0\right)
+    =|v_i|^2 (1-\sig{y_i}^0\sig{v_i}^0)
+\end{equation*}
+令$f_2=|v_i-\sig{y_i}^\frac12|^2$，于是
+\begin{equation*}
+     f_2
+    % =\left(v_i-\sig{y_i}^\frac12\right)^2
+    = |v_i|^2+|y_i|-2 v_i \sig{y_i}^\frac12
+    = |v_i|^2+|y_i|-2 v_i \sig{y_i}^\frac12
+    = |v_i|^2+|y_i|-2 |v_i| |y_i|^\frac12 \sig{y_i}^0\sig{v_i}^0
+\end{equation*}
+令$c=\sig{y_i}^0\sig{v_i}^0 \in \{-1,1,0\}$，对$f_1$和$f_2$做差得：
+\begin{equation*}
+    f_2-f_1=
+    c |v_i|^2+|y_i|-2 c |v_i| |y_i|^\frac12 
+    = c\left(|v_i|+|y_i|^\frac12\right)^2\geq 0
+\end{equation*}
+
+\textbf{更一般得结论为}：
+\begin{equation}\label{eq a:result general}
+    \left|
+    \sig{v_i}^2 \left(
+        -\sig{y_i}^0
+        +\sig{v_i}^0\right)
+    \right|
+    \leq
+    |v_i-\sig{y_i}^\frac12|^2 
+\end{equation}
+考虑到已经证得\eqref{eq a:result +}成立，于是只要证明
+\begin{equation}\label{eq a:result -}
+    \sig{v_i}^2 \left(
+        \sig{y_i}^0
+        -\sig{v_i}^0\right)
+    \leq
+    |v_i-\sig{y_i}^\frac12|^2 
+\end{equation}
+考察
+\begin{equation*}
+    f_2+f_1=
+    (2-c) |v_i|^2+|y_i|-2 c |v_i| |y_i|^\frac12 
+    = \left(c|v_i|+|y_i|^\frac12\right)^2
+    +(2-c-c^2) |v_i|^2
+    \geq 0
+\end{equation*}
+这里$2-c-c^2\in \{0,2\}$.
+
+\printbibliography[heading=subbibintoc]

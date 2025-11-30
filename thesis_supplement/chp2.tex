@@ -1,0 +1,118 @@
+\chapter{Robust Stabilization of Double Integrator System}  
+
+Robust finite-time stabilization is often treated under the analytical framework of homogeneity and has been frequently illustrated in the context of the feedback control of the double integrator. 
+For such a simple system, the simplest considered robust finite-time controller is the `twisting' controller composed of the signum value of position error and velocity error.
+Here, a controller with linear component of velocity error and signum component of position error is discussed.
+The analytical findings are further illustrated through computer simulations.
+
+\section{从合围问题中引发的单体问题}
+
+\subsection{First Order}
+
+\begin{proposition}
+    For a function $\phi(s):\RR^n\to\RR^n$ with $\phi^T(s)(x-x^*)<0$, $\forall \|s-x^*\|\leq \|x-x^*\|$ and $\phi(x^*)$
+\end{proposition}
+
+\begin{equation}
+    \dot{x}=\phi(x)=-x+\frac{1}{x}
+\end{equation}
+
+\begin{equation}
+    V=\frac{1}{2}v^2-\int_{x^*}^x \phi(s) ds
+\end{equation}
+
+
+\begin{equation}
+    \dot{V}=vu-(\phi(x)-\phi(x^*))v
+    =-v^2
+\end{equation}
+
+\subsection{Second Order}
+
+\begin{equation}
+    \ddot{x}=\phi(x)-k\dot{x}=-x+\frac{1}{x}-k\dot{x}
+\end{equation}
+
+\begin{equation}
+    V=\frac{1}{2}v^2-\int_{x^*}^x \phi(s) ds
+\end{equation}
+
+
+\begin{equation}
+    \dot{V}=vu-(\phi(x)-\phi(x^*))v
+    =-v^2
+\end{equation}
+
+
+
+\section{Introduction}
+
+Consider the double integrator system, expressed as
+\begin{equation}\label{eq:model}
+    \begin{cases}
+        \dot{x}=v,\\
+        \dot{v}=u+\delta,
+    \end{cases}
+\end{equation}
+where $\delta$ is perturbation with $\vert \delta \vert \leq C$.
+
+The system \eqref{eq:model} can be stabilized robustly with a twisting controller with 
+\begin{equation}
+    u=-k_1 \sign(x) -k_2 \sign(v),
+\end{equation}
+under the parameter $k_1>k_2>C$.
+\cite[Theorem 4.1]{shtesselSlidingModeControl2014} proves this with geometrical method.
+\cite[Theorem 4.1]{orlovFiniteTimeStability2004} proves this with Lyapunov method.
+
+\cite[Theorem 4.2]{orlovFiniteTimeStability2004} also shows that the system can also be stabilized with 
+\begin{equation}
+    u=-k_1 \sign x -k_2 \sign v -k_3 x -k_4 v,
+\end{equation}
+where $0<C<k_2<k_1-M$ and $k_3\geq 0,k_4 \geq 0$.
+
+If no perturbation in this system, many controllers can be used.
+The simplest controller is a linear feedback controller $u=-k_1 x -k_2 v$ 
+with exponential convergence.
+As proved in \cite[Theorem 3.1]{zavala-rioContinuousFinitetimeStabilization2022},
+the system \eqref{eq:model} with $C=0$ can be stabilized with a homogeneous controller
+\begin{equation}
+    u=-k_1 \sign(x)|x|^{a_1}-k_2 \sign(v)|v|^{a_2},
+\end{equation}
+where $k_1>0,k_2>0$ and $0<a_1<a_2<1$.
+This controller guarantees finite-time convergence.
+
+\section{Main Result}
+
+We found the following controller can also robustly stabilize this system with only one $\sign$ function
+\begin{equation}\label{eq:-signx-v}
+    u=-k_1 \sign x -k_2 v.
+\end{equation}
+
+\begin{theorem}
+    The double integrator can be robustly stabilized with the controller \eqref{eq:-signx-v}
+    with $k_1 k_2 >C$.
+\end{theorem}
+\begin{proof}
+    Select $V=k_1|x|+\frac{1}{2}|v|^2$, we have 
+    \begin{equation*}
+        \dot{V}=\sign(x) v + v (u+\delta)=
+        v(k_1\sign(x)-k_1 \sign(x)-k_2 v +\delta)
+        \leq -|v|(k_2|v|-C).
+    \end{equation*}
+    Then $\{|v|\leq \frac{C}{k_2}\}$ is a positive invariance set.
+    In this set, 
+    \begin{equation*}
+        \ddot{x}=-k_1 \sign x -k_2 \dot{x} +\delta
+    \end{equation*}
+    Since $k_1>2C$, 
+    \begin{equation*}
+        \ddot{x} {x}<0
+    \end{equation*}
+\end{proof}
+
+\section{Discussion}
+
+extend to higher order system?
+
+ 
+  
