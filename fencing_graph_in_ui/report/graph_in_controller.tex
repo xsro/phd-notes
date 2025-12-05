@@ -1,0 +1,118 @@
+\documentclass{ctexart}
+\usepackage{amsmath,amsthm}
+\usepackage{amssymb}
+\newtheorem{theorem}{\textbf{Theorem}}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx,subcaption}
+
+\title{合围控制器中包含拓扑信息时对最终编队的影响}
+
+\begin{document}
+
+\maketitle
+
+\section{平均一致性跟踪带有偏置的情况}
+
+平均一致性跟踪 $\rightarrow$ formation control。
+考虑单积分集群，基于平均一致性算法，并附加偏置设计算法：
+\[
+\dot{x}_i = - \sum_{j \in \mathcal{N}_i} (x_i - x_j) - b_i
+\]
+通过设计bi是否可以实现避碰？ 
+通过设计$b_i$ 是否可以实现编队设计（自组织）。
+是否可以进一步考虑bearing-only? consensus-tracking? distance-only?
+
+双积分的情形中，可以推导成算法：
+\begin{equation}
+	\begin{cases}
+		\dot{p}_i = v_i\\
+		\dot{v}_i = -\sum_{j\in N_i} (p_i - p_j) -  \sum_{j\in N_i} (v_i - v_j)
+		- b_i 
+	\end{cases}
+\end{equation}
+$b_i$ 如何只作用于位置控制？ 
+
+\textcolor{red}{单积分情况在\cite[定理2.13]{ren} 中有讨论，其考虑$d_i$相等都是$d_i=w^f(t)$的情形。}
+\begin{theorem}[2.13]
+Suppose that $\mathcal{A}_n$ is constant. Algorithm (2.10) achieves consensus asymptotically if and only if directed graph $\mathcal{G}_n$ has a directed spanning tree. In particular, $\xi_i(t) \to \sum_{i=1}^n \nu_i \xi_i(0) + \int_0^t w^f(\tau)d\tau$, as $t \to \infty$, where $\nu = [\nu_1, \ldots, \nu_n]^T \geq 0$, $\mathbf{1}_n^T \nu = 1$, and $\mathcal{L}_n^T \nu = 0$.
+\end{theorem}
+
+
+\section{在合围中的应用}
+
+我们在设计合围控制律的时候常常会故意避免在$u_i$中出现拓扑信息，因为拓扑会影响最终的队形。
+例如如下的控制律：
+\begin{equation}
+	\label{eq 1}
+	\dot{p}_i=-b_i p_{i0} - \sum_{j \in \mathcal{N}_i} a_{ij}(p_i - p_j) +\phi_i,
+\end{equation}
+其中$p\in\mathbb{R}^2$ 为智能体得位置。
+这样是可以实现控制目标的，但是这就需要一个固定的拓扑。
+考虑中心的动力学为：
+\begin{equation}
+	\sum_{i\in\mathbb{N}}\dot{p}_i=-\sum_{i\in\mathbb{N}}b_i p_{i0}
+\end{equation}
+该动力学难以分析。
+
+记录$p=[p_{10}^T,p_{20}^T,\dots,p_{N0}^T]^T$, $\Phi=[\phi_1^T,\phi_2^T,\dots,\phi_N^T]^T$.
+矩阵$B=diag(b_1,b_2,\dots,b_N)$, 矩阵$L$为$A=[a_{ij}]_{N\times N}$对应得拉普拉斯矩阵，于是可以将系统\eqref{eq 1}写成紧凑得形式为：
+\begin{equation}
+	\dot{p}=-(B+L)\otimes I_2 p +\Phi
+\end{equation}
+考虑李函数为：
+\begin{equation}
+	V=\frac12 p^T ((B+L) \otimes I_2)p
+	+ \frac12 \sum_{i\in\mathbb{N}} \sum_{j\in\mathbb{N}} \int_{\lVert p_{ij} \rVert}^\mu \alpha(s) \mathrm{d}s
+\end{equation}
+求导得：
+\begin{equation}
+	\dot{V}= p^T ((B+L) \otimes I_2)\dot{p}-\Phi \dot{p}=-\lVert - (M\otimes I_2)p + \Phi\rVert^2
+\end{equation}
+有不变集原理可知：
+\begin{equation}
+	\lim_{t\to\infty}\lVert - (M\otimes I_2)p + \Phi\rVert=0
+\end{equation}
+根据$\phi_i$得定义有$\sum_{i\in\mathbb{N}}\phi_i=0$，即$(1_N^T\otimes I_2)\Phi=0$.
+根据拉普拉斯矩阵得性质有：$1_N^T L=0$.
+于是有当$t\to\infty$时，有：
+\begin{equation}
+	(1_N^T\otimes I_2)(B\otimes I_2)p=0
+	\Rightarrow
+	1_N^T (B \otimes I_2) p=0
+\end{equation}
+即$\sum_{i\in\mathbb{N}}b_i p_{i0}=0$.
+图\ref{fig b2345} 给出了不同$b_i$取值的最终合围队形。
+这些队形可以满足合围的要求，但是事实上只是能够获得目标信息的部分实现合围，其他的与这些智能体协同，最终的队形可能不太理想。
+
+\begin{figure}
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{figure/b23.pdf}
+		\caption{$b_2,b_3=1$}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{figure/b235.pdf}
+		\caption{$b_2,b_3,b_5=1$}
+	\end{subfigure}
+	\\
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{figure/b236.pdf}
+		\caption{$b_2,b_3,b_6=1$}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		\includegraphics[width=\linewidth]{figure/b23.pdf}
+		\caption{$b_2,b_3,b_5,b_6=1$}
+	\end{subfigure}
+	\caption{$b_i$取值不同情况下的合围队形}
+	\label{fig b2345}
+\end{figure}
+
+
+
+\begin{thebibliography}{99}
+ \bibitem[ren]{ren}{Ren W, Beard R W. Distributed consensus in multi-vehicle cooperative control[M]. London: Springer London, 2008.
+}
+ \end{thebibliography}
+
+\end{document}
