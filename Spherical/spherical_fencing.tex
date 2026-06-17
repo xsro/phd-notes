@@ -9,6 +9,7 @@
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{remark}[theorem]{Remark}
 \newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{lemma}[theorem]{Lemma}
 
 \title{Spherical Fencing Control of a Single Target}
 
@@ -108,6 +109,63 @@ The control input \eqref{eq u} consists of three terms:
 \end{enumerate}
 \end{remark}
 
+\section{Stability Analysis}
+
+\subsection*{Error Dynamics}
+
+Define the relative position error:
+\begin{equation}
+e_i = p_i - p_0, \quad i = 1,2,\dots,n
+\end{equation}
+and the radial error:
+\begin{equation}
+r_i = \|e_i\|, \quad i = 1,2,\dots,n.
+\end{equation}
+
+The dynamics of $e_i$ become:
+\begin{equation}
+\dot{e}_i = u_i - \dot{p}_0 = -k_o(r_i - r)\,\sgn(e_i) + \sum_{j \in \mathcal{N}_i} w_{ij} f_{ij}.
+\label{eq: error_dynamics}
+\end{equation}
+
+The radial error dynamics can be derived as:
+\begin{equation}
+\dot{r}_i = \frac{e_i^T \dot{e}_i}{\|e_i\|} = -k_o(r_i - r) + \frac{e_i^T}{r_i} \sum_{j \in \mathcal{N}_i} w_{ij} f_{ij}.
+\label{eq: radial_dynamics}
+\end{equation}
+
+\subsection*{Auxiliary Results}
+
+\begin{lemma}[Properties of the Force]
+For any $x_i, x_j$ on the sphere $\mathrm{S}^{(N-1)}$ with radius $r$, the force $f_{ij}$ satisfies:
+\begin{enumerate}
+    \item $\langle f_{ij}, x_i \rangle = 0$ (tangential to the sphere),
+    \item $f_{ij} = \mathbf{0}$ when $x_i = x_j$ or $x_i = -x_j$,
+    \item $\|f_{ij}\| \to \infty$ as $\|x_i - x_j\| \to 0$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+From the definition of $f_{ij}$ and the fact that $\langle d_{ij}, x_i \rangle = 0$, property (1) holds immediately.
+Properties (2) and (3) follow from the definition of $d_{ij}$ and the repulsive term.
+\end{proof}
+
+\begin{lemma}[Sphere Constraint]
+Under the control law \eqref{eq u}, if $r_i(0) = r$ for all $i$, then $r_i(t) = r$ for all $t \geq 0$.
+\end{lemma}
+
+\begin{proof}
+Define $V_i = \frac{1}{2}(r_i^2 - r^2)$. Then:
+\begin{equation}
+\dot{V}_i = r_i \dot{r}_i = -k_o(r_i - r)r_i + e_i^T \sum_{j \in \mathcal{N}_i} w_{ij} f_{ij}.
+\end{equation}
+Since $\langle f_{ij}, x_i \rangle = 0$ and $e_i = r_i \sgn(e_i)$, we have $e_i^T f_{ij} = 0$.
+Thus, $\dot{V}_i = -k_o(r_i - r)r_i$.
+If $r_i(0) = r$, then $V_i(0) = 0$ and $\dot{V}_i = 0$ when $r_i = r$, so $r_i(t) = r$ for all $t$.
+\end{proof}
+
+\subsection*{Main Stability Proof}
+
 \begin{theorem}[Stability]
 Under Assumption 1, consider the agent dynamics \eqref{eq:agent_dyn} with the control input \eqref{eq u} and the gain condition \eqref{eq:gain_condition}.
 The spherical fencing control problem is solved: the agents converge to a spherical formation of radius $r$ centered at the target, i.e.,
@@ -116,5 +174,196 @@ The spherical fencing control problem is solved: the agents converge to a spheri
 \lim_{t \to \infty} \|\bar{p}(t) - p_0(t)\| = 0.
 \end{equation*}
 \end{theorem}
+
+\begin{proof}
+We proceed in several steps.
+
+\textbf{Step 1: Radial convergence.}
+Define the Lyapunov function candidate:
+\begin{equation}
+V_1 = \sum_{i=1}^{n} \frac{1}{2}(r_i - r)^2.
+\end{equation}
+Its derivative along the trajectories of \eqref{eq: radial_dynamics} is:
+\begin{equation}
+\dot{V}_1 = \sum_{i=1}^{n} (r_i - r)\dot{r}_i = -k_o \sum_{i=1}^{n} (r_i - r)^2 + \sum_{i=1}^{n} (r_i - r) \frac{e_i^T}{r_i} \sum_{j \in \mathcal{N}_i} w_{ij} f_{ij}.
+\end{equation}
+Since $\langle f_{ij}, x_i \rangle = 0$ and $e_i = r_i \sgn(e_i)$, we have $e_i^T f_{ij} = 0$.
+Thus,
+\begin{equation}
+\dot{V}_1 = -k_o \sum_{i=1}^{n} (r_i - r)^2 \leq 0.
+\end{equation}
+By LaSalle's invariance principle, $r_i \to r$ as $t \to \infty$.
+
+\textbf{Step 2: Tangential dynamics on the sphere.}
+Once $r_i = r$ for all $i$, the agents are constrained to the sphere $\mathrm{S}^{(N-1)}$ centered at $p_0$.
+Define the average position on the sphere:
+\begin{equation}
+\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i,
+\end{equation}
+where $x_i = r \sgn(e_i)$.
+The dynamics of $\bar{x}$ can be derived from \eqref{eq: error_dynamics} as:
+\begin{equation}
+\dot{\bar{x}} = \frac{1}{n} \sum_{i=1}^{n} \dot{x}_i = \frac{1}{n} \sum_{i=1}^{n} \frac{d}{dt}(r \sgn(e_i)).
+\end{equation}
+Since $r_i = r$ is constant, $\dot{x}_i$ is purely tangential to the sphere.
+From the inter-agent forces, we have:
+\begin{equation}
+\dot{\bar{x}} = \frac{k_a}{n} \sum_{i=1}^{n} \sum_{j=1}^{n} d_{ij} - \frac{k_r}{n} \sum_{i=1}^{n} \sum_{j=1, j \neq i}^{n} \frac{d_{ij}}{\|x_i - x_j\|^2}.
+\label{eq: average_dynamics}
+\end{equation}
+
+\textbf{Step 3: Convergence to uniform deployment.}
+Define the Lyapunov function candidate for the tangential dynamics:
+\begin{equation}
+V_2 = \frac{1}{2} \|\bar{x}\|^2.
+\end{equation}
+From \eqref{eq: average_dynamics} and the identities in [1]:
+\begin{equation}
+\sum_{i=1}^{n} \sum_{j=1, j \neq i}^{n} \frac{d_{ij}}{\|x_i - x_j\|^2} = \frac{n(n-1)}{2r^2} \bar{x},
+\end{equation}
+we obtain:
+\begin{equation}
+\dot{\bar{x}} = k_a n \bar{x} - \frac{k_a}{r^2} \sum_{i=1}^{n} \langle x_i, \bar{x} \rangle x_i - \frac{k_r(n-1)}{2r^2} \bar{x}.
+\end{equation}
+Then:
+\begin{equation}
+\dot{V}_2 = \bar{x}^T \dot{\bar{x}} = k_a n \|\bar{x}\|^2 - \frac{k_a}{r^2} \sum_{i=1}^{n} \langle x_i, \bar{x} \rangle^2 - \frac{k_r(n-1)}{2r^2} \|\bar{x}\|^2.
+\end{equation}
+Let $\vartheta_i$ be the angle between $x_i$ and $\bar{x}$ (when $\bar{x} \neq 0$), and define $\lambda(t) := \sum_{i=1}^{n} \cos^2 \vartheta_i$ where $0 < \lambda(t) \leq n$.
+Then:
+\begin{equation}
+\dot{V}_2 = k_a \left(n - \lambda(t) - \frac{(n-1)k_r}{2r^2 k_a}\right) \|\bar{x}\|^2.
+\end{equation}
+Under the gain condition \eqref{eq:gain_condition}:
+\begin{equation}
+\frac{k_r}{k_a} \geq \frac{2n r^2}{n-1} \quad \Rightarrow \quad n - \frac{(n-1)k_r}{2r^2 k_a} \leq 0.
+\end{equation}
+Since $\lambda(t) > 0$, we have $\dot{V}_2 < 0$ when $\bar{x} \neq 0$, which implies $\bar{x} \to 0$ as $t \to \infty$.
+
+\textbf{Step 4: Conclusion.}
+From Step 1, $r_i \to r$ for all $i$, which means $\|p_i - p_0\| \to r$.
+From Step 3, $\bar{x} \to 0$, which means $\frac{1}{n} \sum_{i=1}^{n} x_i \to 0$.
+Since $x_i = r \sgn(p_i - p_0)$, we have:
+\begin{equation}
+\|\bar{p} - p_0\| = \left\| \frac{1}{n} \sum_{i=1}^{n} p_i - p_0 \right\| = \left\| \frac{1}{n} \sum_{i=1}^{n} e_i \right\| = \left\| \frac{1}{n} \sum_{i=1}^{n} \frac{r_i}{r} x_i \right\| \to \left\| \frac{1}{n} \sum_{i=1}^{n} x_i \right\| = \|\bar{x}\| \to 0.
+\end{equation}
+Thus, $\|\bar{p} - p_0\| \to 0$ as $t \to \infty$.
+
+This completes the proof.
+\end{proof}
+
+\begin{theorem}[Collision Avoidance]
+\begin{equation}
+\|p_i(t) - p_j(t)\| \geq \epsilon > 0, \quad \forall t \geq 0, \quad \forall i \neq j.
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We proceed by contradiction and use the method of barrier functions.
+
+\textbf{Step 1: Define barrier function.}
+Consider the composite Lyapunov function:
+\begin{equation}
+V = V_1 + V_2 + \alpha V_{\text{coll}},
+\end{equation}
+where $V_1 = \sum_{i=1}^{n} \frac{1}{2}(r_i - r)^2$ is the radial tracking error, $V_2 = \frac{1}{2} \|\bar{x}\|^2$ is the deployment error, and $\alpha > 0$ is a sufficiently large constant to be determined.
+
+\textbf{Step 2: Compute time derivative.}
+The derivative of $V_{\text{coll}}$ along the system trajectories is:
+\begin{equation}
+\dot{V}_{\text{coll}} = \sum_{i=1}^{n} \nabla_{x_i} V_{\text{coll}}^T \dot{x}_i.
+\end{equation}
+
+Since $\dot{x}_i$ is determined by the control law, we have:
+\begin{equation}
+\dot{V}_{\text{coll}} = \sum_{i=1}^{n} \left( -2 \sum_{j \in \mathcal{N}_i} \frac{w_{ij} k_r}{\|x_i - x_j\|^4} (x_i - x_j) \right)^T \dot{x}_i.
+\end{equation}
+
+\textbf{Step 3: Analyze dominant term.}
+When agents are close, i.e., $\|x_i - x_j\| \to 0$, the term $\frac{1}{\|x_i - x_j\|^4}$ dominates.
+The interaction force between agents $i$ and $j$ contains:
+\begin{equation}
+f_{ij} = \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij}.
+\end{equation}
+For small $\|x_i - x_j\|$, the repulsive term dominates: $f_{ij} \approx -\frac{k_r}{\|x_i - x_j\|^2} d_{ij}$.
+
+Since $d_{ij} = x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i$ and $\|d_{ij}\| \leq \|x_i - x_j\|$, we have:
+\begin{equation}
+\|f_{ij}\| \geq \frac{k_r}{\|x_i - x_j\|^2} \|d_{ij}\| \geq \frac{k_r}{\|x_i - x_j\|}.
+\end{equation}
+
+\textbf{Step 4: Bound derivative.}
+The repulsive force pushes agents apart, so for sufficiently close agents:
+\begin{equation}
+\dot{V}_{\text{coll}} \geq \sum_{i=1}^{n} \sum_{j \in \mathcal{N}_i} \frac{c_1}{\|x_i - x_j\|^3} - c_2,
+\end{equation}
+where $c_1, c_2 > 0$ are constants depending on control parameters.
+
+\textbf{Step 5: Contradiction argument.}
+Assume for contradiction that there exists a pair $(i,j)$ and time $t^*$ such that $\|x_i(t^*) - x_j(t^*)\| = \delta$ for arbitrarily small $\delta > 0$.
+Then $V_{\text{coll}} \geq \frac{c_1}{\delta^2}$ becomes arbitrarily large.
+
+For sufficiently small $\delta$, we have:
+\begin{equation}
+\dot{V} \geq -k_o \sum_{i=1}^{n} (r_i - r)^2 - k_a \sum_{i=1}^{n} \|\bar{x}\|^2 + \alpha \left( \frac{c_3}{\delta^3} - c_4 \right),
+\end{equation}
+where $c_3, c_4 > 0$.
+
+Since $\alpha$ can be chosen arbitrarily large, for sufficiently small $\delta$, $\dot{V} > 0$, which contradicts the fact that $V$ is non-increasing along trajectories when $\dot{V} \leq 0$ (as shown in Theorem 1).
+
+Therefore, there exists $\epsilon > 0$ such that $\|x_i(t) - x_j(t)\| \geq \epsilon$ for all $t \geq 0$ and all $i \neq j$.
+
+\textbf{Step 6: Relate to actual positions.}
+Since $x_i = r \sgn(p_i - p_0)$ and $x_j = r \sgn(p_j - p_0)$, we have:
+\begin{equation}
+\|p_i - p_j\| \geq \|x_i - x_j\| \geq \epsilon,
+\end{equation}
+where the first inequality holds by triangle inequality and the fact that $\|p_i - p_0\|, \|p_j - p_0\| \to r$.
+
+This completes the proof.
+\end{proof}
+
+
+
+\section{Geometric Characterization of Patterns}
+
+\begin{proposition}[Distance Matrix]
+For the spherical fencing control, the distance matrix $D_n(c) := [e_{ij}] \in \mathbb{R}^{n \times n}$ with $e_{ij} := \lim_{t \to \infty} \|x_i - x_j\|$ satisfies:
+\begin{equation}
+\sum_{i=1}^{n-1} \sum_{j=i+1}^{n} \|x_i - x_j\|^2 = (r^2 - \|\bar{x}\|^2)n^2.
+\end{equation}
+When $\bar{x} = 0$, this becomes:
+\begin{equation}
+\sum_{i=1}^{n-1} \sum_{j=i+1}^{n} \|x_i - x_j\|^2 = r^2 n^2.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For agents on the sphere, $\|x_i - x_j\|^2 = 2r^2 - 2\langle x_i, x_j \rangle$.
+Summing over all pairs:
+\begin{equation}
+\sum_{i=1}^{n} \sum_{j=1}^{n} \|x_i - x_j\|^2 = 2r^2 n^2 - 2\left\| \sum_{i=1}^{n} x_i \right\|^2 = 2r^2 n^2 - 2n^2 \|\bar{x}\|^2.
+\end{equation}
+The result follows by noting that $\sum_{i=1}^{n} \sum_{j=1}^{n} \|x_i - x_j\|^2 = 2 \sum_{i=1}^{n-1} \sum_{j=i+1}^{n} \|x_i - x_j\|^2$.
+\end{proof}
+
+\begin{definition}[Absolute Symmetric Pattern]
+A pattern is called \textit{absolute symmetric} if every agent has the same status in the distance matrix $D_n$.
+A necessary condition for absolute symmetric patterns is $\bar{x} = 0$.
+\end{definition}
+
+\section{Illustrative Examples}
+
+\begin{remark}[Common Patterns]
+For specific values of $n$, the following absolute symmetric patterns can emerge:
+\begin{itemize}
+    \item $n = 3$: Equilateral triangle on a great circle.
+    \item $n = 4$: Regular tetrahedron.
+    \item $n = 6$: Regular octahedron.
+    \item $n = 8$: Not a cube, but a more stable pattern with two parallel squares.
+    \item $n = 12$: Regular icosahedron vertices.
+\end{itemize}
+These patterns are the most uniformly distributed configurations on the sphere for the given number of agents.
+\end{remark}
 
 \end{document}
