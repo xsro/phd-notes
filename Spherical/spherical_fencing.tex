@@ -8,8 +8,9 @@
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{remark}[theorem]{Remark}
+\newtheorem{assumption}[theorem]{Assumption}
 
-\title{Spherical fencing control of one target}
+\title{Spherical Fencing Control of a Single Target}
 
 \begin{document}
 
@@ -17,10 +18,10 @@
 
 \section{Problem Description}
 
-Consider homogeneous agents moving collectively in $N$-dimensional Euclidean space, $N \geq 2$. 
-We design cooperative control laws such that agents are driven to fence the target with a spherical formation with radius $r > 0$.
+Consider $n$ homogeneous agents moving in $N$-dimensional Euclidean space, $N \geq 2$.
+We design cooperative control laws so that the agents collectively form a spherical formation of radius $r > 0$ enclosing the target.
 
-The positions of $n$ agents are denoted by $p_i$ and the position of the target is denote by $p_0$;
+Let $p_i \in \mathbb{R}^N$ denote the position of agent $i$ and $p_0 \in \mathbb{R}^N$ denote the position of the target.
 \begin{definition}[Spherical fencing control]
 The target is said to \textit{be spherically fenced} by agents if
 \begin{equation}
@@ -31,51 +32,89 @@ The target is said to \textit{be spherically fenced} by agents if
 where $\bar{p}=1/n \sum_{i=1}^{n} p_i$ is the center of $n$ agents.
 \end{definition}
 
-Denote $\sgn(x)=x/\|x\|$ when $\|x\| \neq 0$ and $\sgn(x)=\mathbf{0}$ when $\|x\|= 0$. 
-We assume $p_i(0)-p_0(0)$ is not zero and not collinear.
+Define $\sgn(x) = x/\|x\|$ for $\|x\| \neq 0$ and $\sgn(x) = \mathbf{0}$ for $\|x\| = 0$.
+Throughout, we assume that each agent starts at a distinct position from the target, i.e., $p_i(0) \neq p_0(0)$ for all $i$, and that the initial relative positions $\{p_i(0) - p_0(0)\}_{i=1}^{n}$ span $\mathbb{R}^N$.
 
-\section{First-Order Model}
+\section{Agent Dynamics}
 
-Consider agents governed by first-order integrators:
+The agents are governed by first-order integrators:
 \begin{equation}
 \dot{p}_i = u_i \in \mathbb{R}^N, \quad i = 1,2,\dots,n
+\label{eq:agent_dyn}
 \end{equation}
 
 \section{Control Law Design}
 
-Define the vector:
+Define the radial projection of each agent onto the sphere of radius $r$:
 \begin{equation}
-    x_i=r \sgn(p_i-p_0)
-    \quad
-    d_{ij} = x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i \in \mathbb{R}^N
+    x_i = r\,\sgn(p_i - p_0) \in \mathbb{R}^N,
 \end{equation}
-with properties: $\langle d_{ij}, x_i \rangle = 0$, $d_{ij} = 0$ when $x_i = x_j$ or $x_i = -x_j$, and
+and the tangential coupling vector between agents $i$ and $j$:
+\begin{equation}
+    d_{ij} = x_j - \frac{\langle x_i, x_j \rangle}{r^2}\, x_i \in \mathbb{R}^N.
+\end{equation}
+By construction, $d_{ij}$ is orthogonal to $x_i$, i.e., $\langle d_{ij}, x_i \rangle = 0$, so it lies in the tangent space of the sphere at $x_i$.
+The coupling vector satisfies $d_{ij} = \mathbf{0}$ when $x_i = x_j$ or $x_i = -x_j$, and its magnitude is
 \begin{equation}
 \|d_{ij}\| = \frac{\|x_i - x_j\| \sqrt{4r^2 - \|x_i - x_j\|^2}}{2r}.
 \end{equation}
 
-\begin{definition}[Force]
-Define the instantaneous force $f_{ij}$ on agent $i$ due to agent $j$ as:
+\begin{definition}[Inter-agent Force]
+The interaction force exerted on agent $i$ by agent $j$ is defined as
 \begin{equation}
-f_{ij} = \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij} \in \mathbb{R}^N
+f_{ij} = \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij} \in \mathbb{R}^N,
 \end{equation}
-where $k_a \geq 0$ is the attraction parameter, $k_r \geq 0$ is the repulsion parameter, and $\frac{k_r}{\|x_i - x_j\|}$ is the state-dependent repulsive coefficient.
+where $k_a > 0$ is the attraction gain, $k_r > 0$ is the repulsion gain, and $d_{ij}$ is the tangential coupling vector.
 \end{definition}
 
-The overall control law is:
+\begin{remark}[Singular Configurations]
+When $x_i = x_j$ (two agents at the same projected point), we have $d_{ij} = \mathbf{0}$ and the force vanishes, so the repulsive mechanism is inactive.
+This corresponds to a degenerate equilibrium; in practice, any small perturbation breaks the symmetry and restores the force.
+Similarly, $d_{ij} = \mathbf{0}$ when $x_i = -x_j$ (diametrically opposite), where no tangential coupling acts.
+\end{remark}
+
+\subsection*{Communication Graph}
+
+Let $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ be an undirected graph with vertex set $\mathcal{V} = \{1,\dots,n\}$ and edge set $\mathcal{E}$.
+The neighbor set of agent $i$ is $\mathcal{N}_i = \{j : (i,j) \in \mathcal{E}\}$, and $w_{ij} > 0$ is the edge weight for $j \in \mathcal{N}_i$, with $w_{ii} = 0$.
+
+\begin{assumption}[Graph Connectivity]
+The communication graph $\mathcal{G}$ is connected.
+\end{assumption}
+
+\subsection*{Control Law}
+
+The overall control input for agent $i$ is
 \begin{equation}
-u_i = 
--k_o(x_i-r\sgn(p_{i0}))
-+
-\sum_{j \in \mathcal{N}_i} w_{ij} \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) \left(x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i\right)
-+ \dot{p}_0
+u_i =
+-k_o\bigl(\|p_i - p_0\| - r\bigr)\,\sgn(p_i - p_0)
++ \sum_{j \in \mathcal{N}_i} w_{ij} \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij}
++ \dot{p}_0,
 \label{eq u}
 \end{equation}
-where $\mathcal{N}_i$ is the neighbor set of agent $i$, $w_{ij} > 0$ when $j \in \mathcal{N}_i$, and $w_{ii} = 0$.
-We choose $k_o, k_r, k_a>0$  and $\frac{k_r}{k_a} \geq \frac{2nr^2}{n-1}$.
+where $k_o > 0$ is the radial tracking gain. Note that the first term can be equivalently written as $-\frac{k_o}{r}(\|p_i - p_0\| - r)\,x_i$, which is proportional to the signed distance error along the radial direction.
+The control parameters $k_o, k_r, k_a > 0$ are chosen such that
+\begin{equation}
+\frac{k_r}{k_a} \geq \frac{2n\,r^2}{n-1}.
+\label{eq:gain_condition}
+\end{equation}
 
-\begin{theorem}[Stability Analysis]
-Consider the dynamics (2) with control input \eqref{eq u}, the spherical fencing control problem is solved.
+\begin{remark}[Structure of the Control Law]
+The control input \eqref{eq u} consists of three terms:
+\begin{enumerate}
+    \item \emph{Radial tracking}: $-k_o(\|p_i - p_0\| - r)\,\sgn(p_i - p_0)$ drives each agent toward the sphere of radius $r$ by acting along the radial direction with a signed distance error.
+    \item \emph{Inter-agent interaction}: the weighted sum of $f_{ij}$ over neighbors, which spreads agents uniformly on the sphere through tangential forces.
+    \item \emph{Feedforward}: $\dot{p}_0$ compensates for the target's motion.
+\end{enumerate}
+\end{remark}
+
+\begin{theorem}[Stability]
+Under Assumption 1, consider the agent dynamics \eqref{eq:agent_dyn} with the control input \eqref{eq u} and the gain condition \eqref{eq:gain_condition}.
+The spherical fencing control problem is solved: the agents converge to a spherical formation of radius $r$ centered at the target, i.e.,
+\begin{equation*}
+\lim_{t \to \infty} \|p_i(t) - p_0(t)\| = r, \quad
+\lim_{t \to \infty} \|\bar{p}(t) - p_0(t)\| = 0.
+\end{equation*}
 \end{theorem}
 
 \end{document}
