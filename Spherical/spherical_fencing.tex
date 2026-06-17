@@ -1,0 +1,81 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,amsthm}
+\DeclareMathOperator{\sgn}{sgn}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{Spherical fencing control of one target}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem Description}
+
+Consider homogeneous agents moving collectively in $N$-dimensional Euclidean space, $N \geq 2$. 
+We design cooperative control laws such that agents are driven to fence the target with a spherical formation with radius $r > 0$.
+
+The positions of $n$ agents are denoted by $p_i$ and the position of the target is denote by $p_0$;
+\begin{definition}[Spherical fencing control]
+The target is said to \textit{be spherically fenced} by agents if
+\begin{equation}
+\lim_{t \to \infty} \|p_i(t) - p_0(t)\| = r ,
+\quad 
+\lim_{t \to \infty} \|\bar{p}(t) - p_0(t)\| = 0
+\end{equation}
+where $\bar{p}=1/n \sum_{i=1}^{n} p_i$ is the center of $n$ agents.
+\end{definition}
+
+Denote $\sgn(x)=x/\|x\|$ when $\|x\| \neq 0$ and $\sgn(x)=\mathbf{0}$ when $\|x\|= 0$. 
+We assume $p_i(0)-p_0(0)$ is not zero and not collinear.
+
+\section{First-Order Model}
+
+Consider agents governed by first-order integrators:
+\begin{equation}
+\dot{p}_i = u_i \in \mathbb{R}^N, \quad i = 1,2,\dots,n
+\end{equation}
+
+\section{Control Law Design}
+
+Define the vector:
+\begin{equation}
+    x_i=r \sgn(p_i-p_0)
+    \quad
+    d_{ij} = x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i \in \mathbb{R}^N
+\end{equation}
+with properties: $\langle d_{ij}, x_i \rangle = 0$, $d_{ij} = 0$ when $x_i = x_j$ or $x_i = -x_j$, and
+\begin{equation}
+\|d_{ij}\| = \frac{\|x_i - x_j\| \sqrt{4r^2 - \|x_i - x_j\|^2}}{2r}.
+\end{equation}
+
+\begin{definition}[Force]
+Define the instantaneous force $f_{ij}$ on agent $i$ due to agent $j$ as:
+\begin{equation}
+f_{ij} = \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij} \in \mathbb{R}^N
+\end{equation}
+where $k_a \geq 0$ is the attraction parameter, $k_r \geq 0$ is the repulsion parameter, and $\frac{k_r}{\|x_i - x_j\|}$ is the state-dependent repulsive coefficient.
+\end{definition}
+
+The overall control law is:
+\begin{equation}
+u_i = 
+-k_o(x_i-r\sgn(p_{i0}))
++
+\sum_{j \in \mathcal{N}_i} w_{ij} \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) \left(x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i\right)
++ \dot{p}_0
+\label{eq u}
+\end{equation}
+where $\mathcal{N}_i$ is the neighbor set of agent $i$, $w_{ij} > 0$ when $j \in \mathcal{N}_i$, and $w_{ii} = 0$.
+We choose $k_o, k_r, k_a>0$  and $\frac{k_r}{k_a} \geq \frac{2nr^2}{n-1}$.
+
+\begin{theorem}[Stability Analysis]
+Consider the dynamics (2) with control input \eqref{eq u}, the spherical fencing control problem is solved.
+\end{theorem}
+
+\end{document}
