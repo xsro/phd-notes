@@ -5,6 +5,12 @@ Nt = par.Nt;
 N = par.N;
 m = par.m;
 
+% Ensure output directory exists
+out_dir = fullfile(fileparts(mfilename('fullpath')), 'out');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
+
 p  = hist.p;
 v  = hist.v;
 p0 = hist.p0;
@@ -19,6 +25,7 @@ vel_err = zeros(Nt,N);
 s_norm = zeros(Nt,N);
 sdot_norm = zeros(Nt,N);
 dist_min = zeros(Nt,1);
+dist_center_to_target = zeros(Nt,1);
 
 for k = 1:Nt
     p_k = squeeze(p(k,:,:));
@@ -41,6 +48,10 @@ for k = 1:Nt
         end
     end
     dist_min(k) = dmin;
+
+    % center of all agents to target distance
+    p_center = mean(p_k, 1);
+    dist_center_to_target(k) = norm(p_center - p0_k);
 end
 
 %% Figure 1: trajectories
@@ -69,6 +80,7 @@ for i = 1:N
 end
 legend_entries{N+1} = 'Target';
 legend(legend_entries, 'Location','best');
+saveas(gcf, fullfile(out_dir, 'fig1_trajectories.png'));
 
 %% Figure 2: final convex hull
 figure('Color','w','Position',[150 150 750 650]);
@@ -88,6 +100,7 @@ xlabel('$x$','Interpreter','latex');
 ylabel('$y$','Interpreter','latex');
 title('Final convex hull and target','Interpreter','latex');
 legend('Convex hull','Agents','Target','Location','best');
+saveas(gcf, fullfile(out_dir, 'fig2_convex_hull.png'));
 
 %% Figure 3: sliding variables
 figure('Color','w','Position',[200 100 900 700]);
@@ -109,6 +122,7 @@ for ell = 1:m
     yline(-2*eps_ref,'g--');
 end
 xlabel('Time (s)');
+saveas(gcf, fullfile(out_dir, 'fig3_sliding_variables.png'));
 
 %% Figure 4: norm of sdot
 figure('Color','w','Position',[250 150 900 450]);
@@ -120,6 +134,7 @@ xlabel('Time (s)');
 ylabel('$\|\dot{s}_{i0}\|$','Interpreter','latex');
 title('Norm of sliding variable derivative','Interpreter','latex');
 legend(arrayfun(@(i) ['Agent ',num2str(i)], 1:N, 'UniformOutput', false));
+saveas(gcf, fullfile(out_dir, 'fig4_sdot_norm.png'));
 
 %% Figure 5: velocity tracking error
 figure('Color','w','Position',[300 200 900 450]);
@@ -131,6 +146,7 @@ xlabel('Time (s)');
 ylabel('$\|v_i-v_0\|$','Interpreter','latex');
 title('Relative velocity error','Interpreter','latex');
 legend(arrayfun(@(i) ['Agent ',num2str(i)], 1:N, 'UniformOutput', false));
+saveas(gcf, fullfile(out_dir, 'fig5_velocity_error.png'));
 
 %% Figure 6: minimum inter-agent distance
 figure('Color','w','Position',[350 250 900 450]);
@@ -140,6 +156,7 @@ xlabel('Time (s)');
 ylabel('Minimum inter-agent distance');
 title('Collision avoidance distance','Interpreter','latex');
 legend('min distance','$d_{\rm safe}$','Interpreter','latex');
+saveas(gcf, fullfile(out_dir, 'fig6_min_distance.png'));
 
 %% Figure 7: input gain signs
 figure('Color','w','Position',[400 300 900 650]);
@@ -153,6 +170,7 @@ for ell = 1:m
     title(['Unknown sign-switching input gain component ', num2str(ell)], 'Interpreter','latex');
 end
 xlabel('Time (s)');
+saveas(gcf, fullfile(out_dir, 'fig7_input_gain_signs.png'));
 
 %% Figure 8: controls
 figure('Color','w','Position',[450 350 900 650]);
@@ -166,5 +184,15 @@ for ell = 1:m
     title(['Control input component ', num2str(ell)], 'Interpreter','latex');
 end
 xlabel('Time (s)');
+saveas(gcf, fullfile(out_dir, 'fig8_controls.png'));
+
+%% Figure 9: center of agents to target distance
+figure('Color','w','Position',[500 400 900 450]);
+plot(t, dist_center_to_target, 'b-', 'LineWidth', 1.5); hold on; grid on;
+xlabel('Time (s)');
+ylabel('$\|\bar{p}(t)-p_0(t)\|$','Interpreter','latex');
+title('Distance from agent center to target','Interpreter','latex');
+legend('$\|\bar{p}-p_0\|$','Interpreter','latex');
+saveas(gcf, fullfile(out_dir, 'fig9_center_to_target.png'));
 
 end

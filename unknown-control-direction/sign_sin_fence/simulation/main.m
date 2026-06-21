@@ -22,7 +22,7 @@ clear; clc; close all;
 par.N  = 4;             % number of agents
 par.m  = 2;             % dimension, 2D
 par.T  = 30;            % total simulation time
-par.dt = 1e-3;          % time step
+par.dt = 1e-5;          % time step
 par.t  = 0:par.dt:par.T;
 par.Nt = length(par.t);
 

@@ -1281,3 +1281,42 @@ If the above nominal relative dynamics satisfy the assumptions of existing fenci
    \]
 
    后续 convex-hull fencing、collision avoidance 和 velocity consensus 应引用已有名义系统结论。
+
+
+   ---
+   
+   # 5. 仿真结果
+   
+   以下为 MATLAB 仿真结果，验证了上述算法在多智能体围捕场景下的有效性。
+   
+   ![Agent与目标轨迹](simulation/out/fig1_trajectories.png)
+   
+   **图1：Agent与目标轨迹。** 实线为各Agent的运动轨迹，虚线为目标的运动轨迹。圆圈和方块分别标记初始和最终位置。
+   
+   ![最终凸包](simulation/out/fig2_convex_hull.png)
+   
+   **图2：最终凸包。** 蓝色区域为所有Agent在终点位置构成的凸包，目标（黑色五角星）被包含在凸包内部，表明围捕成功。
+   
+   ![滑模变量](simulation/out/fig3_sliding_variables.png)
+   
+   **图3：滑模变量各分量。** 各Agent的滑模变量在不同分量上随时间收敛到周期滑模面，红色和绿色虚线标注了周期边界 \(\pm\varepsilon,\pm 2\varepsilon\)。
+   
+   ![滑模变量导数范数](simulation/out/fig4_sdot_norm.png)
+   
+   **图4：滑模变量导数范数 \(\|\dot{s}_{i0}\|\)。** 反映滑模变量的变化率，最终趋于零表明系统进入滑模运动。
+   
+   ![速度跟踪误差](simulation/out/fig5_velocity_error.png)
+   
+   **图5：相对速度误差 \(\|v_i-v_0\|\)。** 各Agent与目标之间的速度误差随时间收敛，表明各Agent成功跟踪目标速度。
+   
+   ![最小Agent间距](simulation/out/fig6_min_distance.png)
+   
+   **图6：最小Agent间距离。** 红色虚线为安全距离 \(d_{\rm safe}\)，实际最小距离始终大于安全距离，验证了碰撞避免的有效性。
+   
+   ![输入增益符号](simulation/out/fig7_input_gain_signs.png)
+   
+   **图7：未知符号切换的输入增益 \(b_{i\ell}(t)\)。** 展示了各Agent各维度的控制方向系数随时间发生符号切换的过程。
+   
+   ![控制输入](simulation/out/fig8_controls.png)
+   
+   **图8：控制输入各分量 \(u_{i\ell}\)。** 展示了各Agent在各维度上的实际控制信号。
