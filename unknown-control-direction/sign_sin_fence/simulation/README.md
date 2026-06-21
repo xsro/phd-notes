@@ -1,0 +1,9 @@
+touch main.m
+touch agent_dynamics.m
+touch controller_periodic_smc.m
+touch repulsion_term.m
+touch input_gain_matrix.m
+touch disturbance_agent.m
+touch target_acceleration.m
+touch sat_sign.m
+touch plot_results.m
