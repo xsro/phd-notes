@@ -21,7 +21,7 @@
 
 \title{控制方向未知且符号可切换的多智能体周期滑模合围控制}
 \author{}
-\date{}
+\date{\today}
 
 \begin{document}
 
@@ -29,20 +29,16 @@
 
 下面给出当前算法的完整叙述，分为三部分：
 \begin{enumerate}[nosep]
-    \item 问题 formulation
-    \item 控制算法 design
+    \item 问题建模
+    \item 控制算法设计
     \item 稳定性证明：有限时间进入周期滑模并满足 \(\dot s_{i0}=0\)
 \end{enumerate}
 
-这里证明只到
-\[
-    \dot s_{i0}=0
-\]
-为止。由 \(\dot s_{i0}=0\) 进一步推出合围、避碰、速度一致的过程，可引用已有 fencing formation 文献中的名义系统分析结果。
+这里证明只到 \(\dot s_{i0}=0\) 为止。由 \(\dot s_{i0}=0\) 进一步推出合围、避碰、速度一致的过程，可引用已有合围编队文献中的名义系统分析结果。
 
 \section{问题描述}
 
-考虑 \(N\) 个卫星 agent 和一个目标 target。设 agent \(i\) 的位置、速度分别为
+考虑 \(N\) 个卫星智能体和一个目标。设智能体 \(i\) 的位置、速度分别为
 \[
     p_i(t)\in\mathbb R^m,\qquad v_i(t)\in\mathbb R^m,
 \]
@@ -51,9 +47,9 @@
     p_0(t)\in\mathbb R^m,\qquad v_0(t)\in\mathbb R^m.
 \]
 
-\subsection{Agent 动力学：控制方向未知}
+\subsection{智能体动力学：控制方向未知}
 
-考虑 agent \(i\) 的二阶动力学为
+考虑智能体 \(i\) 的二阶动力学为
 \begin{align}
     \dot p_i &= v_i, \label{eq:agent-p}\\
     \dot v_i &= B_i(t)u_i+d_i, \label{eq:agent-v}
@@ -78,7 +74,7 @@
     \|d_i(t)\|_\infty\le \bar d_i.
 \]
 
-\subsection{Target 动力学}
+\subsection{目标动力学}
 
 目标系统为
 \begin{align}
@@ -92,7 +88,7 @@
 
 \subsection{相对变量}
 
-定义 agent \(i\) 关于目标的相对位置和相对速度为
+定义智能体 \(i\) 关于目标的相对位置和相对速度为
 \[
     p_{i0}=p_i-p_0,\qquad v_{i0}=v_i-v_0.
 \]
@@ -170,7 +166,7 @@
 
 \subsection{周期滑模控制律}
 
-对每个 agent \(i\) 和每个分量 \(\ell=1,\dots,m\)，设计控制律
+对每个智能体 \(i\) 和每个分量 \(\ell=1,\dots,m\)，设计控制律
 \[
     u_{i\ell} = R_{i\ell}(t)\,
     \sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon_{i\ell}}s_{i0,\ell}\right)\right],
@@ -214,7 +210,7 @@
 
 该控制律不使用 \(b_{i\ell}(t)\) 的符号信息。
 
-\section{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\)}
+\section{\texorpdfstring{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\)}{稳定性证明：有限时间到达并满足 sdot=0}}
 
 下面证明：在控制方向符号保持不变的时间区间内，每个分量 \(s_{i0,\ell}\) 有限时间到达某个周期滑模面，并在理想滑模意义下满足 \(\dot s_{i0,\ell}=0\)。
 
@@ -224,7 +220,7 @@
 
 \subsection{逐分量闭环系统}
 
-固定 agent \(i\) 和分量 \(\ell\)。为简化记号，令
+固定智能体 \(i\) 和分量 \(\ell\)。为简化记号，令
 \begin{align*}
     s &= s_{i0,\ell}, & b &= b_{i\ell}(t), & u &= u_{i\ell}, \\
     \Delta &= \Delta_{i\ell}, & w &= w_{i\ell}, & N &= \Delta + w, \\
@@ -258,7 +254,7 @@
 \]
 这是周期滑模可达性的关键不等式。
 
-\subsection{当 \(b>0\) 时的到达性}
+\subsection{\texorpdfstring{当 \(b>0\) 时的到达性}{当 b>0 时的到达性}}
 
 假设在当前时间区间内 \(b(t)>0\)。
 
@@ -304,7 +300,7 @@
 
 也就是说，当 \(b>0\) 时，奇数倍周期滑模面 \(s = (2r+1)\varepsilon\) 是有限时间吸引的。
 
-\subsection{当 \(b<0\) 时的到达性}
+\subsection{\texorpdfstring{当 \(b<0\) 时的到达性}{当 b<0 时的到达性}}
 
 假设在当前时间区间内 \(b(t)<0\)。
 
@@ -362,7 +358,7 @@
 \]
 所以每个分量 \(s_{i0,\ell}\) 都能在有限时间内到达相应的周期滑模面。
 
-\subsection{滑模面上的等效运动与 \(\dot s=0\)}
+\subsection{\texorpdfstring{滑模面上的等效运动与 \(\dot s=0\)}{滑模面上的等效运动与 sdot=0}}
 
 一旦 \(s\) 到达对应的吸引周期滑模面 \(s = k\varepsilon\)，在理想滑模意义下，系统保持在该面上，因此 \(\dot s = 0\)。
 
@@ -400,11 +396,11 @@
     \boxed{\ddot p_{i0} + k_2 \dot p_{i0} + k_1 p_{i0} = \varphi_i.}
 \]
 
-这正是已有 fencing formation 文献中常见的名义合围动力学形式，即：
+这正是已有合围编队文献中常见的名义合围动力学形式，即：
 \begin{itemize}[nosep]
     \item \(k_1 p_{i0}\) 提供目标吸引；
     \item \(k_2 \dot p_{i0}\) 提供阻尼；
-    \item \(\varphi_i\) 提供卫星间排斥与避碰。
+    \item \(\varphi_i\) 提供智能体间排斥与避碰。
 \end{itemize}
 
 因此，本控制器的作用是：在控制方向未知、扰动存在、目标加速度有界的情况下，使实际系统有限时间进入滑模运动，并在滑模运动中恢复已有文献分析的名义合围系统。
@@ -414,17 +410,17 @@
 可以将上述结果概括为以下定理。
 
 \begin{theorem}\label{thm:main}
-Consider the multi-agent system
+考虑多智能体系统
 \begin{align*}
     \dot p_i &= v_i, \\
     \dot v_i &= B_i(t) u_i + d_i,
 \end{align*}
-and the target dynamics
+以及目标动力学
 \begin{align*}
     \dot p_0 &= v_0, \\
     \dot v_0 &= u_0.
 \end{align*}
-Suppose that
+假设
 \begin{align*}
     B_i(t) &= \operatorname{diag}\{b_{i1}(t),\dots,b_{im}(t)\}, \\
     0 < \underline b_{i\ell} &\le |b_{i\ell}(t)|, \qquad \ell=1,\dots,m, \\
@@ -432,38 +428,38 @@ Suppose that
     \|u_0(t)\|_\infty &\le \bar u_0.
 \end{align*}
 
-Define
+定义
 \begin{align*}
     s_{i0} &= \eta_i + k_2 p_{i0} + v_{i0}, \\
     \dot\eta_i &= k_1 p_{i0} - \varphi_i,
 \end{align*}
-and
+以及
 \[
     \Delta_i = k_1 p_{i0} - \varphi_i + k_2 v_{i0}.
 \]
 
-For each component \(\ell\), apply
+对每个分量 \(\ell\)，施加控制
 \[
     u_{i\ell} = R_{i\ell}(t)\,
     \sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon_{i\ell}} s_{i0,\ell}\right)\right],
 \]
-where
+其中
 \[
     R_{i\ell}(t) = \frac{|\Delta_{i\ell}(t)| + \bar d_i + \bar u_0 + \lambda_{i\ell}}{\underline b_{i\ell}},\qquad \lambda_{i\ell} > 0.
 \]
 
-Then, on any time interval over which the sign of \(b_{i\ell}(t)\) is constant, \(s_{i0,\ell}\) reaches a corresponding periodic sliding surface in finite time. In the ideal sliding mode sense,
+则在 \(b_{i\ell}(t)\) 符号保持不变的任意时间区间上，\(s_{i0,\ell}\) 有限时间到达相应的周期滑模面。在理想滑模意义下，
 \[
     \dot s_{i0,\ell} = 0.
 \]
-Consequently, \(\dot s_{i0} = 0\).
+从而 \(\dot s_{i0} = 0\)。
 
-On the sliding manifold, the closed-loop relative dynamics reduce to
+在滑模流形上，闭环相对动力学降阶为
 \[
     \ddot p_{i0} + k_2 \dot p_{i0} + k_1 p_{i0} - \varphi_i = 0.
 \]
 
-If the above nominal relative dynamics satisfy the assumptions of existing fencing formation results, then the desired convex-hull fencing, collision avoidance, and velocity consensus properties follow from those results.
+若上述名义相对动力学满足已有合围编队结论的假设条件，则期望的凸包合围、碰撞避免和速度一致性可由这些结论直接推出。
 \end{theorem}
 
 \section{必须注明的技术条件}
@@ -483,7 +479,7 @@ If the above nominal relative dynamics satisfy the assumptions of existing fenci
     \[
         \ddot p_{i0} + k_2 \dot p_{i0} + k_1 p_{i0} - \varphi_i = 0.
     \]
-    后续 convex-hull fencing、collision avoidance 和 velocity consensus 应引用已有名义系统结论。
+    后续凸包合围、碰撞避免和速度一致性应引用已有名义系统结论。
 \end{enumerate}
 
 \section{仿真结果}
@@ -493,21 +489,21 @@ If the above nominal relative dynamics satisfy the assumptions of existing fenci
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig1_trajectories.png}
-    \caption{Agent与目标轨迹。实线为各Agent的运动轨迹，虚线为目标的运动轨迹。圆圈和方块分别标记初始和最终位置。}
+    \caption{智能体与目标轨迹。实线为各智能体的运动轨迹，虚线为目标的运动轨迹。圆圈和方块分别标记初始和最终位置。}
     \label{fig:trajectories}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig2_convex_hull.png}
-    \caption{最终凸包。蓝色区域为所有Agent在终点位置构成的凸包，目标（黑色五角星）被包含在凸包内部，表明围捕成功。}
+    \caption{最终凸包。蓝色区域为所有智能体在终点位置构成的凸包，目标（黑色五角星）被包含在凸包内部，表明围捕成功。}
     \label{fig:convex-hull}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig3_sliding_variables.png}
-    \caption{滑模变量各分量。各Agent的滑模变量在不同分量上随时间收敛到周期滑模面，红色和绿色虚线标注了周期边界 \(\pm\varepsilon,\pm 2\varepsilon\)。}
+    \caption{滑模变量各分量。各智能体的滑模变量在不同分量上随时间收敛到周期滑模面，红色和绿色虚线标注了周期边界 \(\pm\varepsilon,\pm 2\varepsilon\)。}
     \label{fig:sliding}
 \end{figure}
 
@@ -521,35 +517,35 @@ If the above nominal relative dynamics satisfy the assumptions of existing fenci
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig5_velocity_error.png}
-    \caption{相对速度误差 \(\|v_i-v_0\|\)。各Agent与目标之间的速度误差随时间收敛，表明各Agent成功跟踪目标速度。}
+    \caption{相对速度误差 \(\|v_i-v_0\|\)。各智能体与目标之间的速度误差随时间收敛，表明各智能体成功跟踪目标速度。}
     \label{fig:velocity-error}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig6_min_distance.png}
-    \caption{最小Agent间距离。红色虚线为安全距离 \(d_{\rm safe}\)，实际最小距离始终大于安全距离，验证了碰撞避免的有效性。}
+    \caption{最小智能体间距。红色虚线为安全距离 \(d_{\rm safe}\)，实际最小距离始终大于安全距离，验证了碰撞避免的有效性。}
     \label{fig:min-distance}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig7_input_gain_signs.png}
-    \caption{未知符号切换的输入增益 \(b_{i\ell}(t)\)。展示了各Agent各维度的控制方向系数随时间发生符号切换的过程。}
+    \caption{未知符号切换的输入增益 \(b_{i\ell}(t)\)。展示了各智能体各维度的控制方向系数随时间发生符号切换的过程。}
     \label{fig:gain-signs}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig8_controls.png}
-    \caption{控制输入各分量 \(u_{i\ell}\)。展示了各Agent在各维度上的实际控制信号。}
+    \caption{控制输入各分量 \(u_{i\ell}\)。展示了各智能体在各维度上的实际控制信号。}
     \label{fig:controls}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{simulation/out/fig9_center_to_target.png}
-    \caption{Agent中心到目标的距离 \(\|\bar{p}(t)-p_0(t)\|\)。反映了Agent群体中心逐渐靠近目标的过程。}
+    \caption{智能体中心到目标的距离 \(\|\bar{p}(t)-p_0(t)\|\)。反映了智能体群体中心逐渐靠近目标的过程。}
     \label{fig:center-distance}
 \end{figure}
 
