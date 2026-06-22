@@ -9,6 +9,11 @@ function Bdiag_i = input_gain_matrix(t, i, par)
 m = par.m;
 Bdiag_i = zeros(1,m);
 
+if t>30
+    Bdiag_i=[1,-1];
+    return
+end
+
 for ell = 1:m
 
     % Magnitude is time-varying but always above b_min.
