@@ -4,9 +4,10 @@
 
 定义滑模变量
 \[
-    s_{i0} = \eta_i + k_1 p_{i0} - \varphi_i,
+    s_{i0} = v_{i0} + k_1 p_{i0} - \varphi_i
+    = \dot p_{i0}+k_1 p_{i0}-\varphi_i,
 \]
-其中 \(k_2>0\)。
+其中 \(k_1>0\)。
 
 排斥项可取为
 \[
@@ -89,9 +90,9 @@
 
 该控制律不使用 \(b_{i\ell}(t)\) 的符号信息。
 
-\subsection{\texorpdfstring{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\)}{稳定性证明：有限时间到达并满足 sdot=0}}
+\subsection{\texorpdfstring{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\) 并且 \(s_{i0}\) 有界}{稳定性证明：有限时间到达并满足 sdot=0}}
 
-下面证明：在控制方向符号保持不变的时间区间内，每个分量 \(s_{i0,\ell}\) 有限时间到达某个周期滑模面，并在理想滑模意义下满足 \(\dot s_{i0,\ell}=0\)。
+下面证明：在控制方向符号保持不变的时间区间内，每个分量 \(s_{i0,\ell}\) 有限时间到达某个周期滑模面，并在理想滑模意义下满足 \(\dot s_{i0,\ell}=0\)。进一步，由周期滑模面的有限性可推出 \(s_{i0}\) 始终有界。
 
 若 \(b_{i\ell}(t)\) 发生有限次符号切换，则每次切换后系统会重新进入到达阶段；最后一次切换后，系统最终进入周期滑模运动并满足 \(\dot s_{i0}=0\)。
 
@@ -237,6 +238,44 @@
 \]
 所以每个分量 \(s_{i0,\ell}\) 都能在有限时间内到达相应的周期滑模面。
 
+\subsubsection{\texorpdfstring{\(s_{i0}\) 的有界性}{s 的有界性}}
+
+下面证明 \(s_{i0}\) 在整个到达过程和滑模运动中均有界。固定分量
+\(s=s_{i0,\ell}\)。对给定有限初值 \(s(t_0)\)，选取其所在吸引区间对应的周期滑模面
+\(k\varepsilon\)。若初值恰好位于非吸引周期边界，则需通过 Filippov 选取或微小扰动处理；以下讨论针对通常的吸引区间情形。
+在到达分析中，系统位于该滑模面的吸引区间
+\[
+    |s-k\varepsilon|<\varepsilon .
+\]
+因此到达前有
+\[
+    |s(t)|
+    \le |k|\varepsilon+\varepsilon
+    =
+    (|k|+1)\varepsilon .
+\]
+到达时刻 \(T_r\) 之后，在理想滑模意义下
+\[
+    s(t)=k\varepsilon,\qquad t\ge T_r,
+\]
+因此
+\[
+    |s(t)|=|k|\varepsilon,\qquad t\ge T_r.
+\]
+于是对任意 \(t\ge t_0\)，都有
+\[
+    |s_{i0,\ell}(t)|
+    \le
+    (|k_{i\ell}|+1)\varepsilon_{i\ell}
+    <\infty .
+\]
+由于智能体数和空间维数均有限，可得
+\[
+    \boxed{s_{i0}\in L_\infty.}
+\]
+该结论只说明滑模变量有界；若要进一步推出 \(p_{i0}\)、\(v_{i0}\) 或
+\(\varphi_i\) 分别有界，还需要额外的合围与避碰分析。
+
 \subsubsection{\texorpdfstring{滑模面上的等效运动与 \(\dot s=0\)}{滑模面上的等效运动与 sdot=0}}
 
 一旦 \(s\) 到达对应的吸引周期滑模面 \(s = k\varepsilon\)，在理想滑模意义下，系统保持在该面上，因此 \(\dot s = 0\)。
@@ -252,34 +291,33 @@
     \boxed{\dot s_{i0} = 0.}
 \]
 
-\subsection{稳定性证明：合围与安全避碰}
+
+\subsection{合围性质证明}
+
+\subsubsection{瞬态安全避碰性质P2}
+
+\begin{equation*}
+    W = \frac{k_1}{2} \sum_{i \in \mathcal N}  \|p_{i0}\|^2 
+     + \frac{1}{2} \sum_{i \in \mathcal N} \sum_{j \in \mathcal N_i} \int_{\|p_{ij}\|}^{\mu} \rho(s) ds.
+\end{equation*}
+求导，并带入由 \(s_{i0}    =\dot{p}_{i0}+k_1 p_{i0}-\varphi_i,\) 得：
+\[
+    \dot{W}=\sum_{i\in\mathcal N} (k_1 p_{i0}-\varphi_i)(-k_1 p_{i0}+\varphi_i+s_{i0})
+\]
+由$s_{i0}$有界可得：
+
+\subsubsection{稳态合围性质P1}
 
 由 \(s_{i0}    =\dot{p}_{i0}+k_1 p_{i0}-\varphi_i,\) 可得
 \[
     \dot s_{i0} = \ddot{p}_{i0}+k_1 \dot{p}_{i0}-\dot \varphi_i.
 \]
-又因为 \(\dot\eta_i = k_1 p_{i0} - \varphi_i\)，\(\dot p_{i0} = v_{i0}\)，所以
-\[
-    \dot s_{i0} = k_1 p_{i0} - \varphi_i + k_2 v_{i0} + \dot v_{i0}.
-\]
 在周期滑模运动中，\(\dot s_{i0} = 0\)，因此
 \[
-    \dot v_{i0} + k_2 v_{i0} + k_1 p_{i0} - \varphi_i = 0.
+    \ddot p_{i0}+k_1\dot p_{i0}-\dot\varphi_i=0.
 \]
-又因为 \(v_{i0} = \dot p_{i0}\)，于是得到
+记录\(\bar{p}=1/N \sum_{i\in\mathcal N} p_i\)和\(\tilde{p}=\bar{p}-p_0\)
 \[
-    \boxed{\ddot p_{i0} + k_2 \dot p_{i0} + k_1 p_{i0} - \varphi_i = 0.}
-\]
-等价地，
-\[
-    \boxed{\ddot p_{i0} + k_2 \dot p_{i0} + k_1 p_{i0} = \varphi_i.}
+  \ddot{\tilde{p}}+k_1 \dot{\tilde{p}}=0
 \]
 
-这正是已有合围编队文献中常见的名义合围动力学形式，即：
-\begin{itemize}[nosep]
-    \item \(k_1 p_{i0}\) 提供目标吸引；
-    \item \(k_2 \dot p_{i0}\) 提供阻尼；
-    \item \(\varphi_i\) 提供智能体间排斥与避碰。
-\end{itemize}
-
-因此，本控制器的作用是：在控制方向未知、扰动存在、目标加速度有界的情况下，使实际系统有限时间进入滑模运动，并在滑模运动中恢复已有文献分析的名义合围系统。
