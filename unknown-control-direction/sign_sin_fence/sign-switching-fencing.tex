@@ -20,25 +20,16 @@
 \newcommand{\bu}{\bar{u}}
 
 \title{控制方向未知且符号可切换的多智能体周期滑模合围控制}
-\author{}
+\author{陈\quad 刘}
 \date{\today}
 
 \begin{document}
 
 \maketitle
 
-下面给出当前算法的完整叙述，分为三部分：
-\begin{enumerate}[nosep]
-    \item 问题建模
-    \item 控制算法设计
-    \item 稳定性证明：有限时间进入周期滑模并满足 \(\dot s_{i0}=0\)
-\end{enumerate}
-
-这里证明只到 \(\dot s_{i0}=0\) 为止。由 \(\dot s_{i0}=0\) 进一步推出合围、避碰、速度一致的过程，可引用已有合围编队文献中的名义系统分析结果。
-
 \section{问题描述}
 
-考虑 \(N\) 个卫星智能体和一个目标。设智能体 \(i\) 的位置、速度分别为
+考虑 \(N\) 个智能体和一个目标。设智能体 \(i\) 的位置、速度分别为
 \[
     p_i(t)\in\mathbb R^m,\qquad v_i(t)\in\mathbb R^m,
 \]
@@ -46,8 +37,6 @@
 \[
     p_0(t)\in\mathbb R^m,\qquad v_0(t)\in\mathbb R^m.
 \]
-
-\subsection{智能体动力学：控制方向未知}
 
 考虑智能体 \(i\) 的二阶动力学为
 \begin{align}
@@ -66,15 +55,13 @@
     B_i(t)=\operatorname{diag}\{b_{i1}(t),\dots,b_{im}(t)\}.
 \]
 其中每个 \(b_{i\ell}(t)\) 的符号未知，并允许在正负之间切换，但不允许穿越零。具体假设为：存在已知常数 \(\underline b_{i\ell}>0\) 使得
-\[
+\(
     0<\underline b_{i\ell}\le |b_{i\ell}(t)|,\qquad \ell=1,\dots,m.
-\]
+\)
 扰动满足
-\[
+\(
     \|d_i(t)\|_\infty\le \bar d_i.
-\]
-
-\subsection{目标动力学}
+\)
 
 目标系统为
 \begin{align}
@@ -82,35 +69,42 @@
     \dot v_0 &= u_0,
 \end{align}
 其中目标加速度有界：
-\[
+\(
     \|u_0(t)\|_\infty\le \bar u_0.
-\]
-
-\subsection{相对变量}
+\)
 
 定义智能体 \(i\) 关于目标的相对位置和相对速度为
-\[
-    p_{i0}=p_i-p_0,\qquad v_{i0}=v_i-v_0.
-\]
+\(p_{i0}=p_i-p_0,\)
+\(v_{i0}=v_i-v_0\).
 于是
 \begin{align}
     \dot p_{i0} &= v_{i0}, \\
     \dot v_{i0} &= B_i(t)u_i+d_i-u_0.
 \end{align}
 
-定义
-\[
-    w_i = d_i-u_0.
-\]
+定义\( w_i = d_i-u_0\).
 由扰动和目标加速度有界性，有
-\[
+\(
     \|w_i(t)\|_\infty \le \bar d_i+\bar u_0.
-\]
+\)
 记 \(\bar w_i=\bar d_i+\bar u_0\)，因此对每个分量有
 \[
     |w_{i\ell}(t)|\le \bar w_i.
 \]
 
+
+The fencing formation control objective considered in this paper is to achieve the following properties:
+\begin{enumerate}
+    \item[\textbf{P1}] (Convex-hull Fencing) The target is asymptotically fenced by the convex hull spanned by the satellites, i.e., 
+    $\lim_{t \to \infty} \mathrm{dist} \bigl( p_0(t), \mathrm{co} (p(t)) \bigr) = 0$.
+    
+    \item[\textbf{P2}] (Collision Avoidance) The inter-satellite distances remain above the prescribed safety distance under the closed-loop dynamics, i.e., if $\| p_i(0)-p_j(0) \| > d$, then $\| p_i(t)-p_j(t) \| > d$ for all $t \ge 0$ and all $i, j \in \mathcal N$ with $i \ne j$.
+
+    \item[\textbf{P3}] (Velocity Consensus) The velocity of each satellite asymptotically converges to the target velocity, i.e., 
+    $\lim_{t \to \infty} \| v_i(t) - v_0(t) \| = 0$, $\forall ~i \in \mathcal{N}$.
+\end{enumerate}
+
 \input{body/result1.tex}
+% \input{body/result2.tex}
 
 \end{document}
