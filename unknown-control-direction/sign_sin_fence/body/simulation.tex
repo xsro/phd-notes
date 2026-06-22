@@ -1,0 +1,67 @@
+
+\section{仿真结果}
+
+以下为 MATLAB 仿真结果，验证了上述算法在多智能体围捕场景下的有效性。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig1_trajectories.png}
+    \caption{智能体与目标轨迹。实线为各智能体的运动轨迹，虚线为目标的运动轨迹。圆圈和方块分别标记初始和最终位置。}
+    \label{fig:trajectories}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig2_convex_hull.png}
+    \caption{最终凸包。蓝色区域为所有智能体在终点位置构成的凸包，目标（黑色五角星）被包含在凸包内部，表明围捕成功。}
+    \label{fig:convex-hull}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig3_sliding_variables.png}
+    \caption{滑模变量各分量。各智能体的滑模变量在不同分量上随时间收敛到周期滑模面，红色和绿色虚线标注了周期边界 \(\pm\varepsilon,\pm 2\varepsilon\)。}
+    \label{fig:sliding}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig4_sdot_norm.png}
+    \caption{滑模变量导数范数 \(\|\dot{s}_{i0}\|\)。反映滑模变量的变化率，最终趋于零表明系统进入滑模运动。}
+    \label{fig:sdot-norm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig5_velocity_error.png}
+    \caption{相对速度误差 \(\|v_i-v_0\|\)。各智能体与目标之间的速度误差随时间收敛，表明各智能体成功跟踪目标速度。}
+    \label{fig:velocity-error}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig6_min_distance.png}
+    \caption{最小智能体间距。红色虚线为安全距离 \(d_{\rm safe}\)，实际最小距离始终大于安全距离，验证了碰撞避免的有效性。}
+    \label{fig:min-distance}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig7_input_gain_signs.png}
+    \caption{未知符号切换的输入增益 \(b_{i\ell}(t)\)。展示了各智能体各维度的控制方向系数随时间发生符号切换的过程。}
+    \label{fig:gain-signs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig8_controls.png}
+    \caption{控制输入各分量 \(u_{i\ell}\)。展示了各智能体在各维度上的实际控制信号。}
+    \label{fig:controls}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/out/fig9_center_to_target.png}
+    \caption{智能体中心到目标的距离 \(\|\bar{p}(t)-p_0(t)\|\)。反映了智能体群体中心逐渐靠近目标的过程。}
+    \label{fig:center-distance}
+\end{figure}
