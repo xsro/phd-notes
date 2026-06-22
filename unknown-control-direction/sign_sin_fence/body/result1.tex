@@ -1,36 +1,75 @@
 
 
-\section{普通滑模方法}
+\section{滑模方法1}
 
 定义滑模变量
 \[
-    s_{i0} = v_{i0} + k_1 p_{i0} - \varphi_i
-    = \dot p_{i0}+k_1 p_{i0}-\varphi_i,
+    s_{i0} = v_{i0} + k_1 p_{i0} - \varphi_i + k_2 \eta_i
+    = \dot p_{i0}+k_1 p_{i0}-\varphi_i + k_2 \eta_i,
 \]
-其中 \(k_1>0\)。
+其中 \(\dot \eta_i=k_1 p_{i0} - \varphi_i\), \(k_1,k_2>0\)。
+
+为描述局部避碰交互，定义智能体 \(i\) 的动态邻居集合为
+\[
+    \mathcal N_i(t)
+    \triangleq
+    \left\{
+        j\in\mathcal N\setminus\{i\}:
+        \|p_i(t)-p_j(t)\|<\mu
+    \right\},
+    \qquad i\in\mathcal N,
+\]
+其中 \(\mu>d>0\)，\(\mu\) 为避碰作用距离，\(d\) 为安全距离阈值。
+由于邻居关系由相对距离定义，若 \(j\in\mathcal N_i(t)\)，则
+\(i\in\mathcal N_j(t)\)，因此该交互图为无向对称图。
+
+假设每个智能体只能测量自身相对于目标的相对状态，以及与邻居之间的相对位置向量。
+初始时刻假设所有卫星之间均无碰撞，即
+\[
+    \|p_i(0)-p_j(0)\|>d,\qquad i,j\in\mathcal N,\quad i\ne j.
+\]
 
 排斥项可取为
 \[
-    \varphi_i = \sum_{j\in\mathcal N_i} \rho(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|},
+    \varphi_i = \sum_{j\in\mathcal N_i(t)} \rho(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|},
 \]
 其中 \(p_{ij}=p_i-p_j\)，并且
 \[
     \rho(s) = \max\left\{ \frac{1}{s-d} - \frac{1}{\mu-d},\;0 \right\},\qquad s>d.
 \]
-这里 \(d>0\) 是安全距离，\(\mu>d\) 是作用距离。
+以下推导均在安全域 \(\|p_{ij}\|>d\) 内进行，并假设
+\(\varphi_i\) 沿闭环轨迹在邻居集合不切换的时间区间内分段可微，且
+\(\dot\varphi_i\) 可计算或可获得。
 
 
-由 \(s_{i0}=\dot{p}_{i0}+k_1 p_{i0}-\varphi_i\) 可得
+记
 \[
-    \dot s_{i0} = \ddot{p}_{i0}+k_1 \dot p_{i0}-\dot \varphi_i.
+    g_i = k_1p_{i0}-\varphi_i .
 \]
-代入\(\dot p_{i0}=v_{i0}\)、\(\dot v_{i0}=B_i(t)u_i+w_i\)，得到
+由
 \[
-    \dot s_{i0} =  - \dot \varphi_i + k_1 v_{i0} + B_i(t)u_i + w_i.
+    s_{i0}=v_{i0}+g_i+k_2\eta_i
+    =\dot p_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i
+\]
+可得
+\[
+    \dot s_{i0}
+    =
+    \dot v_{i0}+k_1 \dot p_{i0}-\dot\varphi_i+k_2\dot\eta_i .
+\]
+代入 \(\dot p_{i0}=v_{i0}\)、\(\dot v_{i0}=B_i(t)u_i+w_i\) 和
+\(\dot\eta_i=k_1p_{i0}-\varphi_i\)，得到
+\[
+    \dot s_{i0}
+    =
+    B_i(t)u_i+w_i
+    -\dot\varphi_i+k_1v_{i0}
+    +k_2(k_1p_{i0}-\varphi_i).
 \]
 定义
 \(
-    \Delta_i = - \dot \varphi_i + k_1 v_{i0} .
+    \Delta_i = - \dot \varphi_i + k_1 v_{i0}
+    +k_2(k_1p_{i0}-\varphi_i) .
 \)
 则
 \[
@@ -80,8 +119,10 @@
 \begin{equation}
     \boxed{
     \begin{aligned}
-        s_{i0}    &=\dot{p}_{i0}+k_1 p_{i0}-\varphi_i, \\[1mm]
-        \Delta_i  &= - \dot \varphi_i + k_1 v_{i0}, \\[1mm]
+        \dot\eta_i &= k_1p_{i0}-\varphi_i, \\[1mm]
+        s_{i0}    &=\dot{p}_{i0}+k_1 p_{i0}-\varphi_i+k_2\eta_i, \\[1mm]
+        \Delta_i  &= - \dot \varphi_i + k_1 v_{i0}
+        +k_2(k_1p_{i0}-\varphi_i), \\[1mm]
         R_{i\ell}(t) &= \frac{|\Delta_{i\ell}(t)| + \bar d_i + \bar u_0 + \lambda_{i\ell}}{\underline b_{i\ell}}, \\[1mm]
         u_{i\ell}  &= R_{i\ell}(t)\,
                       \sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon_{i\ell}}s_{i0,\ell}\right)\right].
@@ -97,6 +138,7 @@
 若 \(b_{i\ell}(t)\) 发生有限次符号切换，则每次切换后系统会重新进入到达阶段；最后一次切换后，系统最终进入周期滑模运动并满足 \(\dot s_{i0}=0\)。
 
 若允许无限频繁切换，则需要额外的驻留时间假设，以保证每次切换后有足够时间重新到达相应滑模面。
+在有限次切换或满足驻留时间条件的情况下，后续 \(s_{i0}\) 有界性结论在每个到达区间和最终滑模区间内均成立。
 
 \subsubsection{逐分量闭环系统}
 
@@ -296,28 +338,176 @@
 
 \subsubsection{瞬态安全避碰性质P2}
 
-\begin{equation*}
-    W = \frac{k_1}{2} \sum_{i \in \mathcal N}  \|p_{i0}\|^2 
-     + \frac{1}{2} \sum_{i \in \mathcal N} \sum_{j \in \mathcal N_i} \int_{\|p_{ij}\|}^{\mu} \rho(s) ds.
-\end{equation*}
-求导，并带入由 \(s_{i0}    =\dot{p}_{i0}+k_1 p_{i0}-\varphi_i,\) 得：
+由动态邻居集合 \(\mathcal N_i(t)\) 的定义，交互图在每个邻居集合不切换的时间区间内为无向对称图。并且排斥项成对抵消，即
 \[
-    \dot{W}=\sum_{i\in\mathcal N} (k_1 p_{i0}-\varphi_i)(-k_1 p_{i0}+\varphi_i+s_{i0})
+    \sum_{i\in\mathcal N}\varphi_i=0.
 \]
-由$s_{i0}$有界可得：
+邻居集合在 \(\|p_{ij}\|=\mu\) 处发生切换时，对应势垒积分项为零，因此以下求导可在邻居集合固定的分段时间区间上进行。
+
+令
+\[
+    g_i=k_1p_{i0}-\varphi_i=\dot\eta_i .
+\]
+由新的滑模变量定义
+\[
+    s_{i0}=v_{i0}+g_i+k_2\eta_i
+\]
+可得
+\[
+    v_{i0}=s_{i0}-g_i-k_2\eta_i .
+\]
+
+直接定义增广势函数
+\[
+    V_W
+    =
+    \frac{k_1}{2}\sum_{i\in\mathcal N}\|p_{i0}\|^2
+    +
+    \frac{1}{2}\sum_{i\in\mathcal N}\sum_{j\in\mathcal N_i(t)}
+    \int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds
+    +
+    \frac{k_2}{2}\sum_{i\in\mathcal N}\|\eta_i\|^2 .
+\]
+在上述图结构条件下，势函数项满足
+\[
+    \dot V_W
+    =
+    \sum_{i\in\mathcal N}g_i^Tv_{i0}
+    +
+    k_2\sum_{i\in\mathcal N}\eta_i^T\dot\eta_i .
+\]
+再代入
+\[
+    v_{i0}=s_{i0}-g_i-k_2\eta_i,
+    \qquad
+    \dot\eta_i=g_i,
+\]
+得到
+\[
+    \dot V_W
+    =
+    \sum_{i\in\mathcal N}g_i^T(s_{i0}-g_i-k_2\eta_i)
+    +
+    k_2\sum_{i\in\mathcal N}\eta_i^Tg_i
+    =
+    -\sum_{i\in\mathcal N}\|g_i\|^2
+    +
+    \sum_{i\in\mathcal N}g_i^Ts_{i0}.
+\]
+由 Young 不等式，
+\[
+    g_i^Ts_{i0}
+    \le
+    \|g_i\|\,\|s_{i0}\|
+    \le
+    \|g_i\|^2+\frac14\|s_{i0}\|^2 .
+\]
+因此
+\[
+    \dot V_W
+    \le
+    \frac14\sum_{i\in\mathcal N}\|s_{i0}\|^2 .
+\]
+由于前面已经证明 \(s_{i0}\in L_\infty\)，存在正常数 \(C_s>0\)，使得
+\[
+    \dot V_W\le C_s .
+\]
+于是对任意有限时间区间 \([0,T]\)，有
+\[
+    V_W(t)\le V_W(0)+C_sT<\infty,\qquad 0\le t\le T.
+\]
+另一方面，由于
+\[
+    \int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds\to+\infty,
+    \qquad \|p_{ij}\|\to d^+,
+\]
+若某一对智能体在有限时间 \(T_c<\infty\) 发生碰撞边界到达，即
+\(\|p_{ij}(t)\|\to d^+\)，则 \(V_W(t)\to+\infty\)，这与
+\(V_W(t)\le V_W(0)+C_sT_c<\infty\) 矛盾。因此，在闭环解存在的任意有限时间区间内，系统不会到达
+\(\|p_{ij}\|=d\)。
 
 \subsubsection{稳态合围性质P1}
 
-由 \(s_{i0}    =\dot{p}_{i0}+k_1 p_{i0}-\varphi_i,\) 可得
+由
 \[
-    \dot s_{i0} = \ddot{p}_{i0}+k_1 \dot{p}_{i0}-\dot \varphi_i.
+    s_{i0}=\dot p_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i
+\]
+可得
+\[
+    \dot s_{i0}
+    =
+    \ddot p_{i0}
+    +k_1\dot p_{i0}
+    -\dot\varphi_i
+    +k_2(k_1p_{i0}-\varphi_i).
 \]
 在周期滑模运动中，\(\dot s_{i0} = 0\)，因此
 \[
-    \ddot p_{i0}+k_1\dot p_{i0}-\dot\varphi_i=0.
+    \ddot p_{i0}
+    +k_1\dot p_{i0}
+    -\dot\varphi_i
+    +k_2(k_1p_{i0}-\varphi_i)
+    =0.
 \]
-记录\(\bar{p}=1/N \sum_{i\in\mathcal N} p_i\)和\(\tilde{p}=\bar{p}-p_0\)
+另一方面，在滑模面上有
 \[
-  \ddot{\tilde{p}}+k_1 \dot{\tilde{p}}=0
+    v_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i
+    =
+    k\varepsilon .
+\]
+若采用零滑模面或令 \(\varepsilon\) 足够小，则可近似为
+\[
+    v_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i
+    \approx 0,
+    \qquad
+    \dot\eta_i=k_1p_{i0}-\varphi_i .
+\]
+这说明新滑模量对应的是带积分补偿的名义约束。
+
+记录 \(\bar{p}=1/N \sum_{i\in\mathcal N} p_i\) 和 \(\tilde{p}=\bar{p}-p_0\)。若邻接图无向且排斥项成对抵消，即
+\(\sum_i\varphi_i=0\)，并且处于零滑模面，则对所有智能体求平均可得
+\[
+    \dot{\tilde p}+k_1\tilde p+k_2\bar\eta=0,
+    \qquad
+    \dot{\bar\eta}=k_1\tilde p,
+\]
+其中 \(\bar\eta=1/N\sum_i\eta_i\)。因此
+\[
+    \ddot{\tilde p}
+    +k_1\dot{\tilde p}
+    +k_1k_2\tilde p
+    =0.
+\]
+其特征多项式为
+\[
+    q(\lambda)=\lambda^2+k_1\lambda+k_1k_2.
+\]
+当 \(k_1>0\)、\(k_2>0\) 时，\(q(\lambda)\) Hurwitz，因此可得到
+\[
+    \tilde p(t)\to0.
 \]
 
+若处于非零周期滑模面，则
+\[
+    s_{i0}=k_i\varepsilon_i
+\]
+为常值。记
+\[
+    \bar s=\frac1N\sum_{i\in\mathcal N} k_i\varepsilon_i .
+\]
+对所有智能体求平均得到
+\[
+    \dot{\tilde p}+k_1\tilde p+k_2\bar\eta=\bar s,
+    \qquad
+    \dot{\bar\eta}=k_1\tilde p .
+\]
+由于 \(\bar s\) 为常值，对第一式求导仍有
+\[
+    \ddot{\tilde p}
+    +k_1\dot{\tilde p}
+    +k_1k_2\tilde p
+    =0.
+\]
+因此非零周期滑模面不改变 \(\tilde p\to0\) 的结论，只改变
+\(\bar\eta\) 的平衡值。若控制方向切换导致所到达的周期面发生变化，则
+\(\bar s\) 分段常值；在最后一次切换之后，上述稳态结论仍成立。
