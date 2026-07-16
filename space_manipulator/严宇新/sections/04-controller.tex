@@ -22,11 +22,9 @@ u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
 \end{equation}
 给出。
 
-设 \(z_1,z_2\in\mathbb R^n\) 分别为 \(\chi\) 和 \(\Delta_a\) 的估计值，取 \(\hat\Delta_a=z_2\)。定义复合误差
+设 \(z_1,z_2\in\mathbb R^n\) 分别为 \(\chi\) 和 \(\Delta_a\) 的估计值，取 \(\hat\Delta_a=z_2\)。定义可测复合误差
 \[
 \varepsilon_1=\chi-z_1-\bar\xi(t),
-\qquad
-\varepsilon_2=\Delta_a-z_2-\bar\xi(t),
 \]
 其中 \(\bar\xi(t)\in\mathbb R^n\) 为调节函数，满足有界光滑、单调衰减且 \(t\ge T_o\) 时 \(\bar\xi(t)=0\)。例如可取
 \[
@@ -59,7 +57,7 @@ u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
 \phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).
 \end{aligned}
 \]
-在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界的条件下，观测误差 \(\chi-z_1\) 和 \(\Delta_a-z_2\) 可在 \(t=T_o\) 收敛到零。参数 \(T_o\) 和 \(T_c\) 决定观测收敛时间，但不宜选得过小；否则会带来较大的观测峰值和控制输入峰值。
+在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界且连续时间实现的条件下，观测误差 \(\chi-z_1\) 和 \(\Delta_a-z_2\) 可在 \(t=T_o\) 收敛到零。参数 \(T_o\) 和 \(T_c\) 决定观测收敛时间，但不宜选得过小；否则会带来较大的观测峰值和控制输入峰值。离散仿真或含执行器限幅时，观测误差通常表现为收敛到小邻域。
 
 \subsection{动力学补偿与误差通道规范化}
 
@@ -73,23 +71,23 @@ u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
 M_e(q_m)(\ddot q_m-v)=d(t)-\hat d(t).
 \]
 当观测器已收敛并满足 \(\hat d(t)=d(t)\) 时，且 \(M_e(q_m)\) 正定可逆，因此
-\[
+\(
 \ddot q_m=v.
-\]
+\)
 
 令
-\[
+\(
 v=\ddot q_d+\nu ,
-\]
+\)
 并定义
-\[
-e=q_m-q_d,\qquad
-z=\begin{bmatrix}e\\ \dot e\end{bmatrix}.
-\]
+\(
+e=q_m-q_d\),
+\(z=[e, \dot e]^T.
+\)
 则
-\[
+\(
 \ddot e=\ddot q_m-\ddot q_d=\nu,
-\]
+\)
 误差系统可写成二阶积分链形式
 \begin{equation}
 \dot z=Az+B\nu ,
@@ -153,7 +151,6 @@ K_c(t)=R_h(t)B^\top e^{-A_c^\top t}W_c^{-1}(A_c,h)e^{A_c(h-t)}.
 
 结合式 \eqref{eq:computed_torque} 和式 \eqref{eq:pdf_error_input}，PDF 关节力矩控制律可写为
 \begin{equation}
-\boxed{
 \tau
 =
 M_e(q_m)
@@ -168,7 +165,6 @@ K_c(t)z(t-h)
 C_e(q_m,\dot q_m)\dot q_m
 -
 \hat d(t).
-}
 \label{eq:final_controller}
 \end{equation}
 

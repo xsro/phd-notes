@@ -24,7 +24,7 @@
 clear; clc; close all;
 
 %% -------------------- 1. Simulation settings ----------------------------
-cfg.Ts = 1e-5;             % integration step [s]
+cfg.Ts = 1e-4;             % integration step [s]
 cfg.Tf = 10.0;             % final simulation time [s]
 cfg.t = 0:cfg.Ts:cfg.Tf;
 cfg.N = numel(cfg.t);
