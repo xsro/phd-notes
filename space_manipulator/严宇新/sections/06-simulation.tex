@@ -2,7 +2,7 @@
 
 \subsection{仿真设置}
 
-仿真程序采用 \path{simulation/main_ffsm_pdf_tracking_yan_params.m}。机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，程序中采用基于上述参数构造的正定名义关节空间模型作为可运行验证模型，并在 \path{ffsm_dynamics_nominal()} 中保留替换精确 \(H_g,C_g\) 的接口。该处理使仿真重点集中在控制律结构、周期延迟反馈实现和扰动下跟踪性能验证上。
+机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。程序实现上将仿真计算与绘图过程分离：仿真脚本先将各算例数据保存为 MAT 文件，绘图脚本再加载该数据统一生成论文插图。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，程序中采用基于上述参数构造的正定名义关节空间模型作为可运行验证模型。该处理使仿真重点集中在控制律结构、周期延迟反馈实现和扰动下跟踪性能验证上。
 
 仿真步长为 \(T_s=10^{-3}\,\mathrm{s}\)，总时长为 \(10\,\mathrm{s}\)。参考轨迹初始点和终端点分别取
 \[
@@ -43,79 +43,22 @@ d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i),
 
 \subsection{结果与讨论}
 
-图\ref{fig:position}和图\ref{fig:velocity}分别给出了扰动条件下 PDF+PTDO 控制器的七个关节位置和速度跟踪曲线。由于初始状态与参考初值存在偏差，响应初期出现可见调整过程；随后各关节能够跟随五次多项式参考轨迹，并在参考轨迹结束后保持有界稳定。图\ref{fig:errors}给出了对应的位置误差和速度误差，误差在初始阶段快速下降，在预设时间扰动观测补偿作用下最终收敛到较小范围内。
+图\ref{fig:motion}首先给出了扰动条件下 PDF+PTDO 控制器对应的自由漂浮基座平动、机械臂末端轨迹、初始和最终时刻的机械臂构型以及关节姿态变化。图左侧为三维轨迹与构型示意图，包含基座轨迹、基座初末位置、各关节节点和末端位置；图右侧三行依次给出基座位置、末端位置和关节姿态随时间的变化。其中基座平动由初始总线动量为零时的系统质心守恒关系计算，末端轨迹由随基座平动的名义串联几何链得到。由于当前可运行仿真尚未包含完整角动量递推和基座姿态更新，图中主要展示基座质心平动对机械臂构型和末端轨迹的影响。可以看出，关节运动会诱导基座产生反作用位移，机械臂末端在基座运动和关节运动共同作用下完成空间位移；各关节姿态在五次多项式参考轨迹作用下平滑变化，并在参考轨迹结束后趋于稳定。
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/joint_position_tracking.png}
-\caption{关节位置跟踪曲线}
-\label{fig:position}
+\includegraphics[width=\textwidth]{figures/end_effector_joint_position_trajectory.png}
+\caption{自由漂浮基座平动、末端轨迹与关节姿态变化}
+\label{fig:motion}
 \end{figure}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/joint_velocity_tracking.png}
-\caption{关节速度跟踪曲线}
-\label{fig:velocity}
-\end{figure}
+图\ref{fig:joint_summary}进一步给出了扰动条件下 PDF+PTDO 控制器的关节跟踪、误差和控制力矩综合响应。图中第一列按七行分别给出 \(q_1\) 至 \(q_7\) 的位置跟踪曲线，第二列按七行分别给出 \(\dot q_1\) 至 \(\dot q_7\) 的速度跟踪曲线，第三列自上而下分别为关节位置误差、速度误差和控制力矩。由于初始状态与参考初值存在偏差，响应初期出现可见调整过程；随后各关节能够跟随五次多项式参考轨迹，并在参考轨迹结束后保持有界稳定。误差在初始阶段快速下降，在预设时间扰动观测补偿作用下最终收敛到较小范围内；控制力矩未出现指定时间控制中常见的终端奇异增益现象。
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/tracking_errors.png}
-\caption{关节位置与速度跟踪误差}
-\label{fig:errors}
-\end{figure}
-
-控制力矩如图\ref{fig:torque}所示。由于 PDF 增益为光滑周期函数，控制输入未出现指定时间控制中常见的终端奇异增益现象。图\ref{fig:pdf_energy}显示了 \(R_h(t)\) 的等待--作用周期特征以及误差能量型指标的变化。图\ref{fig:norm}进一步给出误差范数，说明在扰动存在时位置误差范数和速度误差范数均维持在较小范围内。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/control_torque.png}
-\caption{关节控制力矩}
-\label{fig:torque}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/pdf_activation_error_energy.png}
-\caption{PDF 激活函数与误差能量型指标}
-\label{fig:pdf_energy}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/error_norm.png}
-\caption{跟踪误差范数}
-\label{fig:norm}
-\end{figure}
-
-表\ref{tab:sim_metrics}给出了五组算例的定量指标。其中 \(\mathrm{RMS}(e)\) 为所有关节、所有采样时刻位置误差的均方根值。无扰动时，PDF 控制在终端误差和 \(10^{-4}\,\mathrm{rad}\) 阈值意义下的收敛时间上均略优于无延迟 PD 控制；在有界扰动下，未启用扰动观测器的 PD 和 PDF 控制均只能实现小邻域跟踪。加入 PTDO 后，PDF+PTDO 算例的终端位置误差降至 \(3.139\times10^{-5}\,\mathrm{rad}\)，终端速度误差降至 \(4.226\times10^{-4}\,\mathrm{rad/s}\)，且最大控制力矩未出现明显增加。
-
-\begin{table}[H]
-\centering
-\caption{不同控制算例的仿真指标}
-\label{tab:sim_metrics}
-\begin{tabular}{ccccc}
-\toprule
-控制器与工况 & \(\|e(10)\|\) & \(\|\dot e(10)\|\) & \(\mathrm{RMS}(e)\) & \(\max|\tau_i|\)\\
- & rad & rad/s & rad & N\,m\\
-\midrule
-PD，无扰动 & \(4.028\times10^{-9}\) & \(1.802\times10^{-8}\) & \(8.622\times10^{-3}\) & 9.129\\
-PDF，无扰动 & \(3.290\times10^{-10}\) & \(1.145\times10^{-9}\) & \(8.622\times10^{-3}\) & 9.129\\
-PD，有扰动 & \(1.221\times10^{-2}\) & \(1.197\times10^{-2}\) & \(9.455\times10^{-3}\) & 9.129\\
-PDF，有扰动 & \(1.235\times10^{-2}\) & \(1.177\times10^{-2}\) & \(9.456\times10^{-3}\) & 9.129\\
-PDF+PTDO，有扰动 & \(3.139\times10^{-5}\) & \(4.226\times10^{-4}\) & \(8.623\times10^{-3}\) & 9.129\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-图\ref{fig:comparison}给出了各算例的误差范数对比。无扰动情况下，Gramian 型 PDF 增益能够在有限时间附近将误差压低到数值积分误差量级；扰动存在且未补偿时，误差曲线不再精确归零，而是在扰动输入持续作用下保持有界。引入 PTDO 后，误差范数明显低于未补偿扰动算例，并在 \(10^{-4}\,\mathrm{rad}\) 阈值意义下于 \(1.962\,\mathrm{s}\) 后保持收敛。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/controller_comparison.png}
-\caption{不同控制算例的误差范数对比}
-\label{fig:comparison}
+\includegraphics[width=\textwidth]{figures/joint_tracking_error_torque_summary.png}
+\caption{关节位置与速度跟踪、跟踪误差及控制力矩综合响应}
+\label{fig:joint_summary}
 \end{figure}
 
 图\ref{fig:observer}给出了等效加速度扰动 \(\Delta_a\) 及其观测值 \(\hat\Delta_a\) 的响应。由于观测器参数选取兼顾峰值抑制和控制输入平滑，扰动估计误差并未在数值仿真中达到严格零值，但终端观测误差范数由未补偿情形下的 \(1.944\times10^{-1}\) 降至 \(8.489\times10^{-2}\)，均方根观测误差为 \(3.325\times10^{-2}\)。该结果说明 PTDO 能有效削弱扰动对误差通道的影响。

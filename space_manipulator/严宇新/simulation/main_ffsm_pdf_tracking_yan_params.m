@@ -24,7 +24,7 @@
 clear; clc; close all;
 
 %% -------------------- 1. Simulation settings ----------------------------
-cfg.Ts = 1e-3;             % integration step [s]
+cfg.Ts = 1e-5;             % integration step [s]
 cfg.Tf = 10.0;             % final simulation time [s]
 cfg.t = 0:cfg.Ts:cfg.Tf;
 cfg.N = numel(cfg.t);
@@ -109,14 +109,9 @@ for c = 1:numel(cases)
     results(c) = run_case(cases(c), cfg, ref, ctrl, P);
 end
 
-main_result = results(5);
-plot_results(main_result, ref, cfg.figure_dir, cfg.save_figures);
-plot_case_comparison(results, cfg.figure_dir, cfg.save_figures);
-plot_observer_results(main_result, cfg.figure_dir, cfg.save_figures);
-
 metrics = collect_metrics(results);
 if cfg.save_results
-    save(cfg.result_file, 'cfg', 'ctrl', 'cases', 'results', 'metrics');
+    save(cfg.result_file, 'cfg', 'ctrl', 'cases', 'results', 'metrics', 'ref', 'P');
 end
 
 %% -------------------- 6. Print summary ----------------------------------
@@ -130,11 +125,9 @@ for c = 1:numel(results)
         m.max_tau, m.settle_time_e, m.final_obs_error_norm);
 end
 fprintf('PDF Gramian condition number: %.3e\n', ctrl.pdf.gramian_condition);
-if cfg.save_figures
-    fprintf('Figures saved to: %s\n', cfg.figure_dir);
-end
 if cfg.save_results
     fprintf('Numerical results saved to: %s\n', cfg.result_file);
+    fprintf('Run plot_ffsm_pdf_tracking_results.m to regenerate figures.\n');
 end
 
 %% ========================================================================
@@ -547,191 +540,3 @@ function metrics = collect_metrics(results)
     end
 end
 
-function plot_results(result, ref, figure_dir, save_figures)
-% Plot the disturbed PDF case for paper figures.
-
-    t = result.t;
-    q = result.q;
-    dq = result.dq;
-    e = result.e;
-    edot = result.edot;
-    tau = result.tau;
-    Rhlog = result.Rh;
-    Vlog = result.V;
-    n = size(q, 1);
-
-    figure('Name','Joint position tracking','Color','w');
-    tiledlayout(4,2,'Padding','compact','TileSpacing','compact');
-    for i = 1:n
-        nexttile;
-        plot(t, q(i,:), 'b', 'LineWidth', 1.2); hold on;
-        plot(t, ref.qd(i,:), 'r--', 'LineWidth', 1.2);
-        grid on;
-        xlabel('Time [s]');
-        ylabel(sprintf('q_%d [rad]', i));
-        if i == 1
-            legend('Actual', 'Desired');
-        end
-    end
-    save_figure(gcf, figure_dir, 'joint_position_tracking', save_figures);
-
-    figure('Name','Joint velocity response','Color','w');
-    tiledlayout(4,2,'Padding','compact','TileSpacing','compact');
-    for i = 1:n
-        nexttile;
-        plot(t, dq(i,:), 'b', 'LineWidth', 1.2); hold on;
-        plot(t, ref.dqd(i,:), 'r--', 'LineWidth', 1.2);
-        grid on;
-        xlabel('Time [s]');
-        ylabel(sprintf('dq_%d [rad/s]', i));
-        if i == 1
-            legend('Actual', 'Desired');
-        end
-    end
-    save_figure(gcf, figure_dir, 'joint_velocity_tracking', save_figures);
-
-    figure('Name','Tracking errors','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
-    plot(t, e, 'LineWidth', 1.1);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('e_i [rad]');
-    title('Joint position tracking errors');
-    legend(arrayfun(@(i)sprintf('e_%d', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside');
-
-    nexttile;
-    plot(t, edot, 'LineWidth', 1.1);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('de_i [rad/s]');
-    title('Joint velocity tracking errors');
-    legend(arrayfun(@(i)sprintf('de_%d', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside');
-    save_figure(gcf, figure_dir, 'tracking_errors', save_figures);
-
-    figure('Name','Control torque','Color','w');
-    plot(t, tau, 'LineWidth', 1.1);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('\tau_i [N m]');
-    title('Joint control torques');
-    legend(arrayfun(@(i)sprintf('\\tau_%d', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside');
-    save_figure(gcf, figure_dir, 'control_torque', save_figures);
-
-    figure('Name','PDF activation and error energy','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
-    plot(t, Rhlog, 'k', 'LineWidth', 1.4);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('R_h(t)');
-    title('Smooth periodic delayed feedback activation');
-
-    nexttile;
-    semilogy(t, Vlog + 1e-16, 'm', 'LineWidth', 1.4);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('V(t)');
-    title('Error energy-like quantity');
-    save_figure(gcf, figure_dir, 'pdf_activation_error_energy', save_figures);
-
-    figure('Name','Error norm','Color','w');
-    plot(t, vecnorm(e, 2, 1), 'b', 'LineWidth', 1.5); hold on;
-    plot(t, vecnorm(edot, 2, 1), 'r--', 'LineWidth', 1.5);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('Norm');
-    legend('||e||', '||de||');
-    title('Tracking error norms');
-    save_figure(gcf, figure_dir, 'error_norm', save_figures);
-end
-
-function plot_case_comparison(results, figure_dir, save_figures)
-% Compare nominal and disturbed controller error norms.
-
-    figure('Name','Controller comparison','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
-    hold on; grid on;
-    for c = 1:numel(results)
-        semilogy(results(c).t, vecnorm(results(c).e, 2, 1) + 1e-16, 'LineWidth', 1.4);
-    end
-    xlabel('Time [s]');
-    ylabel('||e|| [rad]');
-    legend({results.name}, 'Location', 'northeast');
-    title('Position error norm comparison');
-
-    nexttile;
-    hold on; grid on;
-    for c = 1:numel(results)
-        semilogy(results(c).t, vecnorm(results(c).edot, 2, 1) + 1e-16, 'LineWidth', 1.4);
-    end
-    xlabel('Time [s]');
-    ylabel('||de|| [rad/s]');
-    legend({results.name}, 'Location', 'northeast');
-    title('Velocity error norm comparison');
-    save_figure(gcf, figure_dir, 'controller_comparison', save_figures);
-end
-
-function plot_observer_results(result, figure_dir, save_figures)
-% Plot equivalent acceleration disturbance estimates for observer-enabled
-% cases.
-
-    if ~result.use_observer
-        return;
-    end
-
-    t = result.t;
-    n = size(result.delta_a, 1);
-
-    figure('Name','Prescribed-time disturbance observer','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
-    plot(t, result.delta_a, 'LineWidth', 1.0); hold on;
-    plot(t, result.delta_a_hat, '--', 'LineWidth', 1.0);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('Delta_a and estimate');
-    title('Equivalent acceleration disturbance and estimates');
-    legend([arrayfun(@(i)sprintf('\\Delta_{a%d}', i), 1:n, 'UniformOutput', false), ...
-            arrayfun(@(i)sprintf('hat\\Delta_{a%d}', i), 1:n, 'UniformOutput', false)], ...
-           'Location', 'eastoutside');
-
-    nexttile;
-    semilogy(t, vecnorm(result.delta_a_error, 2, 1) + 1e-16, 'k', 'LineWidth', 1.4);
-    grid on;
-    xlabel('Time [s]');
-    ylabel('Observer error norm');
-    title('Observer error norm');
-    save_figure(gcf, figure_dir, 'disturbance_observer', save_figures);
-end
-
-function save_figure(fig, figure_dir, stem, save_figures)
-% Save each simulation figure in raster and vector formats for LaTeX use.
-
-    if ~save_figures
-        return;
-    end
-    if ~exist(figure_dir, 'dir')
-        mkdir(figure_dir);
-    end
-
-    png_file = fullfile(figure_dir, [stem, '.png']);
-    pdf_file = fullfile(figure_dir, [stem, '.pdf']);
-
-    try
-        exportgraphics(fig, png_file, 'Resolution', 300);
-        exportgraphics(fig, pdf_file);
-    catch
-        set(fig, 'PaperPositionMode', 'auto');
-        print(fig, png_file, '-dpng', '-r300');
-        print(fig, pdf_file, '-dpdf', '-bestfit');
-    end
-end
