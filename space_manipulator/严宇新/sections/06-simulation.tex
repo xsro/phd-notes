@@ -1,0 +1,87 @@
+\section{仿真验证}
+
+\subsection{仿真设置}
+
+仿真程序采用 \texttt{simulation/main\_ffsm\_pdf\_tracking\_yan\_params.m}。机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，仿真代码中采用基于上述参数构造的正定名义关节空间模型作为可运行示例，并保留 \texttt{ffsm\_dynamics\_nominal()} 接口以便替换为精确 \(H_g,C_g\) 模型。
+
+仿真步长为 \(T_s=10^{-3}\,\mathrm{s}\)，总时长为 \(10\,\mathrm{s}\)。初始角速度为零，初始关节角和期望终端关节角分别取
+\[
+\begin{aligned}
+q(0)&=[0,\pi/3,0,\pi/4,\pi/4,0,\pi/6]^\top,\\
+q_f&=[\pi/18,\pi/6,\pi/5,0,-\pi/4,-\pi/3,\pi/12]^\top .
+\end{aligned}
+\]
+并采用五次多项式在 \(8\,\mathrm{s}\) 内生成 \(q_d,\dot q_d,\ddot q_d\)。PDF 人工延迟取 \(h=1\,\mathrm{s}\)，激活函数取
+\[
+R_h(t)=
+\begin{cases}
+0, & \theta\in[0,h),\\
+\sin^4\left(\pi(\theta-h)/h\right), & \theta\in[h,2h),
+\end{cases}
+\quad \theta=t\bmod 2h .
+\]
+仿真中取
+\[
+\begin{aligned}
+K_p&=\operatorname{diag}(25,25,25,22,22,20,20),\\
+K_d&=\operatorname{diag}(10,10,10,9,9,8,8),\\
+K_{ph}&=\operatorname{diag}(8,8,8,6,6,5,5),\\
+K_{dh}&=\operatorname{diag}(3,3,3,2.5,2.5,2,2),
+\end{aligned}
+\]
+并令 \(K_0=[-K_p\ -K_d]\)、\(K_h(t)=R_h(t)[-K_{ph}\ -K_{dh}]\)。有界时变扰动力矩设为
+\[
+d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i).
+\]
+
+\subsection{结果与讨论}
+
+图\ref{fig:position}和图\ref{fig:velocity}分别给出了七个关节的位置和速度跟踪曲线。可以看到，实际轨迹能够跟随五次多项式参考轨迹变化，并在参考轨迹末端保持稳定。图\ref{fig:errors}进一步给出了各关节位置误差和速度误差，误差整体随时间衰减，并在扰动存在时保持在较小范围内。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/joint_position_tracking.png}
+\caption{关节位置跟踪曲线}
+\label{fig:position}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/joint_velocity_tracking.png}
+\caption{关节速度跟踪曲线}
+\label{fig:velocity}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/tracking_errors.png}
+\caption{关节位置与速度跟踪误差}
+\label{fig:errors}
+\end{figure}
+
+控制力矩如图\ref{fig:torque}所示。由于仿真采用正定名义关节空间模型和较平滑的参考轨迹，关节力矩未出现突变或终端奇异增益现象。图\ref{fig:pdf_energy}给出了 PDF 激活函数和误差能量型指标，可以观察到 \(R_h(t)\) 具有周期性等待和作用特征，误差能量整体下降。图\ref{fig:norm}显示位置误差范数与速度误差范数均收敛到较小水平。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/control_torque.png}
+\caption{关节控制力矩}
+\label{fig:torque}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/pdf_activation_error_energy.png}
+\caption{PDF 激活函数与误差能量型指标}
+\label{fig:pdf_energy}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/error_norm.png}
+\caption{跟踪误差范数}
+\label{fig:norm}
+\end{figure}
+
+程序运行得到终端误差 \(\|e(10)\|=1.045968\times10^{-2}\,\mathrm{rad}\)，\(\|\dot e(10)\|=7.832307\times10^{-3}\,\mathrm{rad/s}\)，最大关节力矩幅值为 \(\max_i|\tau_i|=0.508236\,\mathrm{N\,m}\)。仿真结果表明，在名义模型和有界扰动条件下，基于动力学补偿和光滑周期延迟反馈的控制器能够实现较高精度关节轨迹跟踪。
+
+需要强调的是，当前程序中的延迟增益采用工程化的平滑周期加权形式，用于验证控制结构的可运行性；若要获得严格的固定时间精确归零结果，需要按照文献\cite{zhou2022}离线计算满足零化性质的周期增益矩阵，并将仿真模型替换为完整自由漂浮动力学模型。因此，本文仿真结论应理解为对所提控制框架的数值验证，而不是对严格 PDF 零化增益的完整复现实验。

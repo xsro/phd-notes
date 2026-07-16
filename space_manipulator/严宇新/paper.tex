@@ -26,212 +26,44 @@
 
 \noindent\textbf{关键词：}自由漂浮空间机械臂；轨迹跟踪；固定时间稳定；周期延迟反馈；动力学补偿
 
-\section{引言}
-
-\section{自由漂浮空间机械臂建模}
-
-捕获前空间机械臂工作于自由漂浮状态，基座不直接受控，机械臂关节运动会通过动量耦合引起基座位姿变化。设系统广义坐标为 \(q=[q_b^\top\ q_m^\top]^\top\)，其中 \(q_b\) 表示基座位姿或姿态变量，\(q_m\in\mathbb R^n\) 表示机械臂关节变量。系统动力学可写为分块形式
-\[
-\begin{bmatrix}
-M_{bb}(q) & M_{bm}(q)\\
-M_{mb}(q) & M_{mm}(q)
-\end{bmatrix}
-\begin{bmatrix}
-\ddot q_b\\
-\ddot q_m
-\end{bmatrix}
-+
-\begin{bmatrix}
-C_b(q,\dot q)\dot q\\
-C_m(q,\dot q)\dot q
-\end{bmatrix}
-=
-\begin{bmatrix}
-0\\
-\tau
-\end{bmatrix}.
-\]
-式中，\(\tau\in\mathbb R^n\) 为关节驱动力矩。由于捕获前基座不直接施加控制力矩，基座广义输入为零。
-
-若系统无外力、无外力矩，且初始总动量为零，则由动量守恒可得 \(M_{bb}(q)\dot q_b+M_{bm}(q)\dot q_m=0\)，从而 \(\dot q_b=-M_{bb}^{-1}(q)M_{bm}(q)\dot q_m\)。将该关系代入关节动力学，可得到捕获前自由漂浮空间机械臂的等效关节空间模型
-\begin{equation}
-M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t),
-\label{eq:joint_model}
-\end{equation}
-其中 \(M_e(q_m)=M_e^\top(q_m)>0\)，\(C_e(q_m,\dot q_m)\) 为等效科氏和离心项，\(d(t)\) 表示未建模动态、参数不确定性、环境扰动或执行器误差。该建模形式与严宇新论文中捕获前自由漂浮空间机械臂的动力学约化思想一致\cite{yan}.
-
-若任务由末端位姿给定，则末端速度可由广义雅可比矩阵表示为 \(\dot x_e=J_g(q_m)\dot q_m\)，其中 \(J_g(q_m)\) 同时包含机械臂关节运动和自由漂浮基座反作用运动对末端运动的影响。
-
-\section{问题描述}
-
-给定足够光滑且有界的关节期望轨迹 \(q_d(t),\dot q_d(t),\ddot q_d(t)\)。定义关节位置误差和速度误差为 \(e=q_m-q_d\)、\(\dot e=\dot q_m-\dot q_d\)，并令误差状态 \(z=[e^\top\ \dot e^\top]^\top\in\mathbb R^{2n}\)。
-
-本文目标是在捕获前自由漂浮条件下设计关节力矩 \(\tau\)，使闭环误差在预设时间 \(T\) 后满足 \(e(t)=0,\dot e(t)=0,\ t\ge T\)，或在存在扰动和模型近似时收敛到零点附近的小邻域。为保证 PDF 固定时间镇定结论具有明确的适用对象，本文不将延迟反馈直接叠加到原非线性耦合动力学上，而是通过模型补偿建立从辅助输入到误差状态的等效线性通道，并在该误差层完成周期延迟反馈设计。
-
-本文采用如下假设。
-
-\textbf{假设1：} \(M_e(q_m)\) 在工作空间内一致正定且可逆，\(M_e(q_m)\) 与 \(C_e(q_m,\dot q_m)\) 可由模型获得或可由名义模型近似。
-
-\textbf{假设2：} 参考轨迹 \(q_d,\dot q_d,\ddot q_d\) 有界且连续，关节位置和速度可测。
-
-\textbf{假设3：} 人工延迟项 \(z(t-h)\) 可由历史缓存获得，其中 \(h>0\) 为设计延迟。
-
-\textbf{假设4：} 对于严格固定时间结论，暂不考虑执行器饱和、模型误差和外部扰动；若存在有界扰动，则讨论实际固定时间收敛性能。
-
-\section{控制算法设计}
-
-\subsection{动力学补偿与误差通道规范化}
-
-对等效关节空间模型 \eqref{eq:joint_model}，采用如下动力学补偿结构
-\begin{equation}
-\tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d(t),
-\label{eq:computed_torque}
-\end{equation}
-其中 \(v\) 为待设计的辅助加速度输入，\(\hat d(t)\) 为扰动补偿项。理想补偿情形下取 \(\hat d(t)=d(t)\)，由式 \eqref{eq:joint_model} 和 \eqref{eq:computed_torque} 可在关节加速度层得到等效输入关系 \(\ddot q_m=v\)。进一步令 \(v=\ddot q_d+\nu\)，则原非线性耦合项被吸收到补偿通道中，剩余待设计部分表现为从 \(\nu\) 到误差状态 \(z\) 的可控线性接口
-\begin{equation}
-\dot z=Az+B\nu ,
-\label{eq:linear_error}
-\end{equation}
-其中 \(A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix}\)，\(B=\begin{bmatrix}0\\I_n\end{bmatrix}\)。
-由于 \((A,B)\) 可控，PDF 增益的设计对象由原非线性动力学转移为上述误差通道，从而与线性延迟系统固定时间镇定理论保持一致。
-
-\subsection{光滑周期延迟反馈控制律}
-
-文献\cite{zhou2022}指出，对于可控线性时滞系统，适当设计的光滑周期延迟反馈可实现固定时间镇定，并可避免指定时间高增益控制在终端时刻出现的增益奇异问题。本文将该思想嵌入误差通道 \eqref{eq:linear_error}，设计
-\[
-\nu(t)=K_0(t)z(t)+K_h(t)z(t-h),
-\]
-其中 \(K_0(t)\) 和 \(K_h(t)\) 为周期光滑增益矩阵，\(h\) 为设计延迟。闭环误差系统为
-\begin{equation}
-\dot z(t)=Az(t)+BK_0(t)z(t)+BK_h(t)z(t-h).
-\label{eq:closed_delay_error}
-\end{equation}
-
-在标量积分器情形中，PDF 可写为 \(u(t)=-a x(t)-K_{(a,h)}(t)x(t-h)\)，其中 \(K_{(a,h)}(t)=R_h(t)W_c^{-1}(a,h)e^{-a(h-2t)}\)，\(W_c(a,h)=\int_h^{2h}e^{2as}R_h(s)\,ds\)。函数 \(R_h(t)\) 取为 \(2h\) 周期函数，并满足 \(R_h(t)=0,\ t\in[0,h]\)，\(R_h(t)\ge0,\ t\in[h,2h]\)，且在 \([h,2h)\) 的某个子区间内严格为正。该结构使反馈在前半周期等待、后半周期作用，形成 act-and-wait 型周期延迟反馈。
-
-结合动力学补偿，本文最终关节力矩控制律为
-\begin{equation}
-\boxed{
-\tau
-=
-M_e(q_m)
-\left[
-\ddot q_d
-+
-K_0(t)z(t)
-+
-K_h(t)z(t-h)
-\right]
-+
-C_e(q_m,\dot q_m)\dot q_m
--
-\hat d(t).
-}
-\label{eq:final_controller}
-\end{equation}
-
-若考虑有界扰动，可引入饱和型鲁棒补偿 \(\hat d(t)=k_d\,\operatorname{sat}(s/\varphi)\)，其中 \(s=\dot e+\Lambda e\)，\(k_d>0\)、\(\varphi>0\)、\(\Lambda=\Lambda^\top>0\)。需要指出，加入非线性鲁棒补偿后，闭环不再是文献\cite{zhou2022}中的纯线性延迟系统，严格固定时间精确归零结论需要单独证明；工程上通常得到对扰动鲁棒的实际固定时间有界结果。
-
-\section{稳定性与性能分析}
-
-在假设1至假设4成立且 \(\hat d(t)=d(t)\) 的理想情形下，控制律 \eqref{eq:final_controller} 在误差坐标中诱导出闭环延迟系统 \eqref{eq:closed_delay_error}，使非线性关节动力学的固定时间跟踪问题等价为可控线性延迟系统的镇定问题。若周期增益 \(K_0(t)\)、\(K_h(t)\) 按文献\cite{zhou2022}的 PDF 固定时间镇定方法设计，使得闭环周期延迟系统在预设时间 \(T\) 后状态转移矩阵具有有限步零化性质，则有 \(z(t)=0,\ \forall t\ge T\)。结合误差定义可得 \(q_m(t)=q_d(t)\)、\(\dot q_m(t)=\dot q_d(t)\)，\(\forall t\ge T\)。因此，关节空间轨迹跟踪误差可在固定时间内消除。
-
-当模型存在近似误差或扰动补偿不完全时，设残余扰动为 \(\Delta(t)=M_e^{-1}(q_m)[d(t)-\hat d(t)+\Delta_m(t)]\)，其中 \(\Delta_m(t)\) 表示名义模型与真实模型之间的等效误差，则误差系统变为 \(\dot z(t)=Az(t)+BK_0(t)z(t)+BK_h(t)z(t-h)+B\Delta(t)\)。
-若 \(\Delta(t)\) 有界，则误差动态可视为固定时间稳定线性延迟系统受到有界输入扰动。此时严格归零一般不再成立，但闭环轨迹可在预设时间附近进入与扰动上界、模型误差和反馈增益有关的小邻域。为获得严格鲁棒固定时间结论，需要在 PDF 线性闭环基础上进一步构造输入到状态稳定或滑模型鲁棒分析。
-
-对于末端轨迹跟踪任务，可先由广义雅可比矩阵生成关节参考速度
-\[
-\dot q_d=J_g^\#(q_m)[\dot x_e^d-K_x(x_e-x_e^d)],
-\qquad
-J_g^\#=J_g^\top(J_gJ_g^\top+\lambda^2I)^{-1},
-\]
-其中 \(J_g^\#\) 为阻尼伪逆。之后由 \(\dot q_d\) 积分并求导得到 \(q_d,\ddot q_d\)，再代入控制律 \eqref{eq:final_controller}。若 \(J_g\) 接近奇异，则末端固定时间跟踪性能会受到影响，需要加入奇异规避或任务优先级规划。
-
-\section{仿真验证}
-
-\subsection{仿真设置}
-
-仿真程序采用 \texttt{simulation/main\_ffsm\_pdf\_tracking\_yan\_params.m}。机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，仿真代码中采用基于上述参数构造的正定名义关节空间模型作为可运行示例，并保留 \texttt{ffsm\_dynamics\_nominal()} 接口以便替换为精确 \(H_g,C_g\) 模型。
-
-仿真步长为 \(T_s=10^{-3}\,\mathrm{s}\)，总时长为 \(10\,\mathrm{s}\)。初始角速度为零，初始关节角和期望终端关节角分别取
-\[
-\begin{aligned}
-q(0)&=[0,\pi/3,0,\pi/4,\pi/4,0,\pi/6]^\top,\\
-q_f&=[\pi/18,\pi/6,\pi/5,0,-\pi/4,-\pi/3,\pi/12]^\top .
-\end{aligned}
-\]
-并采用五次多项式在 \(8\,\mathrm{s}\) 内生成 \(q_d,\dot q_d,\ddot q_d\)。PDF 人工延迟取 \(h=1\,\mathrm{s}\)，激活函数取
-\[
-R_h(t)=
-\begin{cases}
-0, & \theta\in[0,h),\\
-\sin^4\left(\pi(\theta-h)/h\right), & \theta\in[h,2h),
-\end{cases}
-\quad \theta=t\bmod 2h .
-\]
-仿真中加入有界时变扰动力矩 \(d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i)\)。
-
-\subsection{结果与讨论}
-
-图\ref{fig:position}和图\ref{fig:velocity}分别给出了七个关节的位置和速度跟踪曲线。可以看到，实际轨迹能够跟随五次多项式参考轨迹变化，并在参考轨迹末端保持稳定。图\ref{fig:errors}进一步给出了各关节位置误差和速度误差，误差整体随时间衰减，并在扰动存在时保持在较小范围内。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/joint_position_tracking.png}
-\caption{关节位置跟踪曲线}
-\label{fig:position}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/joint_velocity_tracking.png}
-\caption{关节速度跟踪曲线}
-\label{fig:velocity}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/tracking_errors.png}
-\caption{关节位置与速度跟踪误差}
-\label{fig:errors}
-\end{figure}
-
-控制力矩如图\ref{fig:torque}所示。由于仿真采用正定名义关节空间模型和较平滑的参考轨迹，关节力矩未出现突变或终端奇异增益现象。图\ref{fig:pdf_energy}给出了 PDF 激活函数和误差能量型指标，可以观察到 \(R_h(t)\) 具有周期性等待和作用特征，误差能量整体下降。图\ref{fig:norm}显示位置误差范数与速度误差范数均收敛到较小水平。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/control_torque.png}
-\caption{关节控制力矩}
-\label{fig:torque}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/pdf_activation_error_energy.png}
-\caption{PDF 激活函数与误差能量型指标}
-\label{fig:pdf_energy}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{figures/error_norm.png}
-\caption{跟踪误差范数}
-\label{fig:norm}
-\end{figure}
-
-程序运行得到终端误差 \(\|e(10)\|=1.045968\times10^{-2}\,\mathrm{rad}\)，\(\|\dot e(10)\|=7.832307\times10^{-3}\,\mathrm{rad/s}\)，最大关节力矩幅值为 \(\max_i|\tau_i|=0.508236\,\mathrm{N\,m}\)。
-仿真结果表明，在名义模型和有界扰动条件下，基于动力学补偿和光滑周期延迟反馈的控制器能够实现较高精度关节轨迹跟踪。需要强调的是，当前程序中的延迟增益采用工程化的平滑周期加权形式，用于验证控制结构的可运行性；若要获得严格的固定时间精确归零结果，需要按照文献\cite{zhou2022}离线计算满足零化性质的周期增益矩阵，并将仿真模型替换为完整自由漂浮动力学模型。
-
-\section{结论}
-
-本文针对捕获前自由漂浮空间机械臂轨迹跟踪问题，提出了基于光滑周期延迟反馈的关节空间控制方法。该方法先由动量守恒关系得到等效关节空间动力学，再构造面向误差状态的动力学补偿接口，将 PDF 反馈设计嵌入可控线性误差通道，最后利用当前误差和延迟误差构造周期时变反馈律。理论分析表明，在理想建模和精确补偿条件下，闭环误差动态可继承线性 PDF 控制的固定时间镇定性质；在有界扰动和模型近似条件下，可获得实际收敛性能。基于七自由度空间机械臂参数的仿真结果验证了方法的有效性，并给出了可直接用于论文排版的自动生成图片。
+\input{sections/01-introduction}
+\input{sections/02-modeling}
+\input{sections/03-problem}
+\input{sections/04-controller}
+\input{sections/05-stability}
+\input{sections/06-simulation}
+\input{sections/07-conclusion}
 
 \begin{thebibliography}{9}
 
 \bibitem{yan}
 严宇新.
 面向在轨捕获的空间机械臂运动规划与控制方法研究[D].
-学位论文.
+哈尔滨工业大学, 2025.
+
+\bibitem{wang2015}
+Wang M, Luo J, Walter U.
+Trajectory planning of free-floating space robot using Particle Swarm Optimization (PSO)[J].
+Acta Astronautica, 2015.
+DOI: 10.1016/j.actaastro.2015.03.008.
+
+\bibitem{yu2022}
+Yu X, Guo J, Zhang J.
+Time delay estimation-based reactionless augmented adaptive sliding mode control of a space manipulator's pregrasping a target[J].
+Robotica, 2022.
+DOI: 10.1017/S0263574722000108.
+
+\bibitem{xu2024}
+Xu S, Chen T, Wen H, Jin D.
+Predefined-Time Tracking Control of a Free-Flying Space Robot on SE(3)[J].
+IEEE Transactions on Aerospace and Electronic Systems, 2024.
+DOI: 10.1109/TAES.2024.3398600.
+
+\bibitem{li2025}
+Li J, Cao X, Liu M.
+Fixed-time fault-tolerant control for free-floating space manipulator with prescribed performance constraints and actuator faults[J].
+SCIENTIA SINICA Technologica, 2025.
+DOI: 10.1360/SST-2025-0065.
 
 \bibitem{zhou2022}
 Zhou B, Michiels W, Chen J.

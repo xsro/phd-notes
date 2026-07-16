@@ -1,0 +1,45 @@
+\section{自由漂浮空间机械臂建模}
+
+捕获前空间机械臂工作于自由漂浮状态，基座不直接受控，机械臂关节运动会通过动量耦合引起基座位姿变化。设系统广义坐标为 \(q=[q_b^\top\ q_m^\top]^\top\)，其中 \(q_b\) 表示基座位姿或姿态变量，\(q_m\in\mathbb R^n\) 表示机械臂关节变量。系统动力学可写为分块形式
+\[
+\begin{bmatrix}
+M_{bb}(q) & M_{bm}(q)\\
+M_{mb}(q) & M_{mm}(q)
+\end{bmatrix}
+\begin{bmatrix}
+\ddot q_b\\
+\ddot q_m
+\end{bmatrix}
++
+\begin{bmatrix}
+C_b(q,\dot q)\dot q\\
+C_m(q,\dot q)\dot q
+\end{bmatrix}
+=
+\begin{bmatrix}
+0\\
+\tau
+\end{bmatrix}.
+\]
+式中，\(\tau\in\mathbb R^n\) 为关节驱动力矩。由于捕获前基座不直接施加控制力矩，基座广义输入为零。
+
+若系统无外力、无外力矩，且初始总动量为零，则由动量守恒可得
+\[
+M_{bb}(q)\dot q_b+M_{bm}(q)\dot q_m=0,
+\]
+从而
+\[
+\dot q_b=-M_{bb}^{-1}(q)M_{bm}(q)\dot q_m .
+\]
+将该关系代入关节动力学，可得到捕获前自由漂浮空间机械臂的等效关节空间模型
+\begin{equation}
+M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t),
+\label{eq:joint_model}
+\end{equation}
+其中 \(M_e(q_m)=M_e^\top(q_m)>0\)，\(C_e(q_m,\dot q_m)\) 为等效科氏和离心项，\(d(t)\) 表示未建模动态、参数不确定性、环境扰动或执行器误差。该建模形式与严宇新论文中捕获前自由漂浮空间机械臂的动力学约化思想一致\cite{yan}。
+
+若任务由末端位姿给定，则末端速度可由广义雅可比矩阵表示为
+\[
+\dot x_e=J_g(q_m)\dot q_m,
+\]
+其中 \(J_g(q_m)\) 同时包含机械臂关节运动和自由漂浮基座反作用运动对末端运动的影响。与固定基座机械臂相比，\(J_g(q_m)\) 不仅取决于机械臂构型，还隐含了基座速度由动量守恒关系诱导出的耦合项。因此，在执行末端轨迹跟踪时，必须同时关注广义雅可比矩阵的奇异性、基座姿态漂移和关节限位等因素。

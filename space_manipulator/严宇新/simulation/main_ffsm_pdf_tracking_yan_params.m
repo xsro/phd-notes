@@ -468,7 +468,7 @@ function save_figure(fig, figure_dir, stem, save_figures)
 
     try
         exportgraphics(fig, png_file, 'Resolution', 300);
-        exportgraphics(fig, pdf_file, 'ContentType', 'vector');
+        exportgraphics(fig, pdf_file); %  'ContentType', 'vector'
     catch
         set(fig, 'PaperPositionMode', 'auto');
         print(fig, png_file, '-dpng', '-r300');

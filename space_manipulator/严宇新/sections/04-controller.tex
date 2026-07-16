@@ -1,0 +1,84 @@
+\section{控制算法设计}
+
+\subsection{动力学补偿与误差通道规范化}
+
+对等效关节空间模型 \eqref{eq:joint_model}，采用如下动力学补偿结构
+\begin{equation}
+\tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d(t),
+\label{eq:computed_torque}
+\end{equation}
+其中 \(v\) 为待设计的辅助加速度输入，\(\hat d(t)\) 为扰动补偿项。理想补偿情形下取 \(\hat d(t)=d(t)\)，由式 \eqref{eq:joint_model} 和 \eqref{eq:computed_torque} 可在关节加速度层得到等效输入关系 \(\ddot q_m=v\)。进一步令
+\[
+v=\ddot q_d+\nu ,
+\]
+则原非线性耦合项被吸收到补偿通道中，剩余待设计部分表现为从 \(\nu\) 到误差状态 \(z\) 的可控线性接口
+\begin{equation}
+\dot z=Az+B\nu ,
+\label{eq:linear_error}
+\end{equation}
+其中
+\[
+A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\qquad
+B=\begin{bmatrix}0\\I_n\end{bmatrix}.
+\]
+由于 \((A,B)\) 可控，PDF 增益的设计对象由原非线性动力学转移为上述误差通道，从而与线性延迟系统固定时间镇定理论保持一致。
+
+\subsection{光滑周期延迟反馈控制律}
+
+文献\cite{zhou2022}指出，对于可控线性时滞系统，适当设计的光滑周期延迟反馈可实现固定时间镇定，并可避免指定时间高增益控制在终端时刻出现的增益奇异问题。本文将该思想嵌入误差通道 \eqref{eq:linear_error}，设计
+\[
+\nu(t)=K_0(t)z(t)+K_h(t)z(t-h),
+\]
+其中 \(K_0(t)\) 和 \(K_h(t)\) 为周期光滑增益矩阵，\(h\) 为设计延迟。闭环误差系统为
+\begin{equation}
+\dot z(t)=Az(t)+BK_0(t)z(t)+BK_h(t)z(t-h).
+\label{eq:closed_delay_error}
+\end{equation}
+
+在标量积分器情形中，PDF 可写为
+\[
+u(t)=-a x(t)-K_{(a,h)}(t)x(t-h),
+\]
+其中
+\[
+K_{(a,h)}(t)=R_h(t)W_c^{-1}(a,h)e^{-a(h-2t)},
+\qquad
+W_c(a,h)=\int_h^{2h}e^{2as}R_h(s)\,ds.
+\]
+函数 \(R_h(t)\) 取为 \(2h\) 周期函数，并满足 \(R_h(t)=0,\ t\in[0,h]\)，\(R_h(t)\ge0,\ t\in[h,2h]\)，且在 \([h,2h)\) 的某个子区间内严格为正。该结构使反馈在前半周期等待、后半周期作用，形成 act-and-wait 型周期延迟反馈。
+
+对多自由度机械臂，严格的 \(K_0(t)\) 与 \(K_h(t)\) 应按文献\cite{zhou2022}给出的周期增益构造方法离线求解，使闭环状态转移算子在预设时间后具有有限步零化性质。为开展可运行仿真，本文采用与误差二阶积分通道匹配的工程化实现
+\[
+K_0=[-K_p\ -K_d],\qquad
+K_h(t)=\rho R_h(t)[-K_{ph}\ -K_{dh}],
+\]
+其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该形式保留光滑周期延迟项的等待--作用特征，但其本身不构成严格 PDF 零化增益的完整替代。因此，仿真结果用于验证控制结构和扰动下的跟踪性能，严格固定时间精确归零结论仍以离线求解的 PDF 增益为前提。
+
+结合动力学补偿，本文最终关节力矩控制律为
+\begin{equation}
+\boxed{
+\tau
+=
+M_e(q_m)
+\left[
+\ddot q_d
++
+K_0(t)z(t)
++
+K_h(t)z(t-h)
+\right]
++
+C_e(q_m,\dot q_m)\dot q_m
+-
+\hat d(t).
+}
+\label{eq:final_controller}
+\end{equation}
+
+若考虑有界扰动，可引入饱和型鲁棒补偿
+\[
+\hat d(t)=k_d\,\operatorname{sat}(s/\varphi),
+\qquad
+s=\dot e+\Lambda e,
+\]
+其中 \(k_d>0\)、\(\varphi>0\)、\(\Lambda=\Lambda^\top>0\)。需要指出，加入非线性鲁棒补偿后，闭环不再是文献\cite{zhou2022}中的纯线性延迟系统，严格固定时间精确归零结论需要单独证明；工程上通常得到对扰动鲁棒的实际固定时间有界结果。

@@ -1,0 +1,30 @@
+\section{稳定性与性能分析}
+
+在假设1至假设4成立且 \(\hat d(t)=d(t)\) 的理想情形下，控制律 \eqref{eq:final_controller} 在误差坐标中诱导出闭环延迟系统 \eqref{eq:closed_delay_error}，使非线性关节动力学的固定时间跟踪问题等价为可控线性延迟系统的镇定问题。
+
+\textbf{命题1：} 若周期增益 \(K_0(t)\)、\(K_h(t)\) 按文献\cite{zhou2022}的 PDF 固定时间镇定方法设计，使闭环周期延迟系统 \eqref{eq:closed_delay_error} 在预设时间 \(T\) 后满足有限步零化性质，则理想补偿条件下关节跟踪误差满足
+\[
+e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge T.
+\]
+
+\textbf{证明：} 由动力学补偿 \eqref{eq:computed_torque} 和 \(\hat d(t)=d(t)\) 可得 \(\ddot q_m=v\)。代入 \(v=\ddot q_d+\nu\) 后有 \(\ddot e=\nu\)，因此误差系统可精确写为 \eqref{eq:linear_error}。再代入周期延迟反馈律 \(\nu(t)=K_0(t)z(t)+K_h(t)z(t-h)\)，闭环误差动态即为 \eqref{eq:closed_delay_error}。若所选 PDF 增益使该线性延迟系统的状态转移算子在 \(T\) 后零化，则 \(z(t)=0,\ \forall t\ge T\)。结合 \(z=[e^\top\ \dot e^\top]^\top\) 可得结论。
+
+当模型存在近似误差或扰动补偿不完全时，设残余扰动为
+\[
+\Delta(t)=M_e^{-1}(q_m)[d(t)-\hat d(t)+\Delta_m(t)],
+\]
+其中 \(\Delta_m(t)\) 表示名义模型与真实模型之间的等效误差，则误差系统变为
+\[
+\dot z(t)=Az(t)+BK_0(t)z(t)+BK_h(t)z(t-h)+B\Delta(t).
+\]
+若 \(\Delta(t)\) 有界，则误差动态可视为固定时间稳定线性延迟系统受到有界输入扰动。此时严格归零一般不再成立，但闭环轨迹可在预设时间附近进入与扰动上界、模型误差和反馈增益有关的小邻域。为获得严格鲁棒固定时间结论，需要在 PDF 线性闭环基础上进一步构造输入到状态稳定或滑模型鲁棒分析。
+
+对于末端轨迹跟踪任务，可先由广义雅可比矩阵生成关节参考速度
+\[
+\dot q_d=J_g^\#(q_m)[\dot x_e^d-K_x(x_e-x_e^d)],
+\qquad
+J_g^\#=J_g^\top(J_gJ_g^\top+\lambda^2I)^{-1},
+\]
+其中 \(J_g^\#\) 为阻尼伪逆。之后由 \(\dot q_d\) 积分并求导得到 \(q_d,\ddot q_d\)，再代入控制律 \eqref{eq:final_controller}。若 \(J_g\) 接近奇异，则末端固定时间跟踪性能会受到影响，需要加入奇异规避或任务优先级规划。
+
+综上，本文控制器的严格固定时间性质依赖三个环节：动力学补偿足够精确、PDF 增益满足线性延迟系统的有限步零化条件、历史误差项能够按设计延迟稳定获得。若其中任一环节存在误差，则应将结论表述为实际固定时间有界或小邻域收敛，而非精确归零。
