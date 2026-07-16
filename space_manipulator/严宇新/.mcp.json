@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "llm3-knowledge": {
+      "type": "sse",
+      "url": "http://192.168.1.100:5001/assist/mcp/sse",
+      "headers": {
+        "Host": "chat.fun.cn"
+      }
+    }
+  }
+}
