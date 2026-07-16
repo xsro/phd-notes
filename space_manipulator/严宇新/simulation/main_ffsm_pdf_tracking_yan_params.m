@@ -7,191 +7,119 @@
 %   H_g(q) qdd + C_g(q,qd) qd = tau + d(t)
 %
 % Control:
-%   tau = H0(q) [qdd_d + v_pdf] + C0(q,qd) qd
-%
+%   tau = H0(q) [qdd_d + nu] + C0(q,qd) qd
 %   z(t) = [e(t); edot(t)]
-%   v_pdf = K0 z(t) + Kh(t) z(t-h)
+%   nu = K0 z(t) - Kc(t) z(t-h)
 %
-% Important academic note:
+% Academic note:
 %   The exact H_g and C_g of the free-floating 7-DOF space manipulator
 %   require full kinematic recursion and generalized Jacobian construction.
-%   In this runnable program, a positive-definite nominal joint-space model
-%   is used for demonstration. Replace ffsm_dynamics_nominal() by the exact
-%   Yan model implementation if available.
-%
-% Author: generated for academic simulation use
+%   This runnable program uses a positive-definite nominal joint-space model
+%   built from the tabulated physical parameters. Replace
+%   ffsm_dynamics_nominal() by the exact Yan model implementation when it is
+%   available.
 % -------------------------------------------------------------------------
 
 clear; clc; close all;
 
 %% -------------------- 1. Simulation settings ----------------------------
-Ts   = 1e-3;          % integration step [s]
-Tf   = 10.0;          % final simulation time [s]
-t    = 0:Ts:Tf;
-N    = numel(t);
+cfg.Ts = 1e-3;             % integration step [s]
+cfg.Tf = 10.0;             % final simulation time [s]
+cfg.t = 0:cfg.Ts:cfg.Tf;
+cfg.N = numel(cfg.t);
+cfg.n = 7;
 
-n    = 7;             % 7-DOF manipulator
+cfg.save_figures = true;
+cfg.show_figures = false;
+cfg.save_results = true;
 
-save_figures = true;
-show_figures = false;
 script_dir = fileparts(mfilename('fullpath'));
 if isempty(script_dir)
     script_dir = pwd;
 end
-figure_dir = fullfile(script_dir, '..', 'figures');
-if save_figures && ~exist(figure_dir, 'dir')
-    mkdir(figure_dir);
+cfg.figure_dir = fullfile(script_dir, '..', 'figures');
+cfg.result_file = fullfile(script_dir, 'latest_results.mat');
+if cfg.save_figures && ~exist(cfg.figure_dir, 'dir')
+    mkdir(cfg.figure_dir);
 end
-if ~show_figures
+if ~cfg.show_figures
     set(0, 'DefaultFigureVisible', 'off');
 end
 
 %% -------------------- 2. Parameters from Yan Yuxin Table 2-1 ------------
 P = yan_yuxin_parameters();
 
-%% -------------------- 3. Initial states and desired trajectory ----------
-% Initial joint angles in Section 3.7:
-% q(0) = [0, pi/3, 0, pi/4, pi/4, 0, pi/6]^T rad
-q0 = [0; pi/3; 0; pi/4; pi/4; 0; pi/6];
-dq0 = zeros(n,1);
+%% -------------------- 3. Reference trajectory and initial state ----------
+% Reference initial joint angles in Section 3.7:
+% q_r(0) = [0, pi/3, 0, pi/4, pi/4, 0, pi/6]^T rad
+q_ref0 = [0; pi/3; 0; pi/4; pi/4; 0; pi/6];
+q_ref_f = [pi/18; pi/6; pi/5; 0; -pi/4; -pi/3; pi/12];
+cfg.Tref = 8.0;
+[ref.qd, ref.dqd, ref.ddqd] = quintic_joint_trajectory(q_ref0, q_ref_f, cfg.Tref, cfg.t);
 
-% Choose a final joint configuration for tracking simulation.
-% This is a joint-space reference used for control demonstration.
-% If using Cartesian trajectory from the thesis, first generate q_d(t)
-% through generalized Jacobian inverse planning, then use it here.
-qf = [pi/18; pi/6; pi/5; 0; -pi/4; -pi/3; pi/12];
+% Nonzero initial tracking error makes the convergence mechanism visible.
+% The perturbation is moderate and keeps the initial pose close to the
+% tabulated thesis configuration.
+initial_error_deg = [4; -3; 3; -4; 3; -2; 2];
+cfg.q_init = q_ref0 + deg2rad(initial_error_deg);
+cfg.dq_init = zeros(cfg.n, 1);
 
-% Generate 5th-order polynomial desired trajectory over Tref seconds.
-Tref = 8.0;
-[qd, dqd, ddqd] = quintic_joint_trajectory(q0, qf, Tref, t);
+%% -------------------- 4. Controller parameters --------------------------
+cfg.h = 1.0;                         % artificial delay [s]
+cfg.Nh = round(cfg.h/cfg.Ts);         % delay samples
+cfg.tau_max = 200 * ones(cfg.n, 1);   % [N m], set Inf for no saturation
 
-%% -------------------- 4. PDF controller parameters ----------------------
-% Delay h. For the scalar PDF result, prescribed time is T = 2h.
-% For this nonlinear robot simulation, h is used as the artificial delay.
-h = 1.0;                          % delay [s]
-Nh = round(h/Ts);                 % delay samples
-
-% Smooth periodic function R_h(t), 2h-periodic and zero on [0,h].
-% It activates delayed feedback in [h,2h].
-pdf.h = h;
-pdf.r_order = 2;
-
-% Baseline stabilizing gain for double-integrator tracking error.
-% z = [e; edot], v = K0*z + Kh(t)*z_delay.
+% Baseline stabilizing gain for the double-integrator error channel.
 Kp = diag([25 25 25 22 22 20 20]);
 Kd = diag([10 10 10  9  9  8  8]);
+ctrl.K0 = [-Kp, -Kd];
 
-K0 = [-Kp, -Kd];                  % n x 2n
+% Exact matrix PDF gain for the linear error channel. The gain is computed
+% offline from the controllability Gramian in one 2h-period.
+ctrl.pdf = build_pdf_gain(ctrl.K0, cfg.n, cfg.h);
 
-% Delayed feedback gain. Its time-varying amplitude is shaped by R_h(t).
-% The following is a smooth periodic delayed feedback term for simulation.
-% For a rigorous nilpotent monodromy design, Kdelay must be computed by
-% the exact method in Zhou-Michiels-Chen TAC 2022.
+% Engineering delayed-feedback mode kept for ablation/debugging.
 Kp_h = diag([8 8 8 6 6 5 5]);
 Kd_h = diag([3 3 3 2.5 2.5 2 2]);
-Kh0  = [-Kp_h, -Kd_h];            % n x 2n
+ctrl.engineering_Kh = [-Kp_h, -Kd_h];
+ctrl.engineering_gain = 1.0;
 
-% PDF amplitude
-pdf_gain = 1.0;
+%% -------------------- 5. Run cases --------------------------------------
+cases(1) = make_case("PD, nominal", "pd", false);
+cases(2) = make_case("PDF, nominal", "pdf_exact", false);
+cases(3) = make_case("PD, disturbed", "pd", true);
+cases(4) = make_case("PDF, disturbed", "pdf_exact", true);
 
-%% -------------------- 5. Disturbance and uncertainty settings -----------
-use_disturbance = true;
-
-% torque saturation, set Inf for no saturation
-tau_max = 200 * ones(n,1);        % [N*m], illustrative
-
-%% -------------------- 6. Preallocate variables --------------------------
-q    = zeros(n,N);
-dq   = zeros(n,N);
-ddq  = zeros(n,N);
-tau  = zeros(n,N);
-e    = zeros(n,N);
-edot = zeros(n,N);
-zlog = zeros(2*n,N);
-Rhlog = zeros(1,N);
-Vlog  = zeros(1,N);
-
-q(:,1)  = q0;
-dq(:,1) = dq0;
-
-%% -------------------- 7. Main simulation loop ---------------------------
-for k = 1:N-1
-
-    tk = t(k);
-
-    % Current tracking error
-    e(:,k)    = q(:,k)  - qd(:,k);
-    edot(:,k) = dq(:,k) - dqd(:,k);
-    z         = [e(:,k); edot(:,k)];
-    zlog(:,k)= z;
-
-    % Delayed error state z(t-h)
-    if k > Nh
-        z_delay = zlog(:,k-Nh);
-    else
-        % Initial history: hold initial error history constant
-        z_delay = zlog(:,1);
-    end
-
-    % Smooth periodic delayed feedback activation
-    Rh = smooth_periodic_Rh(tk, h);
-    Rhlog(k) = Rh;
-
-    % PDF control acceleration
-    v_pdf = K0*z + pdf_gain*Rh*(Kh0*z_delay);
-
-    % Nominal dynamics
-    [H0, C0] = ffsm_dynamics_nominal(q(:,k), dq(:,k), P);
-
-    % Computed torque with PDF acceleration
-    tau_cmd = H0*(ddqd(:,k) + v_pdf) + C0*dq(:,k);
-
-    % Saturation
-    tau_cmd = max(min(tau_cmd, tau_max), -tau_max);
-    tau(:,k) = tau_cmd;
-
-    % External disturbance
-    if use_disturbance
-        d = disturbance_torque(tk,n);
-    else
-        d = zeros(n,1);
-    end
-
-    % True dynamics.
-    % Here the same nominal H0,C0 are used as the plant for demonstration.
-    % Replace by exact H_g,C_g if available.
-    H = H0;
-    C = C0;
-
-    ddq(:,k) = H \ (tau_cmd + d - C*dq(:,k));
-
-    % Semi-implicit Euler integration
-    dq(:,k+1) = dq(:,k) + Ts*ddq(:,k);
-    q(:,k+1)  = q(:,k)  + Ts*dq(:,k+1);
-
-    % Error energy-like value
-    Vlog(k) = 0.5*(e(:,k).'*e(:,k) + edot(:,k).'*edot(:,k));
+results = repmat(empty_result(), 1, numel(cases));
+for c = 1:numel(cases)
+    results(c) = run_case(cases(c), cfg, ref, ctrl, P);
 end
 
-% Last sample
-e(:,N)    = q(:,N)  - qd(:,N);
-edot(:,N) = dq(:,N) - dqd(:,N);
-zlog(:,N)= [e(:,N); edot(:,N)];
-Vlog(N)  = 0.5*(e(:,N).'*e(:,N) + edot(:,N).'*edot(:,N));
-Rhlog(N) = smooth_periodic_Rh(t(N), h);
-tau(:,N) = tau(:,N-1);
-ddq(:,N) = ddq(:,N-1);
+main_result = results(4);
+plot_results(main_result, ref, cfg.figure_dir, cfg.save_figures);
+plot_case_comparison(results, cfg.figure_dir, cfg.save_figures);
 
-%% -------------------- 8. Plot results ----------------------------------
-plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, save_figures);
+metrics = collect_metrics(results);
+if cfg.save_results
+    save(cfg.result_file, 'cfg', 'ctrl', 'cases', 'results', 'metrics');
+end
 
-%% -------------------- 9. Print final error ------------------------------
-fprintf('\nFinal tracking error norm:\n');
-fprintf('||e(T)||     = %.6e rad\n', norm(e(:,end)));
-fprintf('||edot(T)||  = %.6e rad/s\n', norm(edot(:,end)));
-fprintf('Max |tau_i|  = %.6f N*m\n', max(abs(tau(:))));
-if save_figures
-    fprintf('Figures saved to: %s\n', figure_dir);
+%% -------------------- 6. Print summary ----------------------------------
+fprintf('\nSimulation summary\n');
+fprintf('Case                     ||e(T)|| [rad]   ||edot(T)|| [rad/s]   ');
+fprintf('max|tau| [N m]   t_settle_e [s]\n');
+for c = 1:numel(results)
+    m = results(c).metrics;
+    fprintf('%-24s %.6e       %.6e            %.6f        %.3f\n', ...
+        results(c).name, m.final_e_norm, m.final_edot_norm, ...
+        m.max_tau, m.settle_time_e);
+end
+fprintf('PDF Gramian condition number: %.3e\n', ctrl.pdf.gramian_condition);
+if cfg.save_figures
+    fprintf('Figures saved to: %s\n', cfg.figure_dir);
+end
+if cfg.save_results
+    fprintf('Numerical results saved to: %s\n', cfg.result_file);
 end
 
 %% ========================================================================
@@ -234,99 +162,229 @@ function P = yan_yuxin_parameters()
                    Ixz(i), Iyz(i), Izz(i) ];
     end
 
-    % Base inertia
-    P.mb = P.mass(1);
-    P.Ib = P.I{1};
-
-    % Link masses and inertias only
     P.mi = P.mass(2:end);
     P.Ilink = P.I(2:end);
+    P.Jdiag = nominal_joint_inertia_diagonal(P);
 end
 
-function [qd, dqd, ddqd] = quintic_joint_trajectory(q0, qf, Tref, t)
-% Fifth-order polynomial trajectory with zero initial/final velocity
-% and acceleration.
+function Jdiag = nominal_joint_inertia_diagonal(P)
+% Precompute the diagonal inertia scale used by the nominal model.
 
-    n = numel(q0);
-    N = numel(t);
-
-    qd   = zeros(n,N);
-    dqd  = zeros(n,N);
-    ddqd = zeros(n,N);
-
-    for k = 1:N
-        tk = t(k);
-        if tk <= Tref
-            s = tk/Tref;
-            phi   = 10*s^3 - 15*s^4 + 6*s^5;
-            dphi  = (30*s^2 - 60*s^3 + 30*s^4)/Tref;
-            ddphi = (60*s - 180*s^2 + 120*s^3)/(Tref^2);
-        else
-            phi   = 1;
-            dphi  = 0;
-            ddphi = 0;
-        end
-
-        qd(:,k)   = q0 + phi*(qf-q0);
-        dqd(:,k)  = dphi*(qf-q0);
-        ddqd(:,k) = ddphi*(qf-q0);
+    n = P.n;
+    Jdiag = zeros(n, 1);
+    for i = 1:n
+        mi = P.mi(i);
+        Ii = P.Ilink{i};
+        ai = P.a(:, i+1);
+        bi = P.b(:, i+1);
+        len2 = max(norm(ai)^2 + norm(bi)^2, 1e-3);
+        Jdiag(i) = Ii(3,3) + 0.15*mi*len2 + 0.05;
     end
 end
 
-function Rh = smooth_periodic_Rh(t,h)
-% Smooth periodic delayed feedback shaping function.
-%
-% Required qualitative properties:
-%   2h-periodic;
-%   R_h(t)=0 for t in [0,h];
-%   R_h(t)>=0 for t in [h,2h];
-%   smooth at switching instants.
-%
-% Here use:
-%   R_h = sin^4(pi*(theta-h)/h), theta in [h,2h],
-%   R_h = 0, theta in [0,h).
-%
-% sin^4 gives C^2 smoothness at h and 2h.
+function [qd, dqd, ddqd] = quintic_joint_trajectory(q0, qf, Tref, t)
+% Vectorized fifth-order polynomial trajectory with zero endpoint velocity
+% and acceleration.
 
-    theta = mod(t,2*h);
+    s = min(t./Tref, 1);
+    phi = 10*s.^3 - 15*s.^4 + 6*s.^5;
+    dphi = (30*s.^2 - 60*s.^3 + 30*s.^4)./Tref;
+    ddphi = (60*s - 180*s.^2 + 120*s.^3)./(Tref^2);
+    dphi(t > Tref) = 0;
+    ddphi(t > Tref) = 0;
 
+    delta = qf - q0;
+    qd = q0 + delta * phi;
+    dqd = delta * dphi;
+    ddqd = delta * ddphi;
+end
+
+function pdf = build_pdf_gain(K0, n, h)
+% Offline Gramian construction of the smooth periodic delayed feedback
+% matrix gain for the normalized error channel.
+
+    A = [zeros(n), eye(n); zeros(n), zeros(n)];
+    B = [zeros(n); eye(n)];
+    Ac = A + B*K0;
+
+    n_grid = 4001;
+    s_grid = linspace(h, 2*h, n_grid);
+    W = zeros(2*n);
+    for k = 1:n_grid
+        s = s_grid(k);
+        Rh = smooth_periodic_Rh(s, h);
+        E = expm(-Ac*s);
+        integrand = E * B * (Rh*eye(n)) * B.' * E.';
+        weight = 1;
+        if k == 1 || k == n_grid
+            weight = 0.5;
+        end
+        W = W + weight*integrand;
+    end
+    W = W * (s_grid(2) - s_grid(1));
+    W = 0.5*(W + W.');
+
+    pdf.A = A;
+    pdf.B = B;
+    pdf.Ac = Ac;
+    pdf.W = W;
+    pdf.W_inv = pinv(W);
+    pdf.gramian_condition = cond(W);
+    pdf.h = h;
+end
+
+function case_cfg = make_case(name, controller_mode, use_disturbance)
+    case_cfg.name = char(name);
+    case_cfg.controller_mode = char(controller_mode);
+    case_cfg.use_disturbance = use_disturbance;
+end
+
+function out = empty_result()
+    out.name = '';
+    out.controller_mode = '';
+    out.use_disturbance = false;
+    out.t = [];
+    out.q = [];
+    out.dq = [];
+    out.ddq = [];
+    out.tau = [];
+    out.e = [];
+    out.edot = [];
+    out.Rh = [];
+    out.V = [];
+    out.metrics = struct();
+end
+
+function out = run_case(case_cfg, cfg, ref, ctrl, P)
+% Simulate one controller/disturbance combination.
+
+    n = cfg.n;
+    N = cfg.N;
+    q = zeros(n, N);
+    dq = zeros(n, N);
+    ddq = zeros(n, N);
+    tau = zeros(n, N);
+    e = zeros(n, N);
+    edot = zeros(n, N);
+    zlog = zeros(2*n, N);
+    Rhlog = zeros(1, N);
+    Vlog = zeros(1, N);
+
+    q(:,1) = cfg.q_init;
+    dq(:,1) = cfg.dq_init;
+
+    for k = 1:N-1
+        tk = cfg.t(k);
+
+        e(:,k) = q(:,k) - ref.qd(:,k);
+        edot(:,k) = dq(:,k) - ref.dqd(:,k);
+        z = [e(:,k); edot(:,k)];
+        zlog(:,k) = z;
+
+        if k > cfg.Nh
+            z_delay = zlog(:, k-cfg.Nh);
+        else
+            z_delay = zlog(:, 1);
+        end
+
+        [nu, Rh] = auxiliary_acceleration(tk, z, z_delay, case_cfg.controller_mode, ctrl, cfg.h);
+        Rhlog(k) = Rh;
+
+        [H0, C0] = ffsm_dynamics_nominal(q(:,k), dq(:,k), P);
+        tau_cmd = H0*(ref.ddqd(:,k) + nu) + C0*dq(:,k);
+        tau_cmd = max(min(tau_cmd, cfg.tau_max), -cfg.tau_max);
+        tau(:,k) = tau_cmd;
+
+        if case_cfg.use_disturbance
+            d = disturbance_torque(tk, n);
+        else
+            d = zeros(n, 1);
+        end
+
+        ddq(:,k) = H0 \ (tau_cmd + d - C0*dq(:,k));
+        dq(:,k+1) = dq(:,k) + cfg.Ts*ddq(:,k);
+        q(:,k+1) = q(:,k) + cfg.Ts*dq(:,k+1);
+        Vlog(k) = 0.5*(e(:,k).'*e(:,k) + edot(:,k).'*edot(:,k));
+    end
+
+    e(:,N) = q(:,N) - ref.qd(:,N);
+    edot(:,N) = dq(:,N) - ref.dqd(:,N);
+    zlog(:,N) = [e(:,N); edot(:,N)];
+    Rhlog(N) = smooth_periodic_Rh(cfg.t(N), cfg.h);
+    Vlog(N) = 0.5*(e(:,N).'*e(:,N) + edot(:,N).'*edot(:,N));
+    tau(:,N) = tau(:,N-1);
+    ddq(:,N) = ddq(:,N-1);
+
+    out = empty_result();
+    out.name = case_cfg.name;
+    out.controller_mode = case_cfg.controller_mode;
+    out.use_disturbance = case_cfg.use_disturbance;
+    out.t = cfg.t;
+    out.q = q;
+    out.dq = dq;
+    out.ddq = ddq;
+    out.tau = tau;
+    out.e = e;
+    out.edot = edot;
+    out.Rh = Rhlog;
+    out.V = Vlog;
+    out.metrics = compute_metrics(cfg.t, e, edot, tau);
+end
+
+function [nu, Rh] = auxiliary_acceleration(t, z, z_delay, mode, ctrl, h)
+% Compute the auxiliary acceleration command.
+
+    Rh = smooth_periodic_Rh(t, h);
+    switch mode
+        case 'pd'
+            nu = ctrl.K0*z;
+        case 'pdf_exact'
+            Kc = exact_pdf_gain(t, ctrl.pdf);
+            nu = ctrl.K0*z - Kc*z_delay;
+        case 'pdf_engineering'
+            nu = ctrl.K0*z + ctrl.engineering_gain*Rh*(ctrl.engineering_Kh*z_delay);
+        otherwise
+            error('Unknown controller mode: %s', mode);
+    end
+end
+
+function Kc = exact_pdf_gain(t, pdf)
+% Periodic matrix PDF gain over the local time theta in [0, 2h).
+
+    h = pdf.h;
+    theta = mod(t, 2*h);
+    Rh = smooth_periodic_Rh(theta, h);
+    if Rh == 0
+        Kc = zeros(size(pdf.B, 2), size(pdf.A, 1));
+        return;
+    end
+    Kc = Rh * (pdf.B.' * expm(-pdf.Ac.'*theta) * pdf.W_inv * expm(pdf.Ac*(h-theta)));
+end
+
+function Rh = smooth_periodic_Rh(t, h)
+% C2 smooth 2h-periodic delayed feedback shaping function.
+
+    theta = mod(t, 2*h);
     if theta < h
         Rh = 0;
     else
-        s = (theta-h)/h;
+        s = (theta - h)/h;
         Rh = sin(pi*s)^4;
     end
 end
 
-function [H, C] = ffsm_dynamics_nominal(q,dq,P)
-% Nominal joint-space model corresponding to:
+function [H, C] = ffsm_dynamics_nominal(q, dq, P)
+% Positive-definite nominal joint-space model corresponding to:
 %   H_g(q) qdd + C_g(q,dq) dq = tau
 %
-% This is a runnable positive-definite approximation using Table 2-1 data.
-% It is NOT a substitute for the exact free-floating H_g and C_g.
-%
-% Replace this function by exact implementation:
+% Replace this function by the exact implementation:
 %   H_g = H_m - H_bm' H_b^{-1} H_bm
 %   C_g = H_bm' H_b^{-1}(C_b H_b^{-1}H_bm - C_bm)
 %         - C_bm' H_b^{-1}H_bm + C_m
 
     n = P.n;
+    Jdiag = P.Jdiag;
 
-    % Construct an illustrative diagonal inertia from link inertia and
-    % parallel-axis-like length contribution. This keeps H positive definite.
-    Jdiag = zeros(n,1);
-    for i = 1:n
-        mi = P.mi(i);
-        Ii = P.Ilink{i};
-        ai = P.a(:,i+1);
-        bi = P.b(:,i+1);
-
-        % Conservative positive inertia scale, not exact FFSM inertia.
-        len2 = max(norm(ai)^2 + norm(bi)^2, 1e-3);
-        Jdiag(i) = Ii(3,3) + 0.15*mi*len2 + 0.05;
-    end
-
-    % Add weak configuration-dependent coupling while maintaining SPD.
     H = diag(Jdiag);
     for i = 1:n
         for j = i+1:n
@@ -335,58 +393,99 @@ function [H, C] = ffsm_dynamics_nominal(q,dq,P)
             H(j,i) = coupling;
         end
     end
+    H = 0.5*(H + H.');
 
-    % Ensure positive definiteness numerically.
-    H = 0.5*(H+H.');
     mineig = min(eig(H));
     if mineig <= 1e-6
-        H = H + (abs(mineig)+1e-3)*eye(n);
+        H = H + (abs(mineig) + 1e-3)*eye(n);
     end
 
-    % Simple viscous/Coriolis-like term.
-    % For exact model, compute C_g(q,dq).
-    Dv = diag(0.05 + 0.02*abs(dq));
-    C = Dv;
+    C = diag(0.05 + 0.02*abs(dq));
 end
 
-function d = disturbance_torque(t,n)
+function d = disturbance_torque(t, n)
 % Bounded time-varying disturbance torque.
-    d = zeros(n,1);
-    for i = 1:n
-        d(i) = 0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i);
+
+    i = (1:n).';
+    d = 0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i);
+end
+
+function metrics = compute_metrics(t, e, edot, tau)
+    e_norm = vecnorm(e, 2, 1);
+    edot_norm = vecnorm(edot, 2, 1);
+    metrics.final_e_norm = e_norm(end);
+    metrics.final_edot_norm = edot_norm(end);
+    metrics.max_e_norm = max(e_norm);
+    metrics.max_edot_norm = max(edot_norm);
+    metrics.rms_e = sqrt(mean(e.^2, 'all'));
+    metrics.rms_edot = sqrt(mean(edot.^2, 'all'));
+    metrics.max_tau = max(abs(tau(:)));
+    metrics.settle_time_e = settling_time(t, e_norm, 1e-4);
+end
+
+function ts = settling_time(t, signal, threshold)
+% First time after which signal stays below threshold. Returns NaN if not
+% achieved.
+
+    ts = NaN;
+    for k = 1:numel(t)
+        if all(signal(k:end) <= threshold)
+            ts = t(k);
+            return;
+        end
     end
 end
 
-function plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, save_figures)
+function metrics = collect_metrics(results)
+    metrics = struct([]);
+    for c = 1:numel(results)
+        metrics(c).name = results(c).name;
+        metrics(c).final_e_norm = results(c).metrics.final_e_norm;
+        metrics(c).final_edot_norm = results(c).metrics.final_edot_norm;
+        metrics(c).max_tau = results(c).metrics.max_tau;
+        metrics(c).settle_time_e = results(c).metrics.settle_time_e;
+    end
+end
 
-    n = size(q,1);
+function plot_results(result, ref, figure_dir, save_figures)
+% Plot the disturbed PDF case for paper figures.
+
+    t = result.t;
+    q = result.q;
+    dq = result.dq;
+    e = result.e;
+    edot = result.edot;
+    tau = result.tau;
+    Rhlog = result.Rh;
+    Vlog = result.V;
+    n = size(q, 1);
 
     figure('Name','Joint position tracking','Color','w');
     tiledlayout(4,2,'Padding','compact','TileSpacing','compact');
     for i = 1:n
         nexttile;
         plot(t, q(i,:), 'b', 'LineWidth', 1.2); hold on;
-        plot(t, qd(i,:), 'r--', 'LineWidth', 1.2);
+        plot(t, ref.qd(i,:), 'r--', 'LineWidth', 1.2);
         grid on;
         xlabel('Time [s]');
-        ylabel(sprintf('q_%d [rad]',i));
+        ylabel(sprintf('q_%d [rad]', i));
         if i == 1
-            legend('Actual','Desired');
+            legend('Actual', 'Desired');
         end
     end
     save_figure(gcf, figure_dir, 'joint_position_tracking', save_figures);
 
-    figure('Name','Joint velocity tracking','Color','w');
+    figure('Name','Joint velocity response','Color','w');
     tiledlayout(4,2,'Padding','compact','TileSpacing','compact');
     for i = 1:n
         nexttile;
         plot(t, dq(i,:), 'b', 'LineWidth', 1.2); hold on;
-        plot(t, dqd(i,:), 'r--', 'LineWidth', 1.2);
+        plot(t, ref.dqd(i,:), 'r--', 'LineWidth', 1.2);
         grid on;
         xlabel('Time [s]');
-        ylabel(sprintf('dq_%d [rad/s]',i));
+        ylabel(sprintf('dq_%d [rad/s]', i));
         if i == 1
-            legend('Actual','Desired');
+            legend('Actual', 'Desired');
         end
     end
     save_figure(gcf, figure_dir, 'joint_velocity_tracking', save_figures);
@@ -400,8 +499,8 @@ function plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, 
     xlabel('Time [s]');
     ylabel('e_i [rad]');
     title('Joint position tracking errors');
-    legend(arrayfun(@(i)sprintf('e_%d',i),1:n,'UniformOutput',false), ...
-           'Location','eastoutside');
+    legend(arrayfun(@(i)sprintf('e_%d', i), 1:n, 'UniformOutput', false), ...
+           'Location', 'eastoutside');
 
     nexttile;
     plot(t, edot, 'LineWidth', 1.1);
@@ -409,8 +508,8 @@ function plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, 
     xlabel('Time [s]');
     ylabel('de_i [rad/s]');
     title('Joint velocity tracking errors');
-    legend(arrayfun(@(i)sprintf('de_%d',i),1:n,'UniformOutput',false), ...
-           'Location','eastoutside');
+    legend(arrayfun(@(i)sprintf('de_%d', i), 1:n, 'UniformOutput', false), ...
+           'Location', 'eastoutside');
     save_figure(gcf, figure_dir, 'tracking_errors', save_figures);
 
     figure('Name','Control torque','Color','w');
@@ -419,8 +518,8 @@ function plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, 
     xlabel('Time [s]');
     ylabel('\tau_i [N m]');
     title('Joint control torques');
-    legend(arrayfun(@(i)sprintf('\\tau_%d',i),1:n,'UniformOutput',false), ...
-           'Location','eastoutside');
+    legend(arrayfun(@(i)sprintf('\\tau_%d', i), 1:n, 'UniformOutput', false), ...
+           'Location', 'eastoutside');
     save_figure(gcf, figure_dir, 'control_torque', save_figures);
 
     figure('Name','PDF activation and error energy','Color','w');
@@ -442,14 +541,42 @@ function plot_results(t, q, dq, qd, dqd, e, edot, tau, Rhlog, Vlog, figure_dir, 
     save_figure(gcf, figure_dir, 'pdf_activation_error_energy', save_figures);
 
     figure('Name','Error norm','Color','w');
-    plot(t, vecnorm(e,2,1), 'b', 'LineWidth', 1.5); hold on;
-    plot(t, vecnorm(edot,2,1), 'r--', 'LineWidth', 1.5);
+    plot(t, vecnorm(e, 2, 1), 'b', 'LineWidth', 1.5); hold on;
+    plot(t, vecnorm(edot, 2, 1), 'r--', 'LineWidth', 1.5);
     grid on;
     xlabel('Time [s]');
     ylabel('Norm');
-    legend('||e||','||\dot e||');
+    legend('||e||', '||de||');
     title('Tracking error norms');
     save_figure(gcf, figure_dir, 'error_norm', save_figures);
+end
+
+function plot_case_comparison(results, figure_dir, save_figures)
+% Compare nominal and disturbed controller error norms.
+
+    figure('Name','Controller comparison','Color','w');
+    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
+
+    nexttile;
+    hold on; grid on;
+    for c = 1:numel(results)
+        semilogy(results(c).t, vecnorm(results(c).e, 2, 1) + 1e-16, 'LineWidth', 1.4);
+    end
+    xlabel('Time [s]');
+    ylabel('||e|| [rad]');
+    legend({results.name}, 'Location', 'northeast');
+    title('Position error norm comparison');
+
+    nexttile;
+    hold on; grid on;
+    for c = 1:numel(results)
+        semilogy(results(c).t, vecnorm(results(c).edot, 2, 1) + 1e-16, 'LineWidth', 1.4);
+    end
+    xlabel('Time [s]');
+    ylabel('||de|| [rad/s]');
+    legend({results.name}, 'Location', 'northeast');
+    title('Velocity error norm comparison');
+    save_figure(gcf, figure_dir, 'controller_comparison', save_figures);
 end
 
 function save_figure(fig, figure_dir, stem, save_figures)
@@ -458,7 +585,6 @@ function save_figure(fig, figure_dir, stem, save_figures)
     if ~save_figures
         return;
     end
-
     if ~exist(figure_dir, 'dir')
         mkdir(figure_dir);
     end
@@ -468,7 +594,7 @@ function save_figure(fig, figure_dir, stem, save_figures)
 
     try
         exportgraphics(fig, png_file, 'Resolution', 300);
-        exportgraphics(fig, pdf_file); %  'ContentType', 'vector'
+        exportgraphics(fig, pdf_file);
     catch
         set(fig, 'PaperPositionMode', 'auto');
         print(fig, png_file, '-dpng', '-r300');

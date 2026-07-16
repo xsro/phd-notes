@@ -111,12 +111,12 @@ C_e(q_m,\dot q_m)\dot q_m
 \label{eq:final_controller}
 \end{equation}
 
-在仿真实现中，为避免在示例程序中引入完整的离线矩阵增益求解，本文采用与二阶误差通道匹配的工程化平滑延迟项
+在数值实现中，本文默认按照式 \eqref{eq:wc_matrix} 和式 \eqref{eq:kc_pdf} 离线计算 \(W_c(A_c,h)\) 与 \(K_c(t)\)，并在每个采样时刻按 \(2h\) 周期读取局部时间对应的 PDF 增益。为便于调参和消融对比，程序中还保留工程化平滑延迟项
 \[
 K_0=[-K_p\ -K_d],\qquad
 -K_c(t)=\rho R_h(t)[-K_{ph}\ -K_{dh}],
 \]
-其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该形式保留 PDF 的等待--作用周期结构，但并不等价于严格的 monodromy matrix 零化增益。因此，仿真结果用于验证控制结构和有界扰动下的跟踪性能；严格固定时间精确归零结论仍以式 \eqref{eq:kc_pdf} 的离线 PDF 增益为前提。
+其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该工程化形式仅保留 PDF 的等待--作用周期结构，并不等价于严格的 monodromy matrix 零化增益；论文中的理论固定时间结论仍以式 \eqref{eq:kc_pdf} 的 Gramian 型 PDF 增益为前提。
 
 若考虑有界扰动，可引入饱和型鲁棒补偿
 \[

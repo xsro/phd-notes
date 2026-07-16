@@ -2,16 +2,23 @@
 
 \subsection{仿真设置}
 
-仿真程序采用 \path{simulation/main_ffsm_pdf_tracking_yan_params.m}。机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，仿真代码中采用基于上述参数构造的正定名义关节空间模型作为可运行示例，并保留 \path{ffsm_dynamics_nominal()} 接口以便替换为精确 \(H_g,C_g\) 模型。
+仿真程序采用 \path{simulation/main_ffsm_pdf_tracking_yan_params.m}。机械臂自由度取 \(n=7\)，惯性参数依据严宇新论文表2-1中的空间机械臂参数整理\cite{yan}。由于完整自由漂浮七自由度机械臂动力学需要递推动力学与广义雅可比矩阵构造，程序中采用基于上述参数构造的正定名义关节空间模型作为可运行验证模型，并在 \path{ffsm_dynamics_nominal()} 中保留替换精确 \(H_g,C_g\) 的接口。该处理使仿真重点集中在控制律结构、周期延迟反馈实现和扰动下跟踪性能验证上。
 
-仿真步长为 \(T_s=10^{-3}\,\mathrm{s}\)，总时长为 \(10\,\mathrm{s}\)。初始角速度为零，初始关节角和期望终端关节角分别取
+仿真步长为 \(T_s=10^{-3}\,\mathrm{s}\)，总时长为 \(10\,\mathrm{s}\)。参考轨迹初始点和终端点分别取
 \[
 \begin{aligned}
-q(0)&=[0,\pi/3,0,\pi/4,\pi/4,0,\pi/6]^\top,\\
+q_r(0)&=[0,\pi/3,0,\pi/4,\pi/4,0,\pi/6]^\top,\\
 q_f&=[\pi/18,\pi/6,\pi/5,0,-\pi/4,-\pi/3,\pi/12]^\top .
 \end{aligned}
 \]
-并采用五次多项式在 \(8\,\mathrm{s}\) 内生成 \(q_d,\dot q_d,\ddot q_d\)。PDF 人工延迟取 \(h=1\,\mathrm{s}\)，激活函数取
+期望轨迹由五次多项式在 \(8\,\mathrm{s}\) 内生成，以保证 \(q_d,\dot q_d,\ddot q_d\) 连续。为避免零初始误差掩盖收敛过程，实际初始关节角设置为
+\[
+q(0)=q_r(0)+\frac{\pi}{180}[4,-3,3,-4,3,-2,2]^\top,
+\qquad
+\dot q(0)=0 .
+\]
+
+PDF 人工延迟取 \(h=1\,\mathrm{s}\)。激活函数为
 \[
 R_h(t)=
 \begin{cases}
@@ -20,23 +27,23 @@ R_h(t)=
 \end{cases}
 \quad \theta=t\bmod 2h .
 \]
-仿真中取
+反馈基准增益取
 \[
 \begin{aligned}
 K_p&=\operatorname{diag}(25,25,25,22,22,20,20),\\
-K_d&=\operatorname{diag}(10,10,10,9,9,8,8),\\
-K_{ph}&=\operatorname{diag}(8,8,8,6,6,5,5),\\
-K_{dh}&=\operatorname{diag}(3,3,3,2.5,2.5,2,2),
+K_d&=\operatorname{diag}(10,10,10,9,9,8,8),
 \end{aligned}
 \]
-并令 \(K_0=[-K_p\ -K_d]\)、\(K_h(t)=R_h(t)[-K_{ph}\ -K_{dh}]\)。有界时变扰动力矩设为
+并令 \(K_0=[-K_p\ -K_d]\)。PDF 增益 \(K_c(t)\) 按式 \eqref{eq:wc_matrix}--\eqref{eq:kc_pdf} 由离散积分离线计算，所得 Gramian 条件数为 \(5.796\times10^5\)。扰动算例中加入有界时变力矩
 \[
-d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i).
+d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i),
+\quad i=1,\ldots,7 .
 \]
+为便于评价，本文同时给出无延迟计算力矩控制（PD）和 PDF 控制在无扰动、扰动两种情况下的对照结果。
 
 \subsection{结果与讨论}
 
-图\ref{fig:position}和图\ref{fig:velocity}分别给出了七个关节的位置和速度跟踪曲线。可以看到，实际轨迹能够跟随五次多项式参考轨迹变化，并在参考轨迹末端保持稳定。图\ref{fig:errors}进一步给出了各关节位置误差和速度误差，误差整体随时间衰减，并在扰动存在时保持在较小范围内。
+图\ref{fig:position}和图\ref{fig:velocity}分别给出了扰动条件下 PDF 控制器的七个关节位置和速度跟踪曲线。由于初始状态与参考初值存在偏差，响应初期出现可见调整过程；随后各关节能够跟随五次多项式参考轨迹，并在参考轨迹结束后保持有界稳定。图\ref{fig:errors}给出了对应的位置误差和速度误差，误差在初始阶段快速下降，在有界扰动作用下最终保持在小邻域内。
 
 \begin{figure}[H]
 \centering
@@ -59,7 +66,7 @@ d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i).
 \label{fig:errors}
 \end{figure}
 
-控制力矩如图\ref{fig:torque}所示。由于仿真采用正定名义关节空间模型和较平滑的参考轨迹，关节力矩未出现突变或终端奇异增益现象。图\ref{fig:pdf_energy}给出了 PDF 激活函数和误差能量型指标，可以观察到 \(R_h(t)\) 具有周期性等待和作用特征，误差能量整体下降。图\ref{fig:norm}显示位置误差范数与速度误差范数均收敛到较小水平。
+控制力矩如图\ref{fig:torque}所示。由于 PDF 增益为光滑周期函数，控制输入未出现指定时间控制中常见的终端奇异增益现象。图\ref{fig:pdf_energy}显示了 \(R_h(t)\) 的等待--作用周期特征以及误差能量型指标的变化。图\ref{fig:norm}进一步给出误差范数，说明在扰动存在时位置误差范数和速度误差范数均维持在较小范围内。
 
 \begin{figure}[H]
 \centering
@@ -82,6 +89,32 @@ d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i).
 \label{fig:norm}
 \end{figure}
 
-程序运行得到终端误差 \(\|e(10)\|=1.045968\times10^{-2}\,\mathrm{rad}\)，\(\|\dot e(10)\|=7.832307\times10^{-3}\,\mathrm{rad/s}\)，最大关节力矩幅值为 \(\max_i|\tau_i|=0.508236\,\mathrm{N\,m}\)。仿真结果表明，在名义模型和有界扰动条件下，基于动力学补偿和光滑周期延迟反馈的控制器能够实现较高精度关节轨迹跟踪。
+表\ref{tab:sim_metrics}给出了四组算例的定量指标。其中 \(\mathrm{RMS}(e)\) 为所有关节、所有采样时刻位置误差的均方根值。无扰动时，PDF 控制在终端误差和 \(10^{-4}\,\mathrm{rad}\) 阈值意义下的收敛时间上均略优于无延迟 PD 控制；在有界扰动下，由于本文未额外引入扰动观测器或鲁棒补偿项，严格归零被扰动破坏，两个控制器均表现为小邻域跟踪。PDF 算例的终端速度误差略小，而终端位置误差与 PD 算例处于同一量级。
 
-需要强调的是，当前程序中的延迟增益采用工程化的平滑周期加权形式，用于验证控制结构的可运行性；若要获得严格的固定时间精确归零结果，需要按照文献\cite{zhouFixedtimeStabilizationLinear2022}离线计算满足零化性质的周期增益矩阵，并将仿真模型替换为完整自由漂浮动力学模型。因此，本文仿真结论应理解为对所提控制框架的数值验证，而不是对严格 PDF 零化增益的完整复现实验。
+\begin{table}[H]
+\centering
+\caption{不同控制算例的仿真指标}
+\label{tab:sim_metrics}
+\begin{tabular}{ccccc}
+\toprule
+控制器与工况 & \(\|e(10)\|\) & \(\|\dot e(10)\|\) & \(\mathrm{RMS}(e)\) & \(\max|\tau_i|\)\\
+ & rad & rad/s & rad & N\,m\\
+\midrule
+PD，无扰动 & \(4.028\times10^{-9}\) & \(1.802\times10^{-8}\) & \(8.622\times10^{-3}\) & 9.129\\
+PDF，无扰动 & \(3.290\times10^{-10}\) & \(1.145\times10^{-9}\) & \(8.622\times10^{-3}\) & 9.129\\
+PD，有扰动 & \(1.221\times10^{-2}\) & \(1.197\times10^{-2}\) & \(9.455\times10^{-3}\) & 9.129\\
+PDF，有扰动 & \(1.235\times10^{-2}\) & \(1.177\times10^{-2}\) & \(9.456\times10^{-3}\) & 9.129\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+图\ref{fig:comparison}给出了四组算例的误差范数对比。无扰动情况下，Gramian 型 PDF 增益能够在有限时间附近将误差压低到数值积分误差量级；扰动存在时，误差曲线不再精确归零，而是在扰动输入持续作用下保持有界。该现象与第5节的分析一致，即严格固定时间精确归零依赖理想动力学补偿、精确 PDF 增益和无残余扰动条件。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/controller_comparison.png}
+\caption{不同控制算例的误差范数对比}
+\label{fig:comparison}
+\end{figure}
+
+综上，仿真结果验证了所提控制结构的可运行性：在名义模型下，基于 Gramian 构造的光滑周期延迟反馈能够实现高精度跟踪；在有界扰动和模型近似条件下，闭环表现为实际意义下的小邻域跟踪。需要指出的是，本文使用的名义模型仍是对完整自由漂浮空间机械臂动力学的近似，因此投稿时应将仿真结论表述为数值验证与工程可行性展示，而不是对完整在轨系统的最终性能证明。
