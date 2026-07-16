@@ -6,6 +6,10 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage[backend=biber,style=gb7714-2015,sorting=none]{biblatex}
+
+\addbibresource{F:/liuch586/repo/profiles/backup/zotero/我的文库.bib}
+\addbibresource{refs/local.bib}
 
 \geometry{left=2.6cm,right=2.6cm,top=2.6cm,bottom=2.6cm}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
@@ -34,43 +38,6 @@
 \input{sections/06-simulation}
 \input{sections/07-conclusion}
 
-\begin{thebibliography}{9}
-
-\bibitem{yan}
-严宇新.
-面向在轨捕获的空间机械臂运动规划与控制方法研究[D].
-哈尔滨工业大学, 2025.
-
-\bibitem{wang2015}
-Wang M, Luo J, Walter U.
-Trajectory planning of free-floating space robot using Particle Swarm Optimization (PSO)[J].
-Acta Astronautica, 2015.
-DOI: 10.1016/j.actaastro.2015.03.008.
-
-\bibitem{yu2022}
-Yu X, Guo J, Zhang J.
-Time delay estimation-based reactionless augmented adaptive sliding mode control of a space manipulator's pregrasping a target[J].
-Robotica, 2022.
-DOI: 10.1017/S0263574722000108.
-
-\bibitem{xu2024}
-Xu S, Chen T, Wen H, Jin D.
-Predefined-Time Tracking Control of a Free-Flying Space Robot on SE(3)[J].
-IEEE Transactions on Aerospace and Electronic Systems, 2024.
-DOI: 10.1109/TAES.2024.3398600.
-
-\bibitem{li2025}
-Li J, Cao X, Liu M.
-Fixed-time fault-tolerant control for free-floating space manipulator with prescribed performance constraints and actuator faults[J].
-SCIENTIA SINICA Technologica, 2025.
-DOI: 10.1360/SST-2025-0065.
-
-\bibitem{zhou2022}
-Zhou B, Michiels W, Chen J.
-Fixed-Time Stabilization of Linear Delay Systems by Smooth Periodic Delayed Feedback[J].
-IEEE Transactions on Automatic Control, 2022, 67(2): 557--573.
-DOI: 10.1109/TAC.2021.3051262.
-
-\end{thebibliography}
+\printbibliography[title={参考文献}]
 
 \end{document}

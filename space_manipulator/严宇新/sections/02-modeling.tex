@@ -1,45 +1,92 @@
 \section{自由漂浮空间机械臂建模}
 
-捕获前空间机械臂工作于自由漂浮状态，基座不直接受控，机械臂关节运动会通过动量耦合引起基座位姿变化。设系统广义坐标为 \(q=[q_b^\top\ q_m^\top]^\top\)，其中 \(q_b\) 表示基座位姿或姿态变量，\(q_m\in\mathbb R^n\) 表示机械臂关节变量。系统动力学可写为分块形式
+捕获前空间机械臂工作于自由漂浮状态，基座不直接受控，机械臂关节运动会通过动量耦合引起基座位姿变化。设基座广义速度为 \(\dot x_b=[v_b^\top\ \omega_b^\top]^\top\in\mathbb R^6\)，机械臂关节变量为 \(q\in\mathbb R^n\)，系统总动能可写为
 \[
+T=\frac12
 \begin{bmatrix}
-M_{bb}(q) & M_{bm}(q)\\
-M_{mb}(q) & M_{mm}(q)
+\dot x_b^\top & \dot q^\top
 \end{bmatrix}
 \begin{bmatrix}
-\ddot q_b\\
-\ddot q_m
+H_b(q) & H_{bm}(q)\\
+H_{bm}^\top(q) & H_m(q)
+\end{bmatrix}
+\begin{bmatrix}
+\dot x_b\\
+\dot q
+\end{bmatrix},
+\]
+其中 \(H_b\) 为基座惯性张量，\(H_m\) 为固定基座机械臂惯性张量，\(H_{bm}\) 为基座与机械臂之间的耦合惯性张量。该类分块建模思想源于空间机械臂多体动力学和虚拟机械臂方法\cite{vafa1990}，也与严宇新论文中由自由漂浮空间机械臂系统总动能推导出的动力学模型一致\cite{yan}。
+
+由拉格朗日方程可得系统分块动力学
+\begin{equation}
+\begin{bmatrix}
+H_b & H_{bm}\\
+H_{bm}^\top & H_m
+\end{bmatrix}
+\begin{bmatrix}
+\ddot x_b\\
+\ddot q
 \end{bmatrix}
 +
 \begin{bmatrix}
-C_b(q,\dot q)\dot q\\
-C_m(q,\dot q)\dot q
+C_b & C_{bm}\\
+C_{bm}^\top & C_m
+\end{bmatrix}
+\begin{bmatrix}
+\dot x_b\\
+\dot q
 \end{bmatrix}
 =
 \begin{bmatrix}
 0\\
-\tau
-\end{bmatrix}.
-\]
-式中，\(\tau\in\mathbb R^n\) 为关节驱动力矩。由于捕获前基座不直接施加控制力矩，基座广义输入为零。
+\tau_m
+\end{bmatrix},
+\label{eq:full_ffsm_dynamics}
+\end{equation}
+其中 \(\tau_m\in\mathbb R^n\) 为关节驱动力矩。式 \eqref{eq:full_ffsm_dynamics} 的第一行输入为零，反映了捕获前基座不施加外力和外力矩的自由漂浮条件。
 
-若系统无外力、无外力矩，且初始总动量为零，则由动量守恒可得
-\[
-M_{bb}(q)\dot q_b+M_{bm}(q)\dot q_m=0,
-\]
-从而
-\[
-\dot q_b=-M_{bb}^{-1}(q)M_{bm}(q)\dot q_m .
-\]
-将该关系代入关节动力学，可得到捕获前自由漂浮空间机械臂的等效关节空间模型
+当系统初始线动量和角动量均为零时，动量守恒方程可写为
 \begin{equation}
-M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t),
+H_b(q)\dot x_b+H_{bm}(q)\dot q=0.
+\label{eq:momentum_constraint}
+\end{equation}
+若 \(H_b(q)\) 非奇异，则有
+\begin{equation}
+\dot x_b=-H_b^{-1}(q)H_{bm}(q)\dot q
+\triangleq J_{bm}(q)\dot q.
+\label{eq:base_joint_jacobian}
+\end{equation}
+该式说明基座速度不是独立可控变量，而是由关节速度通过基座--机械臂雅可比矩阵 \(J_{bm}\) 诱导产生。Umetani 和 Yoshida 最早系统提出用广义雅可比矩阵描述自由漂浮空间机械臂的末端速度关系\cite{umetani1989}；严宇新论文进一步给出基座角速度和线速度的分块表达式，并将其写成 \(J_{bm}=[J_{bm\nu}^\top\ J_{bm\omega}^\top]^\top\) 的形式\cite{yan}。
+
+末端速度由基座运动和机械臂关节运动共同决定。记 \(J_b(q)\) 为基座速度到末端速度的雅可比矩阵，\(J_m(q)\) 为固定基座情形下的机械臂雅可比矩阵，则
+\begin{equation}
+\dot x_e=J_b(q)\dot x_b+J_m(q)\dot q.
+\label{eq:end_velocity_common}
+\end{equation}
+将式 \eqref{eq:base_joint_jacobian} 代入式 \eqref{eq:end_velocity_common}，得到自由漂浮空间机械臂的广义雅可比关系
+\begin{equation}
+\dot x_e=\left[J_b(q)J_{bm}(q)+J_m(q)\right]\dot q
+\triangleq J_g(q)\dot q.
+\label{eq:generalized_jacobian}
+\end{equation}
+因此，\(J_g(q)\) 不仅依赖机械臂构型，还与基座姿态、连杆质量和惯性参数相关；当 \(J_g\) 接近奇异时，末端轨迹跟踪会受到关节速度放大和基座反作用耦合的共同影响。此类由自由漂浮耦合导致的可操作性退化和动态奇异问题在经典研究中已有系统讨论\cite{papadopoulos1993}。
+
+由式 \eqref{eq:momentum_constraint} 对时间求导并代入式 \eqref{eq:full_ffsm_dynamics}，可消去基座加速度，得到关于关节变量的等效动力学
+\begin{equation}
+H_g(q)\ddot q+C_g(q,\dot q)\dot q=\tau_m+d(t),
 \label{eq:joint_model}
 \end{equation}
-其中 \(M_e(q_m)=M_e^\top(q_m)>0\)，\(C_e(q_m,\dot q_m)\) 为等效科氏和离心项，\(d(t)\) 表示未建模动态、参数不确定性、环境扰动或执行器误差。该建模形式与严宇新论文中捕获前自由漂浮空间机械臂的动力学约化思想一致\cite{yan}。
-
-若任务由末端位姿给定，则末端速度可由广义雅可比矩阵表示为
+其中
+\begin{equation}
+H_g(q)=H_m(q)-H_{bm}^\top(q)H_b^{-1}(q)H_{bm}(q),
+\label{eq:generalized_inertia}
+\end{equation}
 \[
-\dot x_e=J_g(q_m)\dot q_m,
+C_g=C_m+C_{bm}^\top J_{bm}
+-H_{bm}^\top H_b^{-1}\left(C_bJ_{bm}+C_{bm}\right)
 \]
-其中 \(J_g(q_m)\) 同时包含机械臂关节运动和自由漂浮基座反作用运动对末端运动的影响。与固定基座机械臂相比，\(J_g(q_m)\) 不仅取决于机械臂构型，还隐含了基座速度由动量守恒关系诱导出的耦合项。因此，在执行末端轨迹跟踪时，必须同时关注广义雅可比矩阵的奇异性、基座姿态漂移和关节限位等因素。
+表示等效非线性项的一种常用整理形式，\(d(t)\) 用于汇总未建模动态、参数不确定性、环境扰动和执行器误差。为与后续控制设计记号一致，下文将 \(q\) 记作 \(q_m\)，并将 \(H_g,C_g\) 分别记作 \(M_e,C_e\)。于是式 \eqref{eq:joint_model} 可写为
+\[
+M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t).
+\]
+该模型保留了自由漂浮基座对关节动力学的等效影响，同时为计算力矩补偿和误差线性化提供了接口。
