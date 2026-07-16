@@ -1,17 +1,78 @@
 \section{控制算法设计}
 
+\subsection{预设时间扰动观测器设计}
+
+对等效关节空间模型 \eqref{eq:joint_model}，先设计扰动观测器来生成后续动力学补偿所需的 \(\hat d(t)\)。将关节速度记为
+\[
+\chi=\dot q_m .
+\]
+由 \eqref{eq:joint_model} 可得
+\begin{equation}
+\dot\chi=u_o+\Delta_a,
+\qquad
+u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
+\qquad
+\Delta_a=M_e^{-1}(q_m)d(t).
+\label{eq:observer_channel}
+\end{equation}
+其中 \(\Delta_a\) 为匹配到加速度通道的集总扰动。该形式与预设时间扰动观测器的标准受扰单积分器模型一致\cite{jiangPrescribedtimeDisturbanceObserver2024}。若能够在预设时间 \(T_o\) 内得到 \(\hat\Delta_a\)，则力矩扰动估计可由
+\begin{equation}
+\hat d(t)=M_e(q_m)\hat\Delta_a(t)
+\label{eq:dhat_from_observer}
+\end{equation}
+给出。
+
+设 \(z_1,z_2\in\mathbb R^n\) 分别为 \(\chi\) 和 \(\Delta_a\) 的估计值，取 \(\hat\Delta_a=z_2\)。定义复合误差
+\[
+\varepsilon_1=\chi-z_1-\bar\xi(t),
+\qquad
+\varepsilon_2=\Delta_a-z_2-\bar\xi(t),
+\]
+其中 \(\bar\xi(t)\in\mathbb R^n\) 为调节函数，满足有界光滑、单调衰减且 \(t\ge T_o\) 时 \(\bar\xi(t)=0\)。例如可取
+\[
+\bar\xi(t)=
+\begin{cases}
+\bar\xi_0(T_o-t)^2, & 0\le t<T_o,\\
+0, & t\ge T_o.
+\end{cases}
+\]
+记 \(\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha\)，并按元素作用于向量。参考文献\cite{jiangPrescribedtimeDisturbanceObserver2024}，构造如下预设时间扰动观测器：
+\begin{equation}
+\left\{
+\begin{aligned}
+\dot z_1
+&=z_2+\frac{\pi}{\eta T_c}
+\phi_1\left(\frac{\varepsilon_1}{\sigma}\right)
+-\dot{\bar\xi}(t)+\bar\xi(t)+u_o,\\
+\dot z_2
+&=\frac{\pi}{\sigma\eta T_c}
+\phi_2\left(\frac{\varepsilon_1}{\sigma}\right)
+-\dot{\bar\xi}(t),
+\end{aligned}
+\right.
+\label{eq:ptdo}
+\end{equation}
+其中 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，且
+\[
+\begin{aligned}
+\phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x),\\
+\phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).
+\end{aligned}
+\]
+在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界的条件下，观测误差 \(\chi-z_1\) 和 \(\Delta_a-z_2\) 可在 \(t=T_o\) 收敛到零。参数 \(T_o\) 和 \(T_c\) 决定观测收敛时间，但不宜选得过小；否则会带来较大的观测峰值和控制输入峰值。
+
 \subsection{动力学补偿与误差通道规范化}
 
-对等效关节空间模型 \eqref{eq:joint_model}，采用如下动力学补偿结构
+在获得 \(\hat d(t)\) 后，采用如下动力学补偿结构
 \begin{equation}
 \tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d(t),
 \label{eq:computed_torque}
 \end{equation}
-其中 \(v\) 为辅助加速度输入，\(\hat d(t)\) 为扰动补偿项。将式 \eqref{eq:computed_torque} 代入式 \eqref{eq:joint_model} 可得
+其中 \(v\) 为辅助加速度输入。将式 \eqref{eq:computed_torque} 代入式 \eqref{eq:joint_model} 可得
 \[
 M_e(q_m)(\ddot q_m-v)=d(t)-\hat d(t).
 \]
-在理想补偿情形下 \(\hat d(t)=d(t)\)，且 \(M_e(q_m)\) 正定可逆，因此
+当观测器已收敛并满足 \(\hat d(t)=d(t)\) 时，且 \(M_e(q_m)\) 正定可逆，因此
 \[
 \ddot q_m=v.
 \]
@@ -52,10 +113,10 @@ B=\begin{bmatrix}0\\I_n\end{bmatrix}.
 \[
 x(2(k+1)h)=\Delta(h)x(2kh),
 \]
-其中 monodromy matrix 为
+其中单周期状态转移矩阵（又称单值矩阵）为
 \begin{equation}
 \Delta(h)=\Phi(2h,0)+\int_h^{2h}\Phi(2h,s)G_0(s)\Phi(s-h,0)\,ds.
-\label{eq:monodromy}
+\label{eq:period_map}
 \end{equation}
 若 \(\Delta(h)\) 为幂零矩阵，即存在最小整数 \(\nu_0\ge1\) 使 \(\Delta^{\nu_0}(h)=0\)，则 \(x(t)=0,\ t\ge 2\nu_0h\)。特别地，若通过增益设计使 \(\Delta(h)=0\)，则系统可在一个完整周期后归零\cite{zhouFixedtimeStabilizationLinear2022}。
 
@@ -88,9 +149,9 @@ W_c(A_c,h)=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds,
 K_c(t)=R_h(t)B^\top e^{-A_c^\top t}W_c^{-1}(A_c,h)e^{A_c(h-t)}.
 \label{eq:kc_pdf}
 \end{equation}
-由于 \((A_c,B)\) 与 \((A,B)\) 同可控，且 \(R_h(t)\) 在后半周期内正定，\(W_c(A_c,h)\) 非奇异。将 \eqref{eq:kc_pdf} 代入 \eqref{eq:monodromy} 可使闭环的 monodromy matrix 满足 \(\Delta(h)=0\)，从而得到固定时间零化性质。式 \eqref{eq:kc_pdf} 也说明 PDF 增益可通过离线积分或线性 Lyapunov 微分方程计算，在线控制只需读取当前误差和历史误差。
+由于 \((A_c,B)\) 与 \((A,B)\) 同可控，且 \(R_h(t)\) 在后半周期内正定，\(W_c(A_c,h)\) 非奇异。将 \eqref{eq:kc_pdf} 代入 \eqref{eq:period_map} 可使闭环的单周期状态转移矩阵满足 \(\Delta(h)=0\)，从而得到固定时间零化性质。式 \eqref{eq:kc_pdf} 也说明 PDF 增益可通过离线积分或线性 Lyapunov 微分方程计算，在线控制只需读取当前误差和历史误差。
 
-结合式 \eqref{eq:computed_torque} 和式 \eqref{eq:pdf_error_input}，理想 PDF 关节力矩控制律可写为
+结合式 \eqref{eq:computed_torque} 和式 \eqref{eq:pdf_error_input}，PDF 关节力矩控制律可写为
 \begin{equation}
 \boxed{
 \tau
@@ -111,17 +172,24 @@ C_e(q_m,\dot q_m)\dot q_m
 \label{eq:final_controller}
 \end{equation}
 
+需要注意，若观测器与 PDF 控制器同时从 \(t=0\) 启动，则 \(0\le t<T_o\) 内的观测误差会作为残余扰动进入误差系统，严格 \(2h\) 零化结论不再直接成立。为保持理论闭环清晰，可采用两阶段时序：先在 \(T_o\) 内完成扰动观测，随后以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益 \(K_c(\vartheta)\)。此时理想条件下总预设收敛时间为
+\[
+T_{\mathrm{tot}}=T_o+2h .
+\]
+
+\subsection{实现说明与鲁棒项}
+
 在数值实现中，本文默认按照式 \eqref{eq:wc_matrix} 和式 \eqref{eq:kc_pdf} 离线计算 \(W_c(A_c,h)\) 与 \(K_c(t)\)，并在每个采样时刻按 \(2h\) 周期读取局部时间对应的 PDF 增益。为便于调参和消融对比，程序中还保留工程化平滑延迟项
 \[
 K_0=[-K_p\ -K_d],\qquad
 -K_c(t)=\rho R_h(t)[-K_{ph}\ -K_{dh}],
 \]
-其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该工程化形式仅保留 PDF 的等待--作用周期结构，并不等价于严格的 monodromy matrix 零化增益；论文中的理论固定时间结论仍以式 \eqref{eq:kc_pdf} 的 Gramian 型 PDF 增益为前提。
+其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该工程化形式仅保留 PDF 的等待--作用周期结构，并不等价于严格的单周期状态转移矩阵零化增益；论文中的理论固定时间结论仍以式 \eqref{eq:kc_pdf} 的 Gramian 型 PDF 增益为前提。
 
-若考虑有界扰动，可引入饱和型鲁棒补偿
+若存在观测误差或未建模高频扰动，也可进一步引入饱和型鲁棒补偿
 \[
-\hat d(t)=k_d\,\operatorname{sat}(s/\varphi),
+\tau_r=-k_d\,\operatorname{sat}(s/\varphi),
 \qquad
 s=\dot e+\Lambda e,
 \]
-其中 \(k_d>0\)、\(\varphi>0\)、\(\Lambda=\Lambda^\top>0\)。需要指出，加入非线性鲁棒补偿后，闭环不再是文献\cite{zhouFixedtimeStabilizationLinear2022}中的纯线性延迟系统，严格固定时间精确归零结论需要单独证明；工程上通常得到对扰动鲁棒的实际固定时间有界结果。
+并将 \(\tau_r\) 叠加到 \eqref{eq:final_controller}。其中 \(k_d>0\)、\(\varphi>0\)、\(\Lambda=\Lambda^\top>0\)。需要指出，加入非线性鲁棒补偿后，闭环不再是文献\cite{zhouFixedtimeStabilizationLinear2022}中的纯线性延迟系统，严格固定时间精确归零结论需要单独证明；工程上通常得到对扰动鲁棒的实际固定时间有界结果。

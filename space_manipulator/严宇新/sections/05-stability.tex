@@ -1,15 +1,22 @@
 \section{稳定性与性能分析}
 
-在假设1至假设4成立且 \(\hat d(t)=d(t)\) 的理想情形下，控制律 \eqref{eq:final_controller} 在误差坐标中诱导出闭环延迟系统 \eqref{eq:closed_delay_error}，使非线性关节动力学的固定时间跟踪问题等价为可控线性延迟系统的镇定问题。
+在假设1至假设5成立的理想情形下，先由预设时间扰动观测器获得 \(\hat d(t)=d(t)\)，再由控制律 \eqref{eq:final_controller} 在误差坐标中诱导出闭环延迟系统 \eqref{eq:closed_delay_error}，从而使非线性关节动力学的固定时间跟踪问题等价为可控线性延迟系统的镇定问题。
 
-\textbf{命题1：} 若 \(K_0\) 使 \(A_c=A+BK_0\)，且周期延迟增益 \(K_c(t)\) 按式 \eqref{eq:kc_pdf} 设计，则理想补偿条件下关节跟踪误差满足
+\textbf{命题1：} 若采用预设时间扰动观测器 \eqref{eq:ptdo}，且 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界，选择 \(T_c\le T_o\)，则在观测器收敛后有
 \[
-e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge 2h.
+\hat d(t)=d(t),\qquad \forall t\ge T_o .
 \]
 
-\textbf{证明：} 由动力学补偿 \eqref{eq:computed_torque} 和 \(\hat d(t)=d(t)\) 可得 \(\ddot q_m=v\)。代入 \(v=\ddot q_d+\nu\) 后有 \(\ddot e=\nu\)，因此误差系统可精确写为 \eqref{eq:linear_error}。再代入 PDF 误差输入 \eqref{eq:pdf_error_input}，得到闭环误差系统 \eqref{eq:closed_delay_error}。
+\textbf{证明：} 由预设时间扰动观测器的收敛性质可知，\(\hat\Delta_a(t)=\Delta_a(t)\) 对所有 \(t\ge T_o\) 成立。结合 \(\hat d=M_e(q_m)\hat\Delta_a\) 和 \(\Delta_a=M_e^{-1}(q_m)d(t)\)，可得 \(\hat d(t)=d(t)\)，命题成立。
 
-对 \eqref{eq:closed_delay_error}，有 \(F(t)=A_c\)、\(G(t)=-BK_c(t)\)。由于 \(R_h(t)=0,\ t\in[0,h]\)，所以 \(K_c(t)=0,\ t\in[0,h]\)，闭环系统属于文献\cite{zhouFixedtimeStabilizationLinear2022}中的周期延迟系统形式。其 monodromy matrix 为
+\textbf{命题2：} 在命题1成立后，若 \(K_0\) 使 \(A_c=A+BK_0\)，且周期延迟增益 \(K_c(t)\) 按式 \eqref{eq:kc_pdf} 设计，并从 \(t=T_o\) 起以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益，则理想模型条件下关节跟踪误差满足
+\[
+e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge T_o+2h.
+\]
+
+\textbf{证明：} 由命题1可知，当 \(t\ge T_o\) 时有 \(\hat d(t)=d(t)\)。因此，动力学补偿 \eqref{eq:computed_torque} 给出 \(\ddot q_m=v\)。代入 \(v=\ddot q_d+\nu\) 后有 \(\ddot e=\nu\)，误差系统可精确写为 \eqref{eq:linear_error}。再代入 PDF 误差输入 \eqref{eq:pdf_error_input}，得到闭环误差系统 \eqref{eq:closed_delay_error}。
+
+对 \eqref{eq:closed_delay_error}，有 \(F(t)=A_c\)、\(G(t)=-BK_c(t)\)。由于 \(R_h(t)=0,\ t\in[0,h]\)，所以 \(K_c(t)=0,\ t\in[0,h]\)，闭环系统属于文献\cite{zhouFixedtimeStabilizationLinear2022}中的周期延迟系统形式。其单周期状态转移矩阵为
 \[
 \Delta_K(h)=e^{2A_ch}
 -\int_h^{2h}e^{A_c(2h-s)}BR_h(s)B^\top e^{-A_c^\top s}W_c^{-1}(A_c,h)e^{A_c(h-s)}e^{A_c(s-h)}\,ds.
@@ -21,11 +28,11 @@ e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge 2h.
 -e^{2A_ch}W_c(A_c,h)W_c^{-1}(A_c,h)
 =0.
 \]
-因此，按 monodromy matrix 零化条件，\(z(t)=0,\ \forall t\ge2h\)。结合 \(z=[e^\top\ \dot e^\top]^\top\) 即得结论。
+因此，按单周期状态转移矩阵零化条件，局部时间 \(\vartheta\ge2h\) 后有 \(z(t)=0\)。由于 \(\vartheta=t-T_o\)，可得 \(z(t)=0,\ \forall t\ge T_o+2h\)。结合 \(z=[e^\top\ \dot e^\top]^\top\) 即得结论。
 
-\textbf{命题2：} 若采用一般周期延迟增益而不是式 \eqref{eq:kc_pdf}，且相应 monodromy matrix \(\Delta(h)\) 为幂零矩阵，即 \(\Delta^{\nu_0}(h)=0\)，则理想补偿条件下有
+\textbf{命题3：} 若采用一般周期延迟增益而不是式 \eqref{eq:kc_pdf}，且相应单周期状态转移矩阵 \(\Delta(h)\) 为幂零矩阵，即 \(\Delta^{\nu_0}(h)=0\)，则理想补偿条件下有
 \[
-e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge 2\nu_0h.
+e(t)=0,\qquad \dot e(t)=0,\qquad \forall t\ge T_o+2\nu_0h.
 \]
 
 该命题直接来自周期延迟系统的单周期状态映射 \(z(2(k+1)h)=\Delta(h)z(2kh)\)。若 \(\Delta^{\nu_0}(h)=0\)，则经过 \(\nu_0\) 个完整周期后 \(z\) 被有限步零化。式 \eqref{eq:kc_pdf} 是更强的特殊情形，对应 \(\nu_0=1\)。
@@ -48,4 +55,4 @@ J_g^\#=J_g^\top(J_gJ_g^\top+\lambda^2I)^{-1},
 \]
 其中 \(J_g^\#\) 为阻尼伪逆。之后由 \(\dot q_d\) 积分并求导得到 \(q_d,\ddot q_d\)，再代入控制律 \eqref{eq:final_controller}。若 \(J_g\) 接近奇异，则末端固定时间跟踪性能会受到影响，需要加入奇异规避、任务优先级规划或关节限位约束。
 
-综上，本文控制器的严格固定时间性质依赖三个环节：动力学补偿足够精确、PDF 增益满足线性延迟系统的 monodromy matrix 零化或幂零条件、历史误差项能够按设计延迟稳定获得。若其中任一环节存在误差，则应将结论表述为实际固定时间有界或小邻域收敛，而非精确归零。
+综上，本文控制器的严格固定时间性质依赖四个环节：扰动观测器在 \(T_o\) 内完成精确补偿、动力学补偿足够精确、PDF 增益满足线性延迟系统的单周期状态转移矩阵零化或幂零条件、历史误差项能够按设计延迟稳定获得。若其中任一环节存在误差，则应将结论表述为实际固定时间有界或小邻域收敛，而非精确归零。

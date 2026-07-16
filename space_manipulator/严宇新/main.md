@@ -264,7 +264,7 @@ z(t)=0,\qquad t\ge T.
 \tag{20}
 \]
 
-这一步是 PDF 理论的核心部分。严格设计时，需要根据 \((A,B)\)、延迟 \(h\) 和目标时间 \(T\) 离线求解周期增益，使闭环周期系统的 monodromy matrix 具有 nilpotent 性质；这正是 smooth periodic delayed feedback 实现固定时间镇定的关键机制 [6]。
+这一步是 PDF 理论的核心部分。严格设计时，需要根据 \((A,B)\)、延迟 \(h\) 和目标时间 \(T\) 离线求解周期增益，使闭环周期系统的单周期状态转移矩阵（单值矩阵）具有幂零性质；这正是 smooth periodic delayed feedback 实现固定时间镇定的关键机制 [6]。
 
 ### 4.2 机械臂动力学补偿层
 

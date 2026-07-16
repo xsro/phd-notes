@@ -7,9 +7,10 @@
 %   H_g(q) qdd + C_g(q,qd) qd = tau + d(t)
 %
 % Control:
-%   tau = H0(q) [qdd_d + nu] + C0(q,qd) qd
+%   tau = H0(q) [qdd_d + nu - dhat_a] + C0(q,qd) qd
 %   z(t) = [e(t); edot(t)]
 %   nu = K0 z(t) - Kc(t) z(t-h)
+%   dhat = H0(q) dhat_a
 %
 % Academic note:
 %   The exact H_g and C_g of the free-floating 7-DOF space manipulator
@@ -84,20 +85,34 @@ Kd_h = diag([3 3 3 2.5 2.5 2 2]);
 ctrl.engineering_Kh = [-Kp_h, -Kd_h];
 ctrl.engineering_gain = 1.0;
 
+% Prescribed-time disturbance observer for the equivalent acceleration
+% disturbance Delta_a = H^{-1} d. The observer is intentionally not too
+% aggressive to avoid peaking in the torque command.
+obs.enabled = false;
+obs.T_o = 1.0;                 % prescribed observation time [s]
+obs.T_c = 1.0;                 % observer internal convergence parameter [s]
+obs.eta = 0.3;
+obs.sigma = 0.4;
+obs.xi0 = zeros(cfg.n, 1);
+obs.use_two_stage_pdf = true;
+ctrl.observer = obs;
+
 %% -------------------- 5. Run cases --------------------------------------
-cases(1) = make_case("PD, nominal", "pd", false);
-cases(2) = make_case("PDF, nominal", "pdf_exact", false);
-cases(3) = make_case("PD, disturbed", "pd", true);
-cases(4) = make_case("PDF, disturbed", "pdf_exact", true);
+cases(1) = make_case("PD, nominal", "pd", false, false);
+cases(2) = make_case("PDF, nominal", "pdf_exact", false, false);
+cases(3) = make_case("PD, disturbed", "pd", true, false);
+cases(4) = make_case("PDF, disturbed", "pdf_exact", true, false);
+cases(5) = make_case("PDF+PTDO, disturbed", "pdf_exact", true, true);
 
 results = repmat(empty_result(), 1, numel(cases));
 for c = 1:numel(cases)
     results(c) = run_case(cases(c), cfg, ref, ctrl, P);
 end
 
-main_result = results(4);
+main_result = results(5);
 plot_results(main_result, ref, cfg.figure_dir, cfg.save_figures);
 plot_case_comparison(results, cfg.figure_dir, cfg.save_figures);
+plot_observer_results(main_result, cfg.figure_dir, cfg.save_figures);
 
 metrics = collect_metrics(results);
 if cfg.save_results
@@ -107,12 +122,12 @@ end
 %% -------------------- 6. Print summary ----------------------------------
 fprintf('\nSimulation summary\n');
 fprintf('Case                     ||e(T)|| [rad]   ||edot(T)|| [rad/s]   ');
-fprintf('max|tau| [N m]   t_settle_e [s]\n');
+fprintf('max|tau| [N m]   t_settle_e [s]   ||obs err(T)||\n');
 for c = 1:numel(results)
     m = results(c).metrics;
-    fprintf('%-24s %.6e       %.6e            %.6f        %.3f\n', ...
+    fprintf('%-24s %.6e       %.6e            %.6f        %.3f          %.6e\n', ...
         results(c).name, m.final_e_norm, m.final_edot_norm, ...
-        m.max_tau, m.settle_time_e);
+        m.max_tau, m.settle_time_e, m.final_obs_error_norm);
 end
 fprintf('PDF Gramian condition number: %.3e\n', ctrl.pdf.gramian_condition);
 if cfg.save_figures
@@ -233,16 +248,18 @@ function pdf = build_pdf_gain(K0, n, h)
     pdf.h = h;
 end
 
-function case_cfg = make_case(name, controller_mode, use_disturbance)
+function case_cfg = make_case(name, controller_mode, use_disturbance, use_observer)
     case_cfg.name = char(name);
     case_cfg.controller_mode = char(controller_mode);
     case_cfg.use_disturbance = use_disturbance;
+    case_cfg.use_observer = use_observer;
 end
 
 function out = empty_result()
     out.name = '';
     out.controller_mode = '';
     out.use_disturbance = false;
+    out.use_observer = false;
     out.t = [];
     out.q = [];
     out.dq = [];
@@ -252,6 +269,9 @@ function out = empty_result()
     out.edot = [];
     out.Rh = [];
     out.V = [];
+    out.delta_a = [];
+    out.delta_a_hat = [];
+    out.delta_a_error = [];
     out.metrics = struct();
 end
 
@@ -269,9 +289,13 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
     zlog = zeros(2*n, N);
     Rhlog = zeros(1, N);
     Vlog = zeros(1, N);
+    delta_a_log = zeros(n, N);
+    delta_a_hat_log = zeros(n, N);
+    delta_a_error_log = zeros(n, N);
 
     q(:,1) = cfg.q_init;
     dq(:,1) = cfg.dq_init;
+    obs_state = init_observer_state(n);
 
     for k = 1:N-1
         tk = cfg.t(k);
@@ -287,24 +311,48 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
             z_delay = zlog(:, 1);
         end
 
-        [nu, Rh] = auxiliary_acceleration(tk, z, z_delay, case_cfg.controller_mode, ctrl, cfg.h);
+        control_time = tk;
+        if case_cfg.use_observer && ctrl.observer.use_two_stage_pdf
+            control_time = max(tk - ctrl.observer.T_o, 0);
+        end
+
+        [nu, Rh] = auxiliary_acceleration(control_time, z, z_delay, ...
+            case_cfg.controller_mode, ctrl, cfg.h);
         Rhlog(k) = Rh;
 
         [H0, C0] = ffsm_dynamics_nominal(q(:,k), dq(:,k), P);
-        tau_cmd = H0*(ref.ddqd(:,k) + nu) + C0*dq(:,k);
-        tau_cmd = max(min(tau_cmd, cfg.tau_max), -cfg.tau_max);
-        tau(:,k) = tau_cmd;
-
         if case_cfg.use_disturbance
             d = disturbance_torque(tk, n);
         else
             d = zeros(n, 1);
         end
 
+        delta_a = H0 \ d;
+        delta_a_hat = zeros(n, 1);
+        if case_cfg.use_observer
+            delta_a_hat = obs_state.z2;
+        end
+
+        u_aux = ref.ddqd(:,k) + nu - delta_a_hat;
+        tau_cmd = H0*u_aux + C0*dq(:,k);
+        tau_cmd = max(min(tau_cmd, cfg.tau_max), -cfg.tau_max);
+        tau(:,k) = tau_cmd;
+
+        % Use the saturated input actually sent to the plant in the observer.
+        u_observer = H0 \ (tau_cmd - C0*dq(:,k));
+        if case_cfg.use_observer
+            obs_state = update_ptdo(obs_state, dq(:,k), u_observer, ...
+                tk, cfg.Ts, ctrl.observer);
+            delta_a_hat = obs_state.z2;
+        end
+
         ddq(:,k) = H0 \ (tau_cmd + d - C0*dq(:,k));
         dq(:,k+1) = dq(:,k) + cfg.Ts*ddq(:,k);
         q(:,k+1) = q(:,k) + cfg.Ts*dq(:,k+1);
         Vlog(k) = 0.5*(e(:,k).'*e(:,k) + edot(:,k).'*edot(:,k));
+        delta_a_log(:,k) = delta_a;
+        delta_a_hat_log(:,k) = delta_a_hat;
+        delta_a_error_log(:,k) = delta_a - delta_a_hat;
     end
 
     e(:,N) = q(:,N) - ref.qd(:,N);
@@ -314,11 +362,15 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
     Vlog(N) = 0.5*(e(:,N).'*e(:,N) + edot(:,N).'*edot(:,N));
     tau(:,N) = tau(:,N-1);
     ddq(:,N) = ddq(:,N-1);
+    delta_a_log(:,N) = delta_a_log(:,N-1);
+    delta_a_hat_log(:,N) = delta_a_hat_log(:,N-1);
+    delta_a_error_log(:,N) = delta_a_error_log(:,N-1);
 
     out = empty_result();
     out.name = case_cfg.name;
     out.controller_mode = case_cfg.controller_mode;
     out.use_disturbance = case_cfg.use_disturbance;
+    out.use_observer = case_cfg.use_observer;
     out.t = cfg.t;
     out.q = q;
     out.dq = dq;
@@ -328,7 +380,49 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
     out.edot = edot;
     out.Rh = Rhlog;
     out.V = Vlog;
-    out.metrics = compute_metrics(cfg.t, e, edot, tau);
+    out.delta_a = delta_a_log;
+    out.delta_a_hat = delta_a_hat_log;
+    out.delta_a_error = delta_a_error_log;
+    out.metrics = compute_metrics(cfg.t, e, edot, tau, delta_a_error_log);
+end
+
+function obs_state = init_observer_state(n)
+    obs_state.z1 = zeros(n, 1);
+    obs_state.z2 = zeros(n, 1);
+end
+
+function obs_state = update_ptdo(obs_state, chi, u_o, t, Ts, obs)
+% Prescribed-time disturbance observer for chi_dot = u_o + Delta_a.
+
+    [xi, xi_dot] = observer_regulation(t, obs);
+    eps1 = chi - obs_state.z1 - xi;
+    scaled_eps = eps1 ./ obs.sigma;
+    phi1 = signed_power(scaled_eps, 1 - obs.eta/2) + ...
+           signed_power(scaled_eps, 1 + obs.eta/2);
+    phi2 = signed_power(scaled_eps, 2 - obs.eta) + ...
+           signed_power(scaled_eps, 2 + obs.eta) + ...
+           obs.sigma * sign(scaled_eps);
+
+    z1_dot = obs_state.z2 + (pi/(obs.eta*obs.T_c))*phi1 - xi_dot + xi + u_o;
+    z2_dot = (pi/(obs.sigma*obs.eta*obs.T_c))*phi2 - xi_dot;
+
+    obs_state.z1 = obs_state.z1 + Ts*z1_dot;
+    obs_state.z2 = obs_state.z2 + Ts*z2_dot;
+end
+
+function [xi, xi_dot] = observer_regulation(t, obs)
+    if t < obs.T_o
+        remaining = obs.T_o - t;
+        xi = obs.xi0 .* (remaining^2);
+        xi_dot = -2 * obs.xi0 .* remaining;
+    else
+        xi = zeros(size(obs.xi0));
+        xi_dot = zeros(size(obs.xi0));
+    end
+end
+
+function y = signed_power(x, p)
+    y = sign(x) .* (abs(x) .^ p);
 end
 
 function [nu, Rh] = auxiliary_acceleration(t, z, z_delay, mode, ctrl, h)
@@ -410,9 +504,10 @@ function d = disturbance_torque(t, n)
     d = 0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i);
 end
 
-function metrics = compute_metrics(t, e, edot, tau)
+function metrics = compute_metrics(t, e, edot, tau, delta_a_error)
     e_norm = vecnorm(e, 2, 1);
     edot_norm = vecnorm(edot, 2, 1);
+    obs_error_norm = vecnorm(delta_a_error, 2, 1);
     metrics.final_e_norm = e_norm(end);
     metrics.final_edot_norm = edot_norm(end);
     metrics.max_e_norm = max(e_norm);
@@ -421,6 +516,9 @@ function metrics = compute_metrics(t, e, edot, tau)
     metrics.rms_edot = sqrt(mean(edot.^2, 'all'));
     metrics.max_tau = max(abs(tau(:)));
     metrics.settle_time_e = settling_time(t, e_norm, 1e-4);
+    metrics.final_obs_error_norm = obs_error_norm(end);
+    metrics.rms_obs_error = sqrt(mean(delta_a_error.^2, 'all'));
+    metrics.max_obs_error_norm = max(obs_error_norm);
 end
 
 function ts = settling_time(t, signal, threshold)
@@ -444,6 +542,8 @@ function metrics = collect_metrics(results)
         metrics(c).final_edot_norm = results(c).metrics.final_edot_norm;
         metrics(c).max_tau = results(c).metrics.max_tau;
         metrics(c).settle_time_e = results(c).metrics.settle_time_e;
+        metrics(c).final_obs_error_norm = results(c).metrics.final_obs_error_norm;
+        metrics(c).rms_obs_error = results(c).metrics.rms_obs_error;
     end
 end
 
@@ -577,6 +677,40 @@ function plot_case_comparison(results, figure_dir, save_figures)
     legend({results.name}, 'Location', 'northeast');
     title('Velocity error norm comparison');
     save_figure(gcf, figure_dir, 'controller_comparison', save_figures);
+end
+
+function plot_observer_results(result, figure_dir, save_figures)
+% Plot equivalent acceleration disturbance estimates for observer-enabled
+% cases.
+
+    if ~result.use_observer
+        return;
+    end
+
+    t = result.t;
+    n = size(result.delta_a, 1);
+
+    figure('Name','Prescribed-time disturbance observer','Color','w');
+    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
+
+    nexttile;
+    plot(t, result.delta_a, 'LineWidth', 1.0); hold on;
+    plot(t, result.delta_a_hat, '--', 'LineWidth', 1.0);
+    grid on;
+    xlabel('Time [s]');
+    ylabel('Delta_a and estimate');
+    title('Equivalent acceleration disturbance and estimates');
+    legend([arrayfun(@(i)sprintf('\\Delta_{a%d}', i), 1:n, 'UniformOutput', false), ...
+            arrayfun(@(i)sprintf('hat\\Delta_{a%d}', i), 1:n, 'UniformOutput', false)], ...
+           'Location', 'eastoutside');
+
+    nexttile;
+    semilogy(t, vecnorm(result.delta_a_error, 2, 1) + 1e-16, 'k', 'LineWidth', 1.4);
+    grid on;
+    xlabel('Time [s]');
+    ylabel('Observer error norm');
+    title('Observer error norm');
+    save_figure(gcf, figure_dir, 'disturbance_observer', save_figures);
 end
 
 function save_figure(fig, figure_dir, stem, save_figures)
