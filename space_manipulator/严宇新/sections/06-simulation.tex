@@ -61,26 +61,6 @@ d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i),
 \label{fig:joint_summary}
 \end{figure}
 
-表\ref{tab:sim_metrics}给出了五组算例的定量指标。其中 \(\mathrm{RMS}(e)\) 为所有关节、所有采样时刻位置误差的均方根值。无扰动时，PD 与 PDF 均可实现高精度跟踪，PDF 在终端误差上略低于 PD；在有界扰动下，未启用扰动观测器的 PD 和 PDF 控制均只能实现小邻域跟踪。加入 PTDO 后，PDF+PTDO 算例的终端位置误差降至 \(3.139\times10^{-5}\,\mathrm{rad}\)，终端速度误差降至 \(4.226\times10^{-4}\,\mathrm{rad/s}\)，且最大控制力矩未出现明显增加。
-
-\begin{table}[H]
-\centering
-\caption{不同控制算例的仿真指标}
-\label{tab:sim_metrics}
-\begin{tabular}{ccccc}
-\toprule
-控制器与工况 & \(\|e(10)\|\) & \(\|\dot e(10)\|\) & \(\mathrm{RMS}(e)\) & \(\max|\tau_i|\)\\
- & rad & rad/s & rad & N\,m\\
-\midrule
-PD，无扰动 & \(4.028\times10^{-9}\) & \(1.802\times10^{-8}\) & \(8.622\times10^{-3}\) & 9.129\\
-PDF，无扰动 & \(3.290\times10^{-10}\) & \(1.145\times10^{-9}\) & \(8.622\times10^{-3}\) & 9.129\\
-PD，有扰动 & \(1.221\times10^{-2}\) & \(1.197\times10^{-2}\) & \(9.455\times10^{-3}\) & 9.129\\
-PDF，有扰动 & \(1.235\times10^{-2}\) & \(1.177\times10^{-2}\) & \(9.456\times10^{-3}\) & 9.129\\
-PDF+PTDO，有扰动 & \(3.139\times10^{-5}\) & \(4.226\times10^{-4}\) & \(8.623\times10^{-3}\) & 9.129\\
-\bottomrule
-\end{tabular}
-\end{table}
-
 图\ref{fig:observer}给出了等效加速度扰动 \(\Delta_a\) 与观测值 \(\hat\Delta_a\) 的对比，以及观测误差范数 \(\|\tilde\Delta_a\|\)。由于观测器参数选取兼顾峰值抑制和控制输入平滑，扰动估计误差并未在离散数值仿真中达到严格零值，但终端观测误差范数为 \(8.489\times10^{-2}\)，均方根观测误差为 \(3.325\times10^{-2}\)。结合表\ref{tab:sim_metrics}可知，该观测补偿能够显著削弱扰动对误差通道的影响。
 
 \begin{figure}[H]
