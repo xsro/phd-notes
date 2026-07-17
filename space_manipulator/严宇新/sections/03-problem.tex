@@ -1,14 +1,12 @@
 \section{问题描述}
 
 给定足够光滑且有界的关节期望轨迹 \(q_d(t),\dot q_d(t),\ddot q_d(t)\)。定义关节位置误差和速度误差为
-\[
-e=q_m-q_d,\qquad \dot e=\dot q_m-\dot q_d,
-\]
+\(
+e=q_m-q_d\),\(\dot e=\dot q_m-\dot q_d\),
 并令误差状态
-\[
+\(
 z=[e^\top\ \dot e^\top]^\top\in\mathbb R^{2n}.
-\]
-
+\)
 本文目标是在捕获前自由漂浮条件下设计关节力矩 \(\tau\)，使闭环误差在预设时间 \(T\) 后满足
 \[
 e(t)=0,\qquad \dot e(t)=0,\qquad t\ge T,
