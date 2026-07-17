@@ -108,9 +108,9 @@ B=\begin{bmatrix}0\\I_n\end{bmatrix}.
 \label{eq:periodic_delay_general}
 \end{equation}
 其中 \(F(t),G(t)\) 为 \(2h\) 周期矩阵，且 \(G(t)=0\) 在每个周期的前半段 \([0,h]\) 成立。由分步法可知，系统在一个周期后的状态满足
-\[
+\(
 x(2(k+1)h)=\Delta(h)x(2kh),
-\]
+\)
 其中单周期状态转移矩阵（又称单值矩阵）为
 \begin{equation}
 \Delta(h)=\Phi(2h,0)+\int_h^{2h}\Phi(2h,s)G_0(s)\Phi(s-h,0)\,ds.
@@ -119,9 +119,9 @@ x(2(k+1)h)=\Delta(h)x(2kh),
 若 \(\Delta(h)\) 为幂零矩阵，即存在最小整数 \(\nu_0\ge1\) 使 \(\Delta^{\nu_0}(h)=0\)，则 \(x(t)=0,\ t\ge 2\nu_0h\)。特别地，若通过增益设计使 \(\Delta(h)=0\)，则系统可在一个完整周期后归零\cite{zhouFixedtimeStabilizationLinear2022}。
 
 为将该思想用于式 \eqref{eq:linear_error}，先取常值反馈 \(K_0\) 使
-\[
+\(
 A_c=A+BK_0
-\]
+\)
 成为期望的基准闭环矩阵，再引入周期延迟反馈
 \begin{equation}
 \nu(t)=K_0z(t)-K_c(t)z(t-h).
