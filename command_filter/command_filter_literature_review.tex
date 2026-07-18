@@ -1,0 +1,284 @@
+\documentclass[UTF8,a4paper,11pt,fontset=fandol]{ctexart}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\geometry{left=2.6cm,right=2.6cm,top=2.6cm,bottom=2.6cm}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+\title{指令滤波反步控制文献调研：核心思想与收敛条件}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+指令滤波反步控制（command filtered backstepping, CFB）是在经典反步法基础上发展起来的一类递归控制设计方法。其主要目标是避免高阶严格反馈系统中虚拟控制量反复求导导致的``复杂性爆炸''，同时通过滤波误差补偿机制保持闭环稳定性。Farrell 等在 IEEE TAC 2009 年论文中给出了非自适应指令滤波反步法的严格稳定性分析，证明补偿跟踪误差可指数收敛，且当滤波器带宽增大时，指令滤波反步闭环解可按 $O(1/\omega_n)$ 逼近标准反步解。此后，研究逐步扩展到有限时间、自适应、模糊/神经逼近、状态约束、故障容错、未知控制方向、渐近跟踪、预设时间以及事件触发编队控制等方向。本文基于本地 MCP 文献库中与 command filter 相关的论文，对指令滤波的核心思想、典型结构、滤波误差处理方式和收敛条件进行归纳。
+\end{abstract}
+
+\section{研究背景}
+
+经典反步法适用于严格反馈非线性系统
+\begin{equation}
+  \dot{x}_i=f_i(\bar{x}_i)+g_i(\bar{x}_i)x_{i+1},\quad i=1,\ldots,n-1,
+  \qquad
+  \dot{x}_n=f_n(x)+g_n(x)u ,
+\end{equation}
+其中 $\bar{x}_i=[x_1,\ldots,x_i]^\top$。在每一步递归设计中，状态 $x_{i+1}$ 被看作虚拟控制量。标准反步法需要计算虚拟控制 $\alpha_i$ 的时间导数，且系统阶数越高，控制律中涉及的高阶导数越复杂。Farrell 等指出，对于 $n$ 阶系统，传统实现可能需要参考信号及虚拟控制信号的多阶导数，这使得工程实现和稳定性证明都变得困难 \cite{Farrell2009CFB}。
+
+动态面控制（dynamic surface control, DSC）通过一阶滤波器缓解该问题，但早期 DSC 结果往往没有系统处理滤波误差对控制性能的影响。指令滤波反步法的关键改进在于：不仅用滤波器生成虚拟控制及其导数估计，还显式引入补偿信号，抵消滤波误差进入误差动力学后的影响 \cite{Farrell2009CFB,Yu2018FiniteTime}。
+
+\section{核心思想}
+
+\subsection{用滤波器替代解析求导}
+
+在 CFB 中，第 $i$ 步设计得到的虚拟控制 $\alpha_i$ 不再直接求导，而是作为命令滤波器输入。Farrell 等采用二阶线性滤波器
+\begin{equation}
+  \dot{z}_{i,1}=\omega_n z_{i,2},\qquad
+  \dot{z}_{i,2}=-2\zeta\omega_n z_{i,2}-\omega_n(z_{i,1}-\alpha_i),
+\end{equation}
+并令
+\begin{equation}
+  x_{i+1,c}=z_{i,1},\qquad \dot{x}_{i+1,c}=\omega_n z_{i,2}.
+\end{equation}
+该滤波器具有单位直流增益，$x_{i+1,c}$ 近似 $\alpha_i$，$\dot{x}_{i+1,c}$ 近似 $\dot{\alpha}_i$。当自然频率 $\omega_n$ 足够大时，滤波输出能较好跟踪虚拟控制命令；工程上通常要求滤波器带宽高于闭环递归误差动态的主要带宽。
+
+\subsection{滤波误差补偿}
+
+仅使用滤波器会引入误差 $x_{i+1,c}-\alpha_i$。为避免该误差破坏 Lyapunov 递推结构，CFB 定义跟踪误差
+\begin{equation}
+  \tilde{x}_i=x_i-x_{i,c},
+\end{equation}
+并引入补偿信号 $\xi_i$：
+\begin{equation}
+  \dot{\xi}_i=-k_i\xi_i+g_i(x_{i+1,c}-\alpha_i)+g_i\xi_{i+1},\quad
+  \xi_n=0,\quad \xi_i(0)=0 .
+\end{equation}
+进一步定义补偿误差
+\begin{equation}
+  v_i=\tilde{x}_i-\xi_i .
+\end{equation}
+通过这种构造，滤波误差项在 $v_i$ 的动力学中被消去，补偿误差系统恢复为与标准反步法相似的级联结构：
+\begin{align}
+  \dot{v}_1&=-k_1 v_1+g_1v_2,\\
+  \dot{v}_i&=-k_i v_i-g_{i-1}v_{i-1}+g_iv_{i+1},\quad i=2,\ldots,n-1,\\
+  \dot{v}_n&=-k_nv_n-g_{n-1}v_{n-1}.
+\end{align}
+因此，CFB 的本质不是简单低通滤波，而是``滤波器生成命令导数 + 补偿器重构误差动力学''。
+
+\section{基本收敛条件}
+
+\subsection{Farrell 等的指数收敛结论}
+
+Farrell 等 \cite{Farrell2009CFB} 对已知严格反馈系统提出如下典型假设：
+\begin{enumerate}
+  \item 控制增益不退化：存在 $g_0>0$，使得 $|g_i(\bar{x}_i)|\ge g_0$。
+  \item $f_i,g_i$ 及其一阶偏导在任意紧集上连续有界，从而局部 Lipschitz。
+  \item 参考信号 $x_d(t)$ 及 $\dot{x}_d(t)$ 连续、有界且可用。
+  \item 递归反馈增益满足 $k_i>0$；二阶命令滤波器满足 $\omega_n>0$、$\zeta\in(0,1]$。
+\end{enumerate}
+
+取 Lyapunov 函数
+\begin{equation}
+  V=\frac{1}{2}\sum_{i=1}^{n}v_i^2 .
+\end{equation}
+沿补偿误差动力学有
+\begin{equation}
+  \dot{V}\le -\underline{k}\|v\|^2=-2\underline{k}V,
+  \qquad
+  \underline{k}=\min_i k_i .
+\end{equation}
+因此 $v_i\in L_2\cap L_\infty$，且 $v_i(t)$ 指数收敛到零。由于 $v_n=\tilde{x}_n$，末级跟踪误差也指数收敛。
+
+更进一步，令 $\epsilon=1/\omega_n$。在满足标准反步法所需更高阶光滑性和有界参考导数的条件下，Tikhonov 奇异摄动理论可证明
+\begin{equation}
+  \tilde{x}(t,\epsilon)-\bar{x}(t)=O(\epsilon),\qquad
+  z_{i,1}(t,\epsilon)-\bar{\alpha}_i(t)=O(\epsilon),\qquad
+  z_{i,2}(t,\epsilon)-\dot{\bar{\alpha}}_i(t)=O(\epsilon),
+\end{equation}
+其中 $\bar{x}$ 和 $\bar{\alpha}_i$ 是标准反步法对应的误差和虚拟控制。该结果说明：滤波器带宽越高，CFB 与标准反步法的闭环响应越接近。但实际设计中，过高带宽会放大噪声并增加控制输入峰值，因此 $\omega_n$ 需要在滤波精度、噪声敏感性和执行器约束之间折中。
+
+\subsection{有限时间收敛条件}
+
+Yu、Shi 和 Zhao 将传统线性命令滤波器替换为 Levant 微分器形式的有限时间滤波器 \cite{Yu2018FiniteTime}：
+\begin{align}
+  \dot{\varphi}_{i,1}&=\nu_{i,1},\\
+  \nu_{i,1}&=-r_{i,1}|\varphi_{i,1}-\alpha_i|^{1/2}\operatorname{sgn}(\varphi_{i,1}-\alpha_i)+\varphi_{i,2},\\
+  \dot{\varphi}_{i,2}&=-r_{i,2}\operatorname{sgn}(\varphi_{i,2}-\nu_{i,1}).
+\end{align}
+在输入无噪声时，滤波输出可在有限时间内满足 $\varphi_{i,1}=\alpha_i$、$\nu_{i,1}=\dot{\alpha}_i$；有界噪声下，误差进入一个由噪声上界决定的小邻域。
+
+该类方法通常构造非 Lipschitz 形式的虚拟控制和补偿器，使 Lyapunov 导数满足
+\begin{equation}
+  \dot{V}\le -aV-bV^{\frac{1+\gamma}{2}}+c,\qquad 0<\gamma<1 ,
+\end{equation}
+其中
+\begin{equation}
+  a=\min_i(2k_i-l_i),\qquad
+  b=2^{(1+\gamma)/2}\min_i s_i,\qquad
+  c=\sum_{i=1}^{n}\frac{l_i}{2}.
+\end{equation}
+基本收敛条件是
+\begin{equation}
+  2k_i-l_i>0,\qquad s_i>0,\qquad 0<\gamma<1 .
+\end{equation}
+此时补偿误差和跟踪误差在有限时间内进入残差集。残差半径可通过增大 $k_i$ 和 $s_i$ 缩小，但 $l_i$ 既能加快补偿器收敛，又会增大残差项 $c$ 并减小 $a$，因此需要协同整定。
+
+在编队控制或水下航行器应用中，若存在未知控制方向，还需引入 Nussbaum 增益。Gao 和 Guo 将 Nussbaum 技术与有限时间 CFB 结合，用于 AUV 编队跟踪，收敛结论通常表现为：所有闭环信号一致有界，编队误差在有限时间内进入任意小邻域 \cite{Gao2020AUV}。
+
+\subsection{自适应与渐近跟踪条件}
+
+在不确定非线性系统中，CFB 常与自适应律、模糊系统或神经网络逼近结合。Zheng 和 Yang 使用命令滤波与通用逼近器处理未建模动态和外部扰动 \cite{Zheng2020Universal}；Ling、Wang 和 Liu 将模糊逼近用于柔性关节机器人，并通过误差补偿机制降低滤波误差影响 \cite{Ling2020Fuzzy}。
+
+Li 针对含未知时变参数和扰动的严格反馈系统研究了命令滤波自适应渐近跟踪 \cite{Li2022Asymptotic}。其典型系统为
+\begin{equation}
+  \dot{x}_i=g_i(\bar{x}_i)x_{i+1}+\theta_i^\top(t)\phi_i(\bar{x}_i)+d_i(t).
+\end{equation}
+该工作采用一阶命令滤波器
+\begin{equation}
+  \varepsilon_i\dot{\bar{\alpha}}_i+\bar{\alpha}_i=\alpha_{i-1},\qquad
+  \bar{\alpha}_i(0)=\alpha_{i-1}(0),
+\end{equation}
+并设计含正可积函数 $\sigma_i(t)$ 的补偿器和自适应律。其收敛分析的要点是：
+\begin{enumerate}
+  \item 虚拟控制增益 $g_i$ 有正下界，可用于构造加权 Lyapunov 函数。
+  \item 时变参数和外部扰动有界，但不要求慢时变或持久激励。
+  \item $\sigma_i(t)>0$ 且可积，用于在保证鲁棒补偿的同时使残差项可积。
+  \item Lyapunov 函数包含补偿误差和未知界估计误差，从而证明闭环所有信号有界，且跟踪误差渐近趋于零。
+\end{enumerate}
+这一方向的重要意义在于：传统 CFB 结果多给出一致最终有界或小邻域收敛，而 Li 的结果进一步追求在不确定、时变扰动条件下的渐近跟踪。
+
+\subsection{预设时间收敛条件}
+
+预设时间控制要求收敛时间由设计者直接指定，而不是依赖初值或复杂参数组合。Sui、Chen 和 Tong 提出基于非线性命令滤波器的预设时间自适应反步控制 \cite{Sui2024Predefined}。其核心稳定性判据为：若存在正定径向无界 Lyapunov 函数 $V$ 满足
+\begin{equation}
+  \dot{V}\le
+  -\frac{3\pi}{2\eta T_d}
+  \left(V^{1+\eta/2}+V^{1-\eta/2}\right)+\Delta,
+  \qquad 0<\eta<1,\quad T_d>0,
+\end{equation}
+则系统实际预设时间稳定，且当 $t\ge T_d$ 时进入集合
+\begin{equation}
+  \Omega=\left\{x:V(x)\le \frac{\eta T_d\Delta}{\pi}\right\}.
+\end{equation}
+若 $\Delta=0$，可得到严格预设时间稳定；若存在扰动和参数不确定性，$\Delta>0$，则只能保证进入零点附近的小邻域。该文的非线性命令滤波器通过 $\tanh(\cdot)$ 平滑符号项，避免传统终端滑模或有限时间反步中可能出现的奇异项和抖振。
+
+\section{典型扩展方向}
+
+\begin{table}[htbp]
+\centering
+\caption{指令滤波反步控制的代表性研究脉络}
+\begin{tabular}{p{3.1cm}p{4.4cm}p{5.4cm}}
+\toprule
+方向 & 代表文献 & 主要结论 \\
+\midrule
+基础 CFB & Farrell 等 \cite{Farrell2009CFB} & 补偿误差指数收敛；滤波解以 $O(1/\omega_n)$ 逼近标准反步解。\\
+有限时间 CFB & Yu 等 \cite{Yu2018FiniteTime} & 使用 Levant 有限时间滤波器和非 Lipschitz 反馈，使误差有限时间进入残差集。\\
+故障容错 & Li \cite{Li2019FTC} & 结合命令滤波、自适应和故障参数界估计，处理执行器失效并保持有限时间稳定。\\
+状态约束 & Yu 等 \cite{Yu2019Barrier} & 将障碍 Lyapunov 函数、观测器和 CFB 结合，保证全状态约束不被违反。\\
+模糊/神经逼近 & Ling 等 \cite{Ling2020Fuzzy}，Zheng 和 Yang \cite{Zheng2020Universal} & 用模糊系统或神经网络逼近未知非线性，同时用命令滤波降低反步求导复杂度。\\
+未知控制方向 & Gao 和 Guo \cite{Gao2020AUV} & 引入 Nussbaum 增益处理输入方向未知，保证编队误差有限时间收敛到小邻域。\\
+渐近跟踪 & Li \cite{Li2022Asymptotic} & 在未知时变参数和扰动下，通过正可积函数和自适应律证明跟踪误差渐近趋零。\\
+预设/固定时间 & Sui 等 \cite{Sui2024Predefined}，Liu 等 \cite{Liu2026USV} & 将收敛时间显式纳入控制律或滤波器设计，实现实际预设时间或固定时间性能。\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{参数选取与工程可实现性问题}
+
+尽管指令滤波反步控制在理论上能够避免虚拟控制量反复求导，但滤波参数和补偿参数的选取并不是一个完全独立于系统运行状态的静态问题。以 Li 的渐近跟踪结果为例，其一阶命令滤波器为
+\begin{equation}
+  \varepsilon_i\dot{\bar{\alpha}}_i+\bar{\alpha}_i=\alpha_{i-1},
+  \qquad i=2,\ldots,n ,
+\end{equation}
+其中 $\varepsilon_i>0$ 是滤波时间常数，对应的滤波带宽可近似理解为 $\omega_{f,i}\approx 1/\varepsilon_i$。较小的 $\varepsilon_i$ 能提高滤波带宽，使 $\bar{\alpha}_i$ 更快跟踪虚拟控制输入，但也会提高对噪声和快速变化信号的敏感性，并可能导致控制输入幅值或变化率增大。
+
+Li 的稳定性证明并未给出 $\varepsilon_i$ 的显式闭式设计公式，而是要求滤波误差满足有界条件
+\begin{equation}
+  \|\bar{\alpha}_{i+1}-\alpha_i\|\le \tau_i ,
+\end{equation}
+并通过补偿增益选择
+\begin{equation}
+  l_i>\tau_i
+\end{equation}
+来保证补偿信号 $\xi_i$ 渐近收敛。由于虚拟控制 $\alpha_i$ 通常是系统状态、参考信号、补偿误差和自适应参数的函数，误差界 $\tau_i$ 的大小会随闭环运行轨迹、参考轨迹频率和不确定项大小而变化。因此，滤波参数的合理取值具有闭环轨迹依赖性：理论上需要依赖闭环信号有界性和虚拟控制信号变化速率的估计，工程上则通常需要结合工作区域、执行器带宽、采样频率、噪声水平和仿真结果进行整定。
+
+这一点也暴露出现有指令滤波方法的工程局限。过小的 $\varepsilon_i$ 虽可减小滤波误差，却可能放大测量噪声并激发未建模高频动态；过大的 $l_i$ 虽能增强滤波误差补偿，却会增加控制输入幅值和执行器负担；较大的反馈增益 $k_i$ 和自适应增益 $\gamma_i$ 可改善暂态性能，但同样可能带来控制饱和和输入速率过大的问题。因此，此类理论结果中的渐近收敛性并不自动等价于工程可实现性。实际应用中，指令滤波反步控制通常还需要配合输入饱和处理、速率约束、噪声鲁棒滤波、带宽限制和半实物仿真验证，才能形成可部署的控制方案。
+
+\section{综合评价}
+
+指令滤波的核心贡献可以概括为三点。第一，它将标准反步法中的解析求导问题转化为滤波器状态生成问题，显著降低高阶系统控制律实现复杂度。第二，它通过补偿信号显式处理滤波误差，使 Lyapunov 递推结构得以保留。第三，它提供了可与自适应、鲁棒、模糊/神经逼近、有限时间、预设时间和约束控制等工具组合的模块化设计框架。
+
+从收敛条件看，基础 CFB 依赖非退化控制增益、局部 Lipschitz 条件、有界参考信号、正反馈增益和 Hurwitz 滤波器；其主要结论是补偿误差指数收敛以及滤波近似误差随带宽增加而降低。有限时间和预设时间 CFB 则进一步要求 Lyapunov 导数中出现 $V^\alpha$、$0<\alpha<1$ 或 $V^{1\pm\eta/2}$ 类型的非线性耗散项，并通过额外参数控制残差集大小和收敛时间。自适应 CFB 的关键难点在于未知参数、扰动和滤波误差耦合，需要通过参数界估计、鲁棒项、正可积函数或逼近器保证所有信号有界，并在更强设计下实现渐近跟踪。
+
+仍需注意的是，滤波器带宽并非越大越好。高带宽可减小 $O(1/\omega_n)$ 滤波误差，但会提高噪声敏感性和控制输入变化率；有限时间或预设时间设计虽然提升响应速度，但常引入更大控制幅值、参数整定复杂性以及残差集与鲁棒项之间的折中。因此，后续研究可进一步关注带宽自适应整定、执行器饱和/速率约束下的可实现性、噪声鲁棒滤波误差界，以及面向多智能体系统的分布式指令滤波稳定性分析。
+
+\begin{thebibliography}{99}
+
+\bibitem{Farrell2009CFB}
+J. A. Farrell, M. Polycarpou, M. Sharma, and W. Dong,
+``Command filtered backstepping,''
+\emph{IEEE Transactions on Automatic Control}, 2009.
+doi: 10.1109/TAC.2009.2015562.
+
+\bibitem{Yu2018FiniteTime}
+J. Yu, P. Shi, and L. Zhao,
+``Finite-time command filtered backstepping control for a class of nonlinear systems,''
+\emph{Automatica}, 2018.
+doi: 10.1016/j.automatica.2018.03.033.
+
+\bibitem{Li2019FTC}
+Y.-X. Li,
+``Finite time command filtered adaptive fault tolerant control for a class of uncertain nonlinear systems,''
+\emph{Automatica}, 2019.
+doi: 10.1016/j.automatica.2019.04.022.
+
+\bibitem{Yu2019Barrier}
+J. Yu, L. Zhao, H. Yu, and C. Lin,
+``Barrier Lyapunov functions-based command filtered output feedback control for full-state constrained nonlinear systems,''
+\emph{Automatica}, 2019.
+doi: 10.1016/j.automatica.2019.03.022.
+
+\bibitem{Ling2020Fuzzy}
+S. Ling, H. Wang, and P. X. Liu,
+``Adaptive fuzzy tracking control of flexible-joint robots based on command filtering,''
+\emph{IEEE Transactions on Industrial Electronics}, 2020.
+doi: 10.1109/TIE.2019.2920599.
+
+\bibitem{Zheng2020Universal}
+X. Zheng and X. Yang,
+``Command filter and universal approximator based backstepping control design for strict-feedback nonlinear systems with uncertainty,''
+\emph{IEEE Transactions on Automatic Control}, 2020.
+doi: 10.1109/TAC.2019.2929067.
+
+\bibitem{Gao2020AUV}
+Z. Gao and G. Guo,
+``Command filtered finite-time formation tracking control of AUVs with unknown control directions,''
+\emph{IET Control Theory and Applications}, 2020.
+doi: 10.1049/iet-cta.2019.0537.
+
+\bibitem{Li2022Asymptotic}
+Y.-X. Li,
+``Command filter adaptive asymptotic tracking of uncertain nonlinear systems with time-varying parameters and disturbances,''
+\emph{IEEE Transactions on Automatic Control}, 2022.
+doi: 10.1109/TAC.2021.3089626.
+
+\bibitem{Sui2024Predefined}
+S. Sui, C. L. P. Chen, and S. Tong,
+``Command filter-based predefined time adaptive control for nonlinear systems,''
+\emph{IEEE Transactions on Automatic Control}, 2024.
+doi: 10.1109/TAC.2024.3399998.
+
+\bibitem{Liu2026USV}
+X. Liu, Y. Wang, G. Wen, and C. Luo,
+``Event-based formation control of underactuated USVs: A fixed-time command filter approach,''
+\emph{IEEE Transactions on Automatic Control}, 2026.
+doi: 10.1109/TAC.2026.3712690.
+
+\end{thebibliography}
+
+\end{document}
