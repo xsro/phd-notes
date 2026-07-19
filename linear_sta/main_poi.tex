@@ -1,0 +1,1389 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{booktabs,longtable,array}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\geometry{left=2.5cm,right=2.5cm,top=2.7cm,bottom=2.7cm}
+\setlist{itemsep=0.25em,topsep=0.4em}
+\allowdisplaybreaks[3]
+
+\newtheorem{assumption}{假设}
+\newtheorem{lemma}{引理}
+\newtheorem{theorem}{定理}
+\newtheorem{corollary}{推论}
+\newtheorem{remark}{说明}
+\renewcommand{\proofname}{证明}
+
+\DeclareMathOperator{\col}{col}
+\DeclareMathOperator{\diag}{diag}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\ipow}[2]{\left\lfloor #1\right\rceil^{#2}}
+\newcommand{\cH}{\mathcal H}
+\newcommand{\Ap}{\mathcal A_p}
+\newcommand{\Av}{\mathcal A_v}
+
+\definecolor{chenblue}{RGB}{31,78,121}
+\definecolor{morenogreen}{RGB}{46,125,50}
+\definecolor{cwred}{RGB}{170,45,45}
+\definecolor{auditgray}{RGB}{80,80,80}
+
+\newtcolorbox{chenbox}{
+  enhanced,breakable,colback=blue!3,colframe=chenblue,
+  title={【陈伟乐原文设计】},fonttitle=\bfseries}
+\newtcolorbox{morenobox}{
+  enhanced,breakable,colback=green!3,colframe=morenogreen,
+  title={【Moreno 原文设计】},fonttitle=\bfseries}
+\newtcolorbox{cwbox}{
+  enhanced,breakable,colback=red!2,colframe=cwred,
+  title={【本文针对 CW 的新推导】},fonttitle=\bfseries}
+\newtcolorbox{auditbox}{
+  enhanced,breakable,colback=black!2,colframe=auditgray,
+  title={【核验边界与注意事项】},fonttitle=\bfseries}
+
+\title{CW 系统下严格仅相对位置测量的\\[0.3em]
+分布式状态观测与自组织合围控制\\[0.3em]
+逐步推导、来源标记与证明核验稿}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档研究在 Clohessy--Wiltshire（CW）相对动力学下，能否在不测量相对速度、不接收邻居控制输入 $u_j$ 的严格信息约束下，利用相对位置构造分布式观测器，并进一步接入安全连通自组织合围控制器。文档首先逐项核验信息结构，然后把陈伟乐等人的分布式有限时间微分器所采用的“图残差、逆映射、积分型 Lyapunov 函数”作为网络分析骨架，把 Moreno 的广义超螺旋算法中的线性校正映射作为局部非线性结构，并单独推导 CW 矩阵项产生的耦合上界。在此基础上，本文重新推导观测器与原合围控制器之间的双通道补偿项，修正估计质心降阶系统，并用最大安全连通区间消除观测边可用性与边保持性之间的循环论证。所得结论是一个充分条件定理：在无向连通且至少一个节点可测目标相对位置、扰动幅值有界、观测器增益满足显式不等式以及势函数满足屏障条件时，所有智能体的位置和速度估计误差渐近收敛，初始边和安全距离得到保持，目标到智能体位置凸包的距离渐近趋于零。
+\end{abstract}
+
+\tableofcontents
+
+\section{先给出结论及来源边界}
+
+\subsection{最终结论}
+
+严格仅相对位置测量的 CW 状态估计问题\textbf{可以做}，但不能直接照搬双积分系统的齐次有限时间证明。本文采用的观测器为
+\begin{equation}
+\begin{aligned}
+  \dot{\hat p}_{i0}
+  &=\hat v_{i0}-k_1\Phi_1(\zeta_i),\\
+  \dot{\hat v}_{i0}
+  &=A_p\hat p_{i0}+A_v\hat v_{i0}+u_i-k_2\Phi_2(\zeta_i),
+\end{aligned}
+\label{eq:observer-preview}
+\end{equation}
+其中 $\zeta_i$ 只由允许的相对位置和观测器内部状态构成。映射 $\Phi_1$ 中包含线性校正项，从而可以对 CW 项建立全局二次估计。
+
+得到估计值后也\textbf{可以接入原合围控制器}，但原补偿项必须改为
+\begin{equation}
+ \Gamma_i=\ell_2k_1\Phi_1(\zeta_i)+k_2\Phi_2(\zeta_i),
+\end{equation}
+并且原齐次估计质心方程必须改写成受
+$N^{-1}\sum_i k_1\Phi_1(\zeta_i)\to0$ 驱动的 Hurwitz 系统。
+在本文给出的附加条件下，最终可同时得到全体相对位置、相对速度估计
+误差渐近收敛以及目标渐近进入智能体位置凸包。
+
+\begin{auditbox}
+本文不声称陈伟乐等人或 Moreno 已经证明了式 \eqref{eq:observer-preview} 对 CW 网络成立。两篇原论文分别提供了不同的设计部件；把这些部件组合并处理 $A_pE_p+A_vE_v$ 是本文的新推导。本文也不把数值搜索得到的常数当成严格证明。
+\end{auditbox}
+
+\subsection{来源对照表}
+
+\begin{longtable}{p{0.26\textwidth}p{0.31\textwidth}p{0.35\textwidth}}
+\toprule
+内容 & 来源 & 本文如何使用 \\
+\midrule
+\endfirsthead
+\toprule
+内容 & 来源 & 本文如何使用 \\
+\midrule
+\endhead
+图残差 $y=(L+B)e$ & 陈伟乐等人 \cite{Chen2024} & 改写为目标相对位置误差残差 $y=\cH E_p$。\\
+逆映射下限与积分型 $V_1$ & 陈伟乐等人 \cite{Chen2024} & 将 $\ipow{v}{2}$ 推广成 $a=\Phi_1^{-1}(v)$。\\
+标准超螺旋两层结构 & 陈伟乐等人 \cite{Chen2024} & 保留“第一层连续注入、第二层符号注入”的结构。\\
+带线性项的 $\phi_1$、$\phi_2$ & Moreno \cite{Moreno2009} & 原样采用函数结构，但保留一般的 $\mu_1>0$。\\
+$\phi_2=\phi_1'\phi_1$ & Moreno \cite{Moreno2009} & 用于确定第二层校正项，避免任意添加线性阻尼。\\
+Moreno 的 ALE 二次型证明 & Moreno \cite{Moreno2009} & 仅作为函数结构的理论依据；本文网络证明不直接照搬该二次型。\\
+CW 耦合项估计 & 本文新推导 & 用强单调界、Young 不等式将其吸收到耗散项。\\
+常数 $C_0$ 的上确界构造 & 本文新推导 & 处理网络积分函数中的非线性耦合和有界扰动。\\
+最终网络渐近收敛定理 & 本文新推导 & 是组合后的充分条件，不属于任一原论文。\\
+安全连通势函数与积分滑模骨架 & 原 \texttt{main.tex} 控制器 & 保留人工势函数、积分变量和估计滑模变量的结构。\\
+双通道补偿 $\Gamma_i$ & 本文新推导 & 取代只适用于旧速度通道观测器的单一补偿 $\chi_i$。\\
+修正后的质心降阶系统 & 本文新推导 & 保留 $\dot{\hat p}_{i0}=\hat v_{i0}-\nu_{p,i}$，得到受渐消输入驱动的 Hurwitz 系统。\\
+观测--控制联合合围定理 & 本文新推导 & 证明估计收敛、边保持、避碰和渐近合围。\\
+\bottomrule
+\end{longtable}
+
+\section{系统、图和严格信息结构}
+
+\subsection{CW 相对动力学}
+
+考虑 $N$ 个卫星，节点集合为 $\mathcal N=\{1,\ldots,N\}$。目标记为节点 $0$。定义
+\begin{equation}
+  p_{i0}=p_i-p_0,\qquad v_{i0}=v_i-v_0.
+\end{equation}
+CW 相对动力学写成
+\begin{equation}
+\begin{aligned}
+  \dot p_{i0}&=v_{i0},\\
+  \dot v_{i0}&=A_pp_{i0}+A_vv_{i0}+u_i-\delta_i,
+\end{aligned}
+\label{eq:cw-agent}
+\end{equation}
+其中典型 CW 矩阵为
+\begin{equation}
+ A_p=\begin{bmatrix}3n^2&0&0\\0&0&0\\0&0&-n^2\end{bmatrix},\qquad
+ A_v=\begin{bmatrix}0&2n&0\\-2n&0&0\\0&0&0\end{bmatrix}.
+\end{equation}
+$u_i\in\R^3$ 是节点 $i$ 自己已知的控制输入；$\delta_i\in\R^3$ 汇总目标机动、外扰和建模误差。
+
+\begin{assumption}[扰动幅值有界]
+每个 $\delta_i$ 可测度，存在已知常数 $\bar\delta>0$，使得
+\begin{equation}
+  \norm{\delta_i(t)}_\infty\le \bar\delta,
+  \qquad i\in\mathcal N, t\ge0.
+\label{eq:delta-bound}
+\end{equation}
+若同时需要讨论解的正则性，可以再假设 $\delta_i$ 绝对连续且 $\norm{\dot\delta_i}\le L_i$；但本文固定增益证明真正使用的是式 \eqref{eq:delta-bound}，不是导数上界。
+\end{assumption}
+
+\begin{remark}
+只有 $\dot\delta_i$ 有界而没有 $\delta_i$ 有界是不够的。例如 $\delta_i(t)=t$ 的导数有界，但其幅值无界；固定幅值的符号注入不能永久抵消这种信号。
+\end{remark}
+
+\subsection{通信图和锚定矩阵}
+
+令 $\mathcal G=(\mathcal N,\mathcal E,\mathcal A)$ 为无向加权图，邻接矩阵为 $\mathcal A=[a_{ij}]$，Laplacian 矩阵为 $L$。令
+\begin{equation}
+  B_0=\diag(b_1,\ldots,b_N),
+\end{equation}
+其中 $b_i>0$ 表示节点 $i$ 能测量 $p_{i0}$，$b_i=0$ 表示不能测量。定义
+\begin{equation}
+  H=L+B_0,\qquad \cH=H\otimes I_3.
+\label{eq:H-def}
+\end{equation}
+
+\begin{assumption}[无向连通和至少一个锚定节点]
+图 $\mathcal G$ 无向连通，且至少存在一个 $i$ 使 $b_i>0$。
+\end{assumption}
+
+\begin{lemma}[锚定 Laplacian 正定]
+在上述假设下，$H=H^T\succ0$，从而 $\cH\succ0$，并且
+\begin{equation}
+  \norm{\cH^{-1}}_2=\frac{1}{\lambda_H},\qquad
+  \lambda_H:=\lambda_{\min}(H)>0.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+任取 $x\in\R^N$，由无向图 Laplacian 的定义，
+\begin{equation}
+ x^THx
+ =\frac12\sum_{i=1}^N\sum_{j=1}^Na_{ij}(x_i-x_j)^2
+ +\sum_{i=1}^Nb_ix_i^2\ge0.
+\end{equation}
+若 $x^THx=0$，则每条边上都有 $x_i=x_j$。图连通，所以所有 $x_i$ 相等。又因为至少一个 $b_i>0$，第二项为零要求该节点 $x_i=0$，故所有 $x_i=0$。因此 $H\succ0$。Kronecker 积保持正定性，故 $\cH\succ0$。最后，$\cH$ 的最小特征值等于 $H$ 的最小特征值，得到逆矩阵范数公式。
+\end{proof}
+
+\subsection{严格信息约束及残差可实现性}
+
+\begin{assumption}[严格仅相对位置的信息结构]
+节点 $i$ 可以使用：
+\begin{enumerate}[label=(\roman*)]
+  \item 邻居相对位置 $p_{ij}=p_i-p_j$；
+  \item 当 $b_i>0$ 时的目标相对位置 $p_{i0}$；
+  \item 邻居发送的观测器内部变量 $\hat p_{j0}$；
+  \item 自身控制输入 $u_i$ 和已知 CW 矩阵。
+\end{enumerate}
+节点不能测量 $v_{ij}$ 或 $v_{i0}$，也不能接收邻居控制输入 $u_j$。
+\end{assumption}
+
+定义位置估计误差
+\begin{equation}
+  e_{pi}=\hat p_{i0}-p_{i0}.
+\end{equation}
+构造位置残差
+\begin{equation}
+\begin{aligned}
+ \zeta_i
+ ={}&\sum_{j=1}^Na_{ij}
+ \big[(\hat p_{i0}-\hat p_{j0})-p_{ij}\big]
+ +b_i(\hat p_{i0}-p_{i0}).
+\end{aligned}
+\label{eq:zeta-measured}
+\end{equation}
+
+\begin{lemma}[残差只使用允许信息]
+式 \eqref{eq:zeta-measured} 可在严格信息结构下实现，而且
+\begin{equation}
+ \zeta_i=\sum_{j=1}^Na_{ij}(e_{pi}-e_{pj})+b_ie_{pi}.
+\label{eq:zeta-error}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+由相对位置定义，
+\begin{equation}
+ p_{i0}-p_{j0}
+ =(p_i-p_0)-(p_j-p_0)=p_i-p_j=p_{ij}.
+\end{equation}
+因此
+\begin{align}
+ &(\hat p_{i0}-\hat p_{j0})-p_{ij}\notag\\
+ &=(\hat p_{i0}-p_{i0})-(\hat p_{j0}-p_{j0})
+ =e_{pi}-e_{pj}.
+\end{align}
+同理，$\hat p_{i0}-p_{i0}=e_{pi}$。代回式 \eqref{eq:zeta-measured} 即得式 \eqref{eq:zeta-error}。该计算没有出现任何速度，也没有出现 $u_j$。
+\end{proof}
+
+\begin{chenbox}
+陈伟乐等人的 DFD-R 使用同类残差：邻居估计位置之差减去真实相对位置，再加可见节点的目标相对位置锚定项。本文保留的是这个“残差结构”。原文对象是双积分型跟随者；把残差放入 CW 观测器不是原文结论。
+\end{chenbox}
+
+\section{广义超螺旋映射与基本不等式}
+
+对标量 $s\in\R$，定义有符号幂
+\begin{equation}
+  \ipow{s}{\alpha}=\abs{s}^{\alpha}\sgn(s),\qquad \alpha>0.
+\end{equation}
+取 $\mu_1>0$、$\mu_2>0$，定义
+\begin{equation}
+ \phi_1(s)=\mu_1\ipow{s}{1/2}+\mu_2s,
+\label{eq:phi1}
+\end{equation}
+以及
+\begin{equation}
+\begin{aligned}
+ \phi_2(s)
+ &:=\phi_1'(s)\phi_1(s)\\
+ &=\frac{\mu_1^2}{2}\sgn(s)
+ +\frac{3\mu_1\mu_2}{2}\ipow{s}{1/2}
+ +\mu_2^2s,
+ \qquad s\ne0.
+\end{aligned}
+\label{eq:phi2}
+\end{equation}
+在 $s=0$ 处，$\phi_2$ 按 Filippov 集值延拓：
+\begin{equation}
+ \mathcal F[\phi_2](0)
+ =\left[-\frac{\mu_1^2}{2},\frac{\mu_1^2}{2}\right].
+\end{equation}
+向量映射 $\Phi_1,\Phi_2$ 均按分量作用。
+
+\begin{morenobox}
+式 \eqref{eq:phi1}--\eqref{eq:phi2} 来自 Moreno 的广义超螺旋算法 \cite{Moreno2009}。原文写出
+$\dot x_1=-k_1\phi_1(x_1)+x_2$、$\dot x_2=-k_2\phi_2(x_1)$，并明确指出 $\mu_2x_1$ 是线性稳定项，且 $\phi_2=\phi_1'\phi_1$。原文采用 ALE 构造 $V=\xi^TP\xi$。本文采用相同的映射，但网络 Lyapunov 函数改用陈伟乐式积分骨架，因此后续证明不是 Moreno 原证明的复制。
+\end{morenobox}
+
+\begin{lemma}[强单调性、可逆性和基础界]
+函数 $\phi_1$ 是奇函数、连续、严格递增并且为 $\R$ 到 $\R$ 的双射。记其逆函数为 $\psi=\phi_1^{-1}$。任意 $x,z\in\R$ 满足
+\begin{equation}
+ (\phi_1(x)-\phi_1(z))(x-z)\ge\mu_2(x-z)^2,
+\label{eq:strong-monotone}
+\end{equation}
+从而
+\begin{equation}
+ \abs{x-z}\le\frac{1}{\mu_2}
+ \abs{\phi_1(x)-\phi_1(z)}.
+\label{eq:inverse-lipschitz}
+\end{equation}
+另外，定义 $w(a)=a\phi_2(a)$，则
+\begin{equation}
+\begin{aligned}
+ w(a)
+ &=\frac{\mu_1^2}{2}\abs a
+ +\frac{3\mu_1\mu_2}{2}\abs a^{3/2}
+ +\mu_2^2a^2,\\
+ w(a)&\ge\frac{\mu_1^2}{2}\abs a,\qquad
+ w(a)\ge\mu_2^2a^2,\\
+ \phi_1(a)^2&\le2w(a).
+\end{aligned}
+\label{eq:w-bounds}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+对 $s\ne0$，
+\begin{equation}
+ \phi_1'(s)=\frac{\mu_1}{2\sqrt{\abs s}}+\mu_2\ge\mu_2.
+\end{equation}
+函数在零点连续，故对任意 $x,z$，由绝对连续函数的积分表示，
+\begin{equation}
+ \phi_1(x)-\phi_1(z)=\int_z^x\phi_1'(\tau)\,d\tau.
+\end{equation}
+当 $x\ge z$ 时，右侧至少为 $\mu_2(x-z)$；当 $x<z$ 时同时改变符号。于是得到式 \eqref{eq:strong-monotone} 和 \eqref{eq:inverse-lipschitz}。严格递增、连续且当 $s\to\pm\infty$ 时 $\phi_1(s)\to\pm\infty$，所以它是双射。
+
+将式 \eqref{eq:phi2} 乘以 $a$，利用 $a\sgn(a)=\abs a$ 和 $a\ipow{a}{1/2}=\abs a^{3/2}$，得到 $w(a)$ 的展开及前两个下界。最后，
+\begin{align}
+ \phi_1(a)^2
+ &=\mu_1^2\abs a+2\mu_1\mu_2\abs a^{3/2}+\mu_2^2a^2\notag\\
+ &\le\mu_1^2\abs a+3\mu_1\mu_2\abs a^{3/2}+2\mu_2^2a^2
+ =2w(a).
+\end{align}
+\end{proof}
+
+\section{观测器与误差系统的逐步推导}
+
+提出式 \eqref{eq:observer-preview} 所示观测器，其中 $k_1,k_2>0$。注意：
+\begin{enumerate}
+  \item 第一式中的 $-k_1\mu_2\zeta_i$ 是线性位置校正；
+  \item 第二式中的线性项 $-k_2\mu_2^2\zeta_i$ 不是随意添加的，而是由 $\phi_2=\phi_1'\phi_1$ 决定；
+  \item 第二式使用的是自身 $u_i$，它将与真实系统中的 $u_i$ 精确抵消。
+\end{enumerate}
+
+定义速度误差
+\begin{equation}
+ e_{vi}=\hat v_{i0}-v_{i0}.
+\end{equation}
+位置误差满足
+\begin{align}
+ \dot e_{pi}
+ &=\dot{\hat p}_{i0}-\dot p_{i0}\notag\\
+ &=\hat v_{i0}-k_1\Phi_1(\zeta_i)-v_{i0}\notag\\
+ &=e_{vi}-k_1\Phi_1(\zeta_i).
+\label{eq:ep-local}
+\end{align}
+速度误差满足
+\begin{align}
+ \dot e_{vi}
+ &=\dot{\hat v}_{i0}-\dot v_{i0}\notag\\
+ &=A_p(\hat p_{i0}-p_{i0})+A_v(\hat v_{i0}-v_{i0})
+ +(u_i-u_i)-k_2\Phi_2(\zeta_i)+\delta_i\notag\\
+ &=A_pe_{pi}+A_ve_{vi}-k_2\Phi_2(\zeta_i)+\delta_i.
+\label{eq:ev-local}
+\end{align}
+
+令
+\begin{equation}
+ E_p=\col(e_{p1},\ldots,e_{pN}),\quad
+ E_v=\col(e_{v1},\ldots,e_{vN}),\quad
+ \delta=\col(\delta_1,\ldots,\delta_N),
+\end{equation}
+并定义
+\begin{equation}
+ \Ap=I_N\otimes A_p,\qquad \Av=I_N\otimes A_v.
+\end{equation}
+由式 \eqref{eq:zeta-error}，堆叠残差为
+\begin{equation}
+ y=\col(\zeta_1,\ldots,\zeta_N)=\cH E_p.
+\label{eq:y-stack}
+\end{equation}
+因此
+\begin{equation}
+\begin{aligned}
+ \dot E_p&=E_v-k_1\Phi_1(y),\\
+ \dot E_v&=\Ap E_p+\Av E_v-k_2\Phi_2(y)+\delta.
+\end{aligned}
+\label{eq:error-stack}
+\end{equation}
+
+\begin{cwbox}
+式 \eqref{eq:error-stack} 与陈伟乐论文的关键差别正是 $\Ap E_p+\Av E_v$。该项破坏原标准超螺旋系统的齐次结构。后文不把它粗略称为“扰动后直接套定理”，而是逐项估计。
+\end{cwbox}
+
+\section{变量变换和积分型 Lyapunov 函数}
+
+定义
+\begin{equation}
+ v=\frac{E_v}{k_1},\qquad \kappa=\frac{k_2}{k_1},
+\label{eq:v-kappa}
+\end{equation}
+并按分量定义
+\begin{equation}
+ a=\Psi(v):=\Phi_1^{-1}(v),\qquad v=\Phi_1(a).
+\label{eq:a-def}
+\end{equation}
+再定义两个差量
+\begin{equation}
+ q=\Phi_1(y)-v=\Phi_1(y)-\Phi_1(a),\qquad r=y-a.
+\label{eq:q-r}
+\end{equation}
+由式 \eqref{eq:inverse-lipschitz}，逐分量相加得
+\begin{equation}
+ \norm r\le\frac{1}{\mu_2}\norm q.
+\label{eq:r-q-bound}
+\end{equation}
+
+由 $y=\cH E_p$ 和误差系统第一式，
+\begin{align}
+ \dot y
+ &=\cH\dot E_p
+ =\cH\big(k_1v-k_1\Phi_1(y)\big)
+ =-k_1\cH q.
+\label{eq:y-dot}
+\end{align}
+由误差系统第二式、$E_p=\cH^{-1}y$、$E_v=k_1v$，
+\begin{align}
+ \dot v
+ &=\frac{1}{k_1}\dot E_v\notag\\
+ &=\frac{1}{k_1}\Ap\cH^{-1}y+\Av v
+ -\kappa\Phi_2(y)+\frac{\delta}{k_1}.
+\label{eq:v-dot}
+\end{align}
+
+\begin{chenbox}
+陈伟乐论文令归一化速度误差为 $v$，并用标准映射 $\ipow{y}{1/2}$ 的逆 $\ipow{v}{2}$ 作为积分下限。本文对应地令 $a=\Phi_1^{-1}(v)$。因此“逆映射作为变下限”来自陈伟乐的证明设计；把逆函数换成含线性项的 $\Phi_1^{-1}$ 是本文推广。
+\end{chenbox}
+
+定义
+\begin{equation}
+ V_1(y,v)
+ =\sum_{\ell=1}^{3N}\int_{a_\ell}^{y_\ell}
+ \big[\phi_1(s)-v_\ell\big],ds,
+\label{eq:V1}
+\end{equation}
+\begin{equation}
+ V_2(v)=\sum_{\ell=1}^{3N}\int_0^{v_\ell}\psi(s)\,ds,
+ \qquad V=V_1+\gamma V_2,\quad\gamma>0.
+\label{eq:V-total}
+\end{equation}
+
+\begin{lemma}[Lyapunov 函数正定且径向无界]
+$V_1\ge\frac{\mu_2}{2}\norm r^2$，并且
+\begin{equation}
+ V_2=\sum_{\ell=1}^{3N}
+ \left(\frac{\mu_1}{3}\abs{a_\ell}^{3/2}
+ +\frac{\mu_2}{2}a_\ell^2\right).
+\label{eq:V2-explicit}
+\end{equation}
+所以 $V$ 对 $(r,a)$ 正定且径向无界；由于 $(y,v)\leftrightarrow(r,a)$ 是连续双射，$V$ 对 $(y,v)$ 也正定且径向无界。
+\end{lemma}
+
+\begin{proof}
+先看单个分量。因为 $v_\ell=\phi_1(a_\ell)$，
+\begin{equation}
+ V_{1\ell}=\int_{a_\ell}^{y_\ell}
+ [\phi_1(s)-\phi_1(a_\ell)],ds.
+\end{equation}
+若 $y_\ell\ge a_\ell$，强单调性给出
+\begin{equation}
+ \phi_1(s)-\phi_1(a_\ell)\ge\mu_2(s-a_\ell),
+ \quad s\in[a_\ell,y_\ell],
+\end{equation}
+从而
+\begin{equation}
+ V_{1\ell}\ge\int_{a_\ell}^{y_\ell}\mu_2(s-a_\ell)ds
+ =\frac{\mu_2}{2}(y_\ell-a_\ell)^2.
+\end{equation}
+若 $y_\ell<a_\ell$，交换积分方向并使用同一个强单调不等式，仍得到相同结论。对所有分量求和即得 $V_1$ 下界。
+
+计算 $V_2$。令积分变量 $s=\phi_1(\alpha)$，则 $ds=\phi_1'(\alpha)d\alpha$，且 $\psi(s)=\alpha$。因此
+\begin{align}
+ \int_0^{v_\ell}\psi(s)ds
+ &=\int_0^{a_\ell}\alpha\phi_1'(\alpha)d\alpha\notag\\
+ &=\int_0^{a_\ell}
+ \left(\frac{\mu_1}{2}\ipow{\alpha}{1/2}+\mu_2\alpha\right)d\alpha\notag\\
+ &=\frac{\mu_1}{3}\abs{a_\ell}^{3/2}+\frac{\mu_2}{2}a_\ell^2.
+\end{align}
+若 $a$ 无界，则 $V_2$ 无界；若 $a$ 有界但 $y$ 无界，则 $r=y-a$ 无界，因而 $V_1$ 无界。这证明径向无界性。
+\end{proof}
+
+\section{Lyapunov 导数：逐项求导}
+
+\begin{lemma}[积分型函数的精确导数]
+沿任意绝对连续的 Filippov 解，在几乎处处成立
+\begin{equation}
+ \dot V=-k_1q^T\cH q+(-r+\gamma a)^T\dot v.
+\label{eq:Vdot-exact}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+对单个分量
+\begin{equation}
+ V_{1\ell}=\int_{a_\ell(v_\ell)}^{y_\ell}
+ [\phi_1(s)-v_\ell]ds
+\end{equation}
+使用含变上、下限的 Leibniz 公式：
+\begin{align}
+ \dot V_{1\ell}
+ ={}&[\phi_1(y_\ell)-v_\ell]\dot y_\ell\notag\\
+ &-[\phi_1(a_\ell)-v_\ell]\dot a_\ell
+ -\left(\int_{a_\ell}^{y_\ell}1ds\right)\dot v_\ell.
+\end{align}
+因为 $v_\ell=\phi_1(a_\ell)$，第二项严格等于零。最后一个积分为 $y_\ell-a_\ell=r_\ell$。故
+\begin{equation}
+ \dot V_{1\ell}=q_\ell\dot y_\ell-r_\ell\dot v_\ell.
+\end{equation}
+求和得到
+\begin{equation}
+ \dot V_1=q^T\dot y-r^T\dot v.
+\end{equation}
+另一方面，由微积分基本定理，
+\begin{equation}
+ \dot V_2=\Psi(v)^T\dot v=a^T\dot v.
+\end{equation}
+代入 $\dot y=-k_1\cH q$，即得式 \eqref{eq:Vdot-exact}。
+\end{proof}
+
+把式 \eqref{eq:v-dot} 代入式 \eqref{eq:Vdot-exact}：
+\begin{align}
+ \dot V={}&-k_1q^T\cH q\notag\\
+ &+(-r+\gamma a)^T
+ \left(\frac1{k_1}\Ap\cH^{-1}y+\Av v\right)\notag\\
+ &+(-r+\gamma a)^T
+ \left(-\kappa\Phi_2(y)+\frac{\delta}{k_1}\right).
+\label{eq:Vdot-split}
+\end{align}
+后两行分别称为 CW 耦合项和非线性--扰动项。
+
+\section{非线性--扰动项的完整估计}
+
+定义向量耗散函数
+\begin{equation}
+ W(a)=a^T\Phi_2(a)=\sum_{\ell=1}^{3N}w(a_\ell).
+\label{eq:W-def}
+\end{equation}
+由式 \eqref{eq:w-bounds}，
+\begin{equation}
+ W(a)\ge\frac{\mu_1^2}{2}\norm{a}_1,\qquad
+ W(a)\ge\mu_2^2\norm{a}^2,\qquad
+ \norm v^2\le2W(a).
+\label{eq:W-vector-bounds}
+\end{equation}
+令
+\begin{equation}
+ \bar d=\frac{\bar\delta}{k_1}.
+\end{equation}
+
+\begin{lemma}[非线性--扰动吸收引理]
+若存在 $c_0>0$ 满足
+\begin{equation}
+ 0<c_0<\kappa\gamma-\frac{2\gamma\bar d}{\mu_1^2},
+\label{eq:c0-condition}
+\end{equation}
+则存在有限常数 $C_0\ge0$，使任意 $y,a\in\R^{3N}$、任意满足 $\norm{d}_\infty\le\bar d$ 的 $d$ 均满足
+\begin{equation}
+ (-r+\gamma a)^T[-\kappa\Phi_2(y)+d]
+ \le C_0\norm q^2-c_0W(a).
+\label{eq:C0-inequality}
+\end{equation}
+其中 $r=y-a$、$q=\Phi_1(y)-\Phi_1(a)$。
+\end{lemma}
+
+\begin{proof}
+因为映射按分量作用，只需证明标量结论并求和。固定一个分量，记
+\begin{equation}
+ h=-r+\gamma a=-y+(1+\gamma)a.
+\end{equation}
+需要上界
+\begin{equation}
+ h[-\kappa\phi_2(y)+d]+c_0w(a).
+\end{equation}
+对 $d$ 取最坏情况，$hd\le\bar d\abs h$。由于 $\phi_1$、$\phi_2$ 均为奇映射，整体同时变号不改变最坏比值，所以不失一般性令 $a=u^2\ge0$。把 $y$ 写成
+\begin{equation}
+ y=\sigma t^2,\qquad t,u\ge0,\qquad\sigma\in\{-1,+1\}.
+\end{equation}
+定义
+\begin{equation}
+ f(t)=\mu_1t+\mu_2t^2,
+\end{equation}
+\begin{equation}
+ g(t)=\frac{\mu_1^2}{2}
+ +\frac{3\mu_1\mu_2}{2}t+\mu_2^2t^2.
+\end{equation}
+则
+\begin{equation}
+ \phi_1(y)=\sigma f(t),\quad
+ \phi_1(a)=f(u),\quad
+ \phi_2(y)=\sigma g(t),\quad
+ w(a)=u^2g(u).
+\end{equation}
+所以
+\begin{equation}
+ q_\sigma(t,u)=\sigma f(t)-f(u),
+\end{equation}
+\begin{equation}
+ h_\sigma(t,u)=-\sigma t^2+(1+\gamma)u^2.
+\end{equation}
+定义连续的最坏分子
+\begin{equation}
+\begin{aligned}
+ N_\sigma(t,u)
+ ={}&-\kappa h_\sigma(t,u)\,\sigma g(t)
+ +\bar d\abs{h_\sigma(t,u)}+c_0u^2g(u).
+\end{aligned}
+\label{eq:N-sigma}
+\end{equation}
+在 $y=0$ 的 Filippov 集上，表达式关于 $\phi_2(0)$ 是仿射的，最大值出现在区间端点，已经由 $\sigma=\pm1$ 的极限覆盖。
+
+现在定义
+\begin{equation}
+ C_0:=\max_{\sigma\in\{-1,+1\}}
+ \sup_{\substack{t,u\ge0\\q_\sigma(t,u)\ne0}}
+ \frac{[N_\sigma(t,u)]_+}{q_\sigma(t,u)^2},
+\label{eq:C0-def}
+\end{equation}
+其中 $[x]_+=\max\{x,0\}$。下面逐步说明该上确界有限。
+
+第一，找出分母的零点。若 $\sigma=+1$，由于 $f$ 严格递增，$q_+=0$ 当且仅当 $t=u$。若 $\sigma=-1$，则
+$q_-=-f(t)-f(u)$，只有 $t=u=0$ 时为零。
+
+第二，考察 $\sigma=+1$ 的零点集合 $t=u$。此时
+\begin{align}
+ N_+(u,u)
+ &= -\kappa\gamma u^2g(u)+\gamma\bar d u^2+c_0u^2g(u)\notag\\
+ &=-(\kappa\gamma-c_0)w(u)+\gamma\bar d u^2.
+\end{align}
+因为 $g(u)\ge\mu_1^2/2$，所以
+\begin{equation}
+ \gamma\bar d u^2\le\frac{2\gamma\bar d}{\mu_1^2}w(u).
+\end{equation}
+结合式 \eqref{eq:c0-condition}，存在
+\begin{equation}
+ \varepsilon=\kappa\gamma-c_0-\frac{2\gamma\bar d}{\mu_1^2}>0
+\end{equation}
+使
+\begin{equation}
+ N_+(u,u)\le-\varepsilon w(u)<0,\qquad u>0.
+\end{equation}
+因此在每个非零对角点附近，$[N_+]_+=0$，比值不会因 $q_+\to0$ 发散。
+
+第三，考察原点。令 $t=R\cos\theta$、$u=R\sin\theta$，$R\to0^+$。由于
+\begin{equation}
+ f(t)=\mu_1t+O(t^2),\qquad g(t)=\frac{\mu_1^2}{2}+O(t),
+\end{equation}
+分子和分母的最低非零阶均为 $R^2$。当 $\sigma=+1$ 且角度趋向 $\theta=\pi/4$ 时，分母二次主项可能消失；但该方向正是 $t=u$，前一步已经证明分子正部在其邻域为零。当 $\sigma=-1$ 时，分母主项为
+\begin{equation}
+ \mu_1^2R^2(\cos\theta+\sin\theta)^2,
+\end{equation}
+在 $\theta\in[0,\pi/2]$ 上严格为正。因此原点附近的正部比值有界。
+
+第四，考察无穷远。令同样的极坐标中 $R\to\infty$。此时
+\begin{equation}
+ f(t)=\mu_2t^2+O(t),\qquad g(t)=\mu_2^2t^2+O(t),
+\end{equation}
+所以分子和分母的最高阶均为 $R^4$。对 $\sigma=-1$，分母四次主项不为零；对 $\sigma=+1$，唯一可能消失的方向仍为 $t=u$，而在该方向分子的四次主项为负。故无穷远处的正部比值也有界。
+
+第五，去掉原点邻域、无穷远区域以及 $q_+=0$ 的负分子邻域后，剩余参数集合是紧集，且分母连续并严格大于零，因此比值在该紧集上取得有限最大值。综上，式 \eqref{eq:C0-def} 定义的 $C_0$ 有限。
+
+于是对每一分量有
+\begin{equation}
+ h[-\kappa\phi_2(y)+d]+c_0w(a)\le C_0q^2.
+\end{equation}
+对全部分量求和，得到式 \eqref{eq:C0-inequality}。
+\end{proof}
+
+\begin{remark}
+式 \eqref{eq:C0-def} 是严格的数学定义，因此“存在有限 $C_0$”的理论结论不依赖数值搜索。但是，若要给出一组可由计算机直接核验的具体增益，就应对该上确界做区间计算、和平方松弛或解析保守放缩；普通浮点优化只能给出候选值，不能证明其为全局上界。
+\end{remark}
+
+\section{CW 耦合项的逐步估计}
+
+定义
+\begin{equation}
+ \rho_p=\frac{\norm{A_p}_2}{k_1\lambda_H},\qquad
+ \rho_v=\norm{A_v}_2.
+\label{eq:rho-pv}
+\end{equation}
+由 Kronecker 积范数和 $\norm{\cH^{-1}}=1/\lambda_H$，
+\begin{equation}
+ \norm{\frac1{k_1}\Ap\cH^{-1}}_2\le\rho_p.
+\end{equation}
+又由式 \eqref{eq:W-vector-bounds}，
+\begin{equation}
+ \norm a\le\frac{\sqrt{W(a)}}{\mu_2},\qquad
+ \norm v\le\sqrt{2W(a)}.
+\label{eq:a-v-W}
+\end{equation}
+
+\begin{lemma}[CW 线性项上界]
+对任意 $\eta_p>0$、$\eta_v>0$，有
+\begin{equation}
+\begin{aligned}
+ &\abs{(-r+\gamma a)^T
+ \left(\frac1{k_1}\Ap\cH^{-1}y+\Av v\right)}\\
+ &\qquad\le C_q\norm q^2+C_WW(a),
+\end{aligned}
+\label{eq:CW-bound}
+\end{equation}
+其中
+\begin{equation}
+ C_q=
+ \frac{\rho_p}{\mu_2^2}
+ \left[1+\frac{(1+\gamma)\eta_p}{2}\right]
+ +\frac{\sqrt2\rho_v}{\mu_2}\frac{\eta_v}{2},
+\label{eq:Cq}
+\end{equation}
+\begin{equation}
+ C_W=
+ \frac{\rho_p}{\mu_2^2}
+ \left[\gamma+\frac{1+\gamma}{2\eta_p}\right]
+ +\frac{\sqrt2\rho_v}{\mu_2}
+ \left[\gamma+\frac{1}{2\eta_v}\right].
+\label{eq:CW}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+先估计位置矩阵项。因为 $y=a+r$，
+\begin{align}
+ &\abs{(-r+\gamma a)^T\frac1{k_1}\Ap\cH^{-1}y}\notag\\
+ &\le\rho_p(\norm r+\gamma\norm a)(\norm r+\norm a)\notag\\
+ &=\rho_p\left[\norm r^2+(1+\gamma)\norm r\norm a
+ +\gamma\norm a^2\right].
+\end{align}
+代入 $\norm r\le\norm q/\mu_2$ 和式 \eqref{eq:a-v-W}：
+\begin{align}
+ &\le\frac{\rho_p}{\mu_2^2}
+ \left[\norm q^2+(1+\gamma)\norm q\sqrt{W(a)}+\gamma W(a)\right].
+\end{align}
+使用带参数 Young 不等式
+\begin{equation}
+ xy\le\frac{\eta_p}{2}x^2+\frac{1}{2\eta_p}y^2,
+\end{equation}
+得到
+\begin{align}
+ &\abs{(-r+\gamma a)^T\frac1{k_1}\Ap\cH^{-1}y}\notag\\
+ &\le\frac{\rho_p}{\mu_2^2}
+ \left[1+\frac{(1+\gamma)\eta_p}{2}\right]\norm q^2\notag\\
+ &\quad+\frac{\rho_p}{\mu_2^2}
+ \left[\gamma+\frac{1+\gamma}{2\eta_p}\right]W(a).
+\label{eq:Ap-bound-detail}
+\end{align}
+
+再估计速度矩阵项：
+\begin{align}
+ \abs{(-r+\gamma a)^T\Av v}
+ &\le\rho_v(\norm r+\gamma\norm a)\norm v\notag\\
+ &\le\frac{\sqrt2\rho_v}{\mu_2}
+ \left[\norm q\sqrt{W(a)}+\gamma W(a)\right].
+\end{align}
+再次使用 Young 不等式，
+\begin{align}
+ \abs{(-r+\gamma a)^T\Av v}
+ &\le\frac{\sqrt2\rho_v}{\mu_2}\frac{\eta_v}{2}\norm q^2\notag\\
+ &\quad+\frac{\sqrt2\rho_v}{\mu_2}
+ \left[\gamma+\frac1{2\eta_v}\right]W(a).
+\label{eq:Av-bound-detail}
+\end{align}
+将式 \eqref{eq:Ap-bound-detail} 和 \eqref{eq:Av-bound-detail} 相加，即得结论。
+\end{proof}
+
+\begin{cwbox}
+这一节全部属于 CW 新推导。线性校正项 $\mu_2s$ 的关键作用体现在式 \eqref{eq:r-q-bound}：它使逆映射全局 Lipschitz，从而能把 $r$ 统一压到 $q$ 上。如果 $\mu_2=0$，该全局线性界消失，以上 CW 耦合吸收过程不能原样成立。
+\end{cwbox}
+
+\section{主收敛定理}
+
+\begin{theorem}[严格仅相对位置观测器的渐近收敛]
+\label{thm:poi-observer}
+考虑 CW 系统 \eqref{eq:cw-agent} 和观测器 \eqref{eq:observer-preview}。假设：
+\begin{enumerate}[label=(A\arabic*)]
+  \item 通信图无向连通，且至少一个节点能测量目标相对位置；
+  \item 严格信息结构成立；
+  \item 扰动满足式 \eqref{eq:delta-bound}；
+  \item $\mu_1,\mu_2,k_1,k_2,\gamma>0$，并存在 $c_0,\eta_p,\eta_v>0$ 使
+  \begin{equation}
+   0<c_0<\kappa\gamma-\frac{2\gamma\bar\delta}{k_1\mu_1^2},
+  \label{eq:gain-1}
+  \end{equation}
+  \begin{equation}
+   k_1\lambda_H>C_0+C_q,
+  \label{eq:gain-2}
+  \end{equation}
+  \begin{equation}
+   c_0>C_W,
+  \label{eq:gain-3}
+  \end{equation}
+  其中 $C_0,C_q,C_W$ 分别由式 \eqref{eq:C0-def}、\eqref{eq:Cq}、\eqref{eq:CW} 定义。
+\end{enumerate}
+则所有 Filippov 解有界且可延拓到 $[0,\infty)$，并满足
+\begin{equation}
+ \lim_{t\to\infty}E_p(t)=0,\qquad
+ \lim_{t\to\infty}E_v(t)=0.
+\label{eq:main-convergence}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+由 $\cH\succ0$，
+\begin{equation}
+ q^T\cH q\ge\lambda_H\norm q^2.
+\end{equation}
+将非线性--扰动引理和 CW 上界代入式 \eqref{eq:Vdot-split}，得到
+\begin{align}
+ \dot V
+ &\le-k_1\lambda_H\norm q^2
+ +C_q\norm q^2+C_WW(a)
+ +C_0\norm q^2-c_0W(a)\notag\\
+ &=-\alpha_q\norm q^2-\alpha_WW(a),
+\label{eq:Vdot-final}
+\end{align}
+其中
+\begin{equation}
+ \alpha_q=k_1\lambda_H-C_0-C_q>0,
+\end{equation}
+\begin{equation}
+ \alpha_W=c_0-C_W>0.
+\end{equation}
+所以 $V(t)\le V(0)$。由于 $V$ 径向无界，$(y,v)$ 有界。由
+$E_p=\cH^{-1}y$、$E_v=k_1v$，原误差也有界。右端是局部有界的 Filippov 集值映射，因此解不会因状态逃逸而在有限时间终止，故解是完备的。
+
+由于扰动 $\delta(t)$ 可以随时间变化，直接套用自治系统的 LaSalle 原理并不严谨。这里改用 Barbalat 引理。对式 \eqref{eq:Vdot-final} 从 $0$ 积分到 $T$，得到
+\begin{equation}
+ \alpha_q\int_0^T\norm{q(t)}^2dt
+ +\alpha_W\int_0^T W(a(t))dt
+ \le V(0)-V(T)\le V(0).
+\end{equation}
+令 $T\to\infty$，可知
+\begin{equation}
+ \norm q^2\in L_1[0,\infty),\qquad W(a)\in L_1[0,\infty).
+\label{eq:L1-result}
+\end{equation}
+前面已经证明 $y,v$ 有界。式 \eqref{eq:y-dot} 表明 $\dot y$ 有界；式 \eqref{eq:v-dot} 中各项在有界集上均有界，且 $\delta$ 有界，所以 $\dot v$ 几乎处处有界。因此 $y,v$ 一致连续。$a=\Psi(v)$，而 $\Psi$ 由式 \eqref{eq:inverse-lipschitz} 全局 Lipschitz，所以 $a$ 一致连续。$\Phi_1$ 在有界集上连续并具有 $1/2$ 阶 H\"older 模，因此 $q=\Phi_1(y)-v$ 一致连续。函数 $W(a)$ 在有界集上一致连续，故 $\norm q^2$ 和 $W(a)$ 都一致连续。由式 \eqref{eq:L1-result} 和 Barbalat 引理，
+\begin{equation}
+ q(t)\to0,\qquad W(a(t))\to0.
+\end{equation}
+由于 $W$ 正定，$W(a(t))\to0$ 推出 $a(t)\to0$；由 $v=\Phi_1(a)$ 得 $v(t)\to0$。再由 $q=\Phi_1(y)-v\to0$ 得 $\Phi_1(y(t))\to0$。$\Phi_1$ 是连续双射，所以
+\begin{equation}
+ y(t)\to0,\qquad v(t)\to0.
+\end{equation}
+最后，
+\begin{equation}
+ E_p=\cH^{-1}y\to0,\qquad E_v=k_1v\to0.
+\end{equation}
+这就是式 \eqref{eq:main-convergence}。
+
+还需核验原点可保持。$y=a=v=0$ 时，第二层 Filippov 注入每一分量可取
+\begin{equation}
+ k_2\mathcal F[\phi_2](0)
+ =\left[-\frac{k_2\mu_1^2}{2},\frac{k_2\mu_1^2}{2}\right].
+\end{equation}
+式 \eqref{eq:gain-1} 隐含
+\begin{equation}
+ \frac{k_2\mu_1^2}{2}>\bar\delta,
+\end{equation}
+因此该集合足以包含并抵消 $\delta_i$ 的每个分量，原点是弱不变的。
+\end{proof}
+
+\subsection{增益存在性的选择顺序}
+
+上述条件看起来互相耦合，但可以按以下顺序理解其可行性：
+\begin{enumerate}
+  \item 先选择 $\mu_1>0$、$\gamma>0$ 和比值 $\kappa=k_2/k_1>0$；
+  \item 选 $c_0\in(0,\kappa\gamma)$，例如先取 $c_0=\kappa\gamma/2$；
+  \item 增大 $\mu_2$。由式 \eqref{eq:CW}，与 $A_v$ 有关的 $C_W$ 项按 $1/\mu_2$ 衰减，因此可先使速度耦合部分小于 $c_0$；
+  \item 固定上述参数后增大 $k_1$，并令 $k_2=\kappa k_1$。此时 $\bar d=\bar\delta/k_1$ 和 $\rho_p$ 均趋于零，式 \eqref{eq:gain-1} 最终成立；
+  \item 对每个固定参数组，$C_0$ 是有限常数，而左侧 $k_1\lambda_H$ 随 $k_1$ 线性增大，所以式 \eqref{eq:gain-2} 最终可以满足；
+  \item 最后用式 \eqref{eq:C0-def} 的认证上界检查具体数值裕度。
+\end{enumerate}
+
+\begin{remark}
+这说明理论上存在满足条件的高增益参数，但不意味着增益越大越适合工程实现。测量噪声、离散采样和执行器带宽会限制可用增益；这些因素不在本文无噪声连续时间定理中。
+\end{remark}
+
+\section{接入原合围控制器后的完整闭环推导}
+
+本节不再使用抽象的线性级联推论，而是逐式接入
+\texttt{main.tex} 中的安全连通人工势函数和积分滑模控制器。
+为避免与观测器增益 $k_1,k_2$ 混淆，把原控制器中的两个正常数
+重新记为
+\begin{equation}
+  \ell_1:=k_{1,\mathrm{ctrl}}>0,\qquad
+  \ell_2:=k_{2,\mathrm{ctrl}}>0.
+\end{equation}
+这只是符号重命名，不改变原控制器结构。
+
+\begin{cwbox}
+本节最关键的修改有两处。第一，新观测器同时在 $\dot{\hat p}_{i0}$
+和 $\dot{\hat v}_{i0}$ 中含有校正项，因此原控制器中的单一补偿
+$+\chi_i$ 必须换成双通道组合补偿。第二，新观测器不满足
+$\dot{\hat p}_{i0}=\hat v_{i0}$，所以原稿中的齐次二阶估计质心方程
+不能原样使用，必须改成一个由渐近消失输入驱动的 Hurwitz 系统。
+\end{cwbox}
+
+\subsection{把新观测器写成双通道注入形式}
+
+定义
+\begin{equation}
+  \nu_{p,i}:=k_1\Phi_1(\zeta_i),\qquad
+  \nu_{v,i}:=k_2\Phi_2(\zeta_i).
+  \label{eq:two-injections}
+\end{equation}
+则观测器可简写为
+\begin{equation}
+\begin{aligned}
+  \dot{\hat p}_{i0}&=\hat v_{i0}-\nu_{p,i},\\
+  \dot{\hat v}_{i0}&=A_p\hat p_{i0}+A_v\hat v_{i0}
+  +u_i-\nu_{v,i}.
+\end{aligned}
+\label{eq:observer-two-injections}
+\end{equation}
+
+\begin{lemma}[观测器注入的有界性和渐消性质]
+\label{lem:injection-properties}
+在定理 \ref{thm:poi-observer} 的条件下，
+$\nu_{p,i},\nu_{v,i}\in L_\infty$，并且
+\begin{equation}
+  \nu_{p,i}(t)\to0.
+  \label{eq:position-injection-vanish}
+\end{equation}
+一般不能仅由 $\zeta_i(t)\to0$ 推出
+$\nu_{v,i}(t)\to0$。
+\end{lemma}
+
+\begin{proof}
+定理 \ref{thm:poi-observer} 已给出 $E_p,E_v\in L_\infty$ 及
+$E_p(t),E_v(t)\to0$。
+由 $y=\cH E_p$，有
+\begin{equation}
+  \zeta_i\in L_\infty,\qquad \zeta_i(t)\to0.
+\end{equation}
+$\Phi_1$ 连续且 $\Phi_1(0)=0$，故
+$\nu_{p,i}=k_1\Phi_1(\zeta_i)$ 有界并趋于零。
+$\Phi_2$ 含有 $\sgn(\zeta_i)$，其各项在有界集上有界，所以
+$\nu_{v,i}\in L_\infty$。但是在 Filippov 意义下
+$\sgn(0)=[-1,1]$，第二层等效注入可在原点处取非零值以平衡
+有界扰动，因此不能无条件宣称 $\nu_{v,i}\to0$。
+\end{proof}
+
+\subsection{安全连通势函数所需的精确性质}
+
+仍采用 \texttt{main.tex} 中的
+\begin{equation}
+\begin{aligned}
+ \varphi_i^{\rm r}
+ &=\sum_{j\in\mathcal N_i(t)}
+ \alpha_{\rm r}(\norm{p_{ij}})\frac{p_{ij}}{\norm{p_{ij}}},\\
+ \varphi_i^{\rm p}
+ &=\sum_{j\in\mathcal N_i^0}
+ \alpha_{\rm p}(\norm{p_{ij}})\frac{p_{ij}}{\norm{p_{ij}}},\\
+ \varphi_i&=\varphi_i^{\rm r}+\varphi_i^{\rm p}.
+\end{aligned}
+\label{eq:new-apf}
+\end{equation}
+其中 $d<\mu$ 分别为安全距离和通信半径，
+$\mathcal N_i^0$ 为初始邻居集合。后续证明真正需要的不是仅仅
+``$\alpha$ 在边界发散''，而是对应势能在边界发散。为此明确作如下假设。
+
+\begin{assumption}[势函数的反对称性和边界强制性]
+\label{ass:barrier-potential}
+在安全区间 $d<\norm{p_{ij}}<\mu$ 内存在非负势能
+$U_{\rm r},U_{\rm c}$，使得沿绝对连续轨迹几乎处处有
+\begin{equation}
+ \dot U_{\rm r}+\dot U_{\rm c}
+ =-\sum_{i=1}^N\varphi_i^Tv_{i0},\qquad
+ \sum_{i=1}^N\varphi_i=0.
+ \label{eq:apf-required-properties}
+\end{equation}
+并且当任一星间距离趋于 $d^+$ 时 $U_{\rm r}\to+\infty$；
+当任一初始边距离趋于 $\mu^-$ 时 $U_{\rm c}\to+\infty$。
+\end{assumption}
+
+\begin{remark}
+\texttt{main.tex} 中的示例
+$a_{\rm r}(s)=c_{\rm r}/(s-d)$ 和
+$a_{\rm p}(s)=c_{\rm p}/(s-\mu)$ 满足该假设，因为对应积分按
+对数发散。只假设 $\alpha(s)\to\infty$ 并不充分：某些发散函数
+在边界附近仍可积，无法保证势能形成不可穿越屏障。
+\end{remark}
+
+\subsection{双通道补偿后的合围控制器}
+
+沿用原积分变量和估计滑模变量：
+\begin{equation}
+  \dot\eta_i=\ell_1\hat p_{i0}-\varphi_i,\qquad
+  \hat s_{i0}=\eta_i+\ell_2\hat p_{i0}+\hat v_{i0}.
+  \label{eq:new-sliding-variable}
+\end{equation}
+由式 \eqref{eq:observer-two-injections} 可知，求导
+$\ell_2\hat p_{i0}$ 时会出现 $-\ell_2\nu_{p,i}$，求导
+$\hat v_{i0}$ 时会出现 $-\nu_{v,i}$。因此定义新的可实现补偿项
+\begin{equation}
+ \boxed{\Gamma_i:=\ell_2\nu_{p,i}+\nu_{v,i}
+ =\ell_2k_1\Phi_1(\zeta_i)+k_2\Phi_2(\zeta_i).}
+ \label{eq:new-compensation}
+\end{equation}
+控制器取为
+\begin{equation}
+\begin{aligned}
+ u_i={}&-A_p\hat p_{i0}-A_v\hat v_{i0}
+ -\ell_1\hat p_{i0}-\ell_2\hat v_{i0}+\varphi_i+\Gamma_i\\
+ &-\kappa_{1,i}\ipow{\hat s_{i0}}{1/2}+\psi_i,\\
+ \dot\psi_i={}&-\frac{\kappa_{2,i}}{2}\sgn(\hat s_{i0}).
+\end{aligned}
+\label{eq:new-controller}
+\end{equation}
+
+\begin{auditbox}
+式 \eqref{eq:new-compensation} 是把新观测器接入原控制器时必须增加的
+接口项。它使用本节点已经计算出的 $\zeta_i$ 和已知增益，不使用
+$v_{ij}$、$v_{i0}$ 或邻居控制输入 $u_j$，因而不破坏严格信息约束。
+\end{auditbox}
+
+\subsection{为什么补偿后仍是标准超螺旋子系统}
+
+对式 \eqref{eq:new-sliding-variable} 逐项求导：
+\begin{align}
+ \dot{\hat s}_{i0}
+ & =\dot\eta_i+\ell_2\dot{\hat p}_{i0}
+ +\dot{\hat v}_{i0} \notag\\
+ & =\ell_1\hat p_{i0}-\varphi_i
+ +\ell_2(\hat v_{i0}-\nu_{p,i})
+ +A_p\hat p_{i0}+A_v\hat v_{i0}+u_i-\nu_{v,i}.
+ \label{eq:sliding-derivative-before-control}
+\end{align}
+代入式 \eqref{eq:new-controller} 后，$A_p,A_v,\ell_1,\ell_2$ 项、
+$\varphi_i$ 项逐项抵消，并且
+\begin{equation}
+ \Gamma_i-\ell_2\nu_{p,i}-\nu_{v,i}=0.
+\end{equation}
+因此精确得到
+\begin{equation}
+\begin{aligned}
+ \dot{\hat s}_{i0}
+ &=-\kappa_{1,i}\ipow{\hat s_{i0}}{1/2}+\psi_i,\\
+ \dot\psi_i
+ &=-\frac{\kappa_{2,i}}2\sgn(\hat s_{i0}).
+\end{aligned}
+\label{eq:exact-st-subsystem}
+\end{equation}
+注意右端已经不含 CW 项、观测误差或 $\delta_i$。
+
+\begin{lemma}[一个完全自包含的固定增益选择]
+若取常数 $\kappa_{1,i}>0,\kappa_{2,i}>0$，则式
+\eqref{eq:exact-st-subsystem} 的每个标量分量在 Filippov 意义下
+有限时间到达 $(\hat s_{i0},\psi_i)=(0,0)$。
+\end{lemma}
+
+\begin{proof}
+对任一标量分量，简记 $s=\hat s_{i0,k}$、$z=\psi_{i,k}$、
+$a=\kappa_{1,i}$、$b=\kappa_{2,i}/2$。取
+\begin{equation}
+ V_{\rm st}=b|s|+\frac12z^2.
+\end{equation}
+在 $s\ne0$ 处直接计算
+\begin{align}
+ \dot V_{\rm st}
+ &=b\sgn(s)(-a\ipow{s}{1/2}+z)
+ +z[-b\sgn(s)]\\
+ &=-ab|s|^{1/2}\le0.
+\end{align}
+满足 $\dot V_{\rm st}=0$ 的集合为 $s=0$。若 $s=0$ 但 $z\ne0$，
+则 $\dot s=z\ne0$，轨迹不能停留在该集合内；故其最大弱不变集仅为
+$(s,z)=(0,0)$，从而原点渐近稳定。该向量场关于膨胀
+$(s,z)\mapsto(\rho^2s,\rho z)$ 是负次数齐次系统。负次数齐次系统的
+渐近稳定原点具有有限时间稳定性，故存在有限 $T_{s,i,k}$ 使该分量
+到达原点。有限个分量的最大到达时间仍有限。
+\end{proof}
+
+\begin{remark}
+\texttt{main.tex} 中的自适应 $\kappa_{1,i},\kappa_{2,i}$ 律也可以保留，
+只要单独引用或证明其有限时间到达引理。本节给出固定正增益版本，是因为
+式 \eqref{eq:exact-st-subsystem} 已经是无扰动超螺旋系统，固定正增益便足以
+形成一个不依赖额外 AST 引理的严格充分方案。
+\end{remark}
+
+\subsection{真实闭环中观测误差进入哪个通道}
+
+记
+\begin{equation}
+ e_{p,i}=\hat p_{i0}-p_{i0},\qquad
+ e_{v,i}=\hat v_{i0}-v_{i0},\qquad
+ \Delta_i=-\delta_i.
+\end{equation}
+将式 \eqref{eq:new-controller} 代入真实 CW 动力学，得到
+\begin{equation}
+ \dot v_{i0}=-\ell_1p_{i0}-\ell_2v_{i0}+\varphi_i+h_i,
+ \label{eq:new-real-closed-loop}
+\end{equation}
+其中
+\begin{equation}
+\begin{aligned}
+ h_i={}&-(A_p+\ell_1I_3)e_{p,i}
+ -(A_v+\ell_2I_3)e_{v,i}+\Gamma_i+\Delta_i\\
+ &-\kappa_{1,i}\ipow{\hat s_{i0}}{1/2}+\psi_i.
+\end{aligned}
+\label{eq:new-h}
+\end{equation}
+所以观测误差没有改变人工势函数的符号和梯度结构，而是连同观测器
+等效注入、真实扰动及到达项一起进入匹配扰动通道 $h_i$。
+
+\subsection{最大安全连通区间与循环论证的消除}
+
+定义首次边界到达时间
+\begin{equation}
+ T_{\rm e}=\inf\left\{t>0:\
+ \begin{array}{l}
+ \exists i\ne j,\ \norm{p_{ij}(t)}=d,\ \text{或}\\
+ \exists(i,j)\in\mathcal E(0),\ \norm{p_{ij}(t)}=\mu
+ \end{array}\right\}.
+ \label{eq:new-first-exit}
+\end{equation}
+初始构型严格安全时 $T_{\rm e}>0$。对任意
+$[0,T]\subset[0,T_{\rm e})$，所有估计边均可用，故前述观测器
+Lyapunov 估计可限制在 $[0,T]$ 上使用。该估计的上界不依赖截断时间
+$T$。若反设 $T_{\rm e}<\infty$，则
+$E_p,E_v,\nu_{p,i},\nu_{v,i}$ 在 $[0,T_{\rm e})$ 上一致有界。
+超螺旋状态在有限时间区间上也有界，故由式 \eqref{eq:new-h} 存在
+$M_h<\infty$ 使
+\begin{equation}
+ \norm{h_i(t)}\le M_h,\qquad 0\le t<T_{\rm e}.
+ \label{eq:h-uniform-bound}
+\end{equation}
+
+定义安全能量
+\begin{equation}
+ W_s=\frac{\ell_1}{2}\sum_{i=1}^N\norm{p_{i0}}^2
+ +\frac12\sum_{i=1}^N\norm{v_{i0}}^2+U_{\rm r}+U_{\rm c}.
+ \label{eq:new-safety-energy}
+\end{equation}
+由式 \eqref{eq:new-real-closed-loop} 和
+\eqref{eq:apf-required-properties}，几乎处处有
+\begin{align}
+ \dot W_s
+ &=\sum_i\left(\ell_1p_{i0}^Tv_{i0}
+ +v_{i0}^T\dot v_{i0}\right)
+ -\sum_i\varphi_i^Tv_{i0}\\
+ &=-\ell_2\sum_i\norm{v_{i0}}^2+\sum_i v_{i0}^Th_i\\
+ &\le-\frac{\ell_2}{2}\sum_i\norm{v_{i0}}^2
+ +\frac{N M_h^2}{2\ell_2}
+ \le \frac{N M_h^2}{2\ell_2}.
+ \label{eq:new-safety-derivative}
+\end{align}
+于是对 $0\le t<T_{\rm e}$，
+\begin{equation}
+ W_s(t)\le W_s(0)+\frac{N M_h^2}{2\ell_2}T_{\rm e}<\infty.
+\end{equation}
+但如果 $t\to T_{\rm e}^{-}$ 时某个距离趋于 $d$ 或某条初始边趋于
+$\mu$，假设 \ref{ass:barrier-potential} 要求相应势能趋于
+$+\infty$，与上式矛盾。因此
+\begin{equation}
+ T_{\rm e}=+\infty.
+ \label{eq:no-exit}
+\end{equation}
+这一步先在最大安全区间上证明一致有界，再反证该区间不能有限终止，
+因而没有把``观测器需要边''和``控制器保持边''相互循环假设。
+
+\subsection{修正后的合围降阶系统}
+
+由超螺旋引理，存在有限 $T_s$，使得 $t\ge T_s$ 时
+\begin{equation}
+ \hat s_{i0}=0,\qquad \psi_i=0.
+\end{equation}
+由 $\hat s_{i0}=0$ 及式 \eqref{eq:new-sliding-variable}，
+\begin{equation}
+ \eta_i=-\ell_2\hat p_{i0}-\hat v_{i0}.
+\end{equation}
+对其求导并代入 $\dot\eta_i=\ell_1\hat p_{i0}-\varphi_i$，得到
+\begin{equation}
+ \dot{\hat v}_{i0}
+ =-\ell_1\hat p_{i0}-\ell_2\dot{\hat p}_{i0}+\varphi_i.
+ \label{eq:corrected-reduced-agent}
+\end{equation}
+这里必须保留 $\dot{\hat p}_{i0}$，不能把它直接换成
+$\hat v_{i0}$。由观测器第一式，
+\begin{equation}
+ \dot{\hat p}_{i0}=\hat v_{i0}-\nu_{p,i}.
+ \label{eq:observer-kinematic-correction}
+\end{equation}
+
+定义估计质心变量和平均位置注入
+\begin{equation}
+ \bar{\hat p}_0=\frac1N\sum_i\hat p_{i0},\qquad
+ \bar{\hat v}_0=\frac1N\sum_i\hat v_{i0},\qquad
+ \bar\nu_p=\frac1N\sum_i\nu_{p,i}.
+\end{equation}
+对式 \eqref{eq:corrected-reduced-agent}、
+\eqref{eq:observer-kinematic-correction} 求和，并用
+$\sum_i\varphi_i=0$，得到正确的质心降阶系统
+\begin{equation}
+ \frac{d}{dt}
+ \begin{bmatrix}\bar{\hat p}_0\\ \bar{\hat v}_0\end{bmatrix}
+ =
+ \underbrace{\begin{bmatrix}
+ 0&I_3\\-\ell_1I_3&-\ell_2I_3
+ \end{bmatrix}}_{A_c^{\rm red}}
+ \begin{bmatrix}\bar{\hat p}_0\\ \bar{\hat v}_0\end{bmatrix}
+ +
+ \begin{bmatrix}-I_3\\ \ell_2I_3\end{bmatrix}\bar\nu_p.
+ \label{eq:corrected-centroid-system}
+\end{equation}
+$A_c^{\rm red}$ 的每个坐标特征多项式为
+$\lambda^2+\ell_2\lambda+\ell_1$，故当
+$\ell_1,\ell_2>0$ 时为 Hurwitz 矩阵。引理
+\ref{lem:injection-properties} 给出
+$\bar\nu_p\in L_\infty$ 且 $\bar\nu_p(t)\to0$。
+
+下面不跳过``渐消输入为何仍收敛''这一步。存在 $M_c,\lambda_c>0$ 使
+$\norm{e^{A_c^{\rm red}t}}\le M_ce^{-\lambda_ct}$。记
+$B_c=[-I_3,\ell_2I_3]^T$，则变参数公式为
+\begin{equation}
+ x_c(t)=e^{A_c^{\rm red}(t-T_s)}x_c(T_s)
+ +\int_{T_s}^te^{A_c^{\rm red}(t-\tau)}B_c\bar\nu_p(\tau)d\tau,
+ \label{eq:centroid-voc}
+\end{equation}
+其中 $x_c=\col(\bar{\hat p}_0,\bar{\hat v}_0)$。
+第一项显然趋于零。对任意 $\varepsilon>0$，由
+$\bar\nu_p(t)\to0$，可取 $T_\varepsilon\ge T_s$ 使
+\begin{equation}
+ \norm{\bar\nu_p(t)}
+ \le\frac{\varepsilon\lambda_c}{2M_c\norm{B_c}},\qquad
+ t\ge T_\varepsilon.
+\end{equation}
+把积分在 $T_\varepsilon$ 处分开。早期有限区间上的卷积项因指数核
+衰减而趋于零；晚期卷积项满足
+\begin{align}
+ &\norm{\int_{T_\varepsilon}^t
+ e^{A_c^{\rm red}(t-\tau)}B_c\bar\nu_p(\tau)d\tau}\\
+ &\qquad\le
+ \frac{\varepsilon\lambda_c}{2}
+ \int_{T_\varepsilon}^te^{-\lambda_c(t-\tau)}d\tau
+ \le\frac\varepsilon2.
+\end{align}
+故 $x_c(t)\to0$，特别地
+\begin{equation}
+ \bar{\hat p}_0(t)\to0.
+ \label{eq:estimated-centroid-zero}
+\end{equation}
+
+真实相对位置质心为
+\begin{equation}
+ e_c:=\frac1N\sum_i p_{i0}
+ =\bar{\hat p}_0-\frac1N\sum_i e_{p,i}.
+\end{equation}
+由式 \eqref{eq:no-exit}，估计图在全时间轴可用，所以定理
+\ref{thm:poi-observer} 给出
+$e_{p,i}(t)\to0$。结合式 \eqref{eq:estimated-centroid-zero}，得到
+$e_c(t)\to0$。又因为
+\begin{equation}
+ \bar p:=\frac1N\sum_i p_i\in\operatorname{co}\{p_1,\ldots,p_N\},
+ \qquad e_c=\bar p-p_0,
+\end{equation}
+所以
+\begin{equation}
+ \operatorname{dist}\!\left(p_0(t),
+ \operatorname{co}\{p_1(t),\ldots,p_N(t)\}\right)
+ \le\norm{e_c(t)}\to0.
+ \label{eq:final-enclosure}
+\end{equation}
+
+\begin{theorem}[严格仅位置观测器与合围控制器的闭环结论]
+假设定理 \ref{thm:poi-observer} 的全部条件成立；初始估计图无向连通且至少一个节点可测
+$p_{i0}$；初始距离严格满足安全和通信约束；人工势函数满足假设
+\ref{ass:barrier-potential}；
+控制器采用式 \eqref{eq:new-sliding-variable}--\eqref{eq:new-controller}，
+并选取 $\ell_1,\ell_2,\kappa_{1,i},\kappa_{2,i}>0$。则在 Filippov
+意义下：
+\begin{enumerate}
+ \item 所有智能体均有
+ $\hat p_{i0}-p_{i0}\to0$、$\hat v_{i0}-v_{i0}\to0$；
+ \item 所有初始通信边保持，且任意两智能体的距离始终大于 $d$；
+ \item 目标到智能体位置凸包的距离渐近趋于零，即式
+ \eqref{eq:final-enclosure} 成立。
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+第一项由定理 \ref{thm:poi-observer} 和最大安全区间反证成立；第二项由
+式 \eqref{eq:new-safety-energy}--\eqref{eq:no-exit} 成立；第三项由
+式 \eqref{eq:corrected-centroid-system}--\eqref{eq:final-enclosure} 成立。
+以上三个步骤的依赖顺序是：先在最大安全区间获得观测器一致有界性，
+再用安全能量排除有限失效时间，随后得到观测误差的全时间渐近收敛，
+最后利用受渐消输入驱动的 Hurwitz 质心系统推出合围。
+\end{proof}
+
+\begin{auditbox}
+最终结论是``可以做''，但必须使用式 \eqref{eq:new-compensation}，并用
+式 \eqref{eq:corrected-centroid-system} 取代原稿中建立在
+$\dot{\hat p}_{i0}=\hat v_{i0}$ 上的齐次质心方程。这里不要求
+$\nu_{v,i}\to0$；速度通道等效注入由 $\Gamma_i$ 精确补偿，而质心
+降阶系统只受到连续位置注入 $\nu_{p,i}\to0$ 的影响。
+\end{auditbox}
+
+\section{数值仿真}
+
+数值仿真采用五个智能体构成的三维 CW 相对动力学系统，智能体~1 和智能体~3
+可获得与目标之间的相对位置，其余智能体仅使用邻居相对位置和邻居发送的
+观测器内部状态。仿真时间为 $20\,\mathrm{s}$，观测器和控制器中的符号函数
+均采用宽度为 $10^{-3}$ 的边界层饱和函数近似。三维轨迹图分别在
+$t=3\,\mathrm{s}$、$10\,\mathrm{s}$ 和 $20\,\mathrm{s}$ 绘制智能体位置凸包。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_tra.pdf}
+    \caption{仅相对位置观测条件下的目标与智能体三维轨迹。}
+    \label{fig:poi-simulation-trajectory}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_est_p_error.pdf}\\[0.8em]
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_est_v_error.pdf}
+    \caption{所有智能体的目标相对位置与相对速度估计误差。}
+    \label{fig:poi-simulation-observer}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.92\linewidth]{simulation_only_poi/figures/cw_only_poi_dist_agents.pdf}
+    \caption{集群中心到目标的距离及智能体之间的相对位置距离。}
+    \label{fig:poi-simulation-distance}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_hat_si0.pdf}
+    \caption{基于估计相对状态构造的滑模变量范数。}
+    \label{fig:poi-simulation-sliding}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_control.pdf}
+    \caption{各智能体控制输入的范数。}
+    \label{fig:poi-simulation-control}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.88\linewidth]{simulation_only_poi/figures/cw_only_poi_injection.pdf}
+    \caption{位置通道注入、速度通道注入及双通道补偿项。}
+    \label{fig:poi-simulation-injection}
+\end{figure}
+
+仿真末段的最大相对位置估计误差为
+$6.117\times10^{-4}\,\mathrm{km}$，最大相对速度估计误差为
+$1.115\times10^{-2}\,\mathrm{km/s}$；对应的末段与初段均方根误差比分别为
+$1.412\times10^{-4}$ 和 $1.437\times10^{-3}$。集群中心误差的末段最大值为
+$4.744\times10^{-3}\,\mathrm{km}$，其均方根误差比为
+$1.167\times10^{-3}$。在整个仿真区间内，智能体之间的最小距离为
+$1.226\,\mathrm{km}>d$，初始通信边的最大距离为
+$3.952\,\mathrm{km}<\mu$。这些结果表明，在本组参数和初始条件下，位置与
+速度估计误差明显衰减，集群中心接近目标，同时安全距离和初始通信边均得到
+保持。最大控制输入范数约为 $177.2\,\mathrm{km/s^2}$，说明当前参数主要用于
+验证闭环结构，控制输入幅值仍有进一步整定空间。
+
+\clearpage
+\begin{thebibliography}{99}
+
+\bibitem{Chen2024}
+W. Chen, H. Du, and S. Li,
+``Distributed Finite-time Differentiator for Multi-agent Systems Under Directed Graph,''
+arXiv:2402.16260, 2024.
+\url{https://arxiv.org/abs/2402.16260}.
+
+\bibitem{Moreno2009}
+J. A. Moreno,
+``A Linear Framework for the Robust Stability Analysis of a Generalized Super-Twisting Algorithm,''
+in \emph{2009 6th International Conference on Electrical Engineering, Computing Science and Automatic Control}, 2009.
+doi: \href{https://doi.org/10.1109/ICEEE.2009.5393477}{10.1109/ICEEE.2009.5393477}.
+
+\bibitem{MorenoOsorio2012}
+J. A. Moreno and M. Osorio,
+``Strict Lyapunov Functions for the Super-Twisting Algorithm,''
+\emph{IEEE Transactions on Automatic Control}, vol. 57, no. 4,
+pp. 1035--1040, 2012.
+doi: \href{https://doi.org/10.1109/TAC.2012.2186179}{10.1109/TAC.2012.2186179}.
+
+\end{thebibliography}
+
+\end{document}
