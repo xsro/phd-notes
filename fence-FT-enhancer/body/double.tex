@@ -4,7 +4,7 @@
 
 考虑 $N\ge 3$ 个机器人，编号集合为 $\mathcal{N}=\{1,2,\ldots,N\}$，每个机器人采用双积分模型
 $\dot p_i=v_i,\quad \dot v_i=u_i+d_i,\quad i\in\mathcal{N},$
-其中 $p_i,v_i,u_i,d_i\in\mathbb{R}^2$ 分别为位置、速度、控制输入和输入通道扰动。目标编号为 $0$，位置为 $p_0(t)\in\mathbb{R}^2$。控制目标为：在保持通信连通和避免机器人间碰撞的前提下，使目标进入机器人位置凸包。固定时间增强器进一步要求该凸包合围性质在固定时间内实现。
+其中 $p_i,v_i,u_i,d_i\in\mathbb{R}^2$ 分别为位置、速度、控制输入和输入通道扰动。目标编号为 $0$，位置为 $p_0(t)\in\mathbb{R}^2$。控制目标为：在保持通信连通和避免机器人间碰撞的前提下，使目标进入机器人位置凸包。固定时间增强器进一步提升质心通道的收敛速度；若进入质心估计器收敛条件的时间依赖初始状态，则整体结论为有限时间合围。
 
 \subsection{已有算法}
 
@@ -82,13 +82,13 @@ $k_s \ge \sup_{t\geq 0}\|\ddot{p}_0\| + \sup_{t\geq 0,i\in\mathbb{N}}\|d_i\|$.
 \end{proof}
 
 
-\subsection{固定时间增强器}
+\subsection{固定时间质心增强器}
 
-上述 SMC 控制律主要保证安全约束和渐近合围。固定时间增强器不直接要求所有 $p_{i0}\to\mathbf{0}$，因为这会与避碰约束冲突；增强器只作用在集群的平移自由度上，使相对目标的集群中心 $c$ 及其速度 $\nu=\dot c$ 在固定时间内到达零点，其中 $c=N^{-1}\sum_i p_{i0}$、$\nu=N^{-1}\sum_i\dot p_{i0}$。机器人之间的相对构型、避碰和连通性仍由原 iAPF--SMC 层负责。
+上述 SMC 控制律主要保证安全约束和渐近合围。固定时间增强器不直接要求所有 $p_{i0}\to\mathbf{0}$，因为这会与避碰约束冲突；增强器只作用在集群的平移自由度上，使相对目标的集群中心 $c$ 及其速度 $\nu=\dot c$ 在增强阶段固定时间到达零点，其中 $c=N^{-1}\sum_i p_{i0}$、$\nu=N^{-1}\sum_i\dot p_{i0}$。机器人之间的相对构型、避碰和连通性仍由原 iAPF--SMC 层负责。
 
-为避免增强器在估计误差尚未消失时破坏相对动力学，采用延迟开启机制。观测器先运行到已知收敛时间上界，随后初始化动态平均一致器；中心增强控制只在一个已知时间上界 $T_e$ 之后开启。开启后每个机器人使用同一个公共平移加速度，因此增强项从所有相对动力学中精确抵消。
+为避免增强器在估计误差尚未消失时破坏相对动力学，采用延迟开启机制。记 $T_s(x(0))$ 为原算法进入质心估计器收敛条件的有限时间，该时间一般依赖初始状态。动态平均一致器在 $T_s$ 后初始化，中心增强控制在估计完成后开启。开启后每个机器人使用同一个公共平移加速度，因此增强项从所有相对动力学中精确抵消。
 
-\subsubsection{预备引理}
+\subsubsection{增强器预备引理}
 
 \begin{lemma}[观测器有限时间收敛]
 在已有算法的观测器增益条件下，存在已知常数 $T_o>0$，使得对所有 $t\geq T_o$，有 $\hat p_{i0}(t)=p_{i0}(t)$、$\hat v_{i0}(t)=\dot p_{i0}(t)$，$i\in\mathcal{N}$。
@@ -112,7 +112,7 @@ $$
 -\kappa_{2}\sum_{j\in\mathcal{N}_i(0)}a_{ij}\lfloor z_i-z_j\rceil^{\beta}
 -\kappa_{3}\sum_{j\in\mathcal{N}_i(0)}a_{ij}\operatorname{sgn}(z_i-z_j),
 $$
-其中 $0<\alpha<1$，$\beta>1$。若存在已知常数 $\bar r$ 使得 $\|\dot r_i(t)-\dot r_j(t)\|\leq\bar r$，$\forall i,j$，$\forall t\geq0$，则当 $\kappa_3$ 足够大时，存在与初值无关的 $T_a>0$，使得 $z_i(t)=N^{-1}\sum_{j=1}^{N}r_j(t)$，$\forall i\in\mathcal{N}$，$\forall t\geq t_0+T_a$。
+其中 $0<\alpha<1$，$\beta>1$。若存在已知常数 $\bar r$ 使得 $\|\dot r_i(t)-\dot r_j(t)\|\leq\bar r$，$\forall i,j$，$\forall t\geq t_0$，则当 $\kappa_3$ 足够大时，存在与初值无关的 $T_a>0$，使得 $z_i(t)=N^{-1}\sum_{j=1}^{N}r_j(t)$，$\forall i\in\mathcal{N}$，$\forall t\geq t_0+T_a$。
 \end{lemma}
 
 \begin{proof}
@@ -126,15 +126,15 @@ $$
 \end{proof}
 
 \begin{lemma}[动态平均输入有界性]
-在原 SMC--iAPF 算法的渐近性质引理成立时，增强器中两个动态平均一致器的输入满足上述有界变化率差条件。具体地，存在常数 $\bar r_p,\bar r_v>0$，使得对所有 $i,j$ 和 $t\geq T_o$，有 $\|\dot r_i^p(t)-\dot r_j^p(t)\|\leq\bar r_p$ 和 $\|\dot r_i^v(t)-\dot r_j^v(t)\|\leq\bar r_v$。
+在原 SMC--iAPF 算法的渐近性质引理成立时，对给定初始状态，存在有限时间 $T_s(x(0))\geq T_o$ 和常数 $\bar r_p,\bar r_v>0$，使得对所有 $i,j$ 和 $t\geq T_s(x(0))$，有 $\|\dot r_i^p(t)-\dot r_j^p(t)\|\leq\bar r_p$ 和 $\|\dot r_i^v(t)-\dot r_j^v(t)\|\leq\bar r_v$。
 \end{lemma}
 
 \begin{proof}
 由观测器有限时间收敛引理，对所有 $t\geq T_o$，有 $r_i^p=\hat p_{i0}=p_{i0}$ 和 $r_i^v=\hat v_{i0}=\dot p_{i0}$。因此位置平均一致器的输入导数满足 $\dot r_i^p-\dot r_j^p=\dot p_{i0}-\dot p_{j0}$。
-由原 SMC--iAPF 算法的渐近性质引理，$\dot p_{i0}$ 收敛，故每个 $\dot p_{i0}$ 有界，从而任意差分 $\dot p_{i0}-\dot p_{j0}$ 有界，存在 $\bar r_p>0$ 使第一式成立。
+由原 SMC--iAPF 算法的渐近性质引理，$\dot p_{i0}$ 收敛，故对给定初始状态，存在有限时间 $T_{sp}(x(0))$ 使任意差分 $\dot p_{i0}-\dot p_{j0}$ 在 $t\geq T_{sp}$ 后满足所需上界，记该上界为 $\bar r_p$。
 
 速度平均一致器的输入导数满足 $\dot r_i^v-\dot r_j^v=\ddot p_{i0}-\ddot p_{j0}$。
-由原 SMC--iAPF 算法的渐近性质引理，$\ddot p_{i0}$ 有界，故任意差分 $\ddot p_{i0}-\ddot p_{j0}$ 有界，存在 $\bar r_v>0$ 使第二式成立。
+由原 SMC--iAPF 算法的渐近性质引理，$\ddot p_{i0}$ 有界，故任意差分 $\ddot p_{i0}-\ddot p_{j0}$ 有界，存在 $\bar r_v>0$ 使第二式成立。取 $T_s(x(0))=\max\{T_o,T_{sp}(x(0))\}$ 即得结论。由于 $T_{sp}$ 来自 $\dot p_{i0}$ 的渐近收敛，它一般依赖初始状态。
 \end{proof}
 
 \begin{lemma}[鲁棒固定时间中心控制]
@@ -185,9 +185,11 @@ $$
 上述中心控制律是便于证明的理想形式。由于 $0<\gamma<1$ 时 $\frac{d}{dt}\lfloor c\rceil^\gamma$ 在 $c=\mathbf{0}$ 附近可能带来奇异性，实际实现可采用非奇异终端滑模等价形式或在原点邻域使用光滑饱和近似；证明中使用的是标准 Filippov 意义下的滑模模型。
 \end{remark}
 
-\subsubsection{增强器设计}
+\subsubsection{质心增强器设计}
 
-在 $t=T_o$ 时初始化两个动态平均一致器：$z_i^p(T_o)=\hat p_{i0}(T_o)$、$z_i^v(T_o)=\hat v_{i0}(T_o)$。分别以 $r_i^p=\hat p_{i0}$ 和 $r_i^v=\hat v_{i0}$ 作为输入运行动态平均一致器，并定义 $\hat c_i=z_i^p$、$\hat\nu_i=z_i^v$。令 $T_e=T_o+T_a$。由观测器有限时间收敛和动态平均一致引理可知，对所有 $t\geq T_e$，有 $\hat c_i=c$、$\hat\nu_i=\nu$，$\forall i\in\mathcal{N}$。
+理论分析采用方案 A：不要求机器人在线协商 $T_e$，而是把 $T_e$ 作为质心估计条件满足并完成估计后的分析时刻。该方案用于给出清晰的有限时间合围证明，但 $T_s(x(0))$ 和 $T_e$ 一般不是严格分布式可在线获得的量。
+
+在 $t=T_s(x(0))$ 时初始化两个动态平均一致器：$z_i^p(T_s)=\hat p_{i0}(T_s)$、$z_i^v(T_s)=\hat v_{i0}(T_s)$。分别以 $r_i^p=\hat p_{i0}$ 和 $r_i^v=\hat v_{i0}$ 作为输入运行动态平均一致器，并定义 $\hat c_i=z_i^p$、$\hat\nu_i=z_i^v$。令 $T_e=T_s(x(0))+T_a$。由观测器有限时间收敛、动态平均输入有界性引理和动态平均一致引理可知，对所有 $t\geq T_e$，有 $\hat c_i=c$、$\hat\nu_i=\nu$，$\forall i\in\mathcal{N}$。
 这里动态平均一致引理所需的输入变化率差有界条件由“动态平均输入有界性”引理给出；实际选取 $\kappa_3$ 时取其大于由 $\max\{\bar r_p,\bar r_v\}$ 和图权重决定的阈值即可。
 
 中心增强项定义为
@@ -200,7 +202,18 @@ a_{\mathrm{FxT}}(\hat c_i,\hat\nu_i), & t\geq T_e.
 $$
 完整控制输入为 $u_i=u_i^{\mathrm{SMC}}+a_i^c$。
 
-\subsubsection{固定时间合围定理}
+\subsubsection{分布式开启机制}
+
+实际分布式实现可采用方案 B：局部残差检测加 ready 信息扩散。机器人 $i$ 构造观测器残差 $\epsilon_i^o=\|\xi_i\|$，以及质心估计一致性残差
+$$
+\epsilon_i^c=\sum_{j\in\mathcal{N}_i(0)}a_{ij}\|z_i^p-z_j^p\|,\qquad
+\epsilon_i^\nu=\sum_{j\in\mathcal{N}_i(0)}a_{ij}\|z_i^v-z_j^v\|.
+$$
+给定阈值 $\varepsilon_o,\varepsilon_c,\varepsilon_\nu>0$ 和驻留时间 $\tau_d>0$，若 $\epsilon_i^o\leq\varepsilon_o$、$\epsilon_i^c\leq\varepsilon_c$、$\epsilon_i^\nu\leq\varepsilon_\nu$ 在区间 $[t-\tau_d,t]$ 内持续成立，则节点 $i$ 标记自身为 ready。
+
+为避免部分节点提前开启导致 $a_i^c-a_j^c\neq\mathbf{0}$，可让 ready 信息在图上传播。设 $\mathcal{S}_i(t)$ 为节点 $i$ 已知的 ready 节点集合，初始化时若节点 $i$ ready 则令 $i\in\mathcal{S}_i$；通信时按规则 $\mathcal{S}_i\leftarrow \mathcal{S}_i\cup\bigcup_{j\in\mathcal{N}_i(0)}\mathcal{S}_j$ 更新。当 $|\mathcal{S}_i|=N$ 时，节点 $i$ 知道全网均已 ready，再开启质心增强器。该机制需要节点 ID、网络规模 $N$ 和可靠通信；若还要求所有节点同步开启，则需全局时钟、通信轮次同步或图直径上界。若无法保证同步开启，则开启过渡阶段会产生短暂非公共输入，需要把 $a_i^c-a_j^c$ 作为有界扰动另行分析。
+
+\subsubsection{有限时间合围结论}
 
 \begin{assumption}
 设 $\mathcal{E}(0)$ 为初始通信边集合，并定义安全连通集合
@@ -222,7 +235,7 @@ $$
 \end{assumption}
 
 \begin{theorem}
-在上述假设下，若 $\kappa_3$ 足够大且中心控制器中 $k_w>\bar w$，则增强后的控制律保持原有避碰和连通约束，并使目标在固定时间内进入机器人位置凸包，即存在与初始状态无关的时间上界 $T^\star\leq T_o+T_a+T_c$，使得对所有 $t\geq T^\star$，有 $c(t)=\mathbf{0}$、$\nu(t)=\mathbf{0}$ 和 $\mathrm{dist}(p_0(t),\mathrm{co}(p(t)))=0$。
+对方案 A，在上述假设下，若 $\kappa_3$ 足够大且中心控制器中 $k_w>\bar w$，则增强后的控制律保持原有避碰和连通约束，并使目标在有限时间内进入机器人位置凸包。更具体地，存在时间 $T^\star(x(0))\leq T_s(x(0))+T_a+T_c$，使得对所有 $t\geq T^\star(x(0))$，有 $c(t)=\mathbf{0}$、$\nu(t)=\mathbf{0}$ 和 $\mathrm{dist}(p_0(t),\mathrm{co}(p(t)))=0$。由于 $T_s(x(0))$ 一般依赖初始状态，该整体结论是有限时间而非固定时间；从 $T_e$ 开始的质心增强阶段仍具有固定时间上界 $T_c$。
 \end{theorem}
 
 \begin{proof}
@@ -238,7 +251,12 @@ $$
 $$
 中，公共增强项完全抵消。于是从 $T_e$ 开始，相对位置、避碰势函数和初始边保持势函数看到的控制差分与原 SMC--iAPF 层一致。由 $\Omega$ 对原相对闭环的正不变性，增强后的闭环仍保持避碰和连通约束。
 
-第二步，证明质心固定时间收敛。由 $c=N^{-1}\sum_i p_{i0}$ 得 $\ddot c=N^{-1}\sum_{i=1}^{N}u_i+N^{-1}\sum_{i=1}^{N}d_i-\ddot p_0$。
+第二步，证明质心增强阶段固定时间收敛。由 $c=N^{-1}\sum_i p_{i0}$ 得
+$$
+\ddot c
+=\frac{1}{N}\sum_{i=1}^{N}u_i
++\frac{1}{N}\sum_{i=1}^{N}d_i-\ddot p_0 .
+$$
 当 $t\geq T_e$ 时，$u_i=u_i^{\mathrm{SMC}}+a_{\mathrm{FxT}}(c,\nu)$，因此
 $$
 \dot c=\nu,\qquad
@@ -247,10 +265,10 @@ $$
 其中 $w(t)$ 正是第二个假设中的有界扰动。由鲁棒固定时间中心控制引理，$c$ 和 $\nu$ 在一个与初始值无关的时间 $T_c$ 内收敛到零。
 
 第三步，证明合围性质。对所有 $t\geq T_e+T_c$，有 $c(t)=N^{-1}\sum_{i=1}^{N}(p_i(t)-p_0(t))=\mathbf{0}$，于是 $p_0(t)=N^{-1}\sum_{i=1}^{N}p_i(t)$。由于等权平均点属于 $\mathrm{co}(p(t))$，得到 $\mathrm{dist}(p_0(t),\mathrm{co}(p(t)))=0$。
-综上，取 $T^\star=T_o+T_a+T_c$ 即得结论。
+综上，取 $T^\star(x(0))=T_s(x(0))+T_a+T_c$ 即得有限时间结论。若能进一步给出与初始状态无关的 $T_s$ 上界，则整体结论才可升级为固定时间。
 \end{proof}
 
-\subsubsection{质心通道仿真对比}
+\subsubsection{质心增强仿真对比}
 
 为直观比较增强器前后的集群中心收敛性，在 \texttt{simulation/main.m} 中对质心降阶模型进行了简单仿真。仿真中，原质心通道采用阻尼二阶渐近收敛模型；增强后在同一质心通道上于 $t=2\,\mathrm{s}$ 开启固定时间中心增强器。图~\ref{fig:centroid-norm-comparison} 给出了 $\|c(t)\|$ 的线性坐标对比。
 
