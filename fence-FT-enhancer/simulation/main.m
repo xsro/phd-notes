@@ -158,13 +158,11 @@ set(groot, 'defaultLegendFontName', 'Times New Roman');
 
 fig = figure('Color', 'w', 'Position', [100, 100, 940, 420]);
 ax = axes('Parent', fig);
+ax.Toolbar.Visible = 'off';
 hold(ax, 'on'); grid(ax, 'on'); box(ax, 'on');
-displayFloor = 1e-8;
-plot(ax, tBase, max(base.err, displayFloor), '-', ...
-    'Color', [0.16, 0.36, 0.62], ...
+plot(ax, tBase, base.err, '-', 'Color', [0.16, 0.36, 0.62], ...
     'LineWidth', 2.2, 'DisplayName', 'Original centroid channel');
-plot(ax, tEnh, max(enh.err, displayFloor), '-', ...
-    'Color', [0.78, 0.24, 0.18], ...
+plot(ax, tEnh, enh.err, '-', 'Color', [0.78, 0.24, 0.18], ...
     'LineWidth', 2.2, 'DisplayName', 'With fixed-time enhancer');
 yline(ax, params.threshold, 'k--', 'LineWidth', 1.4, ...
     'DisplayName', 'Threshold');
@@ -176,9 +174,8 @@ if ~isnan(metrics.enhSettle)
 end
 xlabel(ax, 'Time (s)');
 ylabel(ax, '$\|c(t)\|$', 'Interpreter', 'latex');
-set(ax, 'YScale', 'log', 'FontSize', 14, 'LineWidth', 1.0, ...
-    'GridAlpha', 0.18);
-ylim(ax, [displayFloor, 10]);
+set(ax, 'FontSize', 14, 'LineWidth', 1.0, 'GridAlpha', 0.18);
+ylim(ax, [0, 1.05 * max([base.err; enh.err])]);
 legend(ax, 'Location', 'northeast', 'Interpreter', 'latex');
 exportgraphics(fig, fullfile(figDir, 'centroid_norm_comparison.pdf'), ...
     'ContentType', 'vector');
@@ -187,6 +184,7 @@ exportgraphics(fig, fullfile(figDir, 'centroid_norm_comparison.png'), ...
 
 fig = figure('Color', 'w', 'Position', [120, 120, 760, 620]);
 ax = axes('Parent', fig);
+ax.Toolbar.Visible = 'off';
 hold(ax, 'on'); grid(ax, 'on'); box(ax, 'on');
 plot(ax, base.c(:, 1), base.c(:, 2), '-', 'Color', [0.16, 0.36, 0.62], ...
     'LineWidth', 2.0, 'DisplayName', 'Original');
