@@ -4,13 +4,19 @@
 \usepackage{geometry}
 \geometry{a4paper, margin=2.5cm}
 
+\newtheorem{assumption}{假设}
+\newtheorem{lemma}{引理}
+\newtheorem{theorem}{定理}
+\newtheorem{remark}{说明}
+\renewcommand{\proofname}{证明}
+
 \title{合围控制的固定时间增强器}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-    固定时间增强器
+本文整理一种用于双积分合围控制的固定时间增强器。增强器不强迫所有机器人位置收敛到目标，而是只控制相对目标的集群质心，使目标在固定时间内进入机器人位置凸包；避碰和连通性仍由原积分型人工势场与 SMC 控制层保证。文中把有限时间观测器作为已知引理使用，并给出动态平均一致、鲁棒固定时间质心控制和整体合围结论的推导。
 \end{abstract}
 
 \input{body/double.tex}

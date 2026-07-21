@@ -4,7 +4,7 @@
 
 考虑 $N\ge 3$ 个机器人，编号集合为 $\mathcal{N}=\{1,2,\ldots,N\}$，每个机器人采用双积分模型
 $\dot p_i=v_i,\quad \dot v_i=u_i+d_i,\quad i\in\mathcal{N},$
-其中 $p_i,v_i,u_i,d_i\in\mathbb{R}^2$ 分别为位置、速度、控制输入和输入通道扰动。目标编号为 $0$，位置为 $p_0(t)\in\mathbb{R}^2$。控制目标为：在保持通信连通和避免碰撞的前提下，使所有机器人有限时间内跟踪目标。
+其中 $p_i,v_i,u_i,d_i\in\mathbb{R}^2$ 分别为位置、速度、控制输入和输入通道扰动。目标编号为 $0$，位置为 $p_0(t)\in\mathbb{R}^2$。控制目标为：在保持通信连通和避免机器人间碰撞的前提下，使目标进入机器人位置凸包。固定时间增强器进一步要求该凸包合围性质在固定时间内实现。
 
 \subsection{已有算法}
 
@@ -77,8 +77,322 @@ $\hat\Delta_i=-k_2\hat v_{i0}-k_1\hat p_{i0}+\phi_i,$
 增益选取满足
 $k_s \ge \sup_{t\geq 0}\|\ddot{p}_0\| + \sup_{t\geq 0,i\in\mathbb{N}}\|d_i\|$.
 
+\begin{lemma}[原 SMC--iAPF 算法的渐近性质]
+在上述观测器、积分型人工势场和 SMC 控制律的增益条件下，原算法闭环满足如下性质：
+$$
+\lim_{t\to\infty}\dot p_{i0}(t)=\mathbf{0},\qquad
+\sup_{t\geq0}\|\ddot p_{i0}(t)\|<\infty,
+$$
+并且
+$$
+\lim_{t\to\infty}\bigl(k_1p_{i0}(t)-\phi_i(t)\bigr)=\mathbf{0},
+\qquad i\in\mathcal{N}.
+$$
+\end{lemma}
+
+\begin{proof}
+该结论是原 SMC--iAPF 算法的闭环收敛性质。由观测器有限时间收敛和滑模变量收敛可得 $\dot p_{i0}$ 收敛；由闭环右端各项有界可得 $\ddot p_{i0}$ 有界。另一方面，辅助变量满足
+$
+\dot\Phi_{1i}=k_1p_{i0}-\phi_i
+$
+，结合闭环收敛性可得 $\dot\Phi_{1i}\to\mathbf{0}$，从而
+$
+k_1p_{i0}-\phi_i\to\mathbf{0}
+$。
+\end{proof}
+
 
 \subsection{固定时间增强器}
 
-以上的算法都只能保证渐近收敛，现在需要设计一个机制来实现固定时间的收敛。
-原理是设计一个集群中心估计器，当估计出$1/N\sum_{i\in\mathbb{N}}p_{i0}$后，统一移动这个位移，确保固定时间收敛。
+上述 SMC 控制律主要保证安全约束和渐近合围。固定时间增强器不直接要求所有 $p_{i0}\to\mathbf{0}$，因为这会与避碰约束冲突；增强器只作用在集群的平移自由度上，使相对目标的集群中心
+$$
+c=\frac{1}{N}\sum_{i\in\mathcal{N}}p_{i0},\qquad
+\nu=\dot c=\frac{1}{N}\sum_{i\in\mathcal{N}}\dot p_{i0}
+$$
+在固定时间内到达零点。机器人之间的相对构型、避碰和连通性仍由原 iAPF--SMC 层负责。
+
+为避免增强器在估计误差尚未消失时破坏相对动力学，采用延迟开启机制。观测器先运行到已知收敛时间上界，随后初始化动态平均一致器；中心增强控制只在一个已知时间上界 $T_e$ 之后开启。开启后每个机器人使用同一个公共平移加速度，因此增强项从所有相对动力学中精确抵消。
+
+\subsubsection{预备引理}
+
+\begin{lemma}[观测器有限时间收敛]
+在已有算法的观测器增益条件下，存在已知常数 $T_o>0$，使得对所有 $t\geq T_o$，
+$$
+\hat p_{i0}(t)=p_{i0}(t),\qquad
+\hat v_{i0}(t)=\dot p_{i0}(t),\qquad i\in\mathcal{N}.
+$$
+\end{lemma}
+
+本文直接使用上述观测器结论，不再重复其证明。
+
+\begin{lemma}[固定时间 Lyapunov 判据]
+若正定函数 $V$ 满足
+$$
+\dot V\leq-aV^m-bV^n,\qquad a,b>0,\quad 0<m<1<n,
+$$
+则 $V$ 在固定时间内收敛到零，且收敛时间满足
+$$
+T\leq \frac{1}{a(1-m)}+\frac{1}{b(n-1)}.
+$$
+\end{lemma}
+
+\begin{proof}
+当 $V\geq1$ 时，$\dot V\leq-bV^n$，因此从任意初值进入集合 $V\leq1$ 的时间不超过 $1/[b(n-1)]$。当 $0<V\leq1$ 时，$\dot V\leq-aV^m$，从 $V=1$ 到 $V=0$ 的时间不超过 $1/[a(1-m)]$。两段时间上界与初值无关，故为固定时间收敛。
+\end{proof}
+
+\begin{lemma}[动态平均一致]
+考虑无向连通图。对每个可微的信号 $r_i(t)\in\mathbb{R}^2$，从任意时刻 $t_0$ 初始化状态 $z_i(t_0)=r_i(t_0)$，并令
+$$
+\dot z_i=\dot r_i
+-\kappa_{1}\sum_{j\in\mathcal{N}_i(0)}a_{ij}\lfloor z_i-z_j\rceil^{\alpha}
+-\kappa_{2}\sum_{j\in\mathcal{N}_i(0)}a_{ij}\lfloor z_i-z_j\rceil^{\beta}
+-\kappa_{3}\sum_{j\in\mathcal{N}_i(0)}a_{ij}\operatorname{sgn}(z_i-z_j),
+$$
+其中 $0<\alpha<1$，$\beta>1$。若存在已知常数 $\bar r$ 使得
+$$
+\|\dot r_i(t)-\dot r_j(t)\|\leq\bar r,\qquad \forall i,j,\quad \forall t\geq0,
+$$
+则当 $\kappa_3$ 足够大时，存在与初值无关的 $T_a>0$，使得
+$$
+z_i(t)=\frac{1}{N}\sum_{j=1}^{N}r_j(t),\qquad
+\forall i\in\mathcal{N},\quad \forall t\geq t_0+T_a .
+$$
+\end{lemma}
+
+\begin{proof}
+由图无向性可知所有边上非线性一致项求和为零，因此若 $z_i(t_0)=r_i(t_0)$，则
+$$
+\frac{1}{N}\sum_{i=1}^{N}z_i(t)=\frac{1}{N}\sum_{i=1}^{N}r_i(t)
+$$
+对所有 $t\geq t_0$ 成立。令 $\bar z=N^{-1}\sum_i z_i$，$\varepsilon_i=z_i-\bar z$。对不一致能量
+$
+V_a=\frac{1}{2}\sum_i\|\varepsilon_i\|^2
+$
+求导。连通图的边差范数与节点不一致范数等价，因此两类齐次一致项分别给出 $V_a^{(1+\alpha)/2}$ 和 $V_a^{(1+\beta)/2}$ 型耗散；输入差 $\dot r_i-\dot r_j$ 产生的项被符号一致项吸收。选取 $\kappa_3$ 大于由图权重和 $\bar r$ 决定的阈值后，可得
+$$
+\dot V_a\leq
+-a_a V_a^{(1+\alpha)/2}
+-b_a V_a^{(1+\beta)/2},
+$$
+其中 $a_a,b_a>0$。由固定时间 Lyapunov 判据，$V_a$ 在与初值无关的时间 $T_a$ 内到达零。再结合平均值守恒，得到结论。
+\end{proof}
+
+\begin{lemma}[动态平均输入有界性]
+在原 SMC--iAPF 算法的渐近性质引理成立时，增强器中两个动态平均一致器的输入满足上述有界变化率差条件。具体地，存在常数 $\bar r_p,\bar r_v>0$，使得对所有 $i,j$ 和 $t\geq T_o$，
+$$
+\|\dot r_i^p(t)-\dot r_j^p(t)\|\leq\bar r_p,\qquad
+\|\dot r_i^v(t)-\dot r_j^v(t)\|\leq\bar r_v .
+$$
+\end{lemma}
+
+\begin{proof}
+由观测器有限时间收敛引理，对所有 $t\geq T_o$，
+$$
+r_i^p=\hat p_{i0}=p_{i0},\qquad
+r_i^v=\hat v_{i0}=\dot p_{i0}.
+$$
+因此位置平均一致器的输入导数满足
+$$
+\dot r_i^p-\dot r_j^p
+=\dot p_{i0}-\dot p_{j0}.
+$$
+由原 SMC--iAPF 算法的渐近性质引理，$\dot p_{i0}$ 收敛，故每个 $\dot p_{i0}$ 有界，从而任意差分 $\dot p_{i0}-\dot p_{j0}$ 有界，存在 $\bar r_p>0$ 使第一式成立。
+
+速度平均一致器的输入导数满足
+$$
+\dot r_i^v-\dot r_j^v
+=\ddot p_{i0}-\ddot p_{j0}.
+$$
+由原 SMC--iAPF 算法的渐近性质引理，$\ddot p_{i0}$ 有界，故任意差分 $\ddot p_{i0}-\ddot p_{j0}$ 有界，存在 $\bar r_v>0$ 使第二式成立。
+\end{proof}
+
+\begin{lemma}[鲁棒固定时间中心控制]
+考虑受扰双积分中心系统
+$$
+\dot c=\nu,\qquad \dot\nu=a+w(t),\qquad \|w(t)\|\leq\bar w .
+$$
+存在固定时间反馈 $a=a_{\mathrm{FxT}}(c,\nu)$，使得 $c$ 与 $\nu$ 在固定时间内收敛到零。一个可选的理想滑模实现如下。定义
+$$
+\sigma=\nu+\lambda_1\lfloor c\rceil^{\gamma}
++\lambda_2\lfloor c\rceil^{\delta},
+$$
+其中 $0<\gamma<1<\delta$，$\lambda_1,\lambda_2>0$。令
+$$
+\begin{aligned}
+a_{\mathrm{FxT}}
+={}&-\lambda_1\frac{d}{dt}\lfloor c\rceil^\gamma
+-\lambda_2\frac{d}{dt}\lfloor c\rceil^\delta\\
+&-\ell_1\lfloor\sigma\rceil^{\rho}
+-\ell_2\lfloor\sigma\rceil^{\eta}
+-k_w\operatorname{sgn}(\sigma),
+\end{aligned}
+$$
+其中 $0<\rho<1<\eta$，$\ell_1,\ell_2>0$，$k_w>\bar w$。则 $\sigma$ 固定时间收敛到零；随后 $c$ 与 $\nu$ 固定时间收敛到零。
+\end{lemma}
+
+\begin{proof}
+代入控制律得到
+$$
+\dot\sigma=
+-\ell_1\lfloor\sigma\rceil^{\rho}
+-\ell_2\lfloor\sigma\rceil^{\eta}
+-k_w\operatorname{sgn}(\sigma)+w .
+$$
+取 $V_\sigma=\frac{1}{2}\|\sigma\|^2$，则
+$$
+\dot V_\sigma
+\leq
+-\ell_1\|\sigma\|^{1+\rho}
+-\ell_2\|\sigma\|^{1+\eta}
+-(k_w-\bar w)\|\sigma\|.
+$$
+忽略最后一个非正项，并把 $\|\sigma\|=(2V_\sigma)^{1/2}$ 代入，可得
+$$
+\dot V_\sigma
+\leq
+-a_\sigma V_\sigma^{(1+\rho)/2}
+-b_\sigma V_\sigma^{(1+\eta)/2},
+$$
+其中 $a_\sigma,b_\sigma>0$。由固定时间 Lyapunov 判据，$\sigma$ 在固定时间内到达零。
+
+由于 $k_w>\bar w$，在 Filippov 意义下符号项能够提供保持滑模面所需的等效控制，因此到达 $\sigma=0$ 后该滑模面保持不变。此时由 $\sigma=0$ 得
+$$
+\dot c=-\lambda_1\lfloor c\rceil^\gamma
+-\lambda_2\lfloor c\rceil^\delta .
+$$
+取 $V_c=\frac{1}{2}\|c\|^2$，同理有
+$$
+\dot V_c
+\leq
+-a_c V_c^{(1+\gamma)/2}
+-b_c V_c^{(1+\delta)/2},
+$$
+其中 $a_c,b_c>0$。再次使用固定时间 Lyapunov 判据，$c$ 固定时间收敛到零，且由滑模面 $\sigma=0$ 得 $\nu$ 同时收敛到零。
+\end{proof}
+
+\begin{remark}
+上述中心控制律是便于证明的理想形式。由于 $0<\gamma<1$ 时 $\frac{d}{dt}\lfloor c\rceil^\gamma$ 在 $c=\mathbf{0}$ 附近可能带来奇异性，实际实现可采用非奇异终端滑模等价形式或在原点邻域使用光滑饱和近似；证明中使用的是标准 Filippov 意义下的滑模模型。
+\end{remark}
+
+\subsubsection{增强器设计}
+
+在 $t=T_o$ 时初始化两个动态平均一致器：
+$$
+z_i^p(T_o)=\hat p_{i0}(T_o),\qquad
+z_i^v(T_o)=\hat v_{i0}(T_o).
+$$
+分别以
+$
+r_i^p=\hat p_{i0}
+$
+和
+$
+r_i^v=\hat v_{i0}
+$
+作为输入运行动态平均一致器，并定义
+$$
+\hat c_i=z_i^p,\qquad \hat\nu_i=z_i^v.
+$$
+令
+$$
+T_e=T_o+T_a .
+$$
+由观测器有限时间收敛和动态平均一致引理可知，对所有 $t\geq T_e$，
+$$
+\hat c_i=c,\qquad \hat\nu_i=\nu,\qquad \forall i\in\mathcal{N}.
+$$
+这里动态平均一致引理所需的输入变化率差有界条件由“动态平均输入有界性”引理给出；实际选取 $\kappa_3$ 时取其大于由 $\max\{\bar r_p,\bar r_v\}$ 和图权重决定的阈值即可。
+
+中心增强项定义为
+$$
+a_i^c(t)=
+\begin{cases}
+\mathbf{0}, & t<T_e,\\
+a_{\mathrm{FxT}}(\hat c_i,\hat\nu_i), & t\geq T_e.
+\end{cases}
+$$
+完整控制输入为
+$$
+u_i=u_i^{\mathrm{SMC}}+a_i^c.
+$$
+
+\subsubsection{固定时间合围定理}
+
+\begin{assumption}
+设 $\mathcal{E}(0)$ 为初始通信边集合，并定义安全连通集合
+$$
+\Omega=\{p:\ \|p_{ij}\|>d,\ \forall i\neq j;\ \|p_{ij}\|<\mu,\ \forall (i,j)\in\mathcal{E}(0)\}.
+$$
+原 SMC--iAPF 控制层在无中心增强项时使 $\Omega$ 正不变。
+\end{assumption}
+
+\begin{assumption}
+对 $t\geq T_e$，中心通道中的等效扰动
+$$
+w(t)=
+\frac{1}{N}\sum_{i=1}^{N}u_i^{\mathrm{SMC}}(t)
++\frac{1}{N}\sum_{i=1}^{N}d_i(t)
+-\ddot p_0(t)
+$$
+存在已知上界 $\bar w$，即 $\|w(t)\|\leq\bar w$。
+\end{assumption}
+
+\begin{theorem}
+在上述假设下，若 $\kappa_3$ 足够大且中心控制器中 $k_w>\bar w$，则增强后的控制律保持原有避碰和连通约束，并使目标在固定时间内进入机器人位置凸包，即存在与初始状态无关的时间上界
+$$
+T^\star\leq T_o+T_a+T_c
+$$
+使得对所有 $t\geq T^\star$，
+$$
+c(t)=\mathbf{0},\qquad \nu(t)=\mathbf{0},\qquad
+\mathrm{dist}\bigl(p_0(t),\mathrm{co}(p(t))\bigr)=0.
+$$
+\end{theorem}
+
+\begin{proof}
+第一步，证明增强项不破坏相对安全层。当 $t<T_e$ 时，$a_i^c=\mathbf{0}$，闭环就是原 SMC--iAPF 系统，因此 $\Omega$ 的正不变性由原控制层保证，特别地 $p(T_e)\in\Omega$。当 $t\geq T_e$ 时，由观测器引理和动态平均一致引理，
+$$
+\hat c_i=c,\qquad \hat\nu_i=\nu,\qquad \forall i\in\mathcal{N}.
+$$
+于是所有机器人使用同一个增强输入
+$$
+a_i^c=a_{\mathrm{FxT}}(c,\nu).
+$$
+对任意 $i,j$，
+$$
+a_i^c-a_j^c=\mathbf{0}.
+$$
+因此在相对动力学
+$$
+\ddot p_{ij}
+=u_i-u_j+d_i-d_j
+$$
+中，公共增强项完全抵消。于是从 $T_e$ 开始，相对位置、避碰势函数和初始边保持势函数看到的控制差分与原 SMC--iAPF 层一致。由 $\Omega$ 对原相对闭环的正不变性，增强后的闭环仍保持避碰和连通约束。
+
+第二步，证明质心固定时间收敛。由 $c=N^{-1}\sum_i p_{i0}$ 得
+$$
+\ddot c
+=\frac{1}{N}\sum_{i=1}^{N}u_i
++\frac{1}{N}\sum_{i=1}^{N}d_i-\ddot p_0 .
+$$
+当 $t\geq T_e$ 时，$u_i=u_i^{\mathrm{SMC}}+a_{\mathrm{FxT}}(c,\nu)$，因此
+$$
+\dot c=\nu,\qquad
+\dot\nu=a_{\mathrm{FxT}}(c,\nu)+w(t),
+$$
+其中 $w(t)$ 正是第二个假设中的有界扰动。由鲁棒固定时间中心控制引理，$c$ 和 $\nu$ 在一个与初始值无关的时间 $T_c$ 内收敛到零。
+
+第三步，证明合围性质。对所有 $t\geq T_e+T_c$，
+$$
+c(t)=\frac{1}{N}\sum_{i=1}^{N}(p_i(t)-p_0(t))=\mathbf{0}.
+$$
+于是
+$$
+p_0(t)=\frac{1}{N}\sum_{i=1}^{N}p_i(t).
+$$
+由于等权平均点属于 $\mathrm{co}(p(t))$，得到
+$$
+\mathrm{dist}\bigl(p_0(t),\mathrm{co}(p(t))\bigr)=0.
+$$
+综上，取 $T^\star=T_o+T_a+T_c$ 即得结论。
+\end{proof}
