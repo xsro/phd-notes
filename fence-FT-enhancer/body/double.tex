@@ -270,11 +270,31 @@ $$
 
 \subsubsection{质心增强仿真对比}
 
-为直观比较增强器前后的集群中心收敛性，在 \texttt{simulation/main.m} 中对质心降阶模型进行了简单仿真。仿真中，原质心通道采用阻尼二阶渐近收敛模型；增强后在同一质心通道上于 $t=2\,\mathrm{s}$ 开启固定时间中心增强器。图~\ref{fig:centroid-norm-comparison} 给出了 $\|c(t)\|$ 的线性坐标对比。
+为直观比较增强器前后的集群中心收敛性，在 \texttt{simulation/main.m} 中实现了与本文算法一致的完整多机器人闭环仿真。仿真对象为 $N=5$ 个二维双积分机器人，目标静止于原点，即 $p_0=\mathbf{0}$、$\dot p_0=\mathbf{0}$。初始构型取一个五机器人多边形并整体平移到 $c(0)=[3.2,-2.4]^\top$，初始公共速度为 $\nu(0)=[-0.35,0.20]^\top$。通信图取无向完全图，且每个机器人均可获得目标相对量用于观测器锚定。安全距离和通信距离分别取 $d=0.50$ 和 $\mu=3.40$。
+
+仿真同时运行两组闭环：第一组只使用原 SMC--iAPF 控制层，第二组在相同初始条件和相同原控制层上加入质心增强器。为对应理论方案 A，数值仿真采用分段实现：在 $T_s=2\,\mathrm{s}$ 处按照观测器有限时间收敛引理令 $\hat p_{i0}=p_{i0}$、$\hat v_{i0}=\dot p_{i0}$，随后初始化动态平均一致器；在 $T_e=T_s+T_a=4\,\mathrm{s}$ 处按照动态平均一致引理令 $\hat c_i=c$、$\hat\nu_i=\nu$，并开启增强项 $a_i^c=a_{\mathrm{FxT}}(\hat c_i,\hat\nu_i)$。滑模符号函数在程序中采用小边界层光滑近似，以避免数值积分中的高频抖振。
+
+图~\ref{fig:centroid-norm-comparison} 给出了质心误差 $\|c(t)\|$ 的线性坐标对比。阈值取 $10^{-2}$ 时，原算法收敛时间约为 $10.920\,\mathrm{s}$，加入质心增强器后约为 $6.170\,\mathrm{s}$。两组仿真的最小机器人间距均约为 $0.5076$，始终大于安全距离 $d=0.50$，说明公共质心增强项没有破坏相对避碰约束。
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.88\textwidth]{simulation/figures/centroid_norm_comparison.pdf}
     \caption{增强器前后集群中心误差 $\|c(t)\|$ 的收敛对比。}
     \label{fig:centroid-norm-comparison}
+\end{figure}
+
+图~\ref{fig:agent-trajectories-original} 和图~\ref{fig:agent-trajectories-enhanced} 分别给出了原算法和增强算法下的机器人轨迹。圆点表示初始位置，三角形表示终止位置，黑色实线为集群质心轨迹，星形为目标位置，虚线多边形为终止时刻机器人位置的凸包。可以看到，增强器主要改变集群整体平移通道，使质心更快接近目标；机器人之间的相对构型仍由 iAPF--SMC 层调节，因此终止凸包保持非退化并包含目标。
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.82\textwidth]{simulation/figures/agent_target_trajectories_original.pdf}
+    \caption{原 SMC--iAPF 算法下的机器人和目标轨迹。}
+    \label{fig:agent-trajectories-original}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.82\textwidth]{simulation/figures/agent_target_trajectories_enhanced.pdf}
+    \caption{加入固定时间质心增强器后的机器人和目标轨迹。}
+    \label{fig:agent-trajectories-enhanced}
 \end{figure}
