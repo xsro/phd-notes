@@ -1,0 +1,20 @@
+\section{Introduction}
+\label{sec:intro}
+\textbf{[TODO]} Suggested outline:
+\begin{itemize}
+    \item Multi-agent target fencing/enclosing: agents keep a moving target
+    inside their convex hull (P1) while maintaining safety distances (P2)
+    and matching velocity (P3).
+    \item Existing fencing protocols achieve only \emph{asymptotic}
+    enclosure; transient overshoot and convergence rate depend on initial
+    conditions and gains and cannot be specified in advance.
+    \item Prescribed-performance control (PPC) bounds the error by a
+    user-defined envelope $\rho(t)$ (overshoot, rate, steady-state),
+    but must be made compatible with the hard collision-avoidance
+    ``fence''.
+    \item Contribution: for the double-integrator agent/target model, a
+    distributed \emph{prescribed-performance fencing} controller that
+    guarantees P4 (enclosure within $\rho(t)$) together with the
+    collision-avoidance fence (P2) and velocity match (P3); extension to
+    prescribed-\emph{time} enclosure.
+\end{itemize}

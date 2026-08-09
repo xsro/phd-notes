@@ -1,0 +1,49 @@
+\documentclass[twocolumn]{article}
+
+\usepackage{geometry}
+\geometry{a4paper, margin=2.0cm}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+
+% ---------- theorem-like environments ----------
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
+\newtheorem{problem}{Problem}
+
+% ---------- notation ----------
+\newcommand{\NN}{\mathcal{N}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\co}{\mathrm{co}}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\dist}{\mathrm{dist}}
+
+\title{Prescribed-Performance Fencing Control for Multi-Agent Systems}
+\author{Liu Cheng}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\textbf{[TODO]} Summarize the fencing (target-enclosing) problem, the
+limitation that existing protocols only guarantee \emph{asymptotic}
+enclosure with no user-specifiable transient behavior, the motivation of
+combining prescribed-performance control (PPC) with the collision-avoidance
+``fence'', and the main contributions (prescribed transient/steady-state
+bounds on the enclosure error while preserving hard collision avoidance).
+\end{abstract}
+
+\input{body/intro}
+\input{body/problem}
+\input{body/design}
+\input{body/analysis}
+\input{body/simulation}
+\input{body/conclusion}
+
+    \bibliographystyle{plain}
+	\bibliography{/Users/a1/sys/profiles/backup/zotero/我的文库.bib}
+
+\end{document}

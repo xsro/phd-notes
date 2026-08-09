@@ -1,0 +1,218 @@
+\section{Problem Formulation}
+
+\subsection{Agent and target dynamics}
+
+Consider $N$ fully-actuated agents and one moving target, all evolving in
+$\RR^n$ ($n=2$ or $3$). Every agent is modelled as a double integrator
+\begin{equation}
+    \ddot p_i = u_i + d_i, \qquad i\in\NN=\{1,\dots,N\},
+    \label{eq:agent}
+\end{equation}
+where $p_i\in\RR^n$ is the position, $u_i\in\RR^n$ the control input, and
+$d_i$ a bounded disturbance. The target obeys the same dynamics
+\begin{equation}
+    \ddot p_0 = u_0 + d_0,
+    \label{eq:target}
+\end{equation}
+with $u_0$ (and $d_0$) possibly unknown to the agents. Introduce the
+relative-to-target states
+\[
+p_{i0}=p_i-p_0,\qquad v_{i0}=\dot p_i-\dot p_0.
+\]
+
+A natural measure of how well the swarm encloses the target is the
+\emph{centroid error}
+\begin{equation}
+    \tilde p = \bar p - p_0
+    = \frac{1}{N}\sum_{i\in\NN} p_i - p_0,
+    \qquad \dot{\tilde p} = \frac{1}{N}\sum_{i\in\NN} v_i - v_0.
+    \label{eq:centroid}
+\end{equation}
+Since the centroid $\bar p$ always belongs to the agents' convex hull
+$\co(p)$, bounding $\tilde p$ bounds the target-to-hull distance (see
+\eqref{eq:dist} below). Differentiating \eqref{eq:centroid} and substituting
+\eqref{eq:agent}--\eqref{eq:target} gives the open-loop centroid dynamics
+\begin{equation}
+    \ddot{\tilde p}
+    = \frac{1}{N}\sum_{i\in\NN}(u_i+d_i) - (u_0+d_0).
+    \label{eq:centroid-dyn}
+\end{equation}
+
+\subsection{Fencing properties}
+
+\begin{definition}[Fencing properties]
+    (Adapted from \cite{chenCooperativeTargetfencingProtocol2019})
+    The self-organizing fencing problem is solved if
+    \begin{enumerate}
+        \item[\textbf{P1}] \textbf{Convex-hull fencing:}
+        $p_0(\infty)\in \co(p(\infty))$, i.e.\ the target is asymptotically
+        enclosed by the convex hull spanned by the agents;
+        \item[\textbf{P2}] \textbf{Collision avoidance:}
+        for a given safety distance $d>0$,
+        $\norm{p_{ij}(t)} > d$, $\forall\, i,j\in\NN,\ j\neq i,\ \forall\, t\ge 0$;
+        \item[\textbf{P3}] \textbf{Velocity match:}
+        $\lim_{t\to\infty}\norm{v_i-v_0}=0$, $\forall\, i\in\NN$.
+    \end{enumerate}
+    Here $v_i=\dot p_i$, $v_0=\dot p_0$, and
+    \[
+    \co(p) = \Bigl\{ \sum_{i=1}^N \lambda_i p_i
+    : \lambda_i \ge 0,\ \sum_{i=1}^N \lambda_i = 1 \Bigr\}
+    \]
+    is the convex hull of the agents (area of the polygon in $\RR^2$,
+    volume of the polytope in $\RR^3$).
+\end{definition}
+
+The distance from the target to the agents' convex hull is
+\begin{equation}
+    \dist(p,p_0)=\inf_{p^*\in\co(p)}\norm{p^*-p_0}.
+    \label{eq:dist}
+\end{equation}
+Because $\bar p\in\co(p)$, one always has
+$\dist(p,p_0)\le \norm{\bar p-p_0}=\norm{\tilde p}$; hence
+$\tilde p\to 0$ implies P1. Under a baseline fencing controller
+$u_i=-k_1 p_{i0}-k_2 v_{i0}+u_0+\phi_i+\psi_i$ (with the collision-avoidance
+term $\phi_i$ of \S\ref{subsec:apf} and a configuration term $\psi_i$),
+\eqref{eq:centroid-dyn} becomes the Hurwitz system
+$\ddot{\tilde p}=-k_1\tilde p-k_2\dot{\tilde p}+\zeta$,
+$\zeta=\frac1N\sum_i(\psi_i+d_i)-d_0$, which yields
+$\tilde p\to 0$ only \emph{asymptotically} and with no user-specifiable
+transient. Prescribing the convergence behavior is the subject of the next
+subsection.
+
+\subsection{Prescribed-performance preliminaries}
+\label{subsec:ppc}
+
+Prescribed-performance control lets the user specify, \emph{a priori}, a
+performance function $\rho(t)>0$ so that the (scalar) enclosure error
+$e(t)=\tilde p^{(\ell)}(t)$ of every component $\ell=1,\dots,n$ satisfies
+\begin{equation}
+    |e(t)| < \rho^{(\ell)}(t), \qquad \forall\, t\ge 0.
+    \label{eq:ppc-constraint}
+\end{equation}
+The function $\rho^{(\ell)}(t)$ is smooth, strictly positive, decreasing,
+with $\rho^{(\ell)}(0)>|e(0)|$ and
+$\lim_{t\to\infty}\rho^{(\ell)}(t)=\rho_\infty^{(\ell)}>0$ (taking
+$\rho_\infty^{(\ell)}=0$ gives asymptotic convergence to zero). It
+simultaneously prescribes:
+\begin{itemize}
+    \item the maximum overshoot: $|e(t)|<\rho^{(\ell)}(0)$;
+    \item the convergence rate (via the decay rate of $\rho^{(\ell)}$);
+    \item the steady-state error bound $\rho_\infty^{(\ell)}$.
+\end{itemize}
+Since $\norm{\tilde p(t)}\le \sum_{\ell=1}^n \rho^{(\ell)}(t)$, the
+prescribed bound on $\tilde p$ directly bounds the enclosure distance
+$\dist(p,p_0)$.
+
+\textbf{Asymptotic (exponential) performance function:}
+\begin{equation}
+    \rho^{(\ell)}(t)=(\rho_0^{(\ell)}-\rho_\infty^{(\ell)})e^{-\ell^{(\ell)} t}
+    +\rho_\infty^{(\ell)},
+    \qquad \rho_0^{(\ell)}>|e(0)|,\ \ell^{(\ell)}>0.
+    \label{eq:rho-exp}
+\end{equation}
+
+\textbf{Prescribed-time performance function:} to force the error inside
+the envelope by a user-specified finite time $T$, use a finite-time
+reaching profile
+\begin{equation}
+    \rho^{(\ell)}(t)=
+    \begin{cases}
+    \bar\rho^{(\ell)} + (\rho_0^{(\ell)}-\bar\rho^{(\ell)})
+        \bigl(1-\tfrac{t}{T}\bigr)^r, & 0\le t<T,\\[4pt]
+    \bar\rho^{(\ell)}, & t\ge T,
+    \end{cases}
+    \qquad r\ge 2,
+    \label{eq:rho-pt}
+\end{equation}
+which reaches the target value $\bar\rho^{(\ell)}$ exactly at $t=T$.
+
+To convert the constrained error \eqref{eq:ppc-constraint} into an
+\emph{unconstrained} variable, introduce the smooth, strictly increasing map
+$T(\cdot)=\tanh(\cdot)\in(-1,1)$ and let the normalized error
+$z^{(\ell)}=e/\rho^{(\ell)}$ satisfy
+\[
+z^{(\ell)} = T(\xi^{(\ell)})\quad\Longleftrightarrow\quad
+\xi^{(\ell)} = T^{-1}(z^{(\ell)})
+= \operatorname{artanh}\!\left(\frac{e}{\rho^{(\ell)}}\right)
+= \frac{1}{2}\ln\frac{1+e/\rho^{(\ell)}}{1-e/\rho^{(\ell)}}.
+\]
+As long as $\xi^{(\ell)}(t)$ stays finite,
+$|z^{(\ell)}(t)|=|T(\xi^{(\ell)})|<1$, so \eqref{eq:ppc-constraint} holds
+automatically. Differentiating $\xi^{(\ell)}$ (with
+$\zeta^{(\ell)}=1/(1-z^{(\ell)2})>0$) gives
+\begin{equation}
+    \dot\xi^{(\ell)}
+    = \frac{\zeta^{(\ell)}}{\rho^{(\ell)}}
+      \bigl(\dot e - z^{(\ell)}\dot\rho^{(\ell)}\bigr),
+    \qquad z^{(\ell)}=\frac{e}{\rho^{(\ell)}}.
+    \label{eq:xi-dyn}
+\end{equation}
+Thus the fencing problem reduces to designing a controller that keeps every
+$\xi^{(\ell)}$ bounded (and drives it to zero)---the standard PPC
+backstepping task for the double-integrator centroid dynamics
+\eqref{eq:centroid-dyn}.
+
+\subsection{PPC fencing problem statement}
+
+\begin{definition}[PPC fencing property]
+    \label{def:ppc-fencing}
+    The fencing is achieved with \emph{prescribed performance} if, in
+    addition to P1--P3, the enclosure error satisfies
+    \begin{enumerate}
+        \item[\textbf{P4}] \textbf{Prescribed-performance enclosure:}
+        $| \tilde p^{(\ell)}(t) | \le \rho^{(\ell)}(t)$ for all
+        $t\ge 0$ and $\ell=1,\dots,n$, where $\rho^{(\ell)}(t)$ is a
+        user-specified performance function of the form \eqref{eq:rho-exp}
+        or \eqref{eq:rho-pt}.
+    \end{enumerate}
+    Property P4 implies P1 (since $\rho^{(\ell)}(t)\to\rho_\infty^{(\ell)}$,
+    and $\rho_\infty^{(\ell)}=0$ gives exact enclosure); the novelty is that
+    the \emph{transient} behavior of the enclosure is now explicitly bounded
+    by the user-chosen envelope.
+\end{definition}
+
+\begin{problem}[Prescribed-performance fencing control]
+    \label{prob:main}
+    Given the double-integrator dynamics
+    \eqref{eq:agent}--\eqref{eq:target} and prescribed performance functions
+    $\rho^{(\ell)}(t)$, design a \emph{distributed} control law $u_i$ using
+    only local information such that the closed loop satisfies:
+    \begin{enumerate}
+        \item[\textbf{P4}] prescribed-performance enclosure:
+        $| \tilde p^{(\ell)}(t) | < \rho^{(\ell)}(t)$, $\forall\, t\ge 0$;
+        \item[\textbf{P2}] collision avoidance (hard ``fence''):
+        $\norm{p_{ij}(t)}>d$ for all $i\neq j,\ t\ge 0$;
+        \item[\textbf{P3}] velocity match:
+        $\lim_{t\to\infty}\norm{v_i-v_0}=0$.
+    \end{enumerate}
+    P2 is enforced as a hard constraint via the artificial-potential barrier
+    below, while P4 prescribes the soft performance envelope on the enclosure
+    error.
+\end{problem}
+
+\subsection{Artificial-potential (collision-avoidance) fence}
+\label{subsec:apf}
+
+The repulsive artificial-potential (APF) term used to enforce P2 is
+\[
+\phi_i^r = \sum_{j \in \NN,\ j\neq i} \alpha_r(\norm{p_{ij}})\,
+\frac{p_{ij}}{\norm{p_{ij}}}
+= \sum_{j \in \NN_i(t)} \alpha_r(\norm{p_{ij}})\,
+\frac{p_{ij}}{\norm{p_{ij}}},
+\]
+where
+\[
+\NN_i(t)=\{j\in\NN\setminus\{i\}:\norm{p_{ij}(t)}<\mu\}
+\]
+is the active neighbor set, $d>0$ is the safety distance and $\mu>d$ the
+activation radius. The continuous function
+$\alpha_r:(d,\infty)\to[0,\infty)$ satisfies
+\begin{enumerate}
+    \item[A1.] $\displaystyle\lim_{s\to d^+}\int_s^\mu \alpha_r(\sigma)\,\mathrm{d}\sigma = +\infty$;
+    \item[A2.] $\alpha_r(s)=0$, $\forall\, s\in[\mu,\infty)$.
+\end{enumerate}
+We set $\phi_i=\phi_i^r$. Since the pairwise terms are anti-symmetric,
+$\sum_{i=1}^N\phi_i=0$ on the safe set
+$\{p:\norm{p_{ij}}>d,\ i\ne j\}$, so the collision-avoidance potential does
+not bias the swarm centroid and therefore does not interfere with the PPC
+enclosure objective.
