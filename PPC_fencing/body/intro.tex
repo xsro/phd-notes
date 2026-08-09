@@ -35,11 +35,15 @@ idea: each agent tracks a filtered target-relative error, and the zero-sum
 property of the filter converts local PPC guarantees into a centroid PPC
 bound.  This second structure avoids differentiating the repulsive APF term,
 which is useful when the potential depends on relative positions and active
-neighbor sets.
+neighbor sets.  A third design further removes the target-acceleration
+feedforward requirement by treating the target acceleration and agent
+disturbances as an unknown bounded lumped uncertainty and compensating it
+with an adaptive robust term.
 
 The rest of the note is organized as follows.  Section~\ref{sec:problem}
 formulates the fencing problem and recalls the PPC transformation.
 Section~\ref{sec:design} gives the centroid-level PPC controller.
 Section~\ref{sec:result2} presents the APF-filtered individual PPC
-algorithm.  Section~\ref{sec:simulation} describes the simulation metrics,
-and Section~\ref{sec:conclusion} concludes the note.
+algorithm.  Section~\ref{sec:result3} gives the adaptive unknown-acceleration
+variant.  Section~\ref{sec:simulation} describes the simulation metrics, and
+Section~\ref{sec:conclusion} concludes the note.

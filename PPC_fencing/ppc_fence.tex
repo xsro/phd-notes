@@ -37,16 +37,18 @@ provide asymptotic enclosure, but their transient overshoot, convergence
 rate, and steady-state accuracy are not specified a priori.  To address this
 limitation, we combine prescribed-performance control with an
 artificial-potential collision-avoidance fence.  Two controller structures
-are presented: a centroid-level PPC design and an APF-filtered individual
-PPC design that avoids differentiating the repulsive potential term.  The
-resulting framework gives an explicit envelope for the enclosure error while
-preserving collision avoidance under standard barrier assumptions.
+are presented: a centroid-level PPC design, an APF-filtered individual PPC
+design that avoids differentiating the repulsive potential term, and an
+adaptive variant for unknown target acceleration and unknown disturbances.
+The resulting framework gives an explicit envelope for the enclosure error
+while preserving collision avoidance under standard barrier assumptions.
 \end{abstract}
 
 \input{body/intro}
 \input{body/problem}
 \input{body/result1.tex}
 \input{body/result2.tex}
+\input{body/result3.tex}
 \input{body/simulation}
 \input{body/conclusion}
 

@@ -42,3 +42,11 @@ The local PPC constraints require $e_{\eta,\max}(t)<\max_i\rho_i(t)$, while
 the centroid bound follows from the averaged local envelopes in
 \eqref{eq:rho-split}.  This diagnostic separates the local tracking behavior
 from the induced centroid-level fencing performance.
+
+For the adaptive unknown-acceleration controller in \S\ref{sec:result3}, the
+simulation should also report the adaptive gains $\hat\kappa_i(t)$.  The
+test should include bounded but unknown target maneuvers and bounded agent
+disturbances, so that the controller is evaluated without using
+$u_0+d_0$ or $d_i$ in the feedback law.  Successful behavior is indicated by
+bounded adaptive gains, preservation of the PPC envelope, and maintenance of
+the minimum pairwise distance above $d$.

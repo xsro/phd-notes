@@ -1,0 +1,242 @@
+\section{Adaptive APF-Filtered PPC Without Target-Acceleration Feedforward}
+\label{sec:result3}
+
+This section gives a third controller for the case where neither the target
+total acceleration $u_0+d_0$ nor the agent disturbance $d_i$ is known.  The
+design keeps the APF-filtered individual PPC structure of
+\S\ref{sec:result2}, but replaces the known robust bound by an adaptive
+sliding gain.
+
+\subsection{Unknown-acceleration model}
+
+Let
+\[
+a_0(t)=u_0(t)+d_0(t)
+\]
+denote the target total acceleration.  The relative acceleration is
+\[
+\ddot p_{i0}=u_i+d_i-a_0.
+\]
+Using the APF filter \eqref{eq:apf-filter} and the filtered error
+\[
+\eta_i=p_{i0}-\Phi_{1,i},\qquad
+\chi_i=\dot\eta_i=v_{i0}+\gamma_1\Phi_{1,i}-\Phi_{2,i},
+\]
+one obtains
+\begin{equation}
+\ddot\eta_i=u_i-a_{\Phi,i}+\Delta_i,
+\qquad
+\Delta_i=d_i-a_0,
+\label{eq:r3-eta-dyn}
+\end{equation}
+where $a_{\Phi,i}$ is defined in \eqref{eq:aPhi}.  Unlike
+\eqref{eq:result2-ui}, the controller below does not use $u_0$ or $d_0$.
+
+\subsection{Standing assumptions}
+
+\begin{assumption}
+\label{as:result3}
+The following conditions hold.
+\begin{enumerate}
+    \item The lumped uncertainty $\Delta_i(t)$ is piecewise continuous and
+    bounded.  Its bound is unknown, but there exists an unknown constant
+    $\kappa_i^*>0$ such that
+    \[
+    \norm{\Delta_i(t)}_\infty\le \kappa_i^*,
+    \qquad \forall t\ge0.
+    \]
+
+    \item The relative states $p_{i0},v_{i0}$ and the local relative
+    positions needed to compute $\phi_i$ are available to agent $i$.
+
+    \item The local PPC feasibility and collision-free initial conditions
+    hold:
+    \[
+    \norm{\eta_i(0)}<\rho_i(0),\qquad
+    \norm{p_{ij}(0)}>d,\quad i\neq j.
+    \]
+
+    \item The APF term is antisymmetric and satisfies A1--A2 in
+    \S\ref{subsec:apf}, and the APF filter is initialized with
+    $\sum_i\Phi_{1,i}(0)=\sum_i\Phi_{2,i}(0)=0$.
+\end{enumerate}
+\end{assumption}
+
+\subsection{PPC variables}
+
+Use the same squared-error PPC transformation as in \S\ref{sec:result2}:
+\[
+e_i=\frac12\norm{\eta_i}^2,\qquad
+\sigma_i(t)=\frac12\rho_i^2(t),
+\]
+\[
+z_i=\frac{e_i}{\sigma_i},\qquad
+\theta_i=\operatorname{artanh}(z_i),\qquad
+\zeta_i=\frac{1}{1-z_i^2}.
+\]
+Choose local envelopes satisfying
+\[
+\frac1N\sum_{i\in\NN}\rho_i(t)\le \rho(t).
+\]
+The desired squared-error derivative and virtual velocity are
+\[
+\dot e_i^*
+=\sigma_i(1-z_i^2)(-c_{1i}\theta_i)+z_i\dot\sigma_i,
+\qquad c_{1i}>0,
+\]
+\begin{equation}
+\alpha_i=
+\begin{cases}
+\displaystyle
+\frac{\dot e_i^*}{\norm{\eta_i}^2}\eta_i, & \eta_i\neq0,\\[8pt]
+0, & \eta_i=0,
+\end{cases}
+\qquad
+s_i=\chi_i-\alpha_i .
+\label{eq:r3-alpha-s}
+\end{equation}
+Then
+\[
+\dot\theta_i
+=-c_{1i}\theta_i+\frac{\zeta_i}{\sigma_i}\eta_i^Ts_i.
+\]
+
+\subsection{Adaptive robust PPC controller}
+
+The adaptive APF-filtered PPC controller is
+\begin{equation}
+\boxed{
+u_i=a_{\Phi,i}+\dot\alpha_i
+-c_{2i}s_i
+-\frac{\zeta_i}{\sigma_i}\eta_i\theta_i
+-\hat\kappa_i\,\operatorname{sgn}(s_i)
+}
+\label{eq:r3-ui}
+\end{equation}
+where $c_{2i}>0$, $\hat\kappa_i(t)>0$ is an adaptive gain, and
+$\operatorname{sgn}(\cdot)$ is applied component-wise.  The gain is updated
+by
+\begin{equation}
+\dot{\hat\kappa}_i=\gamma_i\norm{s_i}_1,\qquad
+\gamma_i>0,\qquad
+\hat\kappa_i(0)>0.
+\label{eq:r3-adaptation}
+\end{equation}
+The term $a_{\Phi,i}$ contains $\phi_i$ but not $\dot\phi_i$, and the
+control law does not contain $u_0$, $d_0$, or $d_i$.
+
+\begin{remark}
+The discontinuous sign term gives the cleanest theoretical statement.  In
+implementation it can be replaced by
+$\operatorname{sat}(s_i/\varepsilon_i)$, together with a small leakage term
+in \eqref{eq:r3-adaptation}; the resulting guarantees become uniformly
+ultimately bounded with an $O(\varepsilon_i)$ residual.
+\end{remark}
+
+\subsection{Distributed algorithm}
+
+At each time $t$, agent $i$ runs the following loop.
+\begin{enumerate}
+    \item Compute $\phi_i$ from local relative positions and update the APF
+    filter \eqref{eq:apf-filter}.
+
+    \item Compute $a_{\Phi,i}$ from \eqref{eq:aPhi}, and form
+    $\eta_i,\chi_i$.
+
+    \item Evaluate $e_i,z_i,\theta_i,\zeta_i$, compute $\alpha_i$ and
+    $s_i$ from \eqref{eq:r3-alpha-s}.
+
+    \item Update the adaptive gain \eqref{eq:r3-adaptation}.
+
+    \item Apply the control input \eqref{eq:r3-ui}.
+\end{enumerate}
+
+\subsection{Performance guarantee}
+
+\begin{theorem}
+\label{thm:result3}
+Under Assumption~\ref{as:result3}, the adaptive controller
+\eqref{eq:r3-ui}--\eqref{eq:r3-adaptation} guarantees
+\[
+\norm{\eta_i(t)}<\rho_i(t),\qquad \forall i\in\NN,\ \forall t\ge0.
+\]
+Consequently,
+\[
+\norm{\bar p(t)-p_0(t)}<\rho(t),\qquad \forall t\ge0.
+\]
+Moreover, collision avoidance is preserved by the APF barrier on the safe
+set.  If $\rho_i(t)\to0$ and the closed-loop signals are uniformly
+continuous, then $\theta_i(t)\to0$, $s_i(t)\to0$, and the filtered errors
+converge to zero.
+\end{theorem}
+
+\begin{proof}
+For a fixed agent, consider
+\[
+V_i
+=\frac12\theta_i^2+\frac12\norm{s_i}^2
+ +\frac{1}{2\gamma_i}(\hat\kappa_i-\kappa_i^*)^2.
+\]
+From \eqref{eq:r3-eta-dyn} and \eqref{eq:r3-ui},
+\[
+\dot s_i
+=-c_{2i}s_i-\frac{\zeta_i}{\sigma_i}\eta_i\theta_i
+-\hat\kappa_i\operatorname{sgn}(s_i)+\Delta_i.
+\]
+Therefore,
+\[
+\begin{aligned}
+\dot V_i
+&=-c_{1i}\theta_i^2-c_{2i}\norm{s_i}^2
+  -\hat\kappa_i\norm{s_i}_1+s_i^T\Delta_i\\
+&\quad
+  +\frac{1}{\gamma_i}(\hat\kappa_i-\kappa_i^*)\dot{\hat\kappa}_i .
+\end{aligned}
+\]
+Since $\norm{\Delta_i}_\infty\le\kappa_i^*$,
+$s_i^T\Delta_i\le\kappa_i^*\norm{s_i}_1$.  Substituting
+\eqref{eq:r3-adaptation} yields
+\[
+\begin{aligned}
+\dot V_i
+&\le -c_{1i}\theta_i^2-c_{2i}\norm{s_i}^2
+    -\hat\kappa_i\norm{s_i}_1+\kappa_i^*\norm{s_i}_1\\
+&\quad
+    +(\hat\kappa_i-\kappa_i^*)\norm{s_i}_1\\
+&= -c_{1i}\theta_i^2-c_{2i}\norm{s_i}^2\le0 .
+\end{aligned}
+\]
+Thus $\theta_i$, $s_i$, and $\hat\kappa_i$ are bounded.  Since
+$\theta_i(0)$ is finite by the initial PPC feasibility condition,
+$\theta_i(t)$ remains finite and therefore
+$z_i(t)=\tanh\theta_i(t)<1$.  Hence
+\[
+\norm{\eta_i(t)}<\rho_i(t),\qquad \forall t\ge0.
+\]
+Using the zero-sum APF filter,
+\[
+\begin{aligned}
+\norm{\bar p-p_0}
+&=\left\|\frac1N\sum_i p_{i0}\right\|
+ =\left\|\frac1N\sum_i \eta_i\right\|\\
+&\le \frac1N\sum_i\norm{\eta_i}
+ < \frac1N\sum_i\rho_i
+\le \rho .
+\end{aligned}
+\]
+The APF term enters the controller through $a_{\Phi,i}$, so the same
+barrier argument used in \S\ref{sec:analysis} applies with the remaining
+adaptive PPC terms bounded on the safe set.  Since the APF potential tends
+to infinity at $\norm{p_{ij}}=d$, bounded closed-loop energy prevents
+collisions.  Finally, $\dot V_i$ implies $\theta_i,s_i\in L_2$; together
+with bounded closed-loop derivatives, Barbalat's lemma gives
+$\theta_i(t)\to0$ and $s_i(t)\to0$.
+\end{proof}
+
+\begin{remark}
+Result 3 removes the feedforward requirement on $u_0+d_0$ at the price of a
+discontinuous robust term and an adaptive gain.  It is therefore suitable
+when the target maneuver and disturbances are unknown but bounded, whereas
+Result 2 is preferable when a target-acceleration feedforward or a reliable
+bound is available.
+\end{remark}

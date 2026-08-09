@@ -16,6 +16,12 @@ advantage is that the controller contains the APF term but does not require
 the derivative of the APF, which simplifies implementation when the
 repulsive potential depends on switching active neighbor sets.
 
+For the case where the target acceleration and disturbances are not
+available, an adaptive robust variant was developed.  This controller treats
+$u_0+d_0$ and $d_i$ as a bounded lumped uncertainty and estimates the
+required sliding gain online.  Thus the PPC fencing objective can still be
+maintained without feedforward cancellation of the target acceleration.
+
 Future work will focus on a composite Lyapunov analysis of the coupled
 estimation, PPC, and APF-filter dynamics; actuator-saturation-aware
 prescribed-time designs; extensions to unknown or non-matching target
