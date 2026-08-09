@@ -1,0 +1,19 @@
+\section{Result 2}
+
+Define a APF filter with $k_1,k_2>0$ as 
+\[
+\dot{\Phi}_{1,i}=-\gamma_1 {\Phi}_{1,i} + {\Phi}_{2,i},
+\quad 
+\dot{\Phi}_{2,i}=-\gamma_2 {\Phi}_{2,i} + \phi_i .
+\]
+where $\sum_{i\in\mathcal{N}}{\Phi}_{1,i}(0)=\mathbf{0}$ and $\sum_{i\in\mathcal{N}}{\Phi}_{2,i}(0)=\mathbf{0}$.
+
+Obviously, we have $\sum_{i\in\mathcal{N}}{\Phi}_{1,i}(t)=\sum_{i\in\mathcal{N}}{\Phi}_{2,i}(t)=\mathbf{0}$.
+This filter is used to eliminate the usage of differentiation of $\phi_i$.
+
+Define an auxiliary value $\xi_i=p_{i0}-{\Phi}_{1,i}$, then we can design controller to $\xi_i$ with a PPC, such that $\|\xi_i\|\leq \rho(t)$.
+
+Then, we can conclude 
+\[
+\|\bar{p}-p_{0}\|=\lVert \frac{1}{N} \sum_{i\in\mathcal{N}}(p_{i0})-\sum_{i\in\mathcal{N}}\Phi_{1,i}\rVert\leq 1/N \sum_{i\in\mathcal{N}}\| \xi_i \|\leq \rho(t).
+\]
