@@ -1,6 +1,23 @@
 \section{Conclusion}
 \label{sec:conclusion}
-\textbf{[TODO]} Summarize the prescribed-performance fencing framework,
-the co-existence of the soft PPC envelope (P4) and the hard collision
-fence (P2), and discuss future work (non-matching uncertainty, time-varying
-communication topology, funnel/barrier interpretation of the fence).
+
+This note developed a prescribed-performance fencing framework for
+double-integrator multi-agent systems.  By applying PPC to the enclosure
+error, the transient and steady-state behavior of the target-to-centroid
+error can be specified through a user-chosen envelope $\rho(t)$.  The
+centroid-level design combines this soft performance requirement with
+zero-sum local terms for artificial-potential collision avoidance and
+velocity matching.
+
+An APF-filtered individual PPC algorithm was also introduced.  This design
+regulates locally filtered target-relative errors and uses the zero-sum
+property of the APF filter to recover a centroid-level PPC bound.  Its main
+advantage is that the controller contains the APF term but does not require
+the derivative of the APF, which simplifies implementation when the
+repulsive potential depends on switching active neighbor sets.
+
+Future work will focus on a composite Lyapunov analysis of the coupled
+estimation, PPC, and APF-filter dynamics; actuator-saturation-aware
+prescribed-time designs; extensions to unknown or non-matching target
+accelerations; and distributed implementations over time-varying
+communication graphs.

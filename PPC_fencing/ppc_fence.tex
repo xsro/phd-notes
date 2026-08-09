@@ -1,7 +1,7 @@
 \documentclass[twocolumn]{article}
 
 \usepackage{geometry}
-\geometry{a4paper, margin=1.0cm}
+\geometry{a4paper, margin=1.5cm}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 
@@ -20,7 +20,7 @@
 \newcommand{\norm}[1]{\lVert #1 \rVert}
 \newcommand{\dist}{\mathrm{dist}}
 
-\title{Prescribed-Performance Fencing Control for Multi-Agent Systems}
+\title{Attempts: Prescribed-Performance Fencing Control for Multi-Agent Systems}
 \author{Liu Cheng}
 \date{\today}
 
@@ -28,12 +28,19 @@
 \maketitle
 
 \begin{abstract}
-\textbf{[TODO]} Summarize the fencing (target-enclosing) problem, the
-limitation that existing protocols only guarantee \emph{asymptotic}
-enclosure with no user-specifiable transient behavior, the motivation of
-combining prescribed-performance control (PPC) with the collision-avoidance
-``fence'', and the main contributions (prescribed transient/steady-state
-bounds on the enclosure error while preserving hard collision avoidance).
+This note studies prescribed-performance target fencing for multi-agent
+systems with double-integrator dynamics.  The objective is to drive a swarm
+so that a moving target is enclosed by the agents' convex hull, while all
+pairwise distances remain above a prescribed safety margin and agent
+velocities match the target velocity.  Existing fencing protocols typically
+provide asymptotic enclosure, but their transient overshoot, convergence
+rate, and steady-state accuracy are not specified a priori.  To address this
+limitation, we combine prescribed-performance control with an
+artificial-potential collision-avoidance fence.  Two controller structures
+are presented: a centroid-level PPC design and an APF-filtered individual
+PPC design that avoids differentiating the repulsive potential term.  The
+resulting framework gives an explicit envelope for the enclosure error while
+preserving collision avoidance under standard barrier assumptions.
 \end{abstract}
 
 \input{body/intro}

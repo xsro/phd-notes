@@ -1,19 +1,261 @@
-\section{Result 2}
+\section{Attempt 2}
+\label{sec:result2}
 
-Define a APF filter with $k_1,k_2>0$ as 
+This section presents an alternative controller in which the prescribed
+performance is enforced through locally filtered target-relative errors.
+Instead of controlling the centroid error directly, each agent regulates its
+own APF-filtered error.  The zero-sum property of the filter then converts
+the individual PPC bounds into the desired centroid PPC bound.
+
+\subsection{APF filter and filtered relative error}
+
+For each agent, introduce the APF filter
+\begin{equation}
+\begin{aligned}
+\dot{\Phi}_{1,i}&=-\gamma_1\Phi_{1,i}+\Phi_{2,i},\\
+\dot{\Phi}_{2,i}&=-\gamma_2\Phi_{2,i}+\phi_i,
+\end{aligned}
+\qquad \gamma_1,\gamma_2>0,
+\label{eq:apf-filter}
+\end{equation}
+with zero-sum initial conditions
 \[
-\dot{\Phi}_{1,i}=-\gamma_1 {\Phi}_{1,i} + {\Phi}_{2,i},
-\quad 
-\dot{\Phi}_{2,i}=-\gamma_2 {\Phi}_{2,i} + \phi_i .
+\sum_{i\in\NN}\Phi_{1,i}(0)=0,\qquad
+\sum_{i\in\NN}\Phi_{2,i}(0)=0.
 \]
-where $\sum_{i\in\mathcal{N}}{\Phi}_{1,i}(0)=\mathbf{0}$ and $\sum_{i\in\mathcal{N}}{\Phi}_{2,i}(0)=\mathbf{0}$.
-
-Obviously, we have $\sum_{i\in\mathcal{N}}{\Phi}_{1,i}(t)=\sum_{i\in\mathcal{N}}{\Phi}_{2,i}(t)=\mathbf{0}$.
-This filter is used to eliminate the usage of differentiation of $\phi_i$.
-
-Define an auxiliary value $\xi_i=p_{i0}-{\Phi}_{1,i}$, then we can design controller to $\xi_i$ with a PPC, such that $\|\xi_i\|\leq \rho(t)$.
-
-Then, we can conclude 
+Because the pairwise APF terms are antisymmetric, $\sum_i\phi_i=0$ on the
+safe set. Hence
 \[
-\|\bar{p}-p_{0}\|=\lVert \frac{1}{N} \sum_{i\in\mathcal{N}}(p_{i0})-\sum_{i\in\mathcal{N}}\Phi_{1,i}\rVert\leq 1/N \sum_{i\in\mathcal{N}}\| \xi_i \|\leq \rho(t).
+\sum_{i\in\NN}\Phi_{1,i}(t)=0,\qquad
+\sum_{i\in\NN}\Phi_{2,i}(t)=0,\qquad \forall t\ge0.
 \]
+
+Define the filtered target-relative error and its velocity as
+\begin{equation}
+\eta_i=p_{i0}-\Phi_{1,i},\qquad
+\chi_i=\dot\eta_i=v_{i0}+\gamma_1\Phi_{1,i}-\Phi_{2,i}.
+\label{eq:eta-chi}
+\end{equation}
+Differentiating \eqref{eq:apf-filter} gives
+\begin{equation}
+\ddot{\Phi}_{1,i}
+=\gamma_1^2\Phi_{1,i}-(\gamma_1+\gamma_2)\Phi_{2,i}+\phi_i
+:=a_{\Phi,i}.
+\label{eq:aPhi}
+\end{equation}
+Thus the filtered error satisfies the double-integrator dynamics
+\begin{equation}
+\ddot\eta_i
+=u_i-u_0-a_{\Phi,i}+w_i,\qquad
+w_i=d_i-d_0,
+\label{eq:eta-dyn}
+\end{equation}
+where $w_i$ is bounded.  The important point is that $a_{\Phi,i}$ contains
+$\phi_i$ but not $\dot\phi_i$; therefore the controller does not require
+differentiating the collision-avoidance APF.
+
+\subsection{Local prescribed-performance objective}
+
+Let $\rho_i(t)>0$ be smooth and decreasing, and choose the local envelopes so
+that
+\begin{equation}
+\frac1N\sum_{i\in\NN}\rho_i(t)\le \rho(t),\qquad \forall t\ge0.
+\label{eq:rho-split}
+\end{equation}
+The simplest choice is $\rho_i(t)=\rho(t)$ for all $i$, which is conservative
+but immediately satisfies \eqref{eq:rho-split}.  Each local initial condition
+must satisfy
+\begin{equation}
+\norm{\eta_i(0)}<\rho_i(0),\qquad \forall i\in\NN.
+\label{eq:local-feas}
+\end{equation}
+
+To avoid the nonsmooth derivative of $\norm{\eta_i}$ at the origin, prescribe
+the squared error
+\[
+e_i=\frac12\norm{\eta_i}^2,\qquad
+\sigma_i(t)=\frac12\rho_i^2(t).
+\]
+Define
+\begin{equation}
+z_i=\frac{e_i}{\sigma_i},\qquad
+\theta_i=\operatorname{artanh}(z_i),\qquad
+\zeta_i=\frac{1}{1-z_i^2}.
+\label{eq:local-ppc-transform}
+\end{equation}
+Boundedness of $\theta_i$ implies $z_i<1$, and therefore
+$\norm{\eta_i}<\rho_i$.
+
+\subsection{Backstepping design}
+
+Treat $\chi_i$ as the virtual input for $\eta_i$.  The desired squared-error
+derivative is selected as
+\[
+\dot e_i^*
+=\sigma_i(1-z_i^2)(-c_{1i}\theta_i)+z_i\dot\sigma_i,
+\qquad c_{1i}>0.
+\]
+Choose the virtual velocity
+\begin{equation}
+\alpha_i=
+\begin{cases}
+\displaystyle
+\frac{\dot e_i^*}{\norm{\eta_i}^2}\eta_i, & \eta_i\neq0,\\[8pt]
+0, & \eta_i=0,
+\end{cases}
+\label{eq:alpha-i}
+\end{equation}
+with the continuous extension at $\eta_i=0$.  Then
+$\eta_i^T\alpha_i=\dot e_i^*$, so with
+\[
+s_i=\chi_i-\alpha_i
+\]
+the transformed error dynamics become
+\begin{equation}
+\dot\theta_i
+=-c_{1i}\theta_i+\frac{\zeta_i}{\sigma_i}\eta_i^Ts_i.
+\label{eq:theta-dyn}
+\end{equation}
+
+The APF-filtered individual PPC controller is
+\begin{equation}
+\boxed{
+u_i=u_0+a_{\Phi,i}+\dot\alpha_i
+-c_{2i}s_i
+-\frac{\zeta_i}{\sigma_i}\eta_i\theta_i
+-k_{ri}\operatorname{sat}(s_i/\varepsilon_i)
+}
+\label{eq:result2-ui}
+\end{equation}
+where $c_{2i}>0$, $\varepsilon_i>0$, and
+$k_{ri}\ge\bar w_i$ with $\norm{w_i}\le\bar w_i$.  The saturation is applied
+component-wise.  The derivative $\dot\alpha_i$ depends on
+$\eta_i,\chi_i,\rho_i,\dot\rho_i,\ddot\rho_i$ and the filter states, but it
+does not contain $\dot\phi_i$.  If one wants to avoid writing
+$\dot\alpha_i$ explicitly, \eqref{eq:result2-ui} can be implemented with a
+standard command-filter/dynamic-surface replacement for $\alpha_i$.
+
+\subsection{Distributed algorithm}
+
+At each time $t$, agent $i$ performs the following operations.
+\begin{enumerate}
+    \item Measure or receive $p_{i0}$, $v_{i0}$ and the relative positions
+    needed to compute the local APF term $\phi_i$.
+
+    \item Update the APF filter \eqref{eq:apf-filter} and compute
+    $a_{\Phi,i}$ from \eqref{eq:aPhi}.
+
+    \item Form $\eta_i,\chi_i$ from \eqref{eq:eta-chi}, then compute the
+    PPC variables $e_i,z_i,\theta_i,\zeta_i$ from
+    \eqref{eq:local-ppc-transform}.
+
+    \item Compute the virtual velocity $\alpha_i$, the velocity error
+    $s_i=\chi_i-\alpha_i$, and apply the control law
+    \eqref{eq:result2-ui}.
+\end{enumerate}
+
+\subsection{Performance guarantee}
+
+\begin{assumption}
+\label{as:result2}
+The following conditions hold:
+\begin{enumerate}
+    \item the target acceleration feedforward $u_0$ is available, or its
+    uncertainty is included in the bound $\bar w_i$;
+    \item $\norm{w_i(t)}\le\bar w_i$ for all $i$ and all $t\ge0$;
+    \item the initial PPC feasibility condition \eqref{eq:local-feas} holds;
+    \item the initial configuration is collision-free,
+    $\norm{p_{ij}(0)}>d$ for all $i\neq j$;
+    \item the APF term is antisymmetric and satisfies A1--A2 in
+    \S\ref{subsec:apf}.
+\end{enumerate}
+\end{assumption}
+
+\begin{theorem}
+\label{thm:result2}
+Under Assumption~\ref{as:result2}, the controller
+\eqref{eq:result2-ui} guarantees
+\[
+\norm{\eta_i(t)}<\rho_i(t),\qquad \forall i\in\NN,\ \forall t\ge0.
+\]
+Consequently, the centroid error satisfies the prescribed envelope
+\[
+\norm{\bar p(t)-p_0(t)}<\rho(t),\qquad \forall t\ge0.
+\]
+Moreover, with the APF barrier active on the safe set, the closed-loop
+system preserves collision avoidance.  If $\rho_i(t)\to0$ and the robust
+boundary layer is removed by using a signum term or by taking
+$\varepsilon_i$ sufficiently small, the agents asymptotically fence the
+target and match its velocity up to the corresponding residual bound.
+\end{theorem}
+
+\begin{proof}
+Consider, for each agent,
+\[
+V_i=\frac12\theta_i^2+\frac12\norm{s_i}^2.
+\]
+Using \eqref{eq:eta-dyn}, \eqref{eq:theta-dyn}, and
+\eqref{eq:result2-ui},
+\[
+\dot s_i
+=-c_{2i}s_i-\frac{\zeta_i}{\sigma_i}\eta_i\theta_i
+-k_{ri}\operatorname{sat}(s_i/\varepsilon_i)+w_i.
+\]
+Therefore
+\[
+\begin{aligned}
+\dot V_i
+&=\theta_i\dot\theta_i+s_i^T\dot s_i\\
+&=-c_{1i}\theta_i^2-c_{2i}\norm{s_i}^2
+-k_{ri}s_i^T\operatorname{sat}(s_i/\varepsilon_i)+s_i^Tw_i.
+\end{aligned}
+\]
+Since $\norm{w_i}\le\bar w_i\le k_{ri}$,
+\[
+\dot V_i
+\le -c_{1i}\theta_i^2-c_{2i}\norm{s_i}^2
++\frac{n}{2}k_{ri}\varepsilon_i.
+\]
+Thus $\theta_i$ and $s_i$ are uniformly ultimately bounded.  In particular
+$\theta_i(t)$ cannot escape to infinity.  Because
+$\norm{\eta_i(0)}<\rho_i(0)$, one has $z_i(0)<1$ and $\theta_i(0)$ finite.
+Finite $\theta_i(t)$ implies $z_i(t)=\tanh\theta_i(t)<1$, hence
+\[
+\frac12\norm{\eta_i(t)}^2<\frac12\rho_i^2(t),
+\qquad
+\norm{\eta_i(t)}<\rho_i(t).
+\]
+
+Using $p_{i0}=\eta_i+\Phi_{1,i}$ and $\sum_i\Phi_{1,i}=0$,
+\[
+\begin{aligned}
+\norm{\bar p-p_0}
+&=\left\|\frac1N\sum_{i\in\NN}p_{i0}\right\|\\
+&=\left\|\frac1N\sum_{i\in\NN}\eta_i\right\|\\
+&\le \frac1N\sum_{i\in\NN}\norm{\eta_i}
+< \frac1N\sum_{i\in\NN}\rho_i
+\le \rho.
+\end{aligned}
+\]
+This proves the prescribed-performance fencing bound.
+
+For collision avoidance, the controller contains the APF term through
+$a_{\Phi,i}$ in \eqref{eq:aPhi}; hence the standard barrier argument of
+\S\ref{sec:analysis} applies with the remaining PPC terms treated as bounded
+closed-loop inputs.  Since the APF potential tends to infinity as any
+$\norm{p_{ij}}\to d^+$, bounded closed-loop energy on the safe set prevents
+collisions.  Finally, when $\rho_i(t)\to0$ and the robust residual is
+removed, $\eta_i\to0$ and $s_i\to0$.  Then
+$p_{i0}-\Phi_{1,i}\to0$ and $\dot\eta_i\to0$; the APF filter converges to a
+static zero-sum offset, giving $\dot p_{i0}\to0$, i.e.\
+$v_i-v_0\to0$.  Since the target is the limit of the agents' centroid, it
+belongs to the limiting convex hull.
+\end{proof}
+
+\begin{remark}
+Compared with the centroid-level PPC controller in \S\ref{sec:design}, this
+algorithm is more conservative because it enforces a PPC envelope on every
+filtered individual error.  Its advantage is structural: the APF term enters
+through the filter acceleration $a_{\Phi,i}$, so no derivative of the
+collision-avoidance term is required.
+\end{remark}

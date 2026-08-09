@@ -1,11 +1,44 @@
 \section{Simulation Verification}
 \label{sec:simulation}
-\textbf{[TODO]} Suggested content:
-\begin{itemize}
-    \item Compare enclosure error $\dist(p,p_0)$ against the prescribed
-    envelope $\rho(t)$ for both the asymptotic \eqref{eq:rho-exp} and
-    prescribed-time \eqref{eq:rho-pt} performance functions.
-    \item Show minimum pairwise distance stays $>d$ (fence preserved).
-    \item Compare with the baseline fencing controller (no PPC) to
-    highlight the improved, user-specifiable transient behavior.
-\end{itemize}
+
+The proposed controllers can be evaluated through a planar fencing scenario
+with $N$ double-integrator agents and one moving target.  The agents are
+initialized in a collision-free configuration, and the prescribed
+performance function is chosen either as the exponential profile
+\eqref{eq:rho-exp} or as the prescribed-time profile \eqref{eq:rho-pt}.  The
+same artificial-potential function is used in all tests so that the safety
+margin $d$ and activation radius $\mu$ are identical across controllers.
+
+The main performance index is the enclosure error
+\[
+e_c(t)=\norm{\bar p(t)-p_0(t)}.
+\]
+For a successful PPC fencing response, $e_c(t)$ must remain below the
+prescribed envelope $\rho(t)$ for the entire simulation interval.  Since
+$\dist(p,p_0)\le e_c(t)$, this also provides an upper bound on the distance
+from the target to the agents' convex hull.  The safety performance is
+checked by plotting
+\[
+d_{\min}(t)=\min_{i\neq j}\norm{p_i(t)-p_j(t)}
+\]
+and verifying $d_{\min}(t)>d$ for all $t$.
+
+To highlight the effect of prescribed performance, the PPC controllers
+should be compared with a baseline fencing controller that uses the same APF
+term but does not impose the envelope $\rho(t)$.  The comparison should
+report the maximum enclosure error, the settling time relative to a selected
+tolerance, the minimum pairwise distance, and the final velocity mismatch
+\[
+e_v(t)=\max_{i\in\NN}\norm{v_i(t)-v_0(t)}.
+\]
+These metrics directly correspond to the desired properties P4, P2, and P3.
+
+For the APF-filtered individual PPC algorithm in \S\ref{sec:result2}, an
+additional diagnostic is useful:
+\[
+e_{\eta,\max}(t)=\max_{i\in\NN}\norm{\eta_i(t)}.
+\]
+The local PPC constraints require $e_{\eta,\max}(t)<\max_i\rho_i(t)$, while
+the centroid bound follows from the averaged local envelopes in
+\eqref{eq:rho-split}.  This diagnostic separates the local tracking behavior
+from the induced centroid-level fencing performance.

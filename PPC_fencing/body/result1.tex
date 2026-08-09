@@ -1,4 +1,4 @@
-\section{Prescribed-Performance Fencing Controller Design}
+\section{Attempt 1}
 \label{sec:design}
 
 This section constructs a distributed controller that simultaneously realizes
@@ -10,9 +10,9 @@ dynamics, using the single scalar transformed error $\xi$ from
 \eqref{eq:xi-dyn}; (iii) these terms are assembled into a distributed control
 law that superimposes local collision-avoidance and velocity-match terms
 without disturbing the centroid control. The controller is summarized in
-\eqref{eq:ui}, and its stability/performance guarantees are proved in
-\S\ref{sec:analysis}. (Known limitations of the present formulation are
-collected honestly in \S\ref{subsec:limits}.)
+\eqref{eq:ui}, and its stability and performance properties are established
+in \S\ref{sec:analysis}.  Technical limitations and implementation caveats
+are discussed in \S\ref{subsec:limits}.
 
 \subsection{Centroid estimation}
 \label{subsec:consensus}
@@ -100,10 +100,13 @@ where $\mathrm{sat}(\cdot)$ is the component-wise saturation
 ($\mathrm{sat}(y)=y$ for $|y|\le1$, $\mathrm{sat}(y)=\mathrm{sign}(y)$
 otherwise) and $k_r\ge\bar\delta$, $\varepsilon>0$. Then
 \[
-s^T\dot s = s^T(\bar u + \delta - \dot\alpha_1)
-= -c_2\norm{s}^2
-  - \frac{\zeta}{\rho}s^T\frac{\tilde p}{\norm{\tilde p}}\xi
-  - k_r\,s^T\mathrm{sat}(s/\varepsilon) + s^T\delta.
+\begin{aligned}
+s^T\dot s
+&= s^T(\bar u + \delta - \dot\alpha_1)\\
+&= -c_2\norm{s}^2
+   - \frac{\zeta}{\rho}s^T\frac{\tilde p}{\norm{\tilde p}}\xi
+   - k_r\,s^T\mathrm{sat}(s/\varepsilon) + s^T\delta .
+\end{aligned}
 \]
 The cross terms cancel because
 $\frac{\zeta}{\rho}\xi\frac{\tilde p^T}{\norm{\tilde p}}s
@@ -271,24 +274,36 @@ along the trajectories is
          - \sum_{i\in\NN} v_{i0}^T\phi_i,
 \]
 where we used the symmetry identity
-\(\frac12\sum_i\sum_{j\in\NN_i}
-   \alpha_r(\norm{p_{ij}})\frac{p_{ij}^T(v_i-v_j)}{\norm{p_{ij}}}
- = \sum_i v_{i0}^T\phi_i\)
-(which follows from the antisymmetry of the pairwise repulsion and
-$\sum_i\phi_i=0$). Substituting the control law \eqref{eq:ui} and noting
-$u_i-u_0-\phi_i = \bar u - k_p(p_i-\hat p_i)-k_v(v_i-\dot{\hat p}_i)+\psi_i$
-(with $\sum_i\psi_i=0$ by Assumption~\ref{as:consensus}) gives
 \[
-\dot V_c = N\bar u^T\dot{\tilde p}
-         - k_p\sum_{i} v_{i0}^T(p_i-\hat p_i)
-         - k_v\sum_{i} v_{i0}^T(v_i-\dot{\hat p}_i)
-         + \sum_{i} v_{i0}^T(\psi_i+d_i-d_0).
+\frac12\sum_i\sum_{j\in\NN_i}
+   \alpha_r(\norm{p_{ij}})
+   \frac{p_{ij}^T(v_i-v_j)}{\norm{p_{ij}}}
+ = \sum_i v_{i0}^T\phi_i,
+\]
+which follows from the antisymmetry of the pairwise repulsion and
+$\sum_i\phi_i=0$. Substituting the control law \eqref{eq:ui} and noting
+\[
+u_i-u_0-\phi_i
+= \bar u-k_p(p_i-\hat p_i)-k_v(v_i-\dot{\hat p}_i)+\psi_i,
+\]
+with $\sum_i\psi_i=0$ by Assumption~\ref{as:consensus}, gives
+\[
+\begin{aligned}
+\dot V_c
+&= N\bar u^T\dot{\tilde p}
+   - k_p\sum_{i} v_{i0}^T(p_i-\hat p_i)\\
+&\quad - k_v\sum_{i} v_{i0}^T(v_i-\dot{\hat p}_i)
+   + \sum_{i} v_{i0}^T(\psi_i+d_i-d_0).
+\end{aligned}
 \]
 Using $v_i=v_{i0}+v_0$,
 \[
+\begin{aligned}
 -k_v\sum_i v_{i0}^T(v_i-\dot{\hat p}_i)
-= -k_v\sum_i\norm{v_{i0}}^2 - k_v\sum_i v_{i0}^Tv_0
-  + k_v\sum_i v_{i0}^T\dot{\hat p}_i.
+&= -k_v\sum_i\norm{v_{i0}}^2
+   - k_v\sum_i v_{i0}^Tv_0 \\
+&\quad + k_v\sum_i v_{i0}^T\dot{\hat p}_i .
+\end{aligned}
 \]
 From part (i), $\xi,s$ are bounded, so $\dot{\tilde p}=\alpha_1+s$ is
 bounded and, with the designed $\bar u$ of \eqref{eq:ubar}, $\bar u$ is
@@ -353,9 +368,9 @@ full controller the convergence is only asymptotic/finite-time; see
 \label{subsec:limits}
 
 The formulation above follows a standard prescribed-performance backstepping
-+ artificial-potential-fence architecture and is suitable as a clear
-presentation of the idea; it is \emph{not yet} a fully rigorous closed-form
-guarantee. The following gaps are acknowledged explicitly.
+and artificial-potential-fence architecture.  It captures the intended
+closed-loop mechanism, but several technical points require additional care
+in a fully rigorous implementation.
 
 \begin{itemize}
     \item \textbf{Non-smoothness at the origin.}
