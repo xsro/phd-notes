@@ -25,11 +25,19 @@
 
 \section{问题描述}
 
-考虑 $N$ 个智能体与一个目标。智能体 $i$ 的位置、速度为 $p_i,v_i\in\mathbb R^m$，目标为 $p_0,v_0\in\mathbb R^m$。智能体二阶动力学为 $\dot p_i=v_i,\ \dot v_i=B_i(t)u_i+d_i$，其中 $u_i$ 为控制输入，$d_i$ 为有界扰动且 $\|d_i\|_\infty\le\bd_i$，$B_i(t)=\operatorname{diag}\{b_{i1},\dots,b_{im}\}$ 为未知对角增益。假设每个 $b_{i\ell}$ 符号未知、允许正负切换但不穿越零，且存在 $\ub_{i\ell}>0$ 使 $0<\ub_{i\ell}\le|b_{i\ell}(t)|$。
+考虑 $N$ 个智能体与一个目标。智能体 $i$ 的位置、速度为 $p_i,v_i\in\mathbb R^m$，目标为 $p_0,v_0\in\mathbb R^m$。智能体二阶动力学为  \[
+\dot p_i=v_i,\ \dot v_i=B_i(t)u_i+d_i,
+\]
+其中 $u_i$ 为控制输入，$d_i$ 为有界扰动且 $\|d_i\|_\infty\le\bd_i$，$B_i(t)=\operatorname{diag}\{b_{i1},\dots,b_{im}\}$ 为未知对角增益。假设每个 $b_{i\ell}$ 符号未知、允许正负切换但不穿越零，且存在 $\ub_{i\ell}>0$ 使 $0<\ub_{i\ell}\le|b_{i\ell}(t)|$。
 
 目标动力学为 $\dot p_0=v_0,\ \dot v_0=u_0$，目标加速度有界 $\|u_0\|_\infty\le\bu_0$。定义相对量 $p_{i0}=p_i-p_0,\ v_{i0}=v_i-v_0$，则 $\dot p_{i0}=v_{i0},\ \dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i=d_i-u_0$，且 $\|w_i\|_\infty\le\bar w_i=\bd_i+\bu_0$。
 
-本文目标是实现：P1（凸包合围）$\lim_{t\to\infty}\mathrm{dist}(p_0(t),\mathrm{co}(p(t)))=0$；P2（避碰）若 $\|p_i(0)-p_j(0)\|>d$ 则对所有 $t\ge0$ 均有 $\|p_i(t)-p_j(t)\|>d$；P3（速度一致）$\lim_{t\to\infty}\|v_i(t)-v_0(t)\|=0,\ \forall i$。
+本文目标是实现：
+\begin{enumerate}
+    \item P1（凸包合围）$\lim_{t\to\infty}\mathrm{dist}(p_0(t),\mathrm{co}(p(t)))=0$；
+    \item P2（避碰）若 $\|p_i(0)-p_j(0)\|>d$ 则对所有 $t\ge0$ 均有 $\|p_i(t)-p_j(t)\|>d$；
+    \item P3（速度一致）$\lim_{t\to\infty}\|v_i(t)-v_0(t)\|=0,\ \forall i$。
+\end{enumerate}
 
 \input{body/result1.tex}
 \input{body/result2.tex}
