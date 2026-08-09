@@ -83,31 +83,28 @@ subsection.
 \label{subsec:ppc}
 
 Prescribed-performance control lets the user specify, \emph{a priori}, a
-performance function $\rho(t)>0$ so that the (scalar) enclosure error
-$e(t)=\tilde p^{(\ell)}(t)$ of every component $\ell=1,\dots,n$ satisfies
+single scalar performance function $\rho(t)>0$ so that the Euclidean norm of
+the enclosure error satisfies
 \begin{equation}
-    |e(t)| < \rho^{(\ell)}(t), \qquad \forall\, t\ge 0.
+    \norm{\tilde p(t)} < \rho(t), \qquad \forall\, t\ge 0.
     \label{eq:ppc-constraint}
 \end{equation}
-The function $\rho^{(\ell)}(t)$ is smooth, strictly positive, decreasing,
-with $\rho^{(\ell)}(0)>|e(0)|$ and
-$\lim_{t\to\infty}\rho^{(\ell)}(t)=\rho_\infty^{(\ell)}>0$ (taking
-$\rho_\infty^{(\ell)}=0$ gives asymptotic convergence to zero). It
-simultaneously prescribes:
+The function $\rho(t)$ is smooth, strictly positive, decreasing,
+with $\rho(0)>\norm{\tilde p(0)}$ and
+$\lim_{t\to\infty}\rho(t)=\rho_\infty>0$ (taking $\rho_\infty=0$ gives
+asymptotic convergence to zero). It simultaneously prescribes:
 \begin{itemize}
-    \item the maximum overshoot: $|e(t)|<\rho^{(\ell)}(0)$;
-    \item the convergence rate (via the decay rate of $\rho^{(\ell)}$);
-    \item the steady-state error bound $\rho_\infty^{(\ell)}$.
+    \item the maximum overshoot: $\norm{\tilde p(t)}<\rho(0)$;
+    \item the convergence rate (via the decay rate of $\rho$);
+    \item the steady-state error bound $\rho_\infty$.
 \end{itemize}
-Since $\norm{\tilde p(t)}\le \sum_{\ell=1}^n \rho^{(\ell)}(t)$, the
-prescribed bound on $\tilde p$ directly bounds the enclosure distance
-$\dist(p,p_0)$.
+Since $\dist(p,p_0)\le\norm{\tilde p(t)}$, the prescribed 2-norm envelope on
+$\tilde p$ directly bounds the enclosure distance $\dist(p,p_0)$.
 
 \textbf{Asymptotic (exponential) performance function:}
 \begin{equation}
-    \rho^{(\ell)}(t)=(\rho_0^{(\ell)}-\rho_\infty^{(\ell)})e^{-\ell^{(\ell)} t}
-    +\rho_\infty^{(\ell)},
-    \qquad \rho_0^{(\ell)}>|e(0)|,\ \ell^{(\ell)}>0.
+    \rho(t)=(\rho_0-\rho_\infty)e^{-\ell t}+\rho_\infty,
+    \qquad \rho_0>\norm{\tilde p(0)},\ \ell>0.
     \label{eq:rho-exp}
 \end{equation}
 
@@ -115,41 +112,45 @@ $\dist(p,p_0)$.
 the envelope by a user-specified finite time $T$, use a finite-time
 reaching profile
 \begin{equation}
-    \rho^{(\ell)}(t)=
+    \rho(t)=
     \begin{cases}
-    \bar\rho^{(\ell)} + (\rho_0^{(\ell)}-\bar\rho^{(\ell)})
-        \bigl(1-\tfrac{t}{T}\bigr)^r, & 0\le t<T,\\[4pt]
-    \bar\rho^{(\ell)}, & t\ge T,
+    \bar\rho + (\rho_0-\bar\rho)\bigl(1-\tfrac{t}{T}\bigr)^r, & 0\le t<T,\\[4pt]
+    \bar\rho, & t\ge T,
     \end{cases}
     \qquad r\ge 2,
     \label{eq:rho-pt}
 \end{equation}
-which reaches the target value $\bar\rho^{(\ell)}$ exactly at $t=T$.
+which reaches the target value $\bar\rho$ exactly at $t=T$.
 
 To convert the constrained error \eqref{eq:ppc-constraint} into an
 \emph{unconstrained} variable, introduce the smooth, strictly increasing map
-$T(\cdot)=\tanh(\cdot)\in(-1,1)$ and let the normalized error
-$z^{(\ell)}=e/\rho^{(\ell)}$ satisfy
+$T(\cdot)=\tanh(\cdot)\in(-1,1)$, let the (scalar) enclosure norm be
+$e(t)=\norm{\tilde p(t)}$, and define the normalized error $z=e/\rho$ via
 \[
-z^{(\ell)} = T(\xi^{(\ell)})\quad\Longleftrightarrow\quad
-\xi^{(\ell)} = T^{-1}(z^{(\ell)})
-= \operatorname{artanh}\!\left(\frac{e}{\rho^{(\ell)}}\right)
-= \frac{1}{2}\ln\frac{1+e/\rho^{(\ell)}}{1-e/\rho^{(\ell)}}.
+\begin{aligned}
+    &z = T(\xi)\quad\Longleftrightarrow
+    \quad\\
+    &\xi = T^{-1}(z)
+    = \operatorname{artanh}\!\left(\frac{e}{\rho}\right)
+    = \frac{1}{2}\ln\frac{1+e/\rho}{1-e/\rho}.
+\end{aligned}
 \]
-As long as $\xi^{(\ell)}(t)$ stays finite,
-$|z^{(\ell)}(t)|=|T(\xi^{(\ell)})|<1$, so \eqref{eq:ppc-constraint} holds
-automatically. Differentiating $\xi^{(\ell)}$ (with
-$\zeta^{(\ell)}=1/(1-z^{(\ell)2})>0$) gives
+As long as $\xi(t)$ stays finite, $|z(t)|=|T(\xi)|<1$, so
+\eqref{eq:ppc-constraint} holds automatically. The norm derivative (for
+$\tilde p\neq 0$) is $\dot e = \frac{\tilde p^T\dot{\tilde p}}{\norm{\tilde p}}$;
+the control law derived below is continuously extensible to $\tilde p=0$
+(the apparent singularity is removable, see \S\ref{subsec:ppc-design}). With
+$\zeta=1/(1-z^2)>0$,
 \begin{equation}
-    \dot\xi^{(\ell)}
-    = \frac{\zeta^{(\ell)}}{\rho^{(\ell)}}
-      \bigl(\dot e - z^{(\ell)}\dot\rho^{(\ell)}\bigr),
-    \qquad z^{(\ell)}=\frac{e}{\rho^{(\ell)}}.
+    \dot\xi
+    = \frac{\zeta}{\rho}
+      \bigl(\dot e - z\dot\rho\bigr),
+    \qquad z=\frac{e}{\rho}.
     \label{eq:xi-dyn}
 \end{equation}
-Thus the fencing problem reduces to designing a controller that keeps every
-$\xi^{(\ell)}$ bounded (and drives it to zero)---the standard PPC
-backstepping task for the double-integrator centroid dynamics
+Thus the fencing problem reduces to designing a controller that keeps the
+single transformed error $\xi$ bounded (and drives it to zero)---the
+standard PPC backstepping task for the double-integrator centroid dynamics
 \eqref{eq:centroid-dyn}.
 
 \subsection{PPC fencing problem statement}
@@ -160,34 +161,33 @@ backstepping task for the double-integrator centroid dynamics
     addition to P1--P3, the enclosure error satisfies
     \begin{enumerate}
         \item[\textbf{P4}] \textbf{Prescribed-performance enclosure:}
-        $| \tilde p^{(\ell)}(t) | \le \rho^{(\ell)}(t)$ for all
-        $t\ge 0$ and $\ell=1,\dots,n$, where $\rho^{(\ell)}(t)$ is a
-        user-specified performance function of the form \eqref{eq:rho-exp}
-        or \eqref{eq:rho-pt}.
+        $\norm{\tilde p(t)} \le \rho(t)$ for all $t\ge 0$, where
+        $\rho(t)$ is a user-specified performance function of the form
+        \eqref{eq:rho-exp} or \eqref{eq:rho-pt}.
     \end{enumerate}
-    Property P4 implies P1 (since $\rho^{(\ell)}(t)\to\rho_\infty^{(\ell)}$,
-    and $\rho_\infty^{(\ell)}=0$ gives exact enclosure); the novelty is that
-    the \emph{transient} behavior of the enclosure is now explicitly bounded
-    by the user-chosen envelope.
+    Property P4 implies P1 (since $\rho(t)\to\rho_\infty$, and
+    $\rho_\infty=0$ gives exact enclosure); the novelty is that the
+    \emph{transient} behavior of the enclosure is now explicitly bounded by
+    the user-chosen 2-norm envelope.
 \end{definition}
 
 \begin{problem}[Prescribed-performance fencing control]
     \label{prob:main}
     Given the double-integrator dynamics
-    \eqref{eq:agent}--\eqref{eq:target} and prescribed performance functions
-    $\rho^{(\ell)}(t)$, design a \emph{distributed} control law $u_i$ using
+    \eqref{eq:agent}--\eqref{eq:target} and a prescribed performance function
+    $\rho(t)$, design a \emph{distributed} control law $u_i$ using
     only local information such that the closed loop satisfies:
     \begin{enumerate}
         \item[\textbf{P4}] prescribed-performance enclosure:
-        $| \tilde p^{(\ell)}(t) | < \rho^{(\ell)}(t)$, $\forall\, t\ge 0$;
+        $\norm{\tilde p(t)} < \rho(t)$, $\forall\, t\ge 0$;
         \item[\textbf{P2}] collision avoidance (hard ``fence''):
         $\norm{p_{ij}(t)}>d$ for all $i\neq j,\ t\ge 0$;
         \item[\textbf{P3}] velocity match:
         $\lim_{t\to\infty}\norm{v_i-v_0}=0$.
     \end{enumerate}
     P2 is enforced as a hard constraint via the artificial-potential barrier
-    below, while P4 prescribes the soft performance envelope on the enclosure
-    error.
+    below, while P4 prescribes the soft 2-norm performance envelope on the
+    enclosure error.
 \end{problem}
 
 \subsection{Artificial-potential (collision-avoidance) fence}

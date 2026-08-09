@@ -1,16 +1,1 @@
-\section{Stability and Performance Analysis}
-\label{sec:analysis}
-\textbf{[TODO]} Suggested roadmap:
-\begin{itemize}
-    \item \textbf{Collision avoidance (P2):} barrier-type Lyapunov
-    $V=\frac12\sum_i\norm{v_{i0}}^2 + \frac12\sum_{i}\sum_{j\in\NN_i(t)}
-    \int_{\norm{p_{ij}}}^\mu \alpha_r(s)\,ds$ (plus the enclosure term);
-    show $\dot V\le c$ so that $\norm{p_{ij}}>d$ is preserved for all $t$.
-    \item \textbf{Prescribed performance (P4):} Lyapunov
-    $V_\xi=\frac12\xi^2$; prove $\xi$ stays finite, hence
-    $e(t)=\rho(t)\tanh\xi(t)<\rho(t)$ for all $t\ge 0$.
-    \item \textbf{Velocity match (P3) / enclosure (P1):} conclude
-    $\xi\to 0\Rightarrow \dist(p,p_0)\to 0$ and $v_i-v_0\to 0$.
-    \item State assumptions on the target motion (e.g.\ bounded
-    $u_0,d_0$) and on initial feasibility ($\rho(0)>\dist(p(0),p_0(0))$).
-\end{itemize}
+
