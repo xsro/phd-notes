@@ -1,7 +1,7 @@
 
 
 
-\subsection{积分滑模方法}
+\section{滑模方法2（积分滑模）}
 
 定义辅助变量 \(\eta_i\in\mathbb R^m\) 满足
 \[
@@ -48,7 +48,7 @@
     \dot s_{i0,\ell} = b_{i\ell}(t) u_{i\ell} + \Delta_{i\ell} + w_{i\ell}.
 \]
 令 \(N_{i\ell} = \Delta_{i\ell} + w_{i\ell}\)，则
-\begin{equation}\label{eq:component-dyn}
+\begin{equation}\label{eq:r2-component-dyn}
     \dot s_{i0,\ell} = b_{i\ell}(t) u_{i\ell} + N_{i\ell}.
 \end{equation}
 
@@ -98,7 +98,7 @@
 
 该控制律不使用 \(b_{i\ell}(t)\) 的符号信息。
 
-\section{\texorpdfstring{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\)}{稳定性证明：有限时间到达并满足 sdot=0}}
+\subsection{\texorpdfstring{稳定性证明：有限时间到达并满足 \(\dot s_{i0}=0\)}{稳定性证明：有限时间到达并满足 sdot=0}}
 
 下面证明：在控制方向符号保持不变的时间区间内，每个分量 \(s_{i0,\ell}\) 有限时间到达某个周期滑模面，并在理想滑模意义下满足 \(\dot s_{i0,\ell}=0\)。
 
@@ -133,7 +133,7 @@
 \]
 
 因此
-\begin{equation}\label{eq:key-inequality}
+\begin{equation}\label{eq:r2-key-inequality}
     |b|R - |N| \ge \lambda.
 \end{equation}
 即
@@ -180,7 +180,7 @@
 \[
     \dot V \le -\left(|b|R - |N|\right)|\tilde s|.
 \]
-由式~\eqref{eq:key-inequality} 得到
+由式~\eqref{eq:r2-key-inequality} 得到
 \[
     \dot V \le -\lambda|\tilde s| = -\lambda\sqrt{2V}.
 \]
@@ -222,7 +222,7 @@
 \[
     \dot V \le -\left(|b|R - |N|\right)|\tilde s|.
 \]
-再由式~\eqref{eq:key-inequality} 得到
+再由式~\eqref{eq:r2-key-inequality} 得到
 \[
     \dot V \le -\lambda|\tilde s| = -\lambda\sqrt{2V}.
 \]
@@ -261,7 +261,7 @@
     \boxed{\dot s_{i0} = 0.}
 \]
 
-\section{降阶名义合围动力学}
+\subsection{降阶名义合围动力学}
 
 由 \(s_{i0} = \eta_i + k_2 p_{i0} + v_{i0}\) 可得
 \[
@@ -293,7 +293,7 @@
 
 因此，本控制器的作用是：在控制方向未知、扰动存在、目标加速度有界的情况下，使实际系统有限时间进入滑模运动，并在滑模运动中恢复已有文献分析的名义合围系统。
 
-\section{定理表述}
+\subsection{定理表述}
 
 可以将上述结果概括为以下定理。
 
@@ -373,7 +373,7 @@
 则排斥项 \(\varphi_i\) 在该轨迹段上有界。后文将进一步讨论
 \(\Omega_d\) 的正不变性问题。
 
-\section{必须注明的技术条件}
+\subsection{必须注明的技术条件}
 
 为了使上述表述在论文中严谨，建议明确写出以下条件：
 

@@ -95,21 +95,92 @@
 \]
 
 
-The fencing formation control objective considered in this paper is to achieve the following properties:
+本文所考虑的围栏编队控制目标是实现以下性质：
 \begin{enumerate}
-    \item[\textbf{P1}] (Convex-hull Fencing) The target is asymptotically fenced by the convex hull spanned by the satellites, i.e., 
+    \item[\textbf{P1}]（凸包合围）目标被各卫星所张成的凸包渐近围栏，即
     $\lim_{t \to \infty} \mathrm{dist} \bigl( p_0(t), \mathrm{co} (p(t)) \bigr) = 0$.
     
-    \item[\textbf{P2}] (Collision Avoidance) The inter-satellite distances remain above the prescribed safety distance under the closed-loop dynamics, i.e., if $\| p_i(0)-p_j(0) \| > d$, then $\| p_i(t)-p_j(t) \| > d$ for all $t \ge 0$ and all $i, j \in \mathcal N$ with $i \ne j$.
+    \item[\textbf{P2}]（避碰）在闭环动力学下，卫星间距离始终保持在规定的安全距离之上，即若 $\| p_i(0)-p_j(0) \| > d$，则对所有 $t \ge 0$ 及所有 $i, j \in \mathcal N$（$i \ne j$），均有 $\| p_i(t)-p_j(t) \| > d$。
 
-    \item[\textbf{P3}] (Velocity Consensus) The velocity of each satellite asymptotically converges to the target velocity, i.e., 
+    \item[\textbf{P3}]（速度一致）每个卫星的速度渐近收敛到目标速度，即
     $\lim_{t \to \infty} \| v_i(t) - v_0(t) \| = 0$, $\forall ~i \in \mathcal{N}$.
 \end{enumerate}
 
+
 \input{body/result1.tex}
-% \input{body/simulation1.tex}
+\input{body/result2.tex}
+\input{body/result3.tex} % 滤波排斥项版本（无需邻居速度）
 
 
-% \input{body/result2.tex}
+
+\section{三种滑模设计方法对比}
+
+本文就同一周期滑模控制律给出三种滑模面设计，核心差异在于滑模变量如何引入排斥项 $\varphi_i$，这决定了\textbf{是否需要邻居速度}以及\textbf{降阶后动力学的形态}。三种方法的控制律
+$u_{i\ell}=R_{i\ell}\sgn[\sin(\pi s_{i\ell}/\varepsilon)]$
+与增益
+$R_{i\ell}=(|\Delta_{i\ell}|+\bar w_i+\lambda)/\underline b$
+完全相同，区别仅在于 $\Delta_i$（即滑模变量）的定义。
+详细推导分别见 \texttt{body/result1.tex}、\texttt{body/result2.tex}、\texttt{body/result3.tex}。
+
+\begin{table}[H]
+\centering
+\caption{result1 / result2 / result3 对比}
+\begin{tabular}{p{2.2cm}|p{3.9cm}|p{3.9cm}|p{3.9cm}}
+\hline
+& \textbf{result1}（滑模方法1） & \textbf{result2}（积分滑模） & \textbf{result3}（滤波排斥项）\\
+\hline
+滑模变量 &
+$s_{i0}=v_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i$ &
+$s_{i0}=\eta_i+k_2p_{i0}+v_{i0}$ &
+$s_{i0}=v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i$\\
+\hline
+$\dot\eta_i$ &
+$k_1p_{i0}-\varphi_i$ &
+$k_1p_{i0}-\varphi_i$ &
+$k_1p_{i0}-\Phi_i$\\
+\hline
+$\Delta_i$ &
+$-\dot\varphi_i+k_1v_{i0}+k_2(k_1p_{i0}-\varphi_i)$ &
+$k_1p_{i0}-\varphi_i+k_2v_{i0}$ &
+$-\dot\Phi_i+k_1v_{i0}+k_2(k_1p_{i0}-\Phi_i)$\\
+\hline
+需邻居速度 &
+是（$\dot\varphi_i$ 依赖 $v_{ij}$） &
+否 &
+否\\
+\hline
+降阶动力学 &
+含 $\dot\varphi_i$，非标准 &
+$\ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i$（标准型） &
+同 result1（用 $\Phi_i$ 替代 $\varphi_i$）\\
+\hline
+P1/P2 证明 &
+自证（障壁势函数） &
+降阶后引用名义系统文献 &
+自证（增广势函数含滤波误差项）\\
+\hline
+P3 速度一致 &
+未证 &
+据名义系统文献可得 &
+未证\\
+\hline
+定位 &
+基线，存在感知缺陷 &
+优雅：无需速度且降阶为标准型 &
+对 result1 做最小改动去缺陷\\
+\hline
+\end{tabular}
+\end{table}
+
+要点：
+\begin{itemize}[nosep]
+    \item \textbf{result1} 是基线，但滑模变量直接减去 $\varphi_i$，求导后出现 $\dot\varphi_i$，需要邻居相对速度，与“仅测相对位置”的假设矛盾。
+    \item \textbf{result2} 用积分滑模（$s_{i0}=\eta_i+k_2p_{i0}+v_{i0}$）把 $\varphi_i$ 关进积分器，既无需邻居速度，又得到标准名义合围动力学 $\ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i$，可直接引用已有文献结论。
+    \item \textbf{result3} 用一阶滤波 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 替代 $\varphi_i$，同样去掉邻居速度依赖，且保持 result1 的滑模变量形式，仅做最小改动。
+    \item 三者的到达性证明与关键不等式 $|b|R>|N|$ 结构完全一致。
+\end{itemize}
+
+
+
 
 \end{document}

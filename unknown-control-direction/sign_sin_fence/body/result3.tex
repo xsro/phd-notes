@@ -1,0 +1,346 @@
+
+
+\section{滑模方法3：滤波排斥项（无需邻居速度）}
+
+本方法是对“滑模方法1”的改进。方法1 中控制律需要 $\dot\varphi_i$，
+而 $\dot\varphi_i$ 依赖于邻居之间的相对速度 $v_{ij}=v_i-v_j$。
+本节用一阶低通滤波后的排斥项 $\Phi_i$ 替代 $\varphi_i$，
+使得 $\dot\Phi_i$ 只由相对位置算出，从而彻底去除对邻居速度的需求。
+
+\subsection{滤波排斥项与滑模变量}
+
+原始排斥项（仅依赖相对位置，可测）仍记为
+\[
+    \varphi_i = \sum_{j\in\mathcal N_i(t)} \rho(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|},
+\]
+其中 $p_{ij}=p_i-p_j$，并且
+\[
+    \rho(s) = \max\left\{ \frac{1}{s-d} - \frac{1}{\mu-d},\;0 \right\},\qquad s>d.
+\]
+引入滤波状态 $\Phi_i\in\mathbb R^m$，其动力学为
+\[
+    \dot\Phi_i = -\gamma_2\,\Phi_i + \varphi_i,\qquad \gamma_2>0.
+\]
+由于 $\Phi_i$ 是智能体自身积分得到的状态、$\varphi_i$ 只由相对位置算出，
+因此 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 是纯本地量，无需任何邻居速度。
+记滤波误差 $e_i=\Phi_i-\varphi_i$，则
+$\dot e_i=-\gamma_2 e_i-\dot\varphi_i$，稳态时 $\Phi_i\to\varphi_i$。
+
+滑模变量改为
+\[
+    s_{i0} = v_{i0} + k_1 p_{i0} - \Phi_i + k_2 \eta_i
+    = \dot p_{i0}+k_1 p_{i0}-\Phi_i + k_2 \eta_i,
+\]
+其中 $\dot \eta_i=k_1 p_{i0} - \Phi_i$，$k_1,k_2>0$。
+
+\subsection{闭环系统与周期滑模控制律}
+
+由
+$
+    \dot p_{i0}=v_{i0},\quad
+    \dot v_{i0}=B_i(t)u_i+w_i
+$
+以及 $\dot\eta_i=k_1p_{i0}-\Phi_i$，可得
+\[
+    \dot s_{i0}
+    =
+    B_i(t)u_i+w_i
+    -\dot\Phi_i+k_1v_{i0}
+    +k_2(k_1p_{i0}-\Phi_i).
+\]
+定义
+\(
+    \Delta_i = -\dot\Phi_i + k_1 v_{i0}
+    +k_2(k_1p_{i0}-\Phi_i) .
+\)
+因为 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 为本地已知量，故 $\Delta_i$ 可计算且
+不依赖邻居速度。于是
+\[
+    \dot s_{i0} = B_i(t)u_i + \Delta_i + w_i.
+\]
+逐分量写为
+\[
+    \dot s_{i0,\ell} = b_{i\ell}(t) u_{i\ell} + N_{i\ell},
+    \qquad N_{i\ell}=\Delta_{i\ell}+w_{i\ell}.
+\]
+
+对每个智能体 $i$ 和每个分量 $\ell=1,\dots,m$，设计控制律
+\[
+    u_{i\ell} = R_{i\ell}(t)\,
+    \sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon_{i\ell}}s_{i0,\ell}\right)\right],
+\]
+其中 $\varepsilon_{i\ell}>0$，控制增益为
+\[
+    R_{i\ell}(t) = \frac{|\Delta_{i\ell}(t)| + \bar w_i + \lambda_{i\ell}}{\underline b_{i\ell}}
+    = \frac{|\Delta_{i\ell}(t)| + \bar d_i + \bar u_0 + \lambda_{i\ell}}{\underline b_{i\ell}},
+\]
+$\lambda_{i\ell}>0$ 为鲁棒裕度。该控制律不使用 $b_{i\ell}(t)$ 的符号信息，
+且仅需自身相对状态、邻居相对位置（算 $\varphi_i$）与本地状态 $\Phi_i,\eta_i,v_{i0}$。
+
+算法总结为
+\begin{equation}
+    \boxed{
+    \begin{aligned}
+        \dot\Phi_i &= -\gamma_2\Phi_i+\varphi_i, \\[1mm]
+        \dot\eta_i &= k_1p_{i0}-\Phi_i, \\[1mm]
+        s_{i0}    &=\dot{p}_{i0}+k_1 p_{i0}-\Phi_i+k_2\eta_i, \\[1mm]
+        \Delta_i  &= -\dot\Phi_i + k_1 v_{i0}
+        +k_2(k_1p_{i0}-\Phi_i), \\[1mm]
+        R_{i\ell}(t) &= \frac{|\Delta_{i\ell}(t)| + \bar d_i + \bar u_0 + \lambda_{i\ell}}{\underline b_{i\ell}}, \\[1mm]
+        u_{i\ell}  &= R_{i\ell}(t)\,
+                      \sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon_{i\ell}}s_{i0,\ell}\right)\right].
+    \end{aligned}}
+\end{equation}
+
+\subsection{\texorpdfstring{稳定性证明：有限时间到达且 $s_{i0}$ 有界}{稳定性证明：有限时间到达且 s(i0) 有界}}
+
+固定智能体 $i$ 与分量 $\ell$，并简记
+$s=s_{i0,\ell},\ b=b_{i\ell}(t),\ u=u_{i\ell},\
+\Delta=\Delta_{i\ell},\ w=w_{i\ell},\ N=\Delta+w,\
+\varepsilon=\varepsilon_{i\ell},\ R=R_{i\ell}(t),\ \lambda=\lambda_{i\ell},\
+\underline b=\underline b_{i\ell}$。
+
+闭环为
+\[
+    \dot s = bR\,\sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon}s\right)\right] + N.
+\]
+由增益设计 $R=\dfrac{|\Delta|+\bar w_i+\lambda}{\underline b}$ 及假设
+$|b|\ge\underline b$、$|w|\le\bar w_i$，有
+\[
+    |b|R \ge \underline b R = |\Delta|+\bar w_i+\lambda,\qquad
+    |N|\le|\Delta|+|w|\le|\Delta|+\bar w_i,
+\]
+故
+\[
+    |b|R-|N|\ge \lambda>0,
+    \qquad\text{即}\qquad
+    \boxed{|b|R>|N|.}
+    \tag{f-key}\label{f-key}
+\]
+这是周期滑模可达性的关键不等式，与滤波前完全一致。
+
+函数 $\sigma(s)=\sgn[\sin(\pi s/\varepsilon)]$ 在 $s=k\varepsilon$（$k\in\mathbb Z$）处变号。
+当 $b>0$ 时，吸引面为奇数倍 $s=(2r+1)\varepsilon$；
+当 $b<0$ 时，吸引面为偶数倍 $s=2r\varepsilon$。
+令 $k\varepsilon$ 为当前符号下对应的吸引面，$\tilde s=s-k\varepsilon$，在吸引区间
+$|\tilde s|<\varepsilon$ 内，两种情况均统一化简为
+\[
+    \dot{\tilde s} = -|b|R\,\sgn(\tilde s) + N.
+\]
+（验证：$b>0$ 时 $\sigma=-\sgn(\tilde s)$，得
+$\dot{\tilde s}=-bR\,\sgn(\tilde s)+N=-|b|R\,\sgn(\tilde s)+N$；
+$b<0$ 时 $\sigma=+\sgn(\tilde s)$，得
+$\dot{\tilde s}=bR\,\sgn(\tilde s)+N=-|b|R\,\sgn(\tilde s)+N$。）
+
+取 Lyapunov 函数 $V=\tfrac12\tilde s^2$，则
+\[
+    \dot V = \tilde s\dot{\tilde s}
+    = -|b|R|\tilde s|+\tilde s N
+    \le -(|b|R-|N|)|\tilde s|
+    \le -\lambda|\tilde s|
+    = -\lambda\sqrt{2V}.
+\]
+因此 $V$ 在有限时间内收敛到零，即每个分量 $s_{i0,\ell}$ 有限时间到达相应周期滑模面。
+
+由 $\dot V\le-\lambda\sqrt{2V}$ 积分得到达时间估计
+\[
+    T_r \le \frac{|\tilde s(t_0)|}{\lambda}.
+\]
+
+有界性：对给定有限初值，选取其所在吸引区间对应的周期面 $k\varepsilon$，
+在到达前有 $|s(t)|\le(|k|+1)\varepsilon$，到达后理想滑模意义下
+$|s(t)|=|k|\varepsilon$。故对任意 $t\ge t_0$
+\[
+    |s_{i0,\ell}(t)|\le (|k_{i\ell}|+1)\varepsilon_{i\ell}<\infty,
+\]
+从而
+\[
+    \boxed{s_{i0}\in L_\infty.}
+\]
+若 $b_{i\ell}(t)$ 发生有限次符号切换，则每次切换后重新进入到达阶段；
+最后一次切换后系统最终进入周期滑模运动并满足 $\dot s_{i0}=0$
+（Filippov 等效控制 $u_{\mathrm{eq}}=-N/b$ 满足 $|u_{\mathrm{eq}}|<R$，
+属于不连续控制的凸包）。若切换无限频繁，则需额外的驻留时间假设。
+
+\subsection{合围性质证明}
+
+\subsubsection{瞬态安全避碰性质 P2}
+
+由动态邻居集合定义，交互图在每个邻居集合不切换的时间区间内为无向对称图，
+且排斥项成对抵消：$\sum_{i\in\mathcal N}\varphi_i=0$。
+邻域在 $\|p_{ij}\|=\mu$ 处切换时势垒积分项为零，故可导性在分段时间区间上成立。
+
+令
+\[
+    g_i=k_1p_{i0}-\Phi_i=\dot\eta_i,
+\]
+由滑模变量定义有
+\[
+    v_{i0}=s_{i0}-g_i-k_2\eta_i.
+\]
+
+定义增广势函数（在方法1的基础上加入滤波误差项）
+\[
+    V_W
+    =
+    \frac{k_1}{2}\sum_{i\in\mathcal N}\|p_{i0}\|^2
+    +
+    \frac{1}{2}\sum_{i\in\mathcal N}\sum_{j\in\mathcal N_i(t)}
+    \int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds
+    +
+    \frac{k_2}{2}\sum_{i\in\mathcal N}\|\eta_i\|^2
+    +
+    \frac{1}{2}\sum_{i\in\mathcal N}\|e_i\|^2 ,
+\]
+其中 $e_i=\Phi_i-\varphi_i$ 为滤波误差。
+
+在邻居集合固定的时间区间内逐项求导。势垒项利用无向图的对称性可得
+\[
+    \frac{d}{dt}\frac{1}{2}\sum_i\sum_{j\in\mathcal N_i}
+    \int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds
+    = -\sum_{i\in\mathcal N}\varphi_i^T v_{i0},
+\]
+滤波误差项
+\[
+    \frac{d}{dt}\frac{1}{2}\sum_i\|e_i\|^2
+    =\sum_i e_i^T\dot e_i
+    =\sum_i e_i^T(-\gamma_2 e_i-\dot\varphi_i)
+    =-\gamma_2\sum_i\|e_i\|^2-\sum_i e_i^T\dot\varphi_i.
+\]
+于是
+\[
+    \dot V_W
+    =
+    k_1\sum_i p_{i0}^T v_{i0}
+    -\sum_i\varphi_i^T v_{i0}
+    +k_2\sum_i\eta_i^T g_i
+    -\gamma_2\sum_i\|e_i\|^2
+    -\sum_i e_i^T\dot\varphi_i .
+\]
+将 $k_1\sum_i p_{i0}^T v_{i0}
+=\sum_i(k_1p_{i0}-\Phi_i)^T v_{i0}+\sum_i\Phi_i^T v_{i0}
+=\sum_i g_i^T v_{i0}+\sum_i(\Phi_i-\varphi_i)^T v_{i0}
+=\sum_i g_i^T v_{i0}+\sum_i e_i^T v_{i0}$，代入得
+\[
+    \dot V_W
+    =
+    \sum_i g_i^T v_{i0}
+    +k_2\sum_i\eta_i^T g_i
+    +\sum_i e_i^T v_{i0}
+    -\gamma_2\sum_i\|e_i\|^2
+    -\sum_i e_i^T\dot\varphi_i .
+\]
+而
+\[
+\begin{aligned}
+    &\sum_i g_i^T v_{i0}+k_2\sum_i\eta_i^T g_i \\
+    &=\sum_i g_i^T(s_{i0}-g_i-k_2\eta_i)+k_2\sum_i\eta_i^T g_i \\
+    &=-\sum_i\|g_i\|^2+\sum_i g_i^T s_{i0}
+    \le \frac14\sum_i\|s_{i0}\|^2 .
+\end{aligned}
+\]
+对含 $e_i$ 的三项用 Young 不等式（取同一系数 $\gamma_2/2$）：
+\[
+    e_i^T v_{i0}\le \frac{\gamma_2}{2}\|e_i\|^2+\frac{1}{2\gamma_2}\|v_{i0}\|^2,\qquad
+    e_i^T\dot\varphi_i\le \frac{\gamma_2}{2}\|e_i\|^2+\frac{1}{2\gamma_2}\|\dot\varphi_i\|^2.
+\]
+故
+\[
+    \sum_i e_i^T v_{i0}
+    -\gamma_2\sum_i\|e_i\|^2
+    -\sum_i e_i^T\dot\varphi_i
+    \le
+    \frac{1}{2\gamma_2}\sum_i\bigl(\|v_{i0}\|^2+\|\dot\varphi_i\|^2\bigr).
+\]
+综上得到精确估计
+\[
+    \boxed{
+    \dot V_W
+    \le
+    \frac14\sum_{i\in\mathcal N}\|s_{i0}\|^2
+    +\frac{1}{2\gamma_2}\sum_{i\in\mathcal N}
+    \bigl(\|v_{i0}\|^2+\|\dot\varphi_i\|^2\bigr).
+    }
+    \tag{f-p2}\label{f-p2}
+\]
+
+\textbf{非碰撞结论。}
+由前述滑模到达性已知 $s_{i0}\in L_\infty$，故第一项有界。
+由小增益/奇异扰动观点：当滤波足够快（即 $\gamma_2$ 足够大）时，
+滤波闭环轨迹是方法1 中已证安全的名义轨迹的 $O(1/\gamma_2)$ 扰动；
+在任意有限时间段内，只要解存在且 $\|p_{ij}\|>d$，
+$v_{i0}$ 与 $\dot\varphi_i$ 均保持有界（与名义安全轨迹接近）。
+于是式~\eqref{f-p2} 右端被某常数 $C$ 控制，即 $\dot V_W\le C$。
+进而对任意有限区间 $[0,T]$
+\[
+    V_W(t)\le V_W(0)+CT<\infty,\qquad 0\le t\le T.
+\]
+而势垒项满足
+$
+    \int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds\to+\infty
+$
+当 $\|p_{ij}\|\to d^+$。
+若某对智能体在有限时间 $T_c<\infty$ 到达碰撞边界 $\|p_{ij}\|=d$，
+则 $V_W(t)\to+\infty$，与上式矛盾。
+因此闭环解存在的任意有限时间内系统不会到达 $\|p_{ij}\|=d$。
+\textbf{结论}：在滤波足够快（$\gamma_2$ 足够大）的条件下，P2 成立。
+
+\subsubsection{稳态合围性质 P1}
+
+在周期滑模运动中 $\dot s_{i0}=0$，每个分量停留于某个常值周期面，即
+\[
+    v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i = k_i\varepsilon_i
+\]
+为常值（若控制方向切换导致所达周期面变化，则在最后一次切换之后为分段常值）。
+记 $\bar s=\frac1N\sum_{i\in\mathcal N}k_i\varepsilon_i$。
+对全体智能体求平均得
+\[
+    \dot{\tilde p}+k_1\tilde p+k_2\bar\eta
+    =\bar s+\frac1N\sum_{i\in\mathcal N}\Phi_i,
+    \qquad
+    \dot{\bar\eta}
+    =\frac1N\sum_{i\in\mathcal N}\dot\eta_i
+    =k_1\tilde p-\frac1N\sum_{i\in\mathcal N}\Phi_i,
+\]
+其中 $\tilde p=\bar p-p_0$ 为质心相对目标的位置，
+$\bar\eta=\frac1N\sum_i\eta_i$。
+记偏差 $b_\Phi(t)=\frac1N\sum_i\Phi_i(t)$，对第一式求导并利用第二式：
+\[
+    \ddot{\tilde p}+k_1\dot{\tilde p}+k_2\dot{\bar\eta}
+    =\dot b_\Phi
+    \;\Rightarrow\;
+    \ddot{\tilde p}+k_1\dot{\tilde p}+k_2(k_1\tilde p-b_\Phi)
+    =\dot b_\Phi,
+\]
+即
+\[
+    \ddot{\tilde p}+k_1\dot{\tilde p}+k_1k_2\tilde p
+    =k_2 b_\Phi+\dot b_\Phi .
+\]
+齐次部分特征多项式 $q(\lambda)=\lambda^2+k_1\lambda+k_1k_2$ 在 $k_1,k_2>0$ 时为 Hurwitz。
+由于滤波稳态 $\Phi_i\to\varphi_i$ 且 $\sum_i\varphi_i=0$，有 $b_\Phi(t)\to0$；
+又 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i\to0$，故 $\dot b_\Phi(t)\to0$。
+即右端强迫项 $w(t)=k_2b_\Phi+\dot b_\Phi$ 有界且趋于零。
+由 Hurwitz 系统的输入到状态稳定性（ISS），得
+\[
+    \tilde p(t)\to0,\qquad \dot{\tilde p}(t)\to0.
+\]
+质心收敛到目标；而质心位于卫星凸包之内，故
+\[
+    \mathrm{dist}\bigl(p_0(t),\mathrm{co}(p(t))\bigr)\le\|\tilde p(t)\|\to0.
+\]
+\textbf{结论}：P1 成立（滤波引入的偏差 $b_\Phi$ 渐近消失，不改变合围结论）。
+
+\subsection{说明}
+
+\begin{itemize}[nosep]
+    \item 与方法1 相比，本方法用 $\Phi_i$（及其本地已知的导数 $\dot\Phi_i$）替代
+          $\varphi_i$ 与 $\dot\varphi_i$，从而\textbf{彻底去除对邻居相对速度的需求}，
+          仅依赖自身相对目标状态与邻居相对位置。
+    \item 滑模到达性、$s_{i0}$ 有界性、Filippov 等效控制 $\dot s_{i0}=0$ 的推导
+          与方法1 完全相同（关键不等式~\eqref{f-key} 不变）。
+    \item P2（避碰）证明需将滤波误差并入增广势函数，并最终依赖“滤波足够快”
+          （$\gamma_2$ 足够大）的小增益条件，以保证式~\eqref{f-p2} 右端有界。
+    \item P3（速度一致）同方法1 一样\textbf{仍未证明}：本方法只移除了感知负担，
+          并未改变滑模面结构，速度一致仍属待研究问题（见主文件批注）。
+\end{itemize}
