@@ -36,19 +36,24 @@ velocities match the target velocity.  Existing fencing protocols typically
 provide asymptotic enclosure, but their transient overshoot, convergence
 rate, and steady-state accuracy are not specified a priori.  To address this
 limitation, we combine prescribed-performance control with an
-artificial-potential collision-avoidance fence.  Two controller structures
-are presented: a centroid-level PPC design, an APF-filtered individual PPC
-design that avoids differentiating the repulsive potential term, and an
-adaptive variant for unknown target acceleration and unknown disturbances.
+artificial-potential collision-avoidance fence.  Three controller structures
+are presented: a centroid-level PPC design (Result 1), an APF-filtered
+individual PPC design (Result 2) that avoids differentiating the repulsive
+potential term, and an adaptive variant (Result 3) for unknown target
+acceleration and unknown disturbances.
 The resulting framework gives an explicit envelope for the enclosure error
 while preserving collision avoidance under standard barrier assumptions.
 \end{abstract}
 
 \input{body/intro}
 \input{body/problem}
+\clearpage
 \input{body/result1.tex}
+\clearpage
 \input{body/result2.tex}
+\clearpage
 \input{body/result3.tex}
+\clearpage
 \input{body/simulation}
 \input{body/conclusion}
 

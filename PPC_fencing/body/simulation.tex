@@ -61,16 +61,17 @@ implementation, the discontinuous sign function in \eqref{eq:r3-ui} is
 replaced by a saturation function with a small leakage term in the adaptive
 gain update, as discussed in Result~3.
 
-Figure~\ref{fig:result3-centroid} shows that the centroid-to-target distance
-remains below the prescribed envelope throughout the simulation.  The final
-centroid error is $1.4\times10^{-3}$, while the final envelope value is
-$5.65\times10^{-1}$.
+Figure~\ref{fig:result3-centroid} shows the centroid-to-target distance, the
+prescribed envelope, and the local filtered-error norms $\norm{\eta_i(t)}$.
+The centroid error remains below the envelope throughout the simulation.
+The final centroid error is $1.4\times10^{-3}$, while the final envelope
+value is $5.65\times10^{-1}$.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{simulation/out/result3_centroid_ppc.pdf}
-    \caption{Result 3: centroid-to-target distance and prescribed
-    performance envelope.}
+    \caption{Result 3: centroid-to-target distance, local filtered-error
+    norms, and prescribed performance envelope.}
     \label{fig:result3-centroid}
 \end{figure}
 

@@ -56,6 +56,7 @@ centerErr = zeros(1, K);
 rhoHist = zeros(1, K);
 pairDist = zeros(nchoosek(N, 2), K);
 etaMax = zeros(1, K);
+etaNormHist = zeros(N, K);
 kappaHist = zeros(N, K);
 
 pairs = nchoosek(1:N, 2);
@@ -84,7 +85,8 @@ for k = 1:K
 
     eta = P - p0 - Phi1;
     chi = V - v0 + gamma1 * Phi1 - Phi2;
-    etaMax(k) = max(vecnorm(eta));
+    etaNormHist(:, k) = vecnorm(eta).';
+    etaMax(k) = max(etaNormHist(:, k));
 
     U = zeros(n, N);
     alphaNow = zeros(n, N);
@@ -148,12 +150,20 @@ end
 fig1 = figure('Color', 'w', 'Position', [100, 100, 760, 430]);
 plot(t, centerErr, 'LineWidth', 2.2); hold on;
 plot(t, rhoHist, '--', 'LineWidth', 2.2);
+etaColors = lines(N);
+for i = 1:N
+    plot(t, etaNormHist(i, :), ':', 'LineWidth', 1.7, ...
+        'Color', etaColors(i, :));
+end
 grid on; box on;
 xlabel('Time (s)', 'Interpreter', 'latex');
 ylabel('Distance', 'Interpreter', 'latex');
-legend({'$\|\bar p-p_0\|$', '$\rho(t)$'}, ...
+etaLabels = arrayfun(@(i) sprintf('$\\|\\eta_%d(t)\\|$', i), ...
+    1:N, 'UniformOutput', false);
+legend([{'$\|\bar p-p_0\|$', '$\rho(t)$'}, etaLabels], ...
     'Interpreter', 'latex', 'Location', 'northeast');
-title('Centroid-to-target distance under Result 3', 'Interpreter', 'latex');
+title('Centroid and filtered-error distances under Result 3', ...
+    'Interpreter', 'latex');
 exportgraphics(fig1, fullfile(outDir, 'result3_centroid_ppc.pdf'), ...
     'ContentType', 'vector');
 exportgraphics(fig1, fullfile(outDir, 'result3_centroid_ppc.png'), ...
@@ -180,7 +190,7 @@ exportgraphics(fig2, fullfile(outDir, 'result3_pairwise_distances.png'), ...
 
 save(fullfile(outDir, 'result3_simulation.mat'), ...
     't', 'centerErr', 'rhoHist', 'pairDist', 'safeDist', ...
-    'etaMax', 'kappaHist', 'pHist', 'p0Hist', 'pairs');
+    'etaNormHist', 'etaMax', 'kappaHist', 'pHist', 'p0Hist', 'pairs');
 
 fprintf('Result 3 simulation finished.\n');
 fprintf('Final centroid error: %.4f\n', centerErr(end));
