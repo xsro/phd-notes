@@ -102,7 +102,7 @@
         V_1 &=\sum_{i\in\mathbb{N}}\Bigl(-\xi_i^\mathsf{T}\nu_i + \frac{1}{3}\|\nu_i\|^3 + \frac{2}{3}\|\xi_i\|^{3/2}\Bigr),\\
         V_2 &= \frac{1}{3}\sum_{i\in\mathbb{N}}\|\nu_i\|^3.
     \end{align*}
-    由杨氏不等式，$\frac{1}{3}\|\nu_i\|^3 + \frac{2}{3}\|\xi_i\|^{3/2} \ge \|\nu_i\|\|\xi_i\| \ge \xi_i^\mathsf{T}\nu_i$，故 $V_1\ge 0$。
+    对固定的 $\xi_i$，将 $V_1$ 的逐项关于 $\nu_i$ 极小化。记 $g(\nu_i)=-\xi_i^\mathsf{T}\nu_i+\frac13\|\nu_i\|^3$，其梯度为 $\|\nu_i\|\nu_i-\xi_i$，故驻点满足 $\|\nu_i\|\nu_i=\xi_i$，即 $\|\nu_i\|=\sqrt{\|\xi_i\|}$、$\nu_i=\xi_i/\sqrt{\|\xi_i\|}$，此时 $g(\nu_i)=-\frac23\|\xi_i\|^{3/2}$。由于 $\frac13\|\nu_i\|^3$ 为凸函数（其梯度 $\|\nu_i\|\nu_i$ 为单调算子），该驻点即全局最小，于是 $-\xi_i^\mathsf{T}\nu_i+\frac13\|\nu_i\|^3\ge -\frac23\|\xi_i\|^{3/2}$，从而 $-\xi_i^\mathsf{T}\nu_i+\frac13\|\nu_i\|^3+\frac23\|\xi_i\|^{3/2}\ge 0$，故 $V_1\ge 0$。
     由于 $\gamma_0>0$，$V=0$ 蕴含对所有 $i$ 有 $\nu_i=\mathbf{0}$，进而由 $V_1=0$ 得对所有 $i$ 有 $\xi_i=\mathbf{0}$。
     因此，$V$ 关于 $(\xi,\nu)$ 正定。
 
