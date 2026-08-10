@@ -237,3 +237,35 @@
     \end{equation}
     当 $V=0$ 时，对所有 $i$ 有 $\nu_i = \xi_i = 0$，从而 $z_i=0$；又因 $M(0)$ 可逆，得 $e = (M(0)^{-1}\otimes I_2)\xi = 0$。证毕。
 \end{proof}
+
+\subsection{时变扰动上界的情形}
+
+上面的证明只用到扰动满足 $\|n_i(t)\|\le \bar n$ 这一**逐时刻**的上界，全过程从未对 $\bar n$ 求导，也从未要求其为常数。因此，若扰动上界是时变的，即已知
+\[
+    \|n_i(t)\|\le \bar n(t),\qquad \bar n^*:=\sup_{t\ge 0}\bar n(t)<\infty,
+\]
+则只需在选取增益时改用其一致上界 $\bar n^*$：取 $\rho\in(0,1)$ 并令
+\[
+    k_b\ge \frac{\bar n^*}{\rho},
+\]
+其余参数（$k_a$、$\gamma_0$、$\gamma_1=1+\rho$、$\lambda_1$）的选取规则完全不变。
+
+证明中关键的一步（对 $\dot V_1$ 的第二部分）有
+\[
+    w_i^\mathsf{T}\dot\nu_i
+    =-\frac{k_b}{k_a}w_i^\mathsf{T}\sgn(\xi_i)+\frac{1}{k_a}w_i^\mathsf{T}n_i
+    \le \frac{k_b}{k_a}\|w_i\|+\frac{\bar n(t)}{k_a}\|w_i\|
+    \le \frac{k_b}{k_a}\|w_i\|+\frac{\bar n^*}{k_a}\|w_i\|
+    =\frac{k_b}{k_a}(1+\rho)\|w_i\|,
+\]
+与 $\bar n$ 为常数的情形逐字相同——区别仅在于把常数 $\bar n$ 替换为一致上界 $\bar n^*$。由此
+\[
+    \dot V\le -\frac{k_b}{k_a}\Bigl(\sum_{i=1}^{N}\|\nu_i-\sig{\xi_i}^{1/2}\|^2+\sum_{i=1}^{N}\|\nu_i\|^2\Bigr)
+\]
+依然在每个时刻成立，从而系统仍在有限时间内**精确**收敛到原点，且收敛时间上界 $T\le 3(k_a/k_b)C_{\max}^{2/3}V(0)^{1/3}$ 保持不变。
+
+结论：只要时变上界具备有限的上确界，原设计（定常增益）无需任何结构性修改即可适用；唯一的变化是增益选取条件中的 $\bar n$ 应理解为 $\sup_{t\ge0}\bar n(t)$。
+
+\begin{remark}[上界无界的情形]
+若 $\bar n(t)$ 随时间无界增长（即 $\sup_{t\ge0}\bar n(t)=\infty$），则任何固定的 $k_b$ 都会在足够大的 $t$ 处被扰动超过，符号项 $-k_b\sgn(\xi_i)$ 不再能主导 $n_i(t)$，$\dot V$ 的负定性随之丧失，原点不再吸引，系统至多收敛到一个随时间膨胀的残差邻域。此时定常增益设计失效，必须引入随时间增长的增益 $k_b(t)$（例如令 $k_b(t)\rho\ge\bar n(t)$）或采用自适应/增益调度结构，才能恢复有限时间收敛。这已超出本附录的范围。
+\end{remark}

@@ -1,7 +1,12 @@
 
 \section{三种滑模设计方法对比}
 
-三种方法采用同一周期滑模控制律 $u_{i\ell}=R_{i\ell}\sgn[\sin(\pi s_{i\ell}/\varepsilon)]$，增益 $R_{i\ell}=(|\Delta_{i\ell}|+\bar w_i+\lambda)/\ub$，区别仅在于滑模变量（即 $\Delta_i$）的定义。详细推导见 result1/2/3。
+三种方法采用同一周期滑模控制律
+\[
+    u_{i\ell}=R_{i\ell}\sgn[\sin(\pi s_{i\ell}/\varepsilon)],\qquad
+    R_{i\ell}=\frac{|\Delta_{i\ell}|+\bar w_{i\ell}+\varepsilon/T^{\mathrm r}_{i\ell}}{\ub_{i\ell}}.
+\]
+其中 $\bar w_{i\ell}$ 是逐分量扰动界，$T^{\mathrm r}_{i\ell}$ 是期望的单个周期单元到达时间；区别仅在于滑模变量（即 $\Delta_i$）的定义。详细推导见 result1/2/3。
 
 \begin{table}[H]
 \centering

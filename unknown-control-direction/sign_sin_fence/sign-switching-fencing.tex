@@ -47,7 +47,11 @@
 \]
 其中 $u_i$ 为控制输入，$d_i$ 为有界扰动且 $\|d_i\|_\infty\le\bd_i$，$B_i(t)=\operatorname{diag}\{b_{i1},\dots,b_{im}\}$ 为未知对角增益。假设每个 $b_{i\ell}$ 符号未知、允许正负切换但不穿越零，且存在 $\ub_{i\ell}>0$ 使 $0<\ub_{i\ell}\le|b_{i\ell}(t)|$。
 
-目标动力学为 $\dot p_0=v_0,\ \dot v_0=u_0$，目标加速度有界 $\|u_0\|_\infty\le\bu_0$。定义相对量 $p_{i0}=p_i-p_0,\ v_{i0}=v_i-v_0$，则 $\dot p_{i0}=v_{i0},\ \dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i=d_i-u_0$，且 $\|w_i\|_\infty\le\bar w_i=\bd_i+\bu_0$。
+目标动力学为 $\dot p_0=v_0,\ \dot v_0=u_0$，目标加速度有界 $\|u_0\|_\infty\le\bu_0$。定义相对量 $p_{i0}=p_i-p_0,\ v_{i0}=v_i-v_0$，则 $\dot p_{i0}=v_{i0},\ \dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i=d_i-u_0$。为便于逐分量选取增益，记
+\[
+    |w_{i\ell}|\le\bar w_{i\ell}:=\bd_i+\bu_0,\qquad \ell=1,\dots,m.
+\]
+若已知更紧的逐分量扰动和目标加速度界，也可直接用其和替换 $\bar w_{i\ell}$。
 
 本文目标是实现：
 \begin{enumerate}

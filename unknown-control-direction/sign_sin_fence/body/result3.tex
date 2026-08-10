@@ -13,7 +13,10 @@ $\Phi_i$ 是智能体自身积分状态，$\varphi_i$ 仅由相对位置算出�
     \dot s_{i0}=B_i(t)u_i+\Delta_i+w_i,\qquad
     \Delta_i=-\dot\Phi_i+k_1v_{i0}+k_2(k_1p_{i0}-\Phi_i),
 \]
-其中 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 本地已知，故无需邻居速度。控制律与增益同前。
+其中 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 本地已知，故无需邻居速度。控制律与增益同前：给定 $T^{\mathrm r}_{i\ell}>0$，令 $\lambda_{i\ell}=\varepsilon/T^{\mathrm r}_{i\ell}$，并取
+\[
+    R_{i\ell}=\frac{|\Delta_{i\ell}|+\bar w_{i\ell}+\lambda_{i\ell}}{\ub_{i\ell}}.
+\]
 
 \subsection{到达性}
 

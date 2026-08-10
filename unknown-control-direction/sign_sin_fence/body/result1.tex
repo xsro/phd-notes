@@ -5,18 +5,25 @@
     \dot s_{i0}=B_i(t)u_i+\Delta_i+w_i,\qquad
     \Delta_i=-\dot\varphi_i+k_1v_{i0}+k_2(k_1p_{i0}-\varphi_i).
 \]
-逐分量写为 $\dot s_{i0,\ell}=b_{i\ell}u_{i\ell}+N_{i\ell}$（$N_{i\ell}=\Delta_{i\ell}+w_{i\ell}$）。控制律取
+逐分量写为 $\dot s_{i0,\ell}=b_{i\ell}u_{i\ell}+N_{i\ell}$（$N_{i\ell}=\Delta_{i\ell}+w_{i\ell}$）。给定期望的单个周期单元到达时间 $T^{\mathrm r}_{i\ell}>0$，取
 \[
     u_{i\ell}=R_{i\ell}\sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon}s_{i0,\ell}\right)\right],\qquad
-    R_{i\ell}=\frac{|\Delta_{i\ell}|+\bar w_i+\lambda}{\ub_{i\ell}},
+    R_{i\ell}=\frac{|\Delta_{i\ell}|+\bar w_{i\ell}+\lambda_{i\ell}}{\ub_{i\ell}},
+    \qquad
+    \lambda_{i\ell}:=\frac{\varepsilon}{T^{\mathrm r}_{i\ell}}.
 \]
-其中 $\lambda>0$。该律不使用 $b_{i\ell}$ 的符号信息。
+因此 $\lambda_{i\ell}$ 直接表示期望的到达速度裕度，而不是任意的正数。该律不使用 $b_{i\ell}$ 的符号信息。
 
 \subsection{到达性与有界性}
 
-固定 $i,\ell$，记 $s=s_{i0,\ell}$、$b=b_{i\ell}$、$N=\Delta+w$。闭环为 $\dot s=bR\sgn[\sin(\pi s/\varepsilon)]+N$。由 $R=(|\Delta|+\bar w_i+\lambda)/\ub$ 与 $|b|\ge\ub$ 得 $|b|R\ge|\Delta|+\bar w_i+\lambda$，而 $|N|\le|\Delta|+\bar w_i$，故 $|b|R-|N|\ge\lambda$，即 $|b|R>|N|$。
+固定 $i,\ell$，记 $s=s_{i0,\ell}$、$b=b_{i\ell}$、$N=\Delta+w$。闭环为 $\dot s=bR\sgn[\sin(\pi s/\varepsilon)]+N$。由 $R=(|\Delta|+\bar w_{i\ell}+\lambda_{i\ell})/\ub$ 与 $|b|\ge\ub$ 得 $|b|R\ge|\Delta|+\bar w_{i\ell}+\lambda_{i\ell}$，而 $|N|\le|\Delta|+\bar w_{i\ell}$，故 $|b|R-|N|\ge\lambda_{i\ell}$，即 $|b|R>|N|$。
 
-$b>0$ 时奇数倍面 $s=(2r+1)\varepsilon$ 吸引；$b<0$ 时偶数倍面 $s=2r\varepsilon$ 吸引。取 $\tilde s=s-k\varepsilon$ 且 $|\tilde s|<\varepsilon$，两种情况均统一化为 $\dot{\tilde s}=-|b|R\,\sgn(\tilde s)+N$。取 $V=\tfrac12\tilde s^2$ 得 $\dot V\le-(|b|R-|N|)|\tilde s|\le-\lambda|\tilde s|=-\lambda\sqrt{2V}$，故有限时间到达，且到达时间 $T_r\le|\tilde s(t_0)|/\lambda$。由此可知 $s_{i0}\in L_\infty$。Filippov 等效控制 $u_{\mathrm{eq}}=-N/b$ 满足 $|u_{\mathrm{eq}}|<R$，故滑模面上 $\dot s_{i0}=0$。若 $b_{i\ell}$ 有限次切换则每次重新到达，最后一次切换后进入周期滑模；无限切换需额外驻留时间假设。
+$b>0$ 时奇数倍面 $s=(2r+1)\varepsilon$ 吸引；$b<0$ 时偶数倍面 $s=2r\varepsilon$ 吸引。取 $\tilde s=s-k\varepsilon$ 且 $|\tilde s|<\varepsilon$，两种情况均统一化为 $\dot{\tilde s}=-|b|R\,\sgn(\tilde s)+N$。取 $V=\tfrac12\tilde s^2$ 得 $\dot V\le-(|b|R-|N|)|\tilde s|\le-\lambda_{i\ell}|\tilde s|=-\lambda_{i\ell}\sqrt{2V}$，故有限时间到达，且
+\[
+    T_r\le\frac{|\tilde s(t_0)|}{\lambda_{i\ell}}
+    <\frac{\varepsilon}{\lambda_{i\ell}}=T^{\mathrm r}_{i\ell}.
+\]
+由此可知 $s_{i0}\in L_\infty$。Filippov 等效控制 $u_{\mathrm{eq}}=-N/b$ 满足 $|u_{\mathrm{eq}}|<R$，故滑模面上 $\dot s_{i0}=0$。若 $b_{i\ell}$ 有限次切换则每次重新到达，最后一次切换后进入周期滑模；无限切换需额外驻留时间假设。
 
 \subsection{合围性质证明}
 
