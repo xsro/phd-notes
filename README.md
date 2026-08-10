@@ -4,3 +4,9 @@
 
 - https://gitee.com/xsro/thesis-phd2029liuch586
 - https://gitee.com/xsro/texes
+- https://github.com/SYSUsz422/miscellaneous-latex
+
+
+## 已经迁移到独立仓库的内容
+
+- 
