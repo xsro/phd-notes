@@ -1,0 +1,51 @@
+
+\section{三种滑模设计方法对比}
+
+三种方法采用同一周期滑模控制律 $u_{i\ell}=R_{i\ell}\sgn[\sin(\pi s_{i\ell}/\varepsilon)]$，增益 $R_{i\ell}=(|\Delta_{i\ell}|+\bar w_i+\lambda)/\ub$，区别仅在于滑模变量（即 $\Delta_i$）的定义。详细推导见 result1/2/3。
+
+\begin{table}[H]
+\centering
+\caption{result1 / result2 / result3 对比}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}p{3.9cm}|>{\raggedright\arraybackslash}p{3.9cm}|>{\raggedright\arraybackslash}p{3.9cm}}
+\hline
+& 方法1 & 方法2（积分滑模） & 方法3（滤波排斥项）\\
+\hline
+滑模变量 &
+$s_{i0}=v_{i0}+k_1p_{i0}-\varphi_i+k_2\eta_i$ &
+$s_{i0}=\eta_i+k_2p_{i0}+v_{i0}$ &
+$s_{i0}=v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i$\\
+\hline
+$\dot\eta_i$ &
+$k_1p_{i0}-\varphi_i$ &
+$k_1p_{i0}-\varphi_i$ &
+$k_1p_{i0}-\Phi_i$\\
+\hline
+$\Delta_i$ &
+$-\dot\varphi_i+k_1v_{i0}+k_2(k_1p_{i0}-\varphi_i)$ &
+$k_1p_{i0}-\varphi_i+k_2v_{i0}$ &
+$-\dot\Phi_i+k_1v_{i0}+k_2(k_1p_{i0}-\Phi_i)$\\
+\hline
+需邻居速度 &
+是（$\dot\varphi_i$） &
+否 &
+否\\
+\hline
+降阶动力学 &
+含 $\dot\varphi_i$，非标准 &
+$\ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i$ &
+同方法1（用 $\Phi_i$）\\
+\hline
+P1/P2 证明 &
+自证（障壁势函数） &
+自证（P1）；P2 需额外 remark（\(\dot s_i\) 有界） &
+自证（增广势函数；P2 需快滤波备注）\\
+\hline
+P3 速度一致 &
+未证 &
+自证（Barbalat） &
+未证\\
+\hline
+\end{tabular}
+\end{table}
+
+要点：方法1 是基线，但滑模变量直接含 $-\varphi_i$，求导后出现 $\dot\varphi_i$，需要邻居相对速度；方法2 用积分滑模把 $\varphi_i$ 关进积分器，既无需邻居速度，又得到标准名义合围动力学；方法3 用一阶滤波 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 替代 $\varphi_i$，同样去掉邻居速度依赖且保持方法1 形式，但 P2 需要额外快滤波条件。三者到达性证明与关键不等式 $|b|R>|N|$ 结构完全一致。

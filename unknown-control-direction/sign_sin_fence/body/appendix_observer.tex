@@ -1,0 +1,239 @@
+\section{分布式微分器的证明}
+
+\subsection{预备知识}
+
+\begin{assumption} \label{assump initially_connected}
+    假设 $\mathcal{G}(0)$ 为无向且连通的图。其边权满足对每条初始边有 $a_{ij}(0)=a_{ji}(0)>0$，否则 $a_{ij}(0)=0$。
+    此外，$\mathcal{B}=\operatorname{diag}(b_1,\ldots,b_N)\neq \mathbf{0}$，且 $b_i\ge 0$。
+\end{assumption}
+
+\begin{lemma}
+    \label{lemma M>0}
+    在假设 \ref{assump initially_connected} 下，矩阵 $M(0)=\mathcal{L}(0)+\mathcal{B}$ 正定。
+\end{lemma}
+\begin{proof}
+    由于 $\mathcal{G}(0)$ 无向，$\mathcal{L}(0)$ 为对称半正定矩阵。
+    由于图连通，$\operatorname{ker}\mathcal{L}(0)=\operatorname{span}\{\mathbf{1}_N\}$。
+    对任意非零 $x\in\mathbb{R}^N$，
+    \[
+        x^\mathsf{T}M(0)x=x^\mathsf{T}\mathcal{L}(0)x+\sum_{i=1}^N b_i x_i^2\ge 0.
+    \]
+    若等号成立，则 $x=c\mathbf{1}_N$ 且对每个 $i$ 有 $b_i x_i^2=0$。
+    由于至少有一个 $b_i$ 为正，故 $c=0$，与 $x\neq 0$ 矛盾。
+    因此 $M(0)$ 正定。
+\end{proof}
+
+在证明引理 \ref{lemma estimator} 之前，先给出若干有用引理。
+
+\begin{lemma}[有限时间比较]\label{lemma:finite_time}
+    设 $V(t)\ge 0$ 绝对连续。若存在常数 $c>0$ 与 $\alpha\in(0,1)$，使得只要 $V(t)>0$ 就有
+    \begin{equation}
+        \dot{V}(t)\leq -cV(t)^\alpha.
+    \end{equation}
+    则 $V(t)$ 在有限时间内到达零。此外，收敛时间满足
+    \begin{equation}
+        T\leq \frac{V(0)^{1-\alpha}}{c(1-\alpha)}.
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    在任意使 $V(t)>0$ 的区间上，对 $V^{1-\alpha}$ 求导得
+    \[
+        \frac{\mathrm{d}}{\mathrm{d}t}V(t)^{1-\alpha}
+        =(1-\alpha)V(t)^{-\alpha}\dot V(t)
+        \le -c(1-\alpha).
+    \]
+    故在 $V$ 到达零之前有 $V(t)^{1-\alpha}\le V(0)^{1-\alpha}-c(1-\alpha)t$，由此得到上述上界。
+\end{proof}
+
+\begin{lemma}[杨氏不等式]\label{lemma:generalized_young}
+    设 $p,q>1$ 且 $1/p+1/q=1$。对任意 $x,\xi\in\mathbb{R}$，
+    \begin{equation}
+        |x\xi|\leq \frac{1}{p}|x|^p+\frac{1}{q}|\xi|^q.
+    \end{equation}
+\end{lemma}
+
+\subsection{主体部分}
+
+\begin{lemma}[ \cite{chenDistributedFinitetimeDifferentiator2024,aldana-lopezExactLeaderEstimation2025,sunDistributedFinitetimeFormation2025}]
+    \label{lemma estimator}
+    在假设 \ref{assump initially_connected} 下，下列系统在有限时间内收敛。
+    该系统为超螺旋算法的分布式版本：
+    \begin{equation}
+        \begin{cases}
+        \dot{e}_i=z_i-k_a \sig{\xi_i}^{1/2}\\
+        \dot{z}_i=-k_b \sgn(\xi_i) + n_i(t)
+    \end{cases},\quad i=1,\ldots,N
+    \label{eq sta}
+    \end{equation}
+    其中 $e_i,z_i,\xi_i, n_i\in \mathbb{R}^2$，且 $\xi_i=\sum_{j\in\mathbb{N}_i(0)}a_{ij}(0)(e_i-e_j)+b_i e_i$。
+    对于不连续的滑模系统，收敛性结论按 Filippov 意义理解。
+    即 $\sgn(x)=x/\|x\|$（当 $\|x\|\neq 0$），而在 $x=\mathbf{0}$ 处表示闭单位球中的任意向量。
+    我们定义 $\sig{x}^q=\|x\|^q \sgn(x)$。
+    扰动 $n(t)$ 满足 $\sup_{t\geq 0, i\in \mathbb{N}}\|n_i(t)\| \leq \bar{n}$。
+    参数 $k_a$ 与 $k_b$ 按下述规则选取：
+    \begin{equation*}
+      k_b >0,\quad k_b \geq \frac{\bar{n}}{\rho}, \quad 
+      k_a \geq \sqrt{\frac{2\gamma_1+2\gamma_0+1}{\lambda_1}}\,\sqrt{k_b} > 0,
+    \end{equation*}
+    其中 $0<\rho<1$，$\gamma_0=(1 + 3\gamma_1)/(1 - \rho)$，$\gamma_1=1 + \rho$，而 $\lambda_1$ 为正定矩阵 $M(0)=\mathcal{L}(0)+\mathcal{B}$ 的最小特征值。
+\end{lemma}
+
+\begin{proof}
+    定义堆叠向量
+    \begin{align*}
+        \xi &= [\xi_1^\mathsf{T}, \dots, \xi_N^\mathsf{T}]^\mathsf{T},\quad 
+        e = [e_1^\mathsf{T}, \dots, e_N^\mathsf{T}]^\mathsf{T},\\
+        \sig{\xi}^q &=[(\sig{\xi_1}^q)^\mathsf{T}, \dots, (\sig{\xi_N}^q)^\mathsf{T}]^\mathsf{T},\quad 
+        n = [n_1^\mathsf{T}, \dots, n_N^\mathsf{T}]^\mathsf{T}.
+    \end{align*}
+    由图拉普拉斯矩阵的定义，
+    \begin{equation}\label{eq:2_error_relation}
+        \xi = ((\mathcal{L}(0)+\mathcal{B})\otimes I_2)e = (M(0)\otimes I_2) e.
+    \end{equation}
+    由假设 \ref{assump initially_connected} 与引理 \ref{lemma M>0}，$M(0)$ 对称且正定。
+    引入缩放变量 $\nu_i = z_i/k_a$，并记 $\nu = [\nu_1^\mathsf{T},\dots,\nu_N^\mathsf{T}]^\mathsf{T}$。则动力学 \eqref{eq sta} 化为
+    \begin{equation}
+        \dot{e} = -k_a\bigl(\sig{\xi}^{1/2} - \nu\bigr),\qquad
+        \dot{\nu} = -\frac{k_b}{k_a}\Bigl(\sgn(\xi) - \frac{n}{k_b}\Bigr). \label{eq:compact}
+    \end{equation}
+
+    构造 Lyapunov 函数候选 $V = V_1 + \gamma_0 V_2$，其中
+    \begin{align*}
+        V_1 &=\sum_{i\in\mathbb{N}}\Bigl(-\xi_i^\mathsf{T}\nu_i + \frac{1}{3}\|\nu_i\|^3 + \frac{2}{3}\|\xi_i\|^{3/2}\Bigr),\\
+        V_2 &= \frac{1}{3}\sum_{i\in\mathbb{N}}\|\nu_i\|^3.
+    \end{align*}
+    由杨氏不等式，$\frac{1}{3}\|\nu_i\|^3 + \frac{2}{3}\|\xi_i\|^{3/2} \ge \|\nu_i\|\|\xi_i\| \ge \xi_i^\mathsf{T}\nu_i$，故 $V_1\ge 0$。
+    由于 $\gamma_0>0$，$V=0$ 蕴含对所有 $i$ 有 $\nu_i=\mathbf{0}$，进而由 $V_1=0$ 得对所有 $i$ 有 $\xi_i=\mathbf{0}$。
+    因此，$V$ 关于 $(\xi,\nu)$ 正定。
+
+    \paragraph{$V$ 的上界。}
+    将 $V_1$ 的每一项改写为
+    \[
+    -\xi_i^\mathsf{T}\nu_i + \|\nu_i\|^3 + \|\xi_i\|^{3/2} - \Bigl(\frac{2}{3}\|\nu_i\|^3 + \frac{1}{3}\|\xi_i\|^{3/2}\Bigr).
+    \]
+    对 $\|\nu_i\|^2\|\xi_i\|^{1/2}=\bigl(\|\nu_i\|^2\bigr)\bigl(\|\xi_i\|^{1/2}\bigr)$ 应用引理 \ref{lemma:generalized_young}（取 $p=3/2$、$q=3$），有 $\frac{2}{3}\|\nu_i\|^3 + \frac{1}{3}\|\xi_i\|^{3/2} \ge \|\nu_i\|^2\|\xi_i\|^{1/2}$。于是
+    \begin{align*}
+        -\xi_i^\mathsf{T}\nu_i + \frac{1}{3}\|\nu_i\|^3 + \frac{2}{3}\|\xi_i\|^{3/2}
+        &\le -\xi_i^\mathsf{T}\nu_i + \|\nu_i\|^3 + \|\xi_i\|^{3/2} - \|\nu_i\|^2\|\xi_i\|^{1/2}\\
+        &\le \bigl(\xi_i - \sig{\nu_i}^2\bigr)^\mathsf{T}\bigl(\sig{\xi_i}^{1/2}-\nu_i\bigr).
+    \end{align*}
+    利用 $\|\xi_i - \sig{\nu_i}^2\| \le \|\xi_i\| + \|\nu_i\|^2$ 以及估计
+    \begin{align*}
+        \|\xi_i\| + \|\nu_i\|^2 
+        &\le \|\nu_i - \sig{\xi_i}^{1/2} - \nu_i\|^2 + \|\nu_i\|^2 \\
+        &\le 3\|\nu_i\|^2 + 2\|\nu_i - \sig{\xi_i}^{1/2}\|^2,
+    \end{align*}
+    借助 Hölder 不等式与杨氏不等式可得
+    \begin{align*}
+        \bigl(\xi_i - \sig{\nu_i}^2\bigr)^\mathsf{T}
+        \bigl(\sig{\xi_i}^{1/2}-\nu_i\bigr)
+        &\le \bigl(3\|\nu_i\|^2
+        + 2\|\nu_i - \sig{\xi_i}^{1/2}\|^2\bigr)
+        \|\nu_i - \sig{\xi_i}^{1/2}\|\\
+        &\le 2\|\nu_i\|^3 + 3\|\nu_i - \sig{\xi_i}^{1/2}\|^3.
+    \end{align*}
+    由此，
+    \begin{equation}\label{eq:V_bound}
+        V \le 3\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^3 + \Bigl(2 + \frac{\gamma_0}{3}\Bigr)\sum_{i=1}^{N}\|\nu_i\|^3.
+    \end{equation}
+
+    \paragraph{$V$ 的时间导数。}
+    沿 \eqref{eq:compact} 对 $V$ 求导得 $\dot{V}=\dot{V}_1 + \gamma_0 \dot{V}_2$，其中
+    \begin{align*}
+        \dot{V}_1 &=\sum_{i=1}^{N}\bigl(-\nu_i + \sig{\xi_i}^{1/2}\bigr)^\mathsf{T}\dot{\xi}_i 
+                   + \sum_{i=1}^{N}\bigl(-\xi_i + \sig{\nu_i}^2\bigr)^\mathsf{T}\dot{\nu}_i,\\
+        \dot{V}_2 &= \sum_{i=1}^{N}\sig{\nu_i}^2 \cdot \dot{\nu}_i.
+    \end{align*}
+
+    对 $\dot{V}_1$ 的第一部分，利用 $\xi = (M(0)\otimes I_2)e$、动力学 \eqref{eq:compact} 以及 Rayleigh–Ritz 定理（其中 $\lambda_1 = \lambda_{\min}(M(0))$），有
+    \begin{align*}
+        \sum_{i=1}^{N}\bigl(-\nu_i + \sig{\xi_i}^{1/2}\bigr)^\mathsf{T}\dot{\xi}_i
+        &= -k_a\bigl(-\nu + \sig{\xi}^{1/2}\bigr)^\mathsf{T}(M(0)\otimes I_2)\bigl(-\nu + \sig{\xi}^{1/2}\bigr)\\
+        &\le -k_a\lambda_1\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2.
+    \end{align*}
+
+    对 $\dot{V}_1$ 的第二部分，令 $w_i = -\xi_i + \sig{\nu_i}^2$。由 $\dot{\nu}_i = -\frac{k_b}{k_a}\sgn(\xi_i) + \frac{n_i}{k_a}$ 以及 $\|n_i\|\le \bar{n}\le k_b\rho$，得
+    \begin{align*}
+        w_i^\mathsf{T}\dot{\nu}_i 
+        &= -\frac{k_b}{k_a}w_i^\mathsf{T}\sgn(\xi_i) + \frac{1}{k_a}w_i^\mathsf{T}n_i\\
+        &\le \frac{k_b}{k_a}\|w_i\| + \frac{k_b\rho}{k_a}\|w_i\|
+         = \frac{k_b}{k_a}\gamma_1\|w_i\|,
+    \end{align*}
+    其中 $\gamma_1 = 1+\rho$。利用前面得到的估计 $\|w_i\|\le 3\|\nu_i\|^2 + 2\|\nu_i - \sig{\xi_i}^{1/2}\|^2$，可得
+    \begin{equation}
+        \dot{V}_1 \le -\Bigl(k_a\lambda_1 - 2\gamma_1\frac{k_b}{k_a}\Bigr)\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2 
+                  + 3\gamma_1\frac{k_b}{k_a}\sum_{i=1}^{N}\|\nu_i\|^2. \label{eq:dotV1}
+    \end{equation}
+
+    下面分析 $\dot{V}_2$：
+    \begin{align*}
+        \dot{V}_2 &= \frac{k_b}{k_a}\sum_{i=1}^{N}\sig{\nu_i}^2\cdot\Bigl(-\sgn(\xi_i) + \frac{n_i}{k_b}\Bigr)\\
+        &= \frac{k_b}{k_a}\sum_{i=1}^{N}\sig{\nu_i}^2\cdot\Bigl(-\sgn(\nu_i) + \frac{n_i}{k_b} + \sgn(\nu_i) - \sgn(\xi_i)\Bigr).
+    \end{align*}
+    由于 $\|\sig{\nu_i}^2\| = \|\nu_i\|^2$ 且 $\sgn(\nu_i)^\mathsf{T}\frac{n_i}{k_b} \le \rho$，推得
+    \begin{equation}
+        \dot{V}_2 \le -\frac{k_b}{k_a}(1-\rho)\sum_{i=1}^{N}\|\nu_i\|^2 
+                   + \frac{k_b}{k_a}\sum_{i=1}^{N}\sig{\nu_i}^2\cdot\bigl(\sgn(\nu_i) - \sgn(\xi_i)\bigr). \label{eq:dotV2_1}
+    \end{equation}
+
+    为估计交叉项，对每个 $i$ 定义
+    \[
+    f_i = 2\|\nu_i - \sig{\xi_i}^{1/2}\|^2 - \sig{\nu_i}^2\cdot\bigl(\sgn(\nu_i) - \sgn(\xi_i)\bigr).
+    \]
+    令 $x = \|\nu_i\|$，$y = \|\xi_i\|^{1/2}$，$c = \sgn(\nu_i)^\mathsf{T}\sgn(\xi_i)\in[-1,1]$。则
+    \begin{align*}
+        f_i &= 2(x^2 + y^2 - 2x y c) - (x^2 - x^2 c)\\
+        &= (1+c)x^2 + 2y^2 - 4cxy.
+    \end{align*}
+    我们证明 $f_i\ge 0$。当 $c\ge 0$ 时，$f_i$ 是关于 $x$ 的二次式：$f_i(x) = (1+c)x^2 - 4c y x + 2y^2$，其最小值在 $x^* = \frac{2c}{1+c}y$ 处取得，最小值为 $\frac{2(1+c-2c^2)}{1+c}y^2 = \frac{2(1-c)(1+2c)}{1+c}y^2 \ge 0$。当 $c<0$ 时，对称轴为负，故在 $x\ge 0$ 上最小值在 $x=0$ 处，此时 $f_i(0)=2y^2\ge 0$。因此恒有 $f_i\ge 0$，从而
+    \begin{equation}
+        \sig{\nu_i}^2\cdot\bigl(\sgn(\nu_i) - \sgn(\xi_i)\bigr) \le 2\|\nu_i - \sig{\xi_i}^{1/2}\|^2. \label{eq:cross_bound}
+    \end{equation}
+    将 \eqref{eq:cross_bound} 代入 \eqref{eq:dotV2_1} 得
+    \begin{equation}
+        \dot{V}_2 \le -\frac{k_b}{k_a}(1-\rho)\sum_{i=1}^{N}\|\nu_i\|^2 
+                   + 2\frac{k_b}{k_a}\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2. \label{eq:dotV2_final}
+    \end{equation}
+
+    \paragraph{$\dot V$ 的综合。}
+    将 \eqref{eq:dotV1} 与 \eqref{eq:dotV2_final} 结合，利用 $\dot V = \dot V_1 + \gamma_0 \dot V_2$：
+    \begin{align*}
+        \dot V \le &-\Bigl(k_a\lambda_1 - 2\gamma_1\frac{k_b}{k_a} - 2\gamma_0\frac{k_b}{k_a}\Bigr)\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2 \\
+        &+ \Bigl(3\gamma_1\frac{k_b}{k_a} - \gamma_0\frac{k_b}{k_a}(1-\rho)\Bigr)\sum_{i=1}^{N}\|\nu_i\|^2.
+    \end{align*}
+    取 $\gamma_0 = \frac{1+3\gamma_1}{1-\rho}$。则 $\|\nu_i\|^2$ 的系数变为 $\frac{k_b}{k_a}[3\gamma_1 - \gamma_0(1-\rho)] = -\frac{k_b}{k_a}$。
+    条件 $k_a \ge \sqrt{\frac{2\gamma_1+2\gamma_0+1}{\lambda_1}}\sqrt{k_b}$ 保证
+    \[
+    k_a\lambda_1 \ge \bigl(2\gamma_1+2\gamma_0+1\bigr)\frac{k_b}{k_a},
+    \]
+    这使得 $\|\nu_i - \sig{\xi_i}^{1/2}\|^2$ 的系数不大于 $-\frac{k_b}{k_a}$。于是
+    \begin{equation}\label{eq:V_dot}
+        \dot V \le -\frac{k_b}{k_a}\Bigl(\sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2 + \sum_{i=1}^{N}\|\nu_i\|^2\Bigr).
+    \end{equation}
+
+    \paragraph{有限时间收敛。}
+    令
+    \[
+        s_1 = \sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^3,
+        \qquad
+        s_2 = \sum_{i=1}^{N}\|\nu_i\|^3 .
+    \]
+    由 $L^p$ 范数关系（因 $3>2$，$\|\cdot\|_3\le \|\cdot\|_2$ 推出 $\sum a_i^3 \le (\sum a_i^2)^{3/2}$），有
+    \[
+    \sum_{i=1}^{N}\|\nu_i - \sig{\xi_i}^{1/2}\|^2 \ge s_1^{2/3},\qquad 
+    \sum_{i=1}^{N}\|\nu_i\|^2 \ge s_2^{2/3}.
+    \]
+    不等式 \eqref{eq:V_bound} 可写为 $V \le 3 s_1 + (2+\frac{\gamma_0}{3}) s_2 \le C_{\max}(s_1+s_2)$，
+    其中 $C_{\max} = \max\{3,\;2+\frac{\gamma_0}{3}\}$。
+    利用 $(a+b)^{2/3} \le a^{2/3}+b^{2/3}$（$a,b\ge 0$），得
+    \[
+    \dot V \le -\frac{k_b}{k_a}\bigl(s_1^{2/3}+s_2^{2/3}\bigr)
+           \le -\frac{k_b}{k_a}(s_1+s_2)^{2/3}
+           \le -\frac{k_b}{k_a}\,C_{\max}^{-2/3}\,V^{2/3}.
+    \]
+    由引理 \ref{lemma:finite_time}（取 $\alpha=2/3$），$V$ 在有限时间内收敛到 $0$，且收敛时间满足
+    \begin{equation}
+        T \le 3\,\frac{k_a}{k_b}\,C_{\max}^{2/3}\,V(0)^{1/3}.
+    \end{equation}
+    当 $V=0$ 时，对所有 $i$ 有 $\nu_i = \xi_i = 0$，从而 $z_i=0$；又因 $M(0)$ 可逆，得 $e = (M(0)^{-1}\otimes I_2)\xi = 0$。证毕。
+\end{proof}
