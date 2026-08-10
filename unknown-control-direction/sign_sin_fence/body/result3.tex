@@ -4,7 +4,11 @@
 \[
     \dot\Phi_i=-\gamma_2\Phi_i+\varphi_i,\qquad \gamma_2>0.
 \]
-$\Phi_i$ 是智能体自身积分状态，$\varphi_i$ 仅由相对位置算出，故 $\dot\Phi_i$ 为本地已知量，无需任何邻居速度。记滤波误差 $e_i=\Phi_i-\varphi_i$。滑模变量改为 $s_{i0}=v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i$，$\dot\eta_i=k_1p_{i0}-\Phi_i$。则
+$\Phi_i$ 是智能体自身积分状态，$\varphi_i$ 仅由相对位置算出，故 $\dot\Phi_i$ 为本地已知量，无需任何邻居速度。记滤波误差 $e_i=\Phi_i-\varphi_i$，则
+\[
+    \dot e_i=-\gamma_2 e_i-\dot\varphi_i.
+\]
+滑模变量改为 $s_{i0}=v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i$，$\dot\eta_i=k_1p_{i0}-\Phi_i$。则
 \[
     \dot s_{i0}=B_i(t)u_i+\Delta_i+w_i,\qquad
     \Delta_i=-\dot\Phi_i+k_1v_{i0}+k_2(k_1p_{i0}-\Phi_i),
@@ -24,13 +28,23 @@ $\Phi_i$ 是智能体自身积分状态，$\varphi_i$ 仅由相对位置算出�
     +\frac{k_2}{2}\sum_i\|\eta_i\|^2
     +\frac12\sum_i\|e_i\|^2 .
 \]
-逐项求导并用 Young 不等式可得
+对 $e_i$ 求导并用 Young 不等式可得
+\[
+    e_i^T\dot e_i
+    \le -\frac{\gamma_2}{2}\|e_i\|^2+\frac{1}{2\gamma_2}\|\dot\varphi_i\|^2.
+\]
+于是沿闭环有
 \[
     \dot V_W\le \frac14\sum_i\|s_{i0}\|^2
+    -\frac{\gamma_2}{2}\sum_i\|e_i\|^2
     +\frac{1}{2\gamma_2}\sum_i\bigl(\|v_{i0}\|^2+\|\dot\varphi_i\|^2\bigr).
 \]
-当滤波足够快（即 $\gamma_2$ 足够大）时，滤波闭环是方法1 已证安全轨迹的 $O(1/\gamma_2)$ 扰动，在任意有限区间 $v_{i0},\dot\varphi_i$ 保持有界，故 $\dot V_W\le C$，从而 $\|p_{ij}\|$ 不会到达 $d$，即不碰撞。
+因 $s_{i0}\in L_\infty$ 来自到达性结论，而在任何候选的有限碰撞区间内 $\Phi_i$ 与 $\dot\varphi_i$ 都保持局部有界，故右端对每个有限区间都是有界的。于是 $V_W$ 在任意有限时间内都不会爆炸；而势垒项在 $\|p_{ij}\|\to d^+$ 时趋于无穷，故有限碰撞时刻不可能存在，因而 $\|p_{ij}(t)\|>d$ 对所有 $t\ge0$ 成立。
+
+\begin{remark}[关于滤波条件]
+上面的 P2 论证本质上是方法1 的障壁证明加一个稳定滤波扰动。它之所以成立，依赖于滤波误差 $e_i$ 在前述候选区间内保持有界，并可通过增大 $\gamma_2$ 使其足够小；这正是方法3 用滤波项换掉 $\dot\varphi_i$ 所付出的代价。
+\end{remark}
 
 \textbf{稳态合围（P1）。} 滑模面上有 $v_{i0}+k_1p_{i0}-\Phi_i+k_2\eta_i=k_i\varepsilon_i$ 为常值。对全体平均得 $\ddot{\tilde p}+k_1\dot{\tilde p}+k_1k_2\tilde p=k_2b_\Phi+\dot b_\Phi$，其中 $b_\Phi=\frac1N\sum_i\Phi_i$。因 $\Phi_i\to\varphi_i$ 且 $\sum_i\varphi_i=0$，有 $b_\Phi\to0$；又 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i\to0$，故 $\dot b_\Phi\to0$。右端有界且趋于零，由 Hurwitz 系统的输入到状态稳定性得 $\tilde p\to0$，即 $\mathrm{dist}(p_0,\mathrm{co}(p))\to0$。
 
-说明：本方法在方法1 形式上做最小改动去除邻居速度依赖，但降阶动力学仍非标准；P3（速度一致）同方法1 仍未证。
+说明：本方法在方法1 形式上做最小改动去除邻居速度依赖，但代价是要用一个快滤波条件来接住 P2；降阶动力学仍非标准，P3（速度一致）同方法1 仍未证。

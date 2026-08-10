@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{array}
 
 \geometry{margin=2.5cm}
 
@@ -14,6 +15,8 @@
 \newcommand{\ub}{\underline{b}}
 \newcommand{\bd}{\bar{d}}
 \newcommand{\bu}{\bar{u}}
+
+\newtheorem{remark}{Remark}
 
 \title{控制方向未知且符号可切换的多智能体周期滑模合围控制}
 \author{陈\quad 刘}
@@ -50,7 +53,7 @@
 \begin{table}[H]
 \centering
 \caption{result1 / result2 / result3 对比}
-\begin{tabular}{p{2.2cm}|p{3.9cm}|p{3.9cm}|p{3.9cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}p{3.9cm}|>{\raggedright\arraybackslash}p{3.9cm}|>{\raggedright\arraybackslash}p{3.9cm}}
 \hline
 & 方法1 & 方法2（积分滑模） & 方法3（滤波排斥项）\\
 \hline
@@ -81,17 +84,17 @@ $\ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i$ &
 \hline
 P1/P2 证明 &
 自证（障壁势函数） &
-引名义系统文献 &
-自证（增广势函数）\\
+自证（P1）；P2 需额外 remark（\(\dot s_i\) 有界） &
+自证（增广势函数；P2 需快滤波备注）\\
 \hline
 P3 速度一致 &
 未证 &
-据文献可得 &
+自证（Barbalat） &
 未证\\
 \hline
 \end{tabular}
 \end{table}
 
-要点：方法1 是基线，但滑模变量直接含 $-\varphi_i$，求导后出现 $\dot\varphi_i$，需要邻居相对速度；方法2 用积分滑模把 $\varphi_i$ 关进积分器，既无需邻居速度，又得到标准名义合围动力学；方法3 用一阶滤波 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 替代 $\varphi_i$，同样去掉邻居速度依赖且保持方法1 形式。三者到达性证明与关键不等式 $|b|R>|N|$ 结构完全一致。
+要点：方法1 是基线，但滑模变量直接含 $-\varphi_i$，求导后出现 $\dot\varphi_i$，需要邻居相对速度；方法2 用积分滑模把 $\varphi_i$ 关进积分器，既无需邻居速度，又得到标准名义合围动力学；方法3 用一阶滤波 $\dot\Phi_i=-\gamma_2\Phi_i+\varphi_i$ 替代 $\varphi_i$，同样去掉邻居速度依赖且保持方法1 形式，但 P2 需要额外快滤波条件。三者到达性证明与关键不等式 $|b|R>|N|$ 结构完全一致。
 
 \end{document}

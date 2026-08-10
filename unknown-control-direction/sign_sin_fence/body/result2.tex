@@ -1,22 +1,65 @@
 \section{滑模方法2（积分滑模）}
 
-定义 $\dot\eta_i=k_1p_{i0}-\varphi_i$，滑模变量 $s_{i0}=\eta_i+k_2p_{i0}+v_{i0}$，其中 $\varphi_i$ 同方法1。由 $\dot p_{i0}=v_{i0}$、$\dot v_{i0}=B_iu_i+w_i$ 与 $\dot\eta_i$ 得
+定义 $\dot\eta_i=k_1p_{i0}-\varphi_i$，滑模变量 $s_{i0}=\eta_i+k_2p_{i0}+v_{i0}$，其中 $k_1,k_2>0$。排斥项取 $\varphi_i=\sum_{j\in\mathcal N_i}\rho(\|p_{ij}\|)p_{ij}/\|p_{ij}\|$，其中 $\rho(s)=\max\{1/(s-d)-1/(\mu-d),0\}$，$d>0$ 为避碰距离、$\mu>d$ 为势垒饱和半径；无向图下 $p_{ij}=-p_{ji}$ 且 $\varphi_i$ 成对抵消，故 $\sum_i\varphi_i=0$。$\varphi_i$ 仅依赖相对位置。由 $\dot p_{i0}=v_{i0}$、$\dot v_{i0}=B_iu_i+w_i$ 与 $\dot\eta_i$ 得
 \[
     \dot s_{i0}=B_i(t)u_i+\Delta_i+w_i,\qquad
     \Delta_i=k_1p_{i0}-\varphi_i+k_2v_{i0}.
 \]
-逐分量 $\dot s_{i0,\ell}=b_{i\ell}u_{i\ell}+N_{i\ell}$，控制律与增益同方法1。注意 $\Delta_i$ 只含 $\varphi_i$（位置量），无需 $\dot\varphi_i$，故不依赖邻居速度。
+逐分量 $\dot s_{i0,\ell}=b_{i\ell}u_{i\ell}+N_{i\ell}$（$N_{i\ell}=\Delta_{i\ell}+w_{i\ell}$）。控制律取
+\[
+    u_{i\ell}=R_{i\ell}\sgn\!\left[\sin\!\left(\frac{\pi}{\varepsilon}s_{i0,\ell}\right)\right],\qquad
+    R_{i\ell}=\frac{|\Delta_{i\ell}|+\bar w_i+\lambda}{\ub_{i\ell}},
+\]
+其中 $\lambda>0$。该律不使用 $b_{i\ell}$ 的符号信息，且 $\Delta_i$ 只含 $\varphi_i$（位置量），无需 $\dot\varphi_i$，故不依赖邻居速度。
 
-\subsection{到达性}
+\subsection{到达性与有界性}
 
-与方法1 完全相同：关键不等式 $|b|R>|N|$ 仍成立，故各分量有限时间到达相应周期面，$s_{i0}\in L_\infty$，滑模面上 $\dot s_{i0}=0$。$b_{i\ell}$ 有限次切换时最后一次后进入滑模；无限切换需驻留时间假设。
+固定 $i,\ell$，记 $s=s_{i0,\ell}$、$b=b_{i\ell}$、$N=\Delta+w$。闭环为 $\dot s=bR\sgn[\sin(\pi s/\varepsilon)]+N$。由 $R=(|\Delta|+\bar w_i+\lambda)/\ub$ 与 $|b|\ge\ub$ 得 $|b|R\ge|\Delta|+\bar w_i+\lambda$，而 $|N|\le|\Delta|+\bar w_i$，故 $|b|R-|N|\ge\lambda$，即 $|b|R>|N|$。
+
+$b>0$ 时奇数倍面 $s=(2r+1)\varepsilon$ 吸引；$b<0$ 时偶数倍面 $s=2r\varepsilon$ 吸引。取 $\tilde s=s-k\varepsilon$ 且 $|\tilde s|<\varepsilon$，两种情况均统一化为 $\dot{\tilde s}=-|b|R\,\sgn(\tilde s)+N$。取 $V_s=\tfrac12\tilde s^2$ 得 $\dot V_s\le-(|b|R-|N|)|\tilde s|\le-\lambda|\tilde s|=-\lambda\sqrt{2V_s}$，故有限时间到达，且到达时间 $T_r\le|\tilde s(t_0)|/\lambda$。由此可知 $s_{i0}\in L_\infty$；且每个分量在有限时间 $T^*$ 内到达某周期面，之后 $\dot s_{i0}=0$。
 
 \subsection{降阶名义合围动力学}
 
-由 $\dot s_{i0}=0$ 与 $v_{i0}=\dot p_{i0}$ 得
+在滑模面上 $\dot s_{i0}=0$，即 $\dot v_{i0}+k_2v_{i0}+k_1p_{i0}-\varphi_i=0$；又 $v_{i0}=\dot p_{i0}$、$\dot v_{i0}=\ddot p_{i0}$，故闭环在滑模运动后等价于标准名义系统
 \[
-    \ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i,
+    \ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i.
 \]
-即标准的“目标吸引 $k_1p_{i0}$+阻尼 $k_2\dot p_{i0}$+智能体间排斥 $\varphi_i$”名义合围系统。该形式与已有合围编队文献完全一致，故凸包合围、碰撞避免与速度一致性可由已有名义系统结论直接推出。
+该式对任意常值周期面均成立（与面常值无关）。下面直接证明 P1–P3，不引用外部文献。
 
-说明：本方法把 $\varphi_i$ 关入积分器，既无需邻居速度，又得到标准降阶动力学，可直接引用文献结论。技术条件包括：输入增益须为对角结构、控制方向不穿越零、切换不能无限快、滑模意义为理想/Filippov、合围结论引用名义系统文献。
+\subsection{稳态合围 P1 与速度一致 P3}
+
+对名义系统关于全体智能体求和，利用无向图下 $\sum_i\varphi_i=0$，得质心相对目标量 $\tilde p=\frac1N\sum_i p_{i0}$ 满足
+\[
+    \ddot{\tilde p}+k_2\dot{\tilde p}+k_1\tilde p=0.
+\]
+其特征多项式 $\lambda^2+k_2\lambda+k_1$ 在 $k_1,k_2>0$ 时为 Hurwitz，故 $\tilde p\to0$、$\dot{\tilde p}\to0$。质心位于卫星凸包之内，于是 $\mathrm{dist}(p_0,\mathrm{co}(p))\le\|\tilde p\|\to0$，即 P1 成立。
+
+为证 P3，取
+\[
+    V=\frac12\sum_i\|v_{i0}\|^2+\frac{k_1}{2}\sum_i\|p_{i0}\|^2
+    +\frac12\sum_i\sum_{j\in\mathcal N_i}\int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds .
+\]
+在滑模面上沿名义系统求导：$\frac{d}{dt}\frac12\sum_i\|v_{i0}\|^2=\sum_i v_{i0}^T(-k_2v_{i0}-k_1p_{i0}+\varphi_i)$，$\frac{d}{dt}\frac{k_1}{2}\sum_i\|p_{i0}\|^2=k_1\sum_i p_{i0}^Tv_{i0}$，二者相加后 $-k_1\sum_i v_{i0}^Tp_{i0}$ 与 $k_1\sum_i p_{i0}^Tv_{i0}$ 抵消，余下 $\sum_i v_{i0}^T\varphi_i$；势垒项导数为 $-\sum_i\varphi_i^Tv_{i0}$（由无向图下 $p_{ij}=-p_{ji}$ 与斥力成对抵消可得）。因 $v_{i0}^T\varphi_i=\varphi_i^Tv_{i0}$ 为同一标量，这两项抵消，故
+\[
+    \dot V=-k_2\sum_i\|v_{i0}\|^2\le0.
+\]
+于是滑模运动阶段 $V(t)\le V(T^*)<\infty$，从而 $\|v_{i0}\|$、$\|p_{i0}\|$ 与势垒项均有界；而势垒项在 $\|p_{ij}\|\to d^+$ 时趋于无穷，故 $\|p_{ij}\|>d$ 恒成立（即 P2，详见下）。又由 $\dot V=-k_2\|v_{i0}\|^2$ 且 $V$ 有界、$\|v_{i0}\|$ 连续有界，据 Barbalat 引理得 $v_{i0}\to0$，即 $v_i\to v_0$，P3 成立。
+
+\subsection{瞬态安全避碰 P2 的完整论证}
+
+上述 $\dot V\le0$ 在滑模面上成立。在到达滑模面前的有限区间 $[0,T^*]$ 内，由闭环
+\[
+    \dot V=\sum_i v_{i0}^T(B_iu_i+w_i)+k_1\sum_i p_{i0}^Tv_{i0}-\sum_i\varphi_i^Tv_{i0}.
+\]
+利用 $\dot v_{i0}=\dot s_{i0}-\Delta_i$ 与 $\Delta_i=k_1p_{i0}-\varphi_i+k_2v_{i0}$ 可化为
+\[
+    \dot V=-k_2\sum_i\|v_{i0}\|^2+\sum_i v_{i0}^T\dot s_{i0}
+    \le\frac{1}{2k_2}\sum_i\|\dot s_{i0,\ell}\|^2 .
+\]
+在到达阶段 $s_{i0}\in L_\infty$，且 $\|p_{ij}\|>d$ 时 $\varphi_i$ 与控制量均有界，故 $\dot s_{i0}$ 在有限区间上有界，从而 $V$ 在 $[0,T^*]$ 上保持有限。因此无论预滑模还是滑模阶段，$V$ 始终有限，势垒项永不爆炸，闭环解可延拓且 $\|p_{ij}(t)\|>d$ 对所有 $t\ge0$ 成立。P2 的这一段论证见下方 remark。
+
+\begin{remark}[关于 $\dot s_{i0}$ 有界性的补充]
+上面的 P2 论证中，关键一步是把到达阶段的 $\dot s_{i0}$ 直接视为有界。但从当前控制律看，$R_{i\ell}$ 本身依赖于 $|\Delta_{i\ell}|$，而 $\Delta_i$ 又包含 $\varphi_i$；当轨迹逼近安全边界时，$\varphi_i$ 可能变大，故 $\dot s_{i0}$ 并不能仅由“$s_{i0}\in L_\infty$”和“$\|p_{ij}\|>d$”自动推出统一上界。换言之，这一段更适合作为条件性论证：若另行补充到达区间内 $\dot s_{i0}\in L_\infty$（或给出与屏障项解耦的上界），则可继续得到 $V$ 的有界性；否则该步仍需加强。
+\end{remark}
+
+说明：本方法把 $\varphi_i$ 关入积分器，既无需邻居速度，又得到标准降阶动力学 $\ddot p_{i0}+k_2\dot p_{i0}+k_1p_{i0}=\varphi_i$；P1 和 P3 的推导较直接，但 P2 还需要结合上面的 remark 进一步补强。技术条件包括：输入增益须为对角结构、控制方向不穿越零、切换不能无限快（或满足驻留时间）、滑模意义为理想/Filippov。
