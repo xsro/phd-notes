@@ -22,14 +22,25 @@
 \author{陈\quad 刘}
 \date{\today}
 
+
+
 \begin{document}
 
+
 \maketitle
+
+
+\begin{abstract}
+    本文试图解决未知控制方向的合围控制问题，但是我们发现，基于周期滑模的方法，一般只能保证滑模量 ${s}_i$ 有界，并最终收敛到一个常值，而不是收敛到$0$。
+    在合围控制中，这就要求$s_i$和$\phi_i$ 保持线性关系，这就要求为了保证$s_i$收敛，$\dot{\phi}_i$出现在控制律中，使得算法依赖邻居的速度。
+    以上算法对应result1，result2 通过积分滑模说明了如果${s}_i$与$\phi_i$的积分线性相关，虽然可以不用邻居速度，但是无法证明避碰的性质。
+    result 3 使用滤波的方式来规避$\phi_i$求导，但是这个方法的问题在于滤波无法精确收敛到 $\phi_i$.
+\end{abstract}
 
 \section{问题描述}
 
 考虑 $N$ 个智能体与一个目标。智能体 $i$ 的位置、速度为 $p_i,v_i\in\mathbb R^m$，目标为 $p_0,v_0\in\mathbb R^m$。智能体二阶动力学为  \[
-\dot p_i=v_i,\ \dot v_i=B_i(t)u_i+d_i,
+\dot p_i=v_i,\ \dot v_i=B_i(t)u_i+d_i, \quad i \in \mathcal{N}=\{1,\dots,N\}
 \]
 其中 $u_i$ 为控制输入，$d_i$ 为有界扰动且 $\|d_i\|_\infty\le\bd_i$，$B_i(t)=\operatorname{diag}\{b_{i1},\dots,b_{im}\}$ 为未知对角增益。假设每个 $b_{i\ell}$ 符号未知、允许正负切换但不穿越零，且存在 $\ub_{i\ell}>0$ 使 $0<\ub_{i\ell}\le|b_{i\ell}(t)|$。
 
