@@ -1,13 +1,14 @@
 \section{通过观测器拓展到输出反馈情形}
 
-未知控制方向 $B_i(t)$ 未知导致无法获知自身加速度，从而难以直接对相对速度建模；同时，原 result1/result2/result3 的设计在不同程度上依赖邻居相对速度（如 $\dot\varphi_i$ 或 $\dot p_{ij}$），本质上属于状态反馈。本节考虑\emph{输出反馈}情形：每个智能体仅能测得相对位置——目标的相对位置 $p_{i0}$ 与邻居的相对位置 $p_{ij}$；并且只有部分智能体（记 $b_i=1$，其余 $b_i=0$）能测得目标相对位置。目标是先用分布式观测器恢复相对速度，再将其嵌入 result1 的周期滑模控制律，从而保留原有的避碰与合围性质。
+未知控制方向 $B_i(t)$ 未知导致无法获知自身加速度，从而难以直接对目标相对速度建模。本节考虑如下输出反馈情形：每个智能体仅能测得相对位置——目标的相对位置 $p_{i0}$ 与邻居的相对位置 $p_{ij}$；只有部分智能体（记 $b_i=1$，其余 $b_i=0$）能直接测得目标相对位置；同时允许智能体获得邻居相对速度 $v_{ij}$。因此 $\dot\varphi_i$ 可由相对位置与邻居相对速度精确计算，剩余需要观测器恢复的是目标相对速度 $v_{i0}$。目标是先用分布式观测器恢复 $(p_{i0},v_{i0})$，再将其嵌入 result1 的周期滑模控制律，从而保留原有的避碰与合围性质。
 
-相对加速度满足 $\dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i$ 含目标机动与有界扰动。由于 $B_i$ 未知、无法对其补偿，只能把 $\dot v_{i0}$ 整体当作观测器误差动力学中的未知扰动。该扰动只需要在闭环实际运行的安全域内给出一致上界即可；一旦安全域建立，分布式超螺旋观测器便可直接按附录的同样思路工作。
+相对加速度满足 $\dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i$ 含目标机动与有界扰动。由于 $B_i$ 未知、无法对其补偿，只能把 $\dot v_{i0}$ 整体当作观测器误差动力学中的未知扰动。为避免原先由势场无界性引起的循环论证，本节把该扰动的一致上界作为显式设计假设。
 
 \subsection{输出反馈问题描述}
 
 考虑各个智能体只能知道目标的相对位置$p_{i0}$和邻居的相对位置$p_{ij}$。
-并且，只有部分智能体知道目标的相对位置，这些智能体对应的$b_i=1$，其余$b_i=0$.
+并且，只有部分智能体知道目标的相对位置，这些智能体对应的$b_i=1$，其余$b_i=0$。
+此外，允许智能体获得邻居相对速度 $v_{ij}$，从而可直接计算 $\dot\varphi_i$。
 
 \subsection{观测器算法。}
 设计
@@ -30,24 +31,20 @@
     \dot{\tilde p}_{i0}&=\tilde v_{i0}-k_a \sig{y_i}^{1/2},\\
     \dot{\tilde v}_{i0}&=-k_b\sgn(y_i)-\dot v_{i0},
 \end{align*}
-其中 $\dot v_{i0}=B_i(t)u_i+w_i$ 正是未知控制方向带来的“自身加速度”项。由于 $B_i$ 未知，无法对其建模补偿，只能整体当作扰动处理。记闭环安全域
+其中 $\dot v_{i0}=B_i(t)u_i+w_i$ 正是未知控制方向带来的“自身加速度”项。由于 $B_i$ 未知，无法对其建模补偿，只能整体当作扰动处理。严谨起见，假设存在有限常数 $\bar n^\star>0$ 使
 \[
-    \Omega_s:=\{\,d<\|p_{ij}\|<\mu:\ i=1,\dots,N,\ j\in\mathcal N_i(0)\,\}.
+    \|\dot v_{i0}(t)\|\le \bar n^\star,\qquad i=1,\dots,N,\ t\ge0.
 \]
-在任意满足 $d+\delta\le\|p_{ij}\|\le\mu-\delta$（$\delta>0$）的安全紧子集上，$\varphi_i^r$ 与 $\varphi_i^p$ 连续有界；后续势垒证明将排除边界到达，因此沿闭环轨迹 $\dot v_{i0}$ 存在一致上界
+该条件可由控制输入幅值的先验上界给出，例如 $\bar n^\star\ge \bar b\sup_{i,t}\|u_i(t)\|+\sup_i\bar w_i$。理论上只需存在常值 $k_b>0$ 使
 \[
-    \|\dot v_{i0}(t)\|\le \bar b\,\|u_i(t)\|+\bar w_i=:\bar n_i(t),
-\]
-这里 $\bar b=\max_{i,\ell}|b_{i\ell}|$、$\bar w_i=\bd_i+\bu_0$ 已知。于是可取常值 $k_b>0$ 使
-\[
-    k_b\rho\ge \sup_{t\ge 0}\bar n_i(t),
+    k_b\rho\ge \bar n^\star,\qquad \rho\in(0,1),
 \]
 并按附录取常值
 \[
     k_a\ge \sqrt{\frac{2\gamma_1+2\gamma_0+1}{\lambda_1}}\,\sqrt{k_b},\qquad
     \gamma_0=\frac{1+3\gamma_1}{1-\rho},\ \gamma_1=1+\rho,
 \]
-其中 $\lambda_1$ 为 $M(0)=\mathcal L(0)+\mathcal B$ 的最小特征值。这样观测器误差系统与附录引理 \ref{lemma estimator} 完全同形，只是扰动界从常数 $\bar n$ 换成了闭环安全域上的一致上界。
+其中 $\lambda_1$ 为 $M(0)=\mathcal L(0)+\mathcal B$ 的最小特征值。这样观测器误差系统与附录引理 \ref{lemma estimator} 完全同形。
 
 \subsection{与 result1 控制律的耦合。}
 将 result1 的周期滑模控制律中的真值 $(p_{i0},v_{i0})$ 以其观测估计值 $(\hat p_{i0},\hat v_{i0})$ 替代。实现时取
@@ -58,7 +55,7 @@
 \end{align*}
 其中
 \[
-    \hat\Delta_i=-\widehat{\dot\varphi}_i+k_1\hat v_{i0}+k_2(k_1\hat p_{i0}-\varphi_i),\qquad
+    \hat\Delta_i=-\dot\varphi_i+k_1\hat v_{i0}+k_2(k_1\hat p_{i0}-\varphi_i),\qquad
     \lambda_{i\ell}=\frac{\varepsilon}{T^{\mathrm r}_{i\ell}}.
 \]
 与 result1、result2 独立使用时的纯排斥项不同，观测器实现要求全程保持通信连通，故此处人工势场取
@@ -69,7 +66,7 @@
 \[
     \varphi_i^p=\sum_{j\in\mathcal N_i(0)}\alpha_p(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|}
 \]
-对每一对\emph{初始}邻居 $j\in\mathcal N_i(0)$ 作用，保证连通。由于初始图无向且 $\alpha_p$ 只依赖距离，$\varphi_i^p$ 在初始边上成对抵消，从而 $\sum_i\varphi_i^p=0$。$\alpha_p:(d,\mu)\to(-\infty,0]$ 连续，满足 $\lim_{s\to d^+}\alpha_p(s)=0$、$\lim_{s\to\mu^-}\int_d^s\alpha_p(\sigma)\,d\sigma=-\infty$，具体可取 $\alpha_p(s)=\begin{cases}0,&s\in(d,l_\mu),\\[2pt]\dfrac{c_p}{s-\mu}-\dfrac{c_p}{l_\mu-\mu},&s\in[l_\mu,\mu),\end{cases}$ $l_\mu\in(d,\mu),c_p>0$（iAPF 设计，参见 \cite{chenCooperativeTargetfencingProtocol2019,panCooperativeTargetFencing2024a}）。$\varphi_i$、$\varphi_i^r$、$\varphi_i^p$ 均仅由相对位置算出。引入观测器后，$\hat v_{i0}$ 在本地即可给出所需相对速度，从而原式中对邻居速度的依赖（以及 $\dot\varphi_i$ 项）可由估计值计算，或按 result3 的滤波方式规避；控制律因此可在仅测相对位置下实现。
+对每一对\emph{初始}邻居 $j\in\mathcal N_i(0)$ 作用，保证连通。由于初始图无向且 $\alpha_p$ 只依赖距离，$\varphi_i^p$ 在初始边上成对抵消，从而 $\sum_i\varphi_i^p=0$。$\alpha_p:(d,\mu)\to(-\infty,0]$ 连续，满足 $\lim_{s\to d^+}\alpha_p(s)=0$、$\lim_{s\to\mu^-}\int_d^s\alpha_p(\sigma)\,d\sigma=-\infty$，具体可取 $\alpha_p(s)=\begin{cases}0,&s\in(d,l_\mu),\\[2pt]\dfrac{c_p}{s-\mu}-\dfrac{c_p}{l_\mu-\mu},&s\in[l_\mu,\mu),\end{cases}$ $l_\mu\in(d,\mu),c_p>0$（iAPF 设计，参见 \cite{chenCooperativeTargetfencingProtocol2019,panCooperativeTargetFencing2024a}）。$\varphi_i$、$\varphi_i^r$、$\varphi_i^p$ 均仅由相对位置算出；$\dot\varphi_i$ 由相对位置与邻居相对速度 $v_{ij}$ 精确计算。因此控制律不需要目标速度真值，只需要观测器给出的 $(\hat p_{i0},\hat v_{i0})$。
 
 \subsection{主要结果。}
 \begin{theorem}\label{thm observer}
@@ -78,13 +75,20 @@
         \item 通信图 $\mathcal G(0)$ 初始连通（满足附录假设 \ref{assump initially_connected}）；
         \item 未知对角增益满足 $0<\ub_{i\ell}\le |b_{i\ell}(t)|\le\bar b$，符号不穿越零；
         \item 扰动有界 $\|d_i\|_\infty\le\bd_i$、$\|u_0\|_\infty\le\bu_0$，且 $\bar b,\bar w_i$ 已知；
-        \item 观测器增益取常值，并满足附录引理 \ref{lemma estimator} 的选取条件；换言之，只要闭环轨迹所在的安全紧子集上存在一致扰动上界，就可按该上界选取 $k_b$ 与 $k_a$。
+        \item 邻居相对速度 $v_{ij}$ 可用，因此 $\dot\varphi_i$ 可由相对位置与相对速度精确计算；
+        \item 存在有限常数 $\bar n^\star>0$ 使 $\|\dot v_{i0}(t)\|\le\bar n^\star$ 对所有 $i,t$ 成立；观测器增益取常值并满足 $k_b\rho\ge\bar n^\star$ 与上式的 $k_a$ 选取条件。该常数不必由观测器在线估计，但若要求可实施的固定增益，则仍需给出其保守上界；
+        \item 初始安全裕度
+        \[
+            \chi_0:=\min\Bigl\{\min_{i<j}\bigl(\|p_{ij}(0)\|-d\bigr),
+            \min_{(i,j)\in\mathcal E(0)}\bigl(\mu-\|p_{ij}(0)\|\bigr)\Bigr\}
+        \]
+        为正。令 $v_\star=\max_{i<j}\|v_{ij}(0)\|$、$a_\star=2\bar n^\star$，取 $T_s>0$ 使 $v_\star T_s+\frac12 a_\star T_s^2<\chi_0$，并选取观测器增益使附录引理 \ref{lemma estimator} 给出的收敛时间上界 $T_1^{\max}$ 满足 $T_1^{\max}<T_s$。
     \end{enumerate}
     采用上述分布式观测器得到 $(\hat p_{i0},\hat v_{i0})$，并将其代入 result1 的周期滑模控制律，则
     \begin{enumerate}[label=(\roman*)]
         \item 观测误差 $(\tilde p_{i0},\tilde v_{i0})$ 在有限时间内收敛到零；
         \item 闭环满足瞬态避碰 P2 与稳态凸包合围 P1；
-        \item 观测器在本地给出 $\hat v_{i0}$，使 result1 的周期滑模律可在仅测相对位置下实现；在此实现下闭环退化为 result1 真值闭环，P1、P2 成立，且若采用 result2 的积分滑模变体则 P3（速度一致）由 Barbalat 引理成立。
+        \item 观测器在本地给出 $\hat v_{i0}$，使 result1 的周期滑模律可在目标速度不可测、邻居相对速度可用的情形下实现；在此实现下闭环退化为 result1 真值闭环，P1、P2 成立，且若采用 result2 的积分滑模变体则 P3（速度一致）由 Barbalat 引理成立。
         \item 通信拓扑保持初始连通，即 $\mathcal G(0)\subseteq\mathcal G(t)$ 对所有 $t\ge0$ 成立。
     \end{enumerate}
 \end{theorem}
@@ -96,21 +100,34 @@
         \xi_i=y_i=b_i e_i+\sum_{j\in\mathcal N_i(0)}a_{ij}(0)(e_i-e_j),
     \]
     故 $\xi=(M(0)\otimes I_2)e$，其中 $M(0)=\mathcal L(0)+\mathcal B$ 仅由初始拓扑决定。由假设 (A1) 与附录引理 \ref{lemma M>0}，$M(0)$ 正定，记 $\lambda_1=\lambda_{\min}(M(0))>0$。
-    下述估计先在最大安全区间内进行；第 3 步将证明边界时刻不可能出现，因此该区间最终延拓到 $[0,\infty)$。
 
-    取 $\nu_i=z_i/k_a$、$\nu=z/k_a$，并按附录中的 Lyapunov 函数 $V=V_1+\gamma_0V_2$ 分析，则误差系统与附录引理 \ref{lemma estimator} 完全同形。由于沿闭环轨迹可取到一致扰动上界，故可直接应用该引理，得到存在有限时间 $T_1$ 使 $V(t)\equiv0$。于是 $\nu_i\equiv0$、$\xi_i\equiv0$；由 $M(0)$ 可逆推出 $e_i\equiv0$，即 $(\tilde p_{i0},\tilde v_{i0})\equiv(0,0)$ 对 $t\ge T_1$。
+    取 $\nu_i=z_i/k_a$、$\nu=z/k_a$。由假设 (A5)，$n_i=\dot v_{i0}$ 满足 $\|n_i(t)\|\le\bar n^\star\le k_b\rho$，故误差系统与附录引理 \ref{lemma estimator} 完全同形。直接应用该引理可得存在有限时间 $T_1\le T_1^{\max}<T_s$ 使 $V(t)\equiv0$。于是 $\nu_i\equiv0$、$\xi_i\equiv0$；由 $M(0)$ 可逆推出 $e_i\equiv0$，即 $(\tilde p_{i0},\tilde v_{i0})\equiv(0,0)$ 对 $t\ge T_1$。
 
     \textbf{2. 由精确观测退化到 result1。}
     由 (i)，$t\ge T_1$ 时 $(\hat p_{i0},\hat v_{i0})=(p_{i0},v_{i0})$，故控制器退化为 result1 的真值闭环。另一方面，吸引项 $\varphi_i^p$ 由初始无向图上的成对势函数构造，因此满足 $\sum_i\varphi_i^p=0$；再加上 $\sum_i\varphi_i^r=0$，整体人工势场仍保留 result1 中的质心不变量。于是 result1 的 P1 论证可直接沿用。
 
     \textbf{3. 瞬态避碰与连通保持。}
-    令
+    先看观测器收敛前的有限区间 $[0,T_1]$。对任意两智能体有 $\dot p_{ij}=v_{ij}$，且
     \[
-        W_c=\frac12\sum_{i=1}^N\sum_{j\in\mathcal N_i(0)}\int_d^{\|p_{ij}\|}\bigl(-\alpha_p(\sigma)\bigr)\,d\sigma.
+        \|\dot v_{ij}\|=\|\dot v_{i0}-\dot v_{j0}\|\le 2\bar n^\star=a_\star.
     \]
-    在 $[0,T_1]$ 上，有限时间观测器保证估计误差有界，周期滑模到达性保证 $\hat s_{i0}$ 有界，故真实滑模量与 $\hat s_{i0}$ 的差也有界。自 $T_1$ 起观测误差恒为零，闭环则与 result1 真值闭环一致。由于 $\varphi_i^p$ 正是 $W_c$ 的梯度项，故 result1 中关于增广势函数的估计不变，$V_W+W_c$ 在任意有限区间上有界。
+    因此
+    \[
+        \|p_{ij}(t)-p_{ij}(0)\|
+        \le v_\star t+\frac12a_\star t^2
+        < \chi_0,\qquad 0\le t\le T_1<T_s.
+    \]
+    由 $\chi_0$ 的定义，$[0,T_1]$ 内既不会发生碰撞，也不会有初始边达到通信边界 $\mu$。
 
-    另一方面，$W_c$ 在 $\|p_{ij}\|\to\mu^-$ 时趋于 $+\infty$，排斥势垒在 $\|p_{ij}\|\to d^+$ 时趋于 $+\infty$。若有限时间内发生碰撞或某条初始边断开，则 $V_W+W_c$ 必须发散，与其有界性矛盾。故 $\mathcal G(0)\subseteq\mathcal G(t)$ 对所有 $t\ge0$ 成立，P2 与结论 (iv) 成立。
+    再看 $t\ge T_1$。此时观测误差恒为零，闭环等价于 result1 真值闭环。令
+    \[
+        W_c=\frac12\sum_{i=1}^N\sum_{j\in\mathcal N_i(0)}\int_d^{\|p_{ij}\|}\bigl(-\alpha_p(\sigma)\bigr)\,d\sigma .
+    \]
+    由于 $\varphi_i^p$ 正是 $W_c$ 的梯度项，result1 中关于增广势函数的估计可原样作用于 $V_W+W_c$，从而 $V_W+W_c$ 在任意有限区间上有界。另一方面，$W_c$ 在 $\|p_{ij}\|\to\mu^-$ 时趋于 $+\infty$，排斥势垒在 $\|p_{ij}\|\to d^+$ 时趋于 $+\infty$。若 $t\ge T_1$ 后有限时间内发生碰撞或某条初始边断开，则 $V_W+W_c$ 必须发散，与其有界性矛盾。故 $\mathcal G(0)\subseteq\mathcal G(t)$ 对所有 $t\ge0$ 成立，P2 与结论 (iv) 成立。
 
     最后，若采用 result2 的积分滑模变体，则 P3（速度一致）仍由 Barbalat 引理得到。证毕。
 \end{proof}
+
+\begin{remark}[关于扰动上界假设]
+    将假设 (A5) 中的“已知一致上界”放宽为“存在有限一致上界”后，定理仍是严格的存在性结论：只要选取某个满足 $k_b\rho\ge\bar n^\star$ 的常值增益，附录引理及上述证明均成立。但若要求控制器能够在不知道 $\bar n^\star$ 的情况下实际选取固定 $k_b$，则还需要引入自适应增益观测器，并重新证明其有限时间收敛性；不能仅通过删除“已知”二字得到该实现结论。
+\end{remark}
