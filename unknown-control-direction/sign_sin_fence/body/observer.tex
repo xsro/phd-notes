@@ -2,7 +2,7 @@
 
 未知控制方向 $B_i(t)$ 未知导致无法获知自身加速度，从而难以直接对目标相对速度建模。本节考虑如下输出反馈情形：每个智能体仅能测得相对位置——目标的相对位置 $p_{i0}$ 与邻居的相对位置 $p_{ij}$；只有部分智能体（记 $b_i=1$，其余 $b_i=0$）能直接测得目标相对位置；同时允许智能体获得邻居相对速度 $v_{ij}$。因此 $\dot\varphi_i$ 可由相对位置与邻居相对速度精确计算，剩余需要观测器恢复的是目标相对速度 $v_{i0}$。目标是先用分布式观测器恢复 $(p_{i0},v_{i0})$，再将其嵌入 result1 的周期滑模控制律，从而保留原有的避碰与合围性质。
 
-相对加速度满足 $\dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i$ 含目标机动与有界扰动。由于 $B_i$ 未知、无法对其补偿，只能把 $\dot v_{i0}$ 整体当作观测器误差动力学中的未知扰动。为避免原先由势场无界性引起的循环论证，本节把该扰动的一致上界作为显式设计假设。
+相对加速度满足 $\dot v_{i0}=B_i(t)u_i+w_i$，其中 $w_i$ 含目标机动与有界扰动。由于 $B_i$ 未知、无法对其补偿，只能把 $\dot v_{i0}$ 整体当作观测器误差动力学中的未知扰动。该扰动上界可能随势场项增长而无界；因此本节采用附录“扰动上界无界的情形”中的时变增益观测器。
 
 \subsection{输出反馈问题描述}
 
@@ -18,33 +18,32 @@
 其中仅部分智能体能测得目标相对位置，对应 $b_i=1$，其余 $b_i=0$；$\mathcal N_i(0)$ 与 $a_{ij}(0)$ 为初始通信拓扑（见附录假设）。观测器方程为
 \begin{equation}
     \begin{cases}
-        \dot{\hat{p}}_{i0}=-k_a \sig{y_i}^{1/2} + \hat{v}_{i0},\\[2pt]
-        \dot{\hat{v}}_{i0}=-k_b \sgn(y_i),
+        \dot{\hat{p}}_{i0}=-k_a(t) \sig{y_i}^{1/2} + \hat{v}_{i0},\\[2pt]
+        \dot{\hat{v}}_{i0}=-k_b(t) \sgn(y_i),
     \end{cases}
     \label{eq observer}
 \end{equation}
-参数选取按照附录进行。
+参数按附录 \eqref{eq:time_varying_gain_design} 选取。
 
 \subsection{扰动分析与增益选取。}
 令估计误差 $\tilde p_{i0}=\hat p_{i0}-p_{i0}$、$\tilde v_{i0}=\hat v_{i0}-v_{i0}$，则由 \eqref{eq observer} 得误差动力学
 \begin{align*}
-    \dot{\tilde p}_{i0}&=\tilde v_{i0}-k_a \sig{y_i}^{1/2},\\
-    \dot{\tilde v}_{i0}&=-k_b\sgn(y_i)-\dot v_{i0},
+    \dot{\tilde p}_{i0}&=\tilde v_{i0}-k_a(t) \sig{y_i}^{1/2},\\
+    \dot{\tilde v}_{i0}&=-k_b(t)\sgn(y_i)-\dot v_{i0},
 \end{align*}
-其中 $\dot v_{i0}=B_i(t)u_i+w_i$ 正是未知控制方向带来的“自身加速度”项。由于 $B_i$ 未知，无法对其建模补偿，只能整体当作扰动处理。严谨起见，假设存在有限常数 $\bar n^\star>0$ 使
+其中 $\dot v_{i0}=B_i(t)u_i+w_i$ 正是未知控制方向带来的“自身加速度”项。由于 $B_i$ 未知，无法对其建模补偿，只能整体当作扰动处理。定义在线上界
 \[
-    \|\dot v_{i0}(t)\|\le \bar n^\star,\qquad i=1,\dots,N,\ t\ge0.
+    \bar n(t):=\max_{1\le i\le N}\{\bar b\,\|u_i(t)\|+\bar w_i\}.
 \]
-该条件可由控制输入幅值的先验上界给出，例如 $\bar n^\star\ge \bar b\sup_{i,t}\|u_i(t)\|+\sup_i\bar w_i$。理论上只需存在常值 $k_b>0$ 使
+取绝对连续的上包络 $K_b(t)$，使其满足附录条件 \eqref{eq:unbounded_Kb}：
 \[
-    k_b\rho\ge \bar n^\star,\qquad \rho\in(0,1),
+    K_b(t)\rho\ge\bar n(t),\qquad 0<K_{b0}\le K_b(t).
 \]
-并按附录取常值
+观测器增益取
 \[
-    k_a\ge \sqrt{\frac{2\gamma_1+2\gamma_0+1}{\lambda_1}}\,\sqrt{k_b},\qquad
-    \gamma_0=\frac{1+3\gamma_1}{1-\rho},\ \gamma_1=1+\rho,
+    k_b(t)=K_b(t),\qquad k_a(t)=c_a\sqrt{K_b(t)},
 \]
-其中 $\lambda_1$ 为 $M(0)=\mathcal L(0)+\mathcal B$ 的最小特征值。这样观测器误差系统与附录引理 \ref{lemma estimator} 完全同形。
+其中 $c_a$ 与 $K_b(t)$ 的变化速度满足附录 \eqref{eq:time_varying_gain_design}--\eqref{eq:slow_gain_condition}。这样即使 $\bar n(t)$ 无全局一致上界，观测误差仍可由附录的时变增益结论保证有限时间收敛。
 
 \subsection{与 result1 控制律的耦合。}
 将 result1 的周期滑模控制律中的真值 $(p_{i0},v_{i0})$ 以其观测估计值 $(\hat p_{i0},\hat v_{i0})$ 替代。实现时取
@@ -66,7 +65,7 @@
 \[
     \varphi_i^p=\sum_{j\in\mathcal N_i(0)}\alpha_p(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|}
 \]
-对每一对\emph{初始}邻居 $j\in\mathcal N_i(0)$ 作用，保证连通。由于初始图无向且 $\alpha_p$ 只依赖距离，$\varphi_i^p$ 在初始边上成对抵消，从而 $\sum_i\varphi_i^p=0$。$\alpha_p:(d,\mu)\to(-\infty,0]$ 连续，满足 $\lim_{s\to d^+}\alpha_p(s)=0$、$\lim_{s\to\mu^-}\int_d^s\alpha_p(\sigma)\,d\sigma=-\infty$，具体可取 $\alpha_p(s)=\begin{cases}0,&s\in(d,l_\mu),\\[2pt]\dfrac{c_p}{s-\mu}-\dfrac{c_p}{l_\mu-\mu},&s\in[l_\mu,\mu),\end{cases}$ $l_\mu\in(d,\mu),c_p>0$（iAPF 设计，参见 \cite{chenCooperativeTargetfencingProtocol2019,panCooperativeTargetFencing2024a}）。$\varphi_i$、$\varphi_i^r$、$\varphi_i^p$ 均仅由相对位置算出；$\dot\varphi_i$ 由相对位置与邻居相对速度 $v_{ij}$ 精确计算。因此控制律不需要目标速度真值，只需要观测器给出的 $(\hat p_{i0},\hat v_{i0})$。
+对每一对\emph{初始}邻居 $j\in\mathcal N_i(0)$ 作用，保证连通。由于初始图无向且 $\alpha_p$ 只依赖距离，$\varphi_i^p$ 在初始边上成对抵消，从而 $\sum_i\varphi_i^p=0$。$\alpha_p:(d,\mu)\to(-\infty,0]$ 连续，满足 $\lim_{s\to d^+}\alpha_p(s)=0$、$\lim_{s\to\mu^-}\int_d^s\alpha_p(\sigma)\,d\sigma=-\infty$，具体可取 $\alpha_p(s)=\begin{cases}0,&s\in(d,l_\mu),\\[2pt]\dfrac{c_p}{s-\mu}-\dfrac{c_p}{l_\mu-\mu},&s\in[l_\mu,\mu),\end{cases}$ $l_\mu\in(d,\mu),c_p>0$（APF 设计，参见 \cite{chenCooperativeTargetfencingProtocol2019,panCooperativeTargetFencing2024a}）。$\varphi_i$、$\varphi_i^r$、$\varphi_i^p$ 均仅由相对位置算出；$\dot\varphi_i$ 由相对位置与邻居相对速度 $v_{ij}$ 精确计算。因此控制律不需要目标速度真值，只需要观测器给出的 $(\hat p_{i0},\hat v_{i0})$。
 
 \subsection{主要结果。}
 \begin{theorem}\label{thm observer}
@@ -76,13 +75,17 @@
         \item 未知对角增益满足 $0<\ub_{i\ell}\le |b_{i\ell}(t)|\le\bar b$，符号不穿越零；
         \item 扰动有界 $\|d_i\|_\infty\le\bd_i$、$\|u_0\|_\infty\le\bu_0$，且 $\bar b,\bar w_i$ 已知；
         \item 邻居相对速度 $v_{ij}$ 可用，因此 $\dot\varphi_i$ 可由相对位置与相对速度精确计算；
-        \item 存在有限常数 $\bar n^\star>0$ 使 $\|\dot v_{i0}(t)\|\le\bar n^\star$ 对所有 $i,t$ 成立；观测器增益取常值并满足 $k_b\rho\ge\bar n^\star$ 与上式的 $k_a$ 选取条件。该常数不必由观测器在线估计，但若要求可实施的固定增益，则仍需给出其保守上界；
+        \item 令 $\bar n(t)=\max_i\{\bar b\|u_i(t)\|+\bar w_i\}$。存在绝对连续的 $K_b(t)$ 满足附录 \eqref{eq:unbounded_Kb}，并按 \eqref{eq:time_varying_gain_design} 取 $k_b(t),k_a(t)$；同时慢变条件 \eqref{eq:slow_gain_condition} 成立；
         \item 初始安全裕度
         \[
             \chi_0:=\min\Bigl\{\min_{i<j}\bigl(\|p_{ij}(0)\|-d\bigr),
             \min_{(i,j)\in\mathcal E(0)}\bigl(\mu-\|p_{ij}(0)\|\bigr)\Bigr\}
         \]
-        为正。令 $v_\star=\max_{i<j}\|v_{ij}(0)\|$、$a_\star=2\bar n^\star$，取 $T_s>0$ 使 $v_\star T_s+\frac12 a_\star T_s^2<\chi_0$，并选取观测器增益使附录引理 \ref{lemma estimator} 给出的收敛时间上界 $T_1^{\max}$ 满足 $T_1^{\max}<T_s$。
+        为正。令 $v_\star=\max_{i<j}\|v_{ij}(0)\|$，$T_1^{\max}$ 为附录无界上界情形给出的收敛时间上界，并记
+        \[
+            K_{b,T}:=\sup_{0\le t\le T_1^{\max}}K_b(t)<\infty .
+        \]
+        假设 $v_\star T_1^{\max}+\rho K_{b,T}(T_1^{\max})^2<\chi_0$。
     \end{enumerate}
     采用上述分布式观测器得到 $(\hat p_{i0},\hat v_{i0})$，并将其代入 result1 的周期滑模控制律，则
     \begin{enumerate}[label=(\roman*)]
@@ -101,21 +104,27 @@
     \]
     故 $\xi=(M(0)\otimes I_2)e$，其中 $M(0)=\mathcal L(0)+\mathcal B$ 仅由初始拓扑决定。由假设 (A1) 与附录引理 \ref{lemma M>0}，$M(0)$ 正定，记 $\lambda_1=\lambda_{\min}(M(0))>0$。
 
-    取 $\nu_i=z_i/k_a$、$\nu=z/k_a$。由假设 (A5)，$n_i=\dot v_{i0}$ 满足 $\|n_i(t)\|\le\bar n^\star\le k_b\rho$，故误差系统与附录引理 \ref{lemma estimator} 完全同形。直接应用该引理可得存在有限时间 $T_1\le T_1^{\max}<T_s$ 使 $V(t)\equiv0$。于是 $\nu_i\equiv0$、$\xi_i\equiv0$；由 $M(0)$ 可逆推出 $e_i\equiv0$，即 $(\tilde p_{i0},\tilde v_{i0})\equiv(0,0)$ 对 $t\ge T_1$。
+    取 $\nu_i=z_i/k_a(t)$、$\nu=z/k_a(t)$。由假设 (A5)，$n_i=\dot v_{i0}$ 满足
+    \[
+        \|n_i(t)\|\le \bar n(t)\le \rho K_b(t)=\rho k_b(t).
+    \]
+    观测器增益满足附录“扰动上界无界的情形：时变增益设计”中的 \eqref{eq:unbounded_Kb}--\eqref{eq:slow_gain_condition}，故可直接应用该小节的有限时间结论。于是存在有限时间 $T_1\le T_1^{\max}$ 使 $V(t)\equiv0$，从而 $\nu_i\equiv0$、$\xi_i\equiv0$；由 $M(0)$ 可逆推出 $e_i\equiv0$，即 $(\tilde p_{i0},\tilde v_{i0})\equiv(0,0)$ 对 $t\ge T_1$。
 
     \textbf{2. 由精确观测退化到 result1。}
     由 (i)，$t\ge T_1$ 时 $(\hat p_{i0},\hat v_{i0})=(p_{i0},v_{i0})$，故控制器退化为 result1 的真值闭环。另一方面，吸引项 $\varphi_i^p$ 由初始无向图上的成对势函数构造，因此满足 $\sum_i\varphi_i^p=0$；再加上 $\sum_i\varphi_i^r=0$，整体人工势场仍保留 result1 中的质心不变量。于是 result1 的 P1 论证可直接沿用。
 
     \textbf{3. 瞬态避碰与连通保持。}
-    先看观测器收敛前的有限区间 $[0,T_1]$。对任意两智能体有 $\dot p_{ij}=v_{ij}$，且
+    先看观测器收敛前的有限区间 $[0,T_1]$。对任意两智能体有 $\dot p_{ij}=v_{ij}$，且对 $0\le t\le T_1\le T_1^{\max}$，
     \[
-        \|\dot v_{ij}\|=\|\dot v_{i0}-\dot v_{j0}\|\le 2\bar n^\star=a_\star.
+        \|\dot v_{ij}\|=\|\dot v_{i0}-\dot v_{j0}\|
+        \le 2\bar n(t)\le 2\rho K_{b,T}.
     \]
     因此
     \[
         \|p_{ij}(t)-p_{ij}(0)\|
-        \le v_\star t+\frac12a_\star t^2
-        < \chi_0,\qquad 0\le t\le T_1<T_s.
+        \le v_\star t+\rho K_{b,T}t^2
+        \le v_\star T_1^{\max}+\rho K_{b,T}(T_1^{\max})^2
+        < \chi_0.
     \]
     由 $\chi_0$ 的定义，$[0,T_1]$ 内既不会发生碰撞，也不会有初始边达到通信边界 $\mu$。
 
@@ -128,6 +137,6 @@
     最后，若采用 result2 的积分滑模变体，则 P3（速度一致）仍由 Barbalat 引理得到。证毕。
 \end{proof}
 
-\begin{remark}[关于扰动上界假设]
-    将假设 (A5) 中的“已知一致上界”放宽为“存在有限一致上界”后，定理仍是严格的存在性结论：只要选取某个满足 $k_b\rho\ge\bar n^\star$ 的常值增益，附录引理及上述证明均成立。但若要求控制器能够在不知道 $\bar n^\star$ 的情况下实际选取固定 $k_b$，则还需要引入自适应增益观测器，并重新证明其有限时间收敛性；不能仅通过删除“已知”二字得到该实现结论。
+\begin{remark}[关于无界扰动上界的实现]
+    本定理不再要求 $\bar n(t)$ 具有全局有限上确界，而是要求存在满足附录 \eqref{eq:unbounded_Kb} 与 \eqref{eq:slow_gain_condition} 的绝对连续上包络 $K_b(t)$。若直接取 $K_b(t)=(\bar n(t)+\delta_b)/\rho$，则还需验证附录末尾给出的 $\dot{\bar n}(t)$ 增长率条件；若 $\bar n(t)$ 有跳变，则应先构造光滑上包络，再生成 $k_b(t)=K_b(t)$ 与 $k_a(t)=c_a\sqrt{K_b(t)}$。
 \end{remark}
