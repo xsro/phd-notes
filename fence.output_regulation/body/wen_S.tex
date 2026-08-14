@@ -1,0 +1,125 @@
+
+\section{一般形式的 $S=[s_{11},s_{12};s_{21},s_{22}]$ 是否也可行}
+
+\subsection{回顾原文的 $S$}
+
+原文取
+\[
+S = \begin{bmatrix}0&1\\-s_1&-s_2\end{bmatrix},
+\]
+它给出的目标动力学是
+\[
+\dot x_0 = v_0,\qquad \dot v_0 = -s_1 x_0 - s_2 v_0.
+\]
+其中上行使 $[0,1]$ 正是“速度是位置的导数”这一运动学一致性关系；
+下行 $[-s_1,-s_2]$ 决定目标加速度律，可由 $(s_1,s_2)$ 任意参数化
+（只要满足 Assumption 1：特征值实部均 $\ge 0$）。
+
+现考察把 $S$ 放宽为一般二阶矩阵
+\[
+S = \begin{bmatrix}s_{11}&s_{12}\\ s_{21}&s_{22}\end{bmatrix}
+\]
+时，原文的结论（尤其是 “$X=I_2$”）是否仍然成立。
+
+\subsection{一般 $S$ 下的稳态映射 $X$}
+
+仍从式 (17) 出发，核心矩阵 $A=\begin{smallmatrix}0&1\\0&0\end{smallmatrix}$、
+$B=\begin{smallmatrix}0\\1\end{smallmatrix}$、$C=[1,0]$ 不变。
+由第三行
+\[
+0 = CX - C
+\]
+得第一行为 $[1,0]$，即 $X=\begin{smallmatrix}1&0\\X_{21}&X_{22}\end{smallmatrix}$。
+再由第一行 $XS = AX - BKZ$ 比较第一行：
+\begin{itemize}
+  \item 左端：$XS$ 第一行 $= [1,0]\,S = [s_{11},s_{12}]$；
+  \item 右端：$AX$ 第一行 $= [0,1]\,X = [X_{21},X_{22}]$，
+    而 $BKZ$ 第一行为零（因 $B=\begin{smallmatrix}0\\1\end{smallmatrix}$）。
+\end{itemize}
+于是 $[s_{11},s_{12}] = [X_{21},X_{22}]$，得到
+\[
+X = \begin{bmatrix}1&0\\ s_{11}&s_{12}\end{bmatrix}.
+\]
+
+\textbf{关键结论}：原文的 “$X=I_2$” 只在 $s_{11}=0,\;s_{12}=1$ 时成立；
+对一般 $S$，$X$ 的上行是 $[1,0]$（位置稳态等于目标位置），
+下行是 $[s_{11},s_{12}]$（速度稳态等于 $s_{11}x_0+s_{12}v_0=\dot x_0$）。
+
+\subsection{对原文若干结论的影响}
+
+\begin{enumerate}
+  \item 原文 “$UX_c=[0,1]X=[0,1]$” 不再成立。一般地
+    \[
+    UX_c = [0,1]\,X = [s_{11},s_{12}] = \text{$X$ 的第二行}.
+    \]
+    因此
+    \[
+    (U\otimes I_2)\tilde\zeta_i = s_{11}x_0 + s_{12}v_0 = \dot x_0,
+    \]
+    即误差增广量选出的是“目标位置的导数”，而非直接的速度差 $v_i-v_0$。
+
+  \item 稳态相容关系 $KZ$ 也改变。由 $XS=AX-BKZ$ 的第二行可得
+    \[
+    KZ = \bigl[-(s_{11}^2+s_{12}s_{21}),\; -(s_{11}s_{12}+s_{12}s_{22})\bigr].
+    \]
+    代入原文特例 $s_{11}=0,s_{12}=1,s_{21}=-s_1,s_{22}=-s_2$ 得
+    $KZ=[s_1,s_2]$，正是 \texttt{wen\_P.tex} 中记录的结果，说明上式是其推广。
+\end{enumerate}
+
+\subsection{合围 (P1) 是否仍成立}
+
+中心误差 $\bar e = \bar x - x_0$ 的收敛只依赖
+$A_c$ Hurwitz 与调节方程可解（Lemma 2/3），
+与 $S$ 的具体数值无关（只要 $S$ 特征值实部 $\ge 0$，
+且 $(A,B)$ 可控——本例二阶积分器显然可控，且无传输零点，
+Francis 可解性自动满足）。因此只要
+\begin{itemize}
+  \item Assumption 1：$S$ 特征值实部均 $\ge 0$；
+  \item 内部模型 $(G_1,G_2)$ 嵌入该 $S$（p-copy）；
+  \item 参数使 $A_c$ 为 Hurwitz，
+\end{itemize}
+就有 $\bar x\to x_0$，配合碰撞规避项使车辆围绕目标展开，
+从而 $x_0\in\operatorname{co}\{x_i\}$，即 (P1) 合围对一般 $S$ 仍成立。
+
+\subsection{速度同步 (P3) 的物理意义}
+
+车辆速度恒为 $v_i=\dot x_i$。
+要使目标“速度” $v_0$ 成为 $x_0$ 的真实导数，必须满足
+\[
+\dot x_0 = v_0
+\quad\Longleftrightarrow\quad
+[s_{11},s_{12}]\begin{bmatrix}x_0\\ v_0\end{bmatrix}=v_0
+\ \text{对轨迹恒成立}
+\quad\Longleftrightarrow\quad
+s_{11}=0,\;s_{12}=1.
+\]
+\begin{itemize}
+  \item 若 $s_{11}=0,s_{12}=1$（即 $S$ 上行为 $[0,1]$）：
+    则 $v_0=\dot x_0$，(P3) 的 $v_i\to v_0$ 与车辆运动学一致，成立。
+  \item 若否则：$v_0\neq\dot x_0$，目标“位置”与“速度”运动学不自洽；
+    此时 (P3) 虽在数学上仍可使 $v_i\to v_0$，
+    但车辆 $\dot x_i=v_i$ 与目标 $\dot x_0\neq v_0$ 不一致，
+    原问题“跟踪一个二阶目标的位置与速度”失去物理意义。
+\end{itemize}
+
+\subsection{结论}
+
+一般二阶矩阵 $S$ 在数学框架内（输出调节核心）是可用的，且
+\begin{itemize}
+  \item 合围 (P1) 对任意满足 Assumption 1 的 $S$ 都成立；
+  \item 但 “$X=I_2$” 与 “速度同步 (P3) 的物理含义” 都要求
+    $S$ 的上行为 $[0,1]$，即 $s_{11}=0,\;s_{12}=1$。
+\end{itemize}
+因此，原文的 $S=\begin{smallmatrix}0&1\\-s_1&-s_2\end{smallmatrix}$
+正是“满足运动学一致性”的\textbf{最一般形式}：
+上行被位置—速度关系固定为 $[0,1]$，
+下行 $[s_{21},s_{22}]=[-s_1,-s_2]$ 可任意（受 Assumption 1 约束）
+以描述目标加速度律。
+
+换句话说，若把 $S$ 放宽为完全任意的二阶矩阵，
+框架仍能做输出调节（可得到一般的
+$X=\begin{smallmatrix}1&0\\s_{11}&s_{12}\end{smallmatrix}$ 与相应的 $KZ$ 关系），
+但只有当 $s_{11}=0,s_{12}=1$ 时，所得结果才对应
+“车辆合围并同步跟踪一个位置—速度自洽的二阶目标”这一原始问题。
+
+此外，可能更加一般的 $S$ 并没有太大的意义。跟踪的其实是$x_0$速度收敛应该收敛到$\dot{x}_0$, 也就是说这两种在这个时候是一样的形式。
