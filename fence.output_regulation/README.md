@@ -1,0 +1,1 @@
+MATLAB simulation codes are presented at https://github.com/SYSUsz422/cooperative-fencing-simulation/blob/develop/fence2026wen/discussion.md

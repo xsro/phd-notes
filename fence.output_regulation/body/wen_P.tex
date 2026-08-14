@@ -1,0 +1,199 @@
+
+\clearpage
+
+\section{讨论：最终队形是什么？}
+
+本文控制器中 $P$ 来自论文 Theorem 1 的 Lyapunov 方程：
+\[
+P A_c + A_c^T P + U^T U = 0,
+\]
+其中
+\[
+A_c=\begin{bmatrix}A&-BK\\G_2C&G_1\end{bmatrix},\qquad
+U=[0,1,0,0,0,0].
+\]
+
+\subsection{矩阵 P 与 alpha 的关系}
+
+论文用 $P$ 构造：
+\[
+\alpha=[0,\alpha_1,\alpha_2^T]^T=\epsilon P^{-1}U^T.
+\]
+因此 $P$ 的唯一性意味着在固定 $A_c$、$U$ 和 $\epsilon$ 后，$\alpha$ 也是唯一确定的。论文数值例子中给出的 $\alpha_1$ 和 $\alpha_2$ 是四舍五入后的数值；本仓库默认重新求 $P$ 并计算更完整精度的 $\alpha$，因此会看到类似：
+\begin{verbatim}
+Case 1: alpha1 = 4.38, alpha2 = [0.951704, 4.02155, 2.70798, -1.25023]^T
+Case 2: alpha1 = 10.24, alpha2 = [0.259605, 10.0022, 1.84197, -0.53952]^T
+\end{verbatim}
+
+其中 $\alpha_1$ 恰好显示为论文中的两位小数，而 $\alpha_2$ 比论文报告值保留了更多有效数字。
+
+\subsection{关于 $u_i \to u_0$ 与 $z_i$ 四个分量的对应关系}
+
+根据 MCP 文献库中 130 号文章，即 Wen 等 2026 论文，控制器和补偿器分别由式 (10)、式 (11) 给出：
+\[
+u_i=-(K\otimes I_2)z_i+\alpha_1\phi_i,
+\]
+其中
+\[
+\phi_i=
+\sum_{j\in\mathcal N_i}\varpi(\|x_{ij}\|)
+\frac{x_{ij}}{\|x_{ij}\|}.
+\]
+
+目标动力学为：
+\[
+\dot x_0=v_0,\qquad
+\dot v_0=-s_1x_0-s_2v_0.
+\]
+因此如果把目标加速度记为 $u_0$，则
+\[
+u_0=\dot v_0=-s_1x_0-s_2v_0.
+\]
+直觉上，闭环稳定后每辆车和目标速度同步，所以应有：
+\[
+u_i \to u_0.
+\]
+
+但需要注意：论文 Theorem 1 中直接证明的是性质 (P3)
+\[
+v_i-v_0\to 0,
+\]
+而不是单独把 $u_i-u_0 \to 0$ 写成定理结论。$u_i \to u_0$ 可以看作稳态相容关系：当速度误差收敛、相对构型趋于稳定、排斥项 $\phi_i$ 也趋于稳定时，车辆加速度应与目标加速度一致。
+
+\subsubsection{不应把 $z_i$ 直接理解为真值估计}
+
+论文在式 (19) 定义增广状态：
+\(
+\zeta_i=
+[x_i^T,v_i^T,\hat x_i^T,\hat v_i^T,\hat x_{0i}^T,\hat v_{0i}^T]^T.
+\)
+然后定义误差：
+\(
+\tilde\zeta_i
+=
+\zeta_i-(X_c\otimes I_2)\theta.
+\)
+证明中使用 Sylvester 方程：
+\[
+X_cS=A_cX_c+B_c.
+\]
+文中指出由式 (17) 可得 $X=I$，因此：
+\(
+(U\otimes I_2)\tilde\zeta_i
+=v_i-v_0.
+\)
+这一步只说明增广误差中由 $U=[0,1,0,0,0,0]$ 选出的分量对应速度同步误差。它并不说明：
+\[
+z_i \to [x_i^T,v_i^T,x_0^T,v_0^T]^T.
+\]
+更准确地说，$z_i$ 是动态补偿器状态。虽然论文文字称其四个块分别表示对 $x_i, v_i, x_0, v_0$ 的 estimated values，但闭环存在排斥调节项时，稳态下每个车辆一般带有一个由 $\phi_i$ 决定的偏置。因此用
+\[
+\|z_i-[x_i^T,v_i^T,x_0^T,v_0^T]^T\|
+\]
+作为收敛误差并不严谨，也不一定收敛到零。
+
+\subsubsection{四个分量的正确稳态对应}
+
+对每个坐标维度，可把增广系统写成 6 维标量块形式：
+\[
+\dot\zeta_i
+=
+(A_c\otimes I_2)\zeta_i
++(B_c\otimes I_2)\theta
++(\alpha\otimes I_2)\phi_i.
+\]
+其中
+\(
+\alpha=[0,\alpha_1,\alpha_2^T]^T.
+\)
+若相对构型稳定，则 $\phi_i$ 收敛到常向量。此时稳态参考可写成：
+\[
+\zeta_i
+\sim
+(X_c\otimes I_2)\theta
++(h\otimes I_2)\phi_i,
+\qquad
+h=-A_c^{-1}\alpha.
+\]
+令\(h=[h_1,h_2,h_3,h_4,h_5,h_6]^T\)以及
+\[
+X_c=
+\begin{bmatrix}
+X\\Z
+\end{bmatrix},
+\qquad
+Z=
+\begin{bmatrix}
+Z_1\\Z_2\\Z_3\\Z_4
+\end{bmatrix},
+\]
+其中 \(X=I_2\), \(Z_i\in\mathbb{R}^{2\times 2}, i=1,\dots,4\) .
+则四个补偿器分量更合适的对应关系是：
+\[
+\hat x_i
+\sim
+(Z_1\otimes I_2)\theta+h_3\phi_i,
+\]
+\[
+\hat v_i
+\sim
+(Z_2\otimes I_2)\theta+h_4\phi_i,
+\]
+\[
+\hat x_{0i}
+\sim
+(Z_3\otimes I_2)\theta+h_5\phi_i,
+\]
+\[
+\hat v_{0i}
+\sim
+(Z_4\otimes I_2)\theta+h_6\phi_i.
+\]
+因此四个分量不是分别简单收敛到 $x_i, v_i, x_0, v_0$，而是收敛到由目标内模项和排斥平衡偏置共同决定的量。
+
+\subsubsection{为什么这样仍然保证 $u_i \to u_0$}
+
+把上述稳态表达代入控制律：
+\[
+u_i
+\sim
+-(KZ\otimes I_2)\theta
+-
+K[h_3,h_4,h_5,h_6]^T\phi_i
++\alpha_1\phi_i.
+\]
+由 Sylvester 方程的相容关系可得：
+\[
+KZ=[s_1,s_2],
+\]
+并且由排斥平衡偏置有：
+\[
+K[h_3,h_4,h_5,h_6]^T=\alpha_1.
+\]
+于是排斥项在控制输入中抵消：
+\[
+-
+K[h_3,h_4,h_5,h_6]^T\phi_i
++\alpha_1\phi_i
+=0.
+\]
+剩下的动态目标项为：
+\[
+u_i
+\sim
+-(KZ\otimes I_2)\theta
+=
+-s_1x_0-s_2v_0
+=u_0.
+\]
+这解释了为什么即使 $z_i$ 四个块不逐个收敛到物理真值，最终控制输入仍应收敛到目标加速度。
+
+\subsubsection{仿真中如何检查}
+
+可以直接在仿真结果中检查每辆车的 $u_i-u_0$：取末端状态解包得到 $x, v, z, \theta$，由目标动力学计算目标加速度 $u_0 = -s_1 x_0 - s_2 v_0$，再对每辆车计算控制输入 $u_i = -(K\otimes I_2)z_i + \alpha_1\phi_i$ 及其与 $u_0$ 的偏差。在当前仓库初值下，末端误差量级为：
+\begin{verbatim}
+Case 1: ||u_i-u_0|| about 4e-4 to 8e-4
+Case 2: ||u_i-u_0|| about 2e-6 to 8e-6
+\end{verbatim}
+
+这与 $u_i \to u_0$ 的稳态判断一致。

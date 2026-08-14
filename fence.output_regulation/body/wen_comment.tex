@@ -1,0 +1,194 @@
+\section{讨论：为什么论文中说 $X$ 是单位矩阵}
+
+本文（Wen 等, 2026, CNSNS, MCP 文献库 130 号）在证明分布式围捕问题时，
+把问题转化为输出调节（output regulation）框架。
+在式 (17) 中出现了矩阵 $X$：
+\[
+\begin{aligned}
+XS &= AX - BKZ, \\
+ZS &= G_1Z + G_2(CX - C), \\
+0  &= CX - C,
+\end{aligned}\tag{17}
+\]
+并紧接着指出 ``From (17), it follows that $X$ is the identity matrix''。
+下面解释这一结论的来由。
+
+
+为简便，论文对每个空间坐标单独写出标量核矩阵（再通过 $\otimes I_2$ 抬升到平面 $\mathbb R^2$）。
+核心矩阵为
+\[
+A=\begin{bmatrix}0&1\\0&0\end{bmatrix},\qquad
+B=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+C=[1,0],\qquad
+S=\begin{bmatrix}0&1\\-s_1&-s_2\end{bmatrix}.
+\]
+其中 $X$ 是 $2\times 2$ 矩阵，作用是把目标外系统状态
+$\theta=[x_0^T, v_0^T]^T$（单坐标下为 $[x_0, v_0]^T$）
+映射到车辆的稳态调节状态 $[x, v]^T$，即稳态关系
+\[
+\begin{bmatrix}x\\ v\end{bmatrix}_{\mathrm{ss}} = X
+\begin{bmatrix}x_0\\ v_0\end{bmatrix}.
+\]
+
+\subsubsection{代数推导}
+
+由式 (17) 第三行（调节输出方程）
+\[
+0 = CX - C
+\]
+以及 $C=[1,0]$，有
+\[
+CX = [1,0]X = \text{第 1 行 of }X = [1,0].
+\]
+因此
+\[
+X = \begin{bmatrix}1&0\\ X_{21}&X_{22}\end{bmatrix}.
+\]
+
+再由式 (17) 第一行
+\[
+XS = AX - BKZ.
+\]
+比较该方程的\textbf{第一行}：
+\begin{itemize}
+  \item 左端：$XS$ 的第一行 $= [1,0]\,S
+    = \bigl[1\cdot 0 + 0\cdot(-s_1),\; 1\cdot 1 + 0\cdot(-s_2)\bigr] = [0,1]$。
+  \item 右端：$AX$ 的第一行 $= [0,1]\,X = \text{第 2 行 of }X = [X_{21}, X_{22}]$；
+    而 $B=[\begin{smallmatrix}0\\1\end{smallmatrix}]$，故 $BKZ$ 的第一行恒为零。
+    于是 $(AX-BKZ)$ 的第一行 $= [X_{21}, X_{22}]$。
+\end{itemize}
+令两端第一行相等，得到
+\[
+[0,1] = [X_{21}, X_{22}] \quad\Longrightarrow\quad X_{21}=0,\; X_{22}=1.
+\]
+结合前面得到的 $X_{11}=1, X_{12}=0$，即得
+\[
+X = \begin{bmatrix}1&0\\0&1\end{bmatrix} = I_2.
+\]
+
+关键点在于：因为 $B=[\begin{smallmatrix}0\\1\end{smallmatrix}]$ 的上半块为零，
+$BKZ$ 项对 $XS=AX-BKZ$ 的第一行没有任何贡献，
+所以这一行只含 $X$ 本身，直接把 $X$ 的第二行锁定为 $[0,1]$。
+再加上调节输出方程给出的第一行 $[1,0]$，便唯一确定 $X=I_2$。
+（式 (17) 整体的唯一性也由 Lemma 2 保证：其解 $(X,Z)$ 唯一，而 $X=I_2$ 配合满足
+$KZ=[s_1,s_2]$、$ZS=G_1Z$ 的 $Z$ 正是该唯一解。）
+
+\subsection{物理解释}
+
+$X$ 是稳态映射：把目标状态 $[x_0, v_0]^T$ 映到车辆的稳态 $[x, v]^T$。
+$X=I_2$ 等价于
+\[
+x_{\mathrm{ss}} = x_0,\qquad v_{\mathrm{ss}} = v_0,
+\]
+即稳态下车的位置与速度分别等于目标的位置与速度。
+这正好对应论文要求的性质 (P3)：$\lim_{t\to\infty}[v_i(t)-v_0(t)]=0$，
+以及围捕 (P1) 所依赖的位置同步。因此从物理上看，$X$ 取单位矩阵正是
+“车辆最终要跟踪目标位置与速度”这一事实的矩阵表述。
+
+\subsection{这一结论的用途}
+
+由 $X=I_2$ 及 $X_c=[X^T, Z^T]^T$，论文推出
+\[
+UX_c = [0,1]X = [0,1],
+\]
+其中 $U=[0,1,0,0,0,0]$（选取增广状态中的速度分量）。
+于是
+\[
+(U\otimes I_2)\tilde\zeta_i
+= (U\otimes I_2)\bigl(\zeta_i - (X_c\otimes I_2)\theta\bigr)
+= v_i - v_0 = \tilde v_i.
+\]
+也就是说，误差增广状态 $\tilde\zeta_i$ 中由 $U$ 选出的分量恰好是速度同步误差，
+这一步在后续用势能函数处理碰撞规避项时是必需的。
+
+\subsection{与本文其他备注的一致性}
+
+本仓库 \texttt{wen\_P.tex} 中已指出由式 (17) 可得 $X=I$，
+并在此基础上推出稳态相容关系 $KZ=[s_1,s_2]$，
+以及控制输入最终收敛到目标加速度 $u_0=-s_1x_0-s_2v_0$。
+这里补充的代数推导说明：$KZ=[s_1,s_2]$ 正是把 $X=I_2$ 代回
+$XS=AX-BKZ$ 后（即 $S=A-BKZ$）所得到的第一行之外的第二行条件，
+与本文整体论证自洽。
+
+
+\section{讨论：什么是 p-copy 以及 $G_1$ 和 $G_2$ 矩阵设计的缘由}
+
+\subsection{论文是否给出了 p-copy 的定义}
+
+没有。Wen 等 (2026) 只在 Lemma 2 中直接使用了
+“the pair $(G_1,G_2)$ incorporates a $p$-copy internal model of $S$”
+这一说法，而 Lemma 2 是整段照引参考文献 [25, Lemma 1.27]
+（Chen \& Huang, 2015, \emph{Stabilization and Regulation of Nonlinear Systems}）。
+论文本身没有展开这个术语，也没有解释为何需要 $p$ 份拷贝。
+
+\subsection{p-copy internal model 的定义}
+
+该定义的原始出处是 Jie Huang 的专著
+\emph{Nonlinear Output Regulation} (2004), Definition 1.22
+（也是 [25] 中 Lemma 1.27 的源头）：
+
+\begin{quote}
+给定任意方阵 $\hat A_1$，若矩阵对 $(\mathcal G_1, \mathcal G_2)$ 可经相似变换写成
+\[
+\mathcal G_1 = T\begin{bmatrix} S_1 & S_2 \\ 0 & \bar G_1\end{bmatrix}T^{-1},
+\qquad
+\mathcal G_2 = T\begin{bmatrix} S_3 \\ \bar G_2\end{bmatrix},
+\]
+其中左上角块 $S_1$ 包含外系统矩阵 $S$（即这里的 $\hat A_1$）的 $p$ 个拷贝，
+则称该矩阵对 \emph{incorporate a $p$-copy internal model} of $\hat A_1$。
+\end{quote}
+
+直观地说：内部模型 $(\mathcal G_1, \mathcal G_2)$ 把外系统生成器 $S$ 复制了 $p$ 份
+嵌进增广系统。这样，当 $A_c$ Hurwitz 且 $S$ 无负实部特征值时，
+调节方程 (6)/(17) 才有唯一解（Lemma 2 保证）。
+
+\subsection{本文所用 $G_1, G_2$ 为何是 2-copy}
+
+论文式 (11) 给出的补偿器矩阵为
+\[
+G_1 = \begin{bmatrix}
+-l_1 & 1 & 0 & 0\\
+-k_1-l_2 & -k_2 & -k_3 & -k_4\\
+0 & 0 & 0 & 1\\
+0 & 0 & -s_1 & -s_2
+\end{bmatrix},\qquad
+G_2 = \begin{bmatrix} l_1 \\ l_2 \\ 0 \\ 1\end{bmatrix}.
+\]
+外系统矩阵 $S=\begin{smallmatrix}0&1\\-s_1&-s_2\end{smallmatrix}$ 是 $2\times 2$，
+而 $(G_1,G_2)$ 是 $4\times 4$ / $4\times 1$，即把 $S$ 嵌入了 $p=2$ 份：
+\begin{itemize}
+  \item 下右 $2\times 2$ 块正是外系统本身 $\begin{smallmatrix}0&1\\-s_1&-s_2\end{smallmatrix}$；
+  \item 上左 $2\times 2$ 块 $\begin{smallmatrix}-l_1&1\\-k_1-l_2&-k_2\end{smallmatrix}$
+    与 $G_2$ 的上两个分量 $\begin{smallmatrix}l_1\\l_2\end{smallmatrix}$
+    构成第二个可控拷贝（controllable copy），保证 $(\bar G_1,\bar G_2)$ 可控。
+\end{itemize}
+经过适当的相似变换 $T$，即可写成定义中的分块形式，从而
+$(G_1,G_2)$ 是一个 2-copy internal model of $S$。
+
+\subsection{为什么需要 p-copy（设计缘由）}
+
+输出调节要求闭环能够跟踪/抑制由外系统 $S$ 生成的任意参考与扰动。
+内部模型原理指出：控制器中必须“包含”外系统的动力学副本，
+才能保证稳态误差为零。具体地：
+\begin{itemize}
+  \item 最小内部模型只需包含 $S$ 的一份副本（$p=1$）。
+    在标准的线性输出调节问题（多为 SISO 或测量较充分）中，
+    单个副本在 Francis 条件下已足以同时保证调节方程可解，
+    并使增广系统可稳、可检测。因此“$p=1$ 一般只能保证调节方程存在解”
+    的说法并不准确——它本来就足以使问题可解。
+  \item 取 $p\ge 1$ 份（本文 $p=2$）的真正目的不是“补足存在性”，
+    而是提供\textbf{设计自由度}：定义中 $(\bar G_1,\bar G_2)$ 块可自由配置，
+    用来在“嵌入 $S$”的同时，使增广矩阵
+    $A_c=\begin{smallmatrix}A&-BK\\G_2C&G_1\end{smallmatrix}$ 成为 Hurwitz
+    并保证 Lemma 2 的 Sylvester/调节方程有唯一解。
+  \item 在分布式、仅相对位置测量、MIMO 或鲁棒调节等情形下，
+    测量往往是部分的、结构化的，单个固定副本可能使增广对
+    $(G_2C,G_1)$ 不可检测，或留下的极点配置自由度太少；
+    此时引入多个可控副本（p-copy）正是为了同时满足
+    “嵌入 $S$” 与 “$A_c$ Hurwitz / 可检测” 两个目标。
+  \item 本文的 $G_1$ 中下右 $2\times 2$ 块正是外系统 $S$ 本身（真正的内部模型副本），
+    上左 $2\times 2$ 块 $\begin{smallmatrix}-l_1&1\\-k_1-l_2&-k_2\end{smallmatrix}$
+    是可调可控的第二份副本，其参数 $l_1,l_2,k_1,k_2$ 提供的自由度，
+    正是用来满足 $A_c$ Hurwitz 这一关键条件，
+    进而由式 (17) 唯一解出 $X=I_2$、$Z$，完成围捕与速度同步证明。
+\end{itemize}
