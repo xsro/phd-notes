@@ -100,3 +100,105 @@ Serrani--Isidori--Marconi 2001；Chen \& Huang 2015）：
     而非“测量是否充分”——所以补救办法是引入自适应/估计，
     而不是增加测量通道。
 \end{itemize}
+
+\subsection{一种具体可行算法：自适应内部模型围捕控制器}
+
+下面给出在“仅相对位置 + $s_1,s_2$ 未知”下可直接落地的算法。
+它是对原文固定结构算法的\textbf{最小改动}：仅把 $G_1$ 中的固定 $S$ 换成在线估计 $\hat S(t)$，
+并补一条参数自适应律。逐坐标写出标量核（再经 $\otimes I_2$ 抬升到 $\mathbb R^2$）。
+
+\textbf{已知结构假设}：
+目标确为二阶，动力学结构 $S=\begin{smallmatrix}0&1\\-s_1&-s_2\end{smallmatrix}$ 已知，
+仅参数 $s_1,s_2$ 未知；目标为时变速度（特征值不在左半平面），提供持续激励。
+
+\medskip
+\textbf{1. 自适应补偿器（取代原文式 (11)）}
+\[
+\dot z_i = \hat G_1(t)\, z_i + G_2\, e_i + \alpha_2\,\phi_i,
+\]
+其中 $z_i=[\hat x_i,\hat v_i,\hat x_{0i},\hat v_{0i}]^T$，
+\[
+\hat G_1(t)=
+\begin{bmatrix}
+-l_1 & 1 & 0 & 0\\
+-k_1-l_2 & -k_2 & -k_3 & -k_4\\
+0 & 0 & 0 & 1\\
+0 & 0 & -\hat s_1(t) & -\hat s_2(t)
+\end{bmatrix},\qquad
+G_2=\begin{bmatrix}l_1\\l_2\\0\\1\end{bmatrix}.
+\]
+与原文唯一区别：下右块由在线估计
+$\hat S(t)=\begin{smallmatrix}0&1\\-\hat s_1(t)&-\hat s_2(t)\end{smallmatrix}$
+取代固定 $S$。$e_i=x_i-x_0$ 为到目标的相对位置，
+$\phi_i=\sum_{j\in\mathcal N_i}\varpi(\|x_{ij}\|)\frac{x_{ij}}{\|x_{ij}\|}$ 为碰撞规避项。
+
+\medskip
+\textbf{2. 控制输入（同原文式 (10)）}
+\[
+u_i = -(K\otimes I_2)z_i + \alpha_1 \phi_i,\qquad
+K=[k_1,k_2,k_3,k_4].
+\]
+
+\medskip
+\textbf{3. 参数自适应律}
+将相对位置误差 $e_i$ 经一阶低通滤波得到 $\varepsilon_i$
+（滤除碰撞规避高频项，并构成合适回归信号）：
+\[
+\dot\varepsilon_i = -\lambda \varepsilon_i + e_i,\qquad \lambda>0.
+\]
+用内部模型给出的目标状态估计 $[\hat x_{0i},\hat v_{0i}]^T$ 作回归向量，
+对参数估计取梯度下降：
+\[
+\dot{\hat s}_1 = -\gamma_1\,\hat x_{0i}\,\varepsilon_i,\qquad
+\dot{\hat s}_2 = -\gamma_2\,\hat v_{0i}\,\varepsilon_i,
+\qquad \gamma_1,\gamma_2>0.
+\]
+（实际实现可用带投影算子的形式把 $\hat s_1,\hat s_2$ 限制在有界集内，
+或采用带正规化的最小二乘增益以提高数值稳健性。）
+
+\medskip
+\textbf{4. 收敛条件}
+在以下条件下，闭环可实现合围 (P1) 与速度同步 (P3)：
+\begin{enumerate}
+  \item 增益 $K,l_1,l_2,\alpha_1,\alpha_2$ 使增广矩阵 $A_c(\hat S)$
+    在参数收敛过程中保持（至少局部）Hurwitz；
+  \item 含 $\hat S$ 的内部模型 $(\hat G_1,\hat G_2)$ 使增广对
+    $(G_2C,\hat G_1)$ 可检测；
+  \item 目标时变（特征值非左半平面），使回归向量
+    $[\hat x_{0i},\hat v_{0i}]^T$ 持续激励（PE，
+    对振荡/增长型目标自然成立），从而 $\hat s_1\to s_1,\;\hat s_2\to s_2$；
+  \item 初始相对距离大于安全距离（原文 Assumption 2）。
+\end{enumerate}
+
+\medskip
+\textbf{5. 与原文结论的衔接}
+参数收敛后 $\hat S\to S$，算法退化为原文固定结构控制器；
+而原文已证明该结构在 $A_c$ Hurwitz 下解决合围与速度同步，
+故自适应版本在 PE 成立时同样解决原问题，且全程仅用相对位置测量
+$e_i$ 与 $x_{ij}$。
+
+\medskip
+\textbf{说明}：上述梯度律是自适应内部模型
+（Serrani--Isidori--Marconi 2001；Chen \& Huang 2015）
+在该问题上的标准写法；严格收敛性按 AIM 定理验证
+（构造含参数误差的 Lyapunov 函数，并依赖 PE 使参数误差项负定）。
+若担心“仅凭相对位置”的可检测性不足，也可改用工件 [22,23]
+的“目标运动有限时间估计器 + 围捕控制器”两步法，
+其测量需求同样仅为相对位置，且把未知 $S$ 完全交给估计器处理。
+
+\subsection{备选具体算法：目标运动估计器 + 围捕控制器（两步法）}
+
+若不希望改动内部模型结构，可采用与原文引言 [22,23] 一致的方案：
+\begin{enumerate}
+  \item \textbf{分布式目标观测器}：每辆车用相对位置
+    $e_i=x_i-x_0$ 与 $x_{ij}=x_i-x_j$ 估计外系统状态
+    $\hat\theta_i=[\hat x_{0i},\hat v_{0i}]^T$，并对未知参数
+    $(\hat s_1,\hat s_2)$ 做自适应更新（形式同上文第 3 步）；
+    估计器可设计为有限时间/指数收敛以保证 $(\hat x_{0i},\hat v_{0i})\to(x_0,v_0)$。
+  \item \textbf{围捕控制器}：把估计出的 $\hat S,\hat\theta_i$ 直接代入
+    原文式 (10)(11)（即把“估计值”当作“已知值”使用）。
+\end{enumerate}
+两步走的好处是：围捕部分\textbf{完全复用原文证明}，
+只需单独保证估计器在仅相对位置下的收敛性；
+代价是需额外设计并证明估计器，且瞬态依赖估计精度。
+
