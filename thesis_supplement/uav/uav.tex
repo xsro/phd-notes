@@ -1,0 +1,368 @@
+
+
+
+在飞行器编队中，通常只考虑单积分或者双积分模型对飞行器个体的建模，似乎处理飞行器动态特性的过程可以由观测器设计等工作实现。
+也有一些文献直接考虑飞行器的动力学运动学模型对个体建模实现控制。
+四旋翼飞行器时一个非线性、多变量、高度耦合、欠驱动系统（四个旋翼的输入控制飞行器刚体的六个自由度）。
+由于寇立伟的用的反馈线性化，将系统化为\(\dot{r}_i'=R(\theta_i)Q u_i\)我发现反馈线性化用在无人机上其实并不多。
+我想似乎这里的耦合会给后面的协同指向与围捕结合带来一些挑战，似乎在小论文中多事单积分双积分模型（更高的没有看到），而在大论文中很多会把无人机模型纳入其中。
+
+\section{飞行器刚体动力学与运动学方程}
+
+由于四旋翼的模型是非线性模型，建立系统的动力学模型比较复杂，通常为了简化，做如下假设：
+
+\begin{assumption}
+机体坐标系的原点为飞行器的质心，且与飞行器集合中心重合
+\end{assumption}
+
+\begin{assumption}
+    四旋翼飞行器机体与螺旋桨都是刚体结构，并且机体是几何与质量对称的
+\end{assumption}
+
+\begin{assumption}
+    \label{升力与螺旋桨转速的平方成正比}
+    螺旋桨产生的升力与螺旋桨转速的平方成正比，螺旋桨旋转时产生的反扭矩与螺旋桨转速的平方成正比
+\end{assumption}
+
+地面惯性坐标系下定义变量：
+
+\begin{enumerate}
+    \item $P=[x,y,z]^T$ 无人机重心相对于地面坐标系的位置变量
+    \item $V=[u,v,w]^T$ 无人机重心相对于地面坐标系的速度变量
+    \item $\Theta=[\phi,\theta,\psi]^T$ 无人机相对于地面坐标系的姿态变量，其中\(-\frac{\pi}{2} < \theta,\phi < \frac{\pi}{2}\)
+    \item $\omega=[p,q,r]^T$ 无人机相对于机体坐标系的姿态角速度，$p,q,r$分别为$\phi,\theta,\psi$的角速度。
+    \item $V_B=[u_b,v_b,w_b]^T$无人机相对于机体坐标系的速度变量
+\end{enumerate}
+
+无人机的位置和姿态是在地面惯性坐标系中定义的，而无人机自身传感器数据是在机体坐标系中获得的。
+两个坐标系需要经过平移与旋转变换实现。
+
+\subsection{四旋翼无人机质心平移运动的动力学方程}
+
+四旋翼无人机质心平移运动的动力学方程在机体坐标系下的描述为：
+\begin{equation}
+    m\dot{V}_B + \omega \times (m V_B) = F_B
+\end{equation}
+式中，m表示四旋翼无人机的质量，\(F_B=[F_x,F_y,F_z]^T\)表示作用于无人机上的合外力，包括旋翼升力、重力以及空气阻力等全部外力在机体坐标系下的投影。\(\omega\times V_B\)是牵连加速度：
+
+\begin{equation}
+    \omega \times V_B = \begin{bmatrix}
+        p\\q\\r
+    \end{bmatrix}
+    \times
+    \begin{bmatrix}
+        u_b\\v_b \\w_b
+    \end{bmatrix}
+    =\left|\begin{matrix}
+        i_b & j_b & k_b\\
+        p & q & r\\
+        u_b & v_b & w_b 
+    \end{matrix}\right|
+    =
+    \begin{bmatrix}
+     qw_b - r v_b \\
+     r u_b - p w_b \\
+     p v_b - q u_b\\   
+    \end{bmatrix}
+    =S(\omega) V_B
+\end{equation}
+其中,\(S(\omega)=\begin{bmatrix}
+    0 & -r & q \\
+    r & 0 & -p \\
+    -q & p & 0
+\end{bmatrix}\)。
+
+代入上式有：
+\begin{equation}
+\label{平动动力学方程}
+\begin{gathered}
+    \dot{V}_B=-S(\omega)V_B+\frac{1}{m}F
+    \\
+    \begin{bmatrix}
+        \dot{u}_b \\ \dot{v}_b \\ \dot{w}_b
+    \end{bmatrix}
+    =
+    -
+    \begin{bmatrix}
+        qw_b - r v_b \\
+        r u_b - p w_b \\
+        p v_b - q u_b\\   
+       \end{bmatrix}
+    +\frac{1}{m}
+    \begin{bmatrix}
+    F_x \\ F_y \\ F_z    
+    \end{bmatrix}
+\end{gathered}
+\end{equation}
+
+\subsection{四旋翼无人机绕质心转动的动力学方程}
+
+四旋翼无人机绕质心转动的动力学方程在机体坐标系下的描述如下：
+\begin{equation}
+    J\dot{\omega}+\omega \times (J\omega) = \Gamma_B
+\end{equation}
+其中，\(J=diag[Ix,Iy,Iz]\)代表四旋翼的惯性矩阵。力矩\(\Gamma_B=[\Gamma_x,\Gamma_y,\Gamma_x]^T\)表示作用于无人机上的合力矩，包括横滚力矩，俯仰力矩和偏航力矩以及陀螺效应产生的陀螺力矩。
+\begin{equation}
+    J\omega
+    =\begin{bmatrix}
+        I_x & 0 & 0\\
+        0 & I_y & 0\\
+        0 & 0 & I_z
+    \end{bmatrix}
+    \begin{bmatrix}
+        p \\ q \\ r
+    \end{bmatrix}
+    =\begin{bmatrix}
+        p I_x \\ q I_y \\ r I_z
+    \end{bmatrix}
+\end{equation}
+另外，
+\begin{equation}
+    \omega \times (J\omega)
+    =
+    \left|\begin{matrix}
+        i_b & j_b & k_b \\
+        p & q & r \\
+        p I_x & q I_y & r I_z
+    \end{matrix}\right|
+    =\begin{bmatrix}
+        (I_z-I_y) r q \\
+        (I_x-I_z) p r \\
+        (I_y-I_x) q p \\
+    \end{bmatrix}
+    =
+    S(\omega)(J \omega)
+\end{equation}
+将上式代入记为四旋翼无人机绕质心转动的动力学方程：
+\begin{equation}
+\label{转动动力学方程}
+\begin{gathered}
+J\dot{\omega}=\Gamma-S(\omega)(J\omega)  
+\\
+\begin{bmatrix}
+    I_x \dot{p}\\
+    I_y \dot{q}\\
+    I_z \dot{r}
+\end{bmatrix}
+=
+\begin{bmatrix}
+    \Gamma_x\\
+    \Gamma_y\\
+    \Gamma_z
+\end{bmatrix}
+-
+\begin{bmatrix}
+    (I_z-I_y) r q \\
+    (I_x-I_z) p r \\
+    (I_y-I_x) q p \\
+\end{bmatrix}
+\end{gathered}
+\end{equation}
+
+\subsection{四旋翼无人机质心平移运动的运动学方程}
+
+\begin{equation}
+    \begin{gathered}
+        \dot{P}=V\\
+        V=R_{B\rightarrow E} V_B
+    \end{gathered}
+\end{equation}
+
+\begin{equation}
+    \ddot{P}=\dot{\dot{V}}=\dot{R}_{B\rightarrow E} V_B + R_{B\rightarrow E} \dot{V}_B
+\end{equation}
+\href{https://blog.csdn.net/weixin_44231148/article/details/121159042}{旋转矩阵的导数}可以通过公式\(\dot{R}=S(\omega) R\)求得,于是代入\eqref{平动动力学方程}可得：
+\begin{equation}
+    \ddot{P}=R \cdot \frac{1}{m} F
+\end{equation}
+
+\subsection{四旋翼无人机绕质心转动的运动学方程}
+
+\begin{equation}
+    \begin{bmatrix}
+        \dot{\phi}\\
+        \dot{\theta}\\
+        \dot{\psi}
+    \end{bmatrix}
+    =
+    W
+    \begin{bmatrix}
+        p \\ q \\r
+    \end{bmatrix}
+\end{equation}
+其中\(W=\begin{bmatrix}
+    1 & \sin \phi \tan \theta & \cos \phi \tan \theta \\
+    0 & \cos \phi & - \sin \phi \\
+    0 & \frac{\sin \phi}{\cos \theta} & \frac{\cos \phi}{\cos \theta} 
+\end{bmatrix}\)
+
+
+
+\section{四旋翼无人机的运动方程组}
+
+\newcommand{\zeros}[1]{{0}_{#1}}
+
+\begin{equation}
+    \begin{bmatrix}
+        \dot{P} \\ \dot{\Theta}
+    \end{bmatrix}
+    =\begin{bmatrix}
+        R_{B\rightarrow E} & \zeros{3 \times 3} \\
+        \zeros{3 \times 3} & W
+    \end{bmatrix}
+    \begin{matrix}
+        V_B\\ \omega
+    \end{matrix}
+\end{equation}
+\begin{equation}
+    \begin{bmatrix}
+        \dot{V}_B \\ \dot{\omega}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        -S(\omega) & \zeros{3 \times 3} \\
+        \zeros{3 \times 3} & -J^{-1} S(\omega) J
+    \end{bmatrix}
+    \begin{bmatrix}
+        V_B \\ \omega
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        diag(\frac{1}{m},\frac{1}{m},\frac{1}{m}) & \zeros{3 \times 3}\\
+        \zeros{3 \times 3} & J^{-1}
+    \end{bmatrix}
+    \begin{bmatrix}
+        F_B \\ \Gamma_B
+    \end{bmatrix}
+\end{equation}
+
+\section{飞行器控制关系方程}
+
+\subsection{旋翼所产生的升力}
+
+根据假设\ref{升力与螺旋桨转速的平方成正比}，旋翼升力为\(F=k_T\omega^2\)，\(k_T\)为比例系数，于是旋翼产生的力可以在机体坐标系中表示为:
+
+\begin{equation}
+    T_B=\begin{bmatrix}
+        0 \\ 0 \\
+        k_T\sum_{i=1}^{4} \Omega_i^2
+    \end{bmatrix}
+\end{equation}
+
+\begin{figure}[htp!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{uav/quadrotor.png}
+    \caption{四旋翼飞行器模型}
+\end{figure}
+
+
+\subsection{重力}
+
+重力在地面惯性坐标系下，因此需要使用旋转矩阵转换到集体坐标系中：
+\begin{equation}
+    G_b=R_{E\rightarrow B} m g e_z =\begin{bmatrix}
+        -mg \sin \theta\\
+        mg \cos \theta \sin \phi \\
+        mg \cos \theta \cos \phi
+    \end{bmatrix}
+\end{equation}
+
+\subsection{旋翼所产生的力矩}
+
+
+旋翼升力产生的横滚力矩和俯仰力矩为：
+\begin{equation}
+    \Gamma_{B1}=\begin{bmatrix}
+        \Gamma_\phi
+        \Gamma_\theta
+        \Gamma_\psi
+    \end{bmatrix}
+    =\begin{bmatrix}
+        l_d(T_1-T_2-T_3+T_4)/2 \\
+        l_d(T_1+T_2-T_3-T_4)/2 \\
+        0
+    \end{bmatrix}
+    =\begin{bmatrix}
+        k_T l_d (\Omega_1^2-\Omega_2^2-\Omega_3^2+\Omega_4^2)/2 \\
+        k_T l_d (\Omega_1^2+\Omega_2^2-\Omega_3^2-\Omega_4^2)/2 \\
+        0
+    \end{bmatrix}
+\end{equation}
+
+飞行器旋翼旋转时由于空气阻力会产生与转动方向相反的反扭力矩，从而产生偏航力矩。
+根据假设\ref{升力与螺旋桨转速的平方成正比}，旋翼升力为\(F=k_T \omega^2\)，\(k_T\)为比例系数，
+\begin{equation}
+    \Gamma_{B2}=\begin{bmatrix}
+        0 \\ 0 \\
+        k_Q (\Omega_1^2-\Omega_2^2+\Omega_3^2-\Omega_4^2)
+    \end{bmatrix}
+\end{equation}
+
+四旋翼无人机在飞行中当姿态发生转动时，安装在旋转轴的旋翼会对这一飞行器的姿态变化产生一种阻抗力矩，这时四个桨叶的旋转引起了陀螺效应。
+它只影响到了飞行器的力矩，对飞行器的受力没产生影响。
+各旋翼在机体坐标系下的转速为：
+\begin{equation}
+    \Omega_{rl}=\begin{bmatrix}
+        0 \\ 0 \\ (-1)^l \Omega_l
+    \end{bmatrix}
+    , l = 1,2,3,4
+\end{equation}
+则总的陀螺力矩可表示为：
+\begin{equation}
+    G_a=\sum_{i=1}^{4} \omega \times \Omega_{ri} \cdot J_r
+    =\begin{bmatrix}
+        q J_r (-\Omega_1+\Omega_2 - \Omega_3 +\Omega_4) \\
+      - p J_r (-\Omega_1+\Omega_2 - \Omega_3 +\Omega_4) \\
+        0
+    \end{bmatrix}
+\end{equation}
+其中,$J_r$为旋翼以及电动机转子的转动惯量。
+
+综上可得，旋翼产生的总力矩：
+\begin{equation}
+    \Gamma_B=\Gamma_{B1}+\Gamma_{B2}+G_a
+    =\begin{bmatrix}
+        k_T l_d (\Omega_1^2-\Omega_2^2-\Omega_3^2+\Omega_4^2)/2 +q J_r (-\Omega_1+\Omega_2 - \Omega_3 +\Omega_4) \\
+        k_T l_d (\Omega_1^2+\Omega_2^2-\Omega_3^2-\Omega_4^2)/2
+        - p J_r (-\Omega_1+\Omega_2 - \Omega_3 +\Omega_4) \\
+        k_Q (\Omega_1^2-\Omega_2^2+\Omega_3^2-\Omega_4^2)
+    \end{bmatrix}
+\end{equation}
+
+忽略牵连角速度\(\omega\times (J\omega)\)及陀螺力矩\(G_a\)，并以重力方向为正，只考虑重力、旋翼升力可以简化模型为：
+\begin{equation}
+    \begin{cases}
+        \dot{P}=V\\
+        m\dot{V}=mge_3 - TR_{B\rightarrow E}e_3
+    \end{cases}
+    \Rightarrow
+    \begin{cases}
+        \ddot{x}=-\frac{T}{m}(\cos\psi \sin\theta \cos\phi + \sin\psi \sin\phi)\\
+        \ddot{y}=-\frac{T}{m}(\sin\psi \sin\theta \cos\phi - \cos\psi\sin\phi)\\
+        \ddot{z}=g-\frac{T}{m}\cos\theta\cos\phi
+    \end{cases}
+\end{equation}
+\begin{equation}
+    \begin{cases}
+        \dot{\Theta}=W\cdot \omega\\
+        J\dot{\omega}=\Gamma_{B1}+\Gamma_{B2}
+    \end{cases}
+\end{equation}
+其中，\(e_3=[0,0,1]^T\)
+
+\section{反馈线性化}
+
+考虑如下仿射系统：
+\begin{equation}
+    \begin{gathered}
+        \dot{x(t)}=f(x(t))+G(x(t))u(t), x(0)=x_0, f(0)=0, x\in R^m, u \in R^m\\
+        y(t)=h(x(t))
+    \end{gathered}
+\end{equation}
+令\(D\)是\(R^n\)包含原点的一个区域且假设存在一个关于D的微分同胚\(T(x),T(0)=0\)，使得变量替换\(z=T(x)\)将系统转化为控制器型（所有的非线性都在控制项）。
+\begin{equation}
+    \dot{z}=Az+B[\phi(x)+\gamma(x)u]
+\end{equation}
+其中(A,B)可控，对于所有的\(x\in D\)，\(\gamma(x)\)是非奇异矩阵。
+\section{四旋翼模型反馈线性化}
+

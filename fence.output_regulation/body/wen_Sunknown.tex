@@ -1,0 +1,204 @@
+
+\section{$s_1,s_2$ 未知时是否还能只用相对位置信息处理}
+
+\subsection{原文对 $S$ 的假设}
+
+原文第 2 节明确写道：
+\begin{quote}
+“Although the system matrix $S$ is known, each vehicle lacks direct access
+to the target's position $x_0$ and velocity $v_0$.”
+\end{quote}
+即原文假设\textbf{模型矩阵 $S$ 是已知的}，未知的是目标状态 $x_0,v_0$（由相对位置测量与内部模型推断）。
+
+更关键的是，$S$ 直接出现在补偿器 (11) 的矩阵 $G_1$ 中：
+\[
+G_1 = \begin{bmatrix}
+-l_1 & 1 & 0 & 0\\
+-k_1-l_2 & -k_2 & -k_3 & -k_4\\
+0 & 0 & 0 & 1\\
+0 & 0 & -s_1 & -s_2
+\end{bmatrix},\qquad
+G_2 = \begin{bmatrix} l_1 \\ l_2 \\ 0 \\ 1\end{bmatrix}.
+\]
+其下右 $2\times2$ 块正是
+\[
+\begin{bmatrix}0&1\\ -s_1&-s_2\end{bmatrix}=S.
+\]
+这正是内部模型原理的要求：控制器中必须“包含”外系统动力学 $S$。
+
+\subsection{为何 $s_1,s_2$ 未知时原算法直接失效}
+
+内部模型原理要求控制器嵌入 $S$；原文的 $G_1$ 把 $S$ 显式写进了下右块。
+若 $s_1,s_2$ 未知，则 $G_1$ 无法构造，固定结构的补偿器 (11) 根本没有定义——
+这并不是“测量不足”的问题，而是“模型未知导致内部模型无法搭建”。
+因此，\textbf{原文的固定结构算法不能处理未知的 $s_1,s_2$}。
+
+\subsection{能否改用“仅相对位置”来处理未知 $S$？——需要自适应内部模型}
+
+未知外系统参数时，标准输出调节框架需升级为
+\textbf{自适应输出调节}（adaptive output regulation，
+Serrani--Isidori--Marconi 2001；Chen \& Huang 2015）：
+把控制器中那一份 $S$ 改为\textbf{在线估计}的内部模型副本，即
+\[
+\hat S(t)=\begin{bmatrix}0&1\\ -\hat s_1(t)&-\hat s_2(t)\end{bmatrix},
+\]
+其中 $\hat s_1,\hat s_2$ 由自适应律根据调节误差（相对位置误差 $e_i=x_i-x_0$）
+实时更新。这样 $S$ 不再需要预先已知。
+
+关于“仅相对位置”：
+\begin{itemize}
+  \item 原补偿器本来只接收位置型相对测量 $e_i=x_i-x_0$（不含速度），
+    目标状态 $v_0$ 也是由内部模型推断的；
+  \item 相对位置误差里含有外系统信息（经由 $x_0$ 进入），
+    因此只要“测量—内部模型”对可检测（detectable），
+    且外系统被充分激励，\textbf{仅相对位置就足以驱动自适应内部模型}。
+\end{itemize}
+
+\subsection{可行性条件}
+
+自适应方案要成立，一般需满足：
+\begin{enumerate}
+  \item 被控对象 $(A,B)$ 可稳、$(C,A)$ 可检测——
+    本例为二阶积分器、测量位置，显然满足。
+  \item 外系统的\textbf{结构}已知（二阶），仅参数未知——
+    这样才能确定自适应内部模型的结构与维数。
+    若连“二阶”这一结构都未知，则须先辨识结构，难度更大。
+  \item \textbf{持续激励（persistent excitation）}：
+    自适应律要收敛到真值，需调节误差对外系统频率充分激励。
+    对原文“时变速度目标”，若 $S$ 的特征值在虚轴或右半平面
+    （振荡或增长型速度），目标自然提供持续激励，参数可收敛；
+    若目标为常速（$S=0$），则无激励，无法辨识 $S$（但此时 $S$ 本就是已知的零矩阵）。
+  \item 自适应后的对 $(G_2C, G_1(\hat S))$ 可检测。
+\end{enumerate}
+
+\subsection{与原文场景的对应}
+
+原文场景是 “target with time-varying velocity”，
+即 $S$ 通常具虚轴或正实部特征值——这正是“自然持续激励”的情形。
+因此，\textbf{改用自适应内部模型后，仅凭相对位置测量即可在未知 $s_1,s_2$ 下实现合围与速度同步}；
+而原文“固定 $G_1$”算法本身不行。
+
+\subsection{另一条路线：目标运动估计器（文献 [22,23]）}
+
+原文引言提到 [22,23] 用有限时间估计器观测目标运动。
+若 $S$ 未知，也可先由相对测量用估计器重建目标状态（及/或 $S$），
+再把估计出的 $S$ 当作“已知”送入围捕控制器。
+这等价于把“未知 $S$”交给估计器处理，控制器仍沿用已知（估计值）$S$ 的内部模型。
+这是另一类算法，而非原文的固定内部模型算法。
+
+\subsection{结论}
+
+\begin{itemize}
+  \item 原文的“固定结构”算法\textbf{不能}处理未知 $s_1,s_2$：
+    $S$ 直接写进 $G_1$，且原文明确假设 $S$ 已知。
+  \item 在“仅相对位置 + $S$ 未知”下，需要把算法改为
+    \textbf{自适应内部模型}（或“目标运动估计器 + 围捕控制器”）方案。
+    相对位置测量本身足以驱动自适应/估计，但需满足
+    可检测性与持续激励条件；
+    对原文的“时变速度目标”场景，持续激励自然满足，故可行。
+  \item 简言之：未知 $s_1,s_2$ 改变的是“模型是否已知”，
+    而非“测量是否充分”——所以补救办法是引入自适应/估计，
+    而不是增加测量通道。
+\end{itemize}
+
+\subsection{一种具体可行算法：自适应内部模型围捕控制器}
+
+下面给出在“仅相对位置 + $s_1,s_2$ 未知”下可直接落地的算法。
+它是对原文固定结构算法的\textbf{最小改动}：仅把 $G_1$ 中的固定 $S$ 换成在线估计 $\hat S(t)$，
+并补一条参数自适应律。逐坐标写出标量核（再经 $\otimes I_2$ 抬升到 $\mathbb R^2$）。
+
+\textbf{已知结构假设}：
+目标确为二阶，动力学结构 $S=\begin{smallmatrix}0&1\\-s_1&-s_2\end{smallmatrix}$ 已知，
+仅参数 $s_1,s_2$ 未知；目标为时变速度（特征值不在左半平面），提供持续激励。
+
+\medskip
+\textbf{1. 自适应补偿器（取代原文式 (11)）}
+\[
+\dot z_i = \hat G_1(t)\, z_i + G_2\, e_i + \alpha_2\,\phi_i,
+\]
+其中 $z_i=[\hat x_i,\hat v_i,\hat x_{0i},\hat v_{0i}]^T$，
+\[
+\hat G_1(t)=
+\begin{bmatrix}
+-l_1 & 1 & 0 & 0\\
+-k_1-l_2 & -k_2 & -k_3 & -k_4\\
+0 & 0 & 0 & 1\\
+0 & 0 & -\hat s_1(t) & -\hat s_2(t)
+\end{bmatrix},\qquad
+G_2=\begin{bmatrix}l_1\\l_2\\0\\1\end{bmatrix}.
+\]
+与原文唯一区别：下右块由在线估计
+$\hat S(t)=\begin{smallmatrix}0&1\\-\hat s_1(t)&-\hat s_2(t)\end{smallmatrix}$
+取代固定 $S$。$e_i=x_i-x_0$ 为到目标的相对位置，
+$\phi_i=\sum_{j\in\mathcal N_i}\varpi(\|x_{ij}\|)\frac{x_{ij}}{\|x_{ij}\|}$ 为碰撞规避项。
+
+\medskip
+\textbf{2. 控制输入（同原文式 (10)）}
+\[
+u_i = -(K\otimes I_2)z_i + \alpha_1 \phi_i,\qquad
+K=[k_1,k_2,k_3,k_4].
+\]
+
+\medskip
+\textbf{3. 参数自适应律}
+将相对位置误差 $e_i$ 经一阶低通滤波得到 $\varepsilon_i$
+（滤除碰撞规避高频项，并构成合适回归信号）：
+\[
+\dot\varepsilon_i = -\lambda \varepsilon_i + e_i,\qquad \lambda>0.
+\]
+用内部模型给出的目标状态估计 $[\hat x_{0i},\hat v_{0i}]^T$ 作回归向量，
+对参数估计取梯度下降：
+\[
+\dot{\hat s}_1 = -\gamma_1\,\hat x_{0i}\,\varepsilon_i,\qquad
+\dot{\hat s}_2 = -\gamma_2\,\hat v_{0i}\,\varepsilon_i,
+\qquad \gamma_1,\gamma_2>0.
+\]
+（实际实现可用带投影算子的形式把 $\hat s_1,\hat s_2$ 限制在有界集内，
+或采用带正规化的最小二乘增益以提高数值稳健性。）
+
+\medskip
+\textbf{4. 收敛条件}
+在以下条件下，闭环可实现合围 (P1) 与速度同步 (P3)：
+\begin{enumerate}
+  \item 增益 $K,l_1,l_2,\alpha_1,\alpha_2$ 使增广矩阵 $A_c(\hat S)$
+    在参数收敛过程中保持（至少局部）Hurwitz；
+  \item 含 $\hat S$ 的内部模型 $(\hat G_1,\hat G_2)$ 使增广对
+    $(G_2C,\hat G_1)$ 可检测；
+  \item 目标时变（特征值非左半平面），使回归向量
+    $[\hat x_{0i},\hat v_{0i}]^T$ 持续激励（PE，
+    对振荡/增长型目标自然成立），从而 $\hat s_1\to s_1,\;\hat s_2\to s_2$；
+  \item 初始相对距离大于安全距离（原文 Assumption 2）。
+\end{enumerate}
+
+\medskip
+\textbf{5. 与原文结论的衔接}
+参数收敛后 $\hat S\to S$，算法退化为原文固定结构控制器；
+而原文已证明该结构在 $A_c$ Hurwitz 下解决合围与速度同步，
+故自适应版本在 PE 成立时同样解决原问题，且全程仅用相对位置测量
+$e_i$ 与 $x_{ij}$。
+
+\medskip
+\textbf{说明}：上述梯度律是自适应内部模型
+（Serrani--Isidori--Marconi 2001；Chen \& Huang 2015）
+在该问题上的标准写法；严格收敛性按 AIM 定理验证
+（构造含参数误差的 Lyapunov 函数，并依赖 PE 使参数误差项负定）。
+若担心“仅凭相对位置”的可检测性不足，也可改用工件 [22,23]
+的“目标运动有限时间估计器 + 围捕控制器”两步法，
+其测量需求同样仅为相对位置，且把未知 $S$ 完全交给估计器处理。
+
+\subsection{备选具体算法：目标运动估计器 + 围捕控制器（两步法）}
+
+若不希望改动内部模型结构，可采用与原文引言 [22,23] 一致的方案：
+\begin{enumerate}
+  \item \textbf{分布式目标观测器}：每辆车用相对位置
+    $e_i=x_i-x_0$ 与 $x_{ij}=x_i-x_j$ 估计外系统状态
+    $\hat\theta_i=[\hat x_{0i},\hat v_{0i}]^T$，并对未知参数
+    $(\hat s_1,\hat s_2)$ 做自适应更新（形式同上文第 3 步）；
+    估计器可设计为有限时间/指数收敛以保证 $(\hat x_{0i},\hat v_{0i})\to(x_0,v_0)$。
+  \item \textbf{围捕控制器}：把估计出的 $\hat S,\hat\theta_i$ 直接代入
+    原文式 (10)(11)（即把“估计值”当作“已知值”使用）。
+\end{enumerate}
+两步走的好处是：围捕部分\textbf{完全复用原文证明}，
+只需单独保证估计器在仅相对位置下的收敛性；
+代价是需额外设计并证明估计器，且瞬态依赖估计精度。
+

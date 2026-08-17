@@ -1,0 +1,110 @@
+
+\section{拓展：把 $e_i$ 改为分布式线性组合后能否实现合围}
+
+\subsection{新的测量定义}
+
+原文式 (11) 的补偿器只接收相对位置测量 $e_i = x_i - x_0$。现尝试改为
+\[
+e_i = b_i (x_i - x_0) + \sum_{j=1}^{n} a_{ij}(x_i - x_j),
+\]
+其中 $b_i\ge 0$ 是车辆 $i$ 到目标（虚拟领导者）的链路权值，
+$a_{ij}\ge 0$ 是车辆 $i,j$ 之间的通信/一致权值。
+该式仍只用到相对位置 $(x_i-x_0)$ 与 $(x_i-x_j)$，
+因此仍满足原文“仅相对位置测量”的感知约束（且可同时利用车—车链路做分布式估计）。
+
+\subsection{与原文证明框架的兼容性}
+
+补偿器结构 (11) 不变，只是把输入 $e_i$ 换成上面的组合。
+中心（平均）系统 (15)–(16) 中的 $\bar e$ 变为新的平均误差 $\bar e_{\mathrm{new}}$。
+由于平均是线性运算，仍有
+\[
+\bar e_{\mathrm{new}} = (C_c\otimes I_2)\bar\zeta + (D_c\otimes I_2)\theta
+\]
+的形式，只是 $C_c,D_c$ 相应改变。只要 $A_c$ 仍 Hurwitz，
+Lemma 2/3 仍保证调节方程有唯一解且 $\bar e_{\mathrm{new}}\to 0$。
+下面分析 $\bar e_{\mathrm{new}}\to 0$ 在几何上意味着什么。
+
+\subsection{中心误差的向量化}
+
+对每个坐标单独分析（再经 $\otimes I_2$ 抬升到 $\mathbb R^2$）。
+记 $x=(x_1,\dots,x_n)^T\in\mathbb R^n$，$1_n=(1,\dots,1)^T$，
+$B=\operatorname{diag}(b_i)$，$A=[a_{ij}]$，
+$D=\operatorname{diag}(\sum_j a_{ij})$，$L=D-A$ 为图拉普拉斯。则
+\[
+e = (B+L)x - B\,1_n\,x_0,
+\]
+平均误差
+\[
+\bar e_{\mathrm{new}}
+= \frac1n 1_n^T e
+= \frac1n\Bigl(1_n^T(B+L)x - 1_n^T B\,1_n\,x_0\Bigr).
+\]
+因为 $L1_n=0$（拉普拉斯行和为零），故
+\[
+1_n^T L = (L^T 1_n)^T
+= \Bigl(\operatorname{outdeg}(i)-\operatorname{indeg}(i)\Bigr)_{i=1}^{n}{}^{T}.
+\]
+于是
+\[
+1_n^T L = 0
+\quad\Longleftrightarrow\quad
+\text{有向图在每个节点处入度 = 出度（balanced）}.
+\]
+若图是无向（对称）的，或是有向但 balanced 的，则 $1_n^TL=0$，从而
+\[
+\bar e_{\mathrm{new}} = \frac{1}{n}\sum_{i=1}^n b_i(x_i-x_0).
+\]
+
+\subsection{合围（目标在车辆凸包内）的充分条件}
+
+由输出调节知 $\bar e_{\mathrm{new}}\to 0$。若上述 balanced 条件成立，则稳态满足
+\[
+\sum_{i=1}^n b_i(x_i-x_0)=0
+\quad\Longrightarrow\quad
+x_0 = \frac{\sum_{i=1}^n b_i x_i}{\sum_{i=1}^n b_i}.
+\]
+因此只要满足
+\begin{enumerate}
+  \item $a_{ij}\ge 0$，且车辆间通信图\textbf{连通}
+        （无向连通，或强连通且 balanced 的有向图）；
+  \item $b_i\ge 0$ 且 $\sum_i b_i > 0$（至少有一辆车与目标直接相连）；
+\end{enumerate}
+就有 $x_0$ 是各车辆位置的凸组合（权值 $b_i/\sum_k b_k$），
+故 $x_0\in\operatorname{co}\{x_i\}$，即实现合围 (P1)。
+再配合原文的碰撞规避项防止车辆塌缩为一点，可保证凸包非退化。
+合围（enclosing / fencing）即目标始终位于车辆瞬时位置凸包之内，与此一致。
+
+\subsection{必要条件与反面情形}
+
+\begin{itemize}
+  \item 若所有 $b_i=0$（$\sum_i b_i=0$），平均误差不再含目标信息，
+        $\bar e_{\mathrm{new}}\to0$ 不能把 $x_0$ 钉在车辆凸包中心，合围无法保证。
+  \item 若通信图不连通，且某个连通分量内既无 $b_i>0$ 的节点、
+        也无路径连到含 $b_i>0$ 的分量，则该分量车辆不受目标约束，合围失败。
+  \item 若有向图不是 balanced 的，则 $1_n^TL\ne 0$，
+        平均误差含额外图项 $\frac1n 1_n^T L x$，
+        此时 $\bar e_{\mathrm{new}}=0$ 不再等价于 $x_0$ 为加权质心，
+        $x_0$ 可能落在凸包之外，合围不再有保证。
+\end{itemize}
+
+\subsection{关于速度同步 (P3) 的说明}
+
+新的 $e_i$ 只含位置、不含速度，与原文 $\bar e=\bar x-x_0$ 同为位置型测量。
+因此速度同步 (P3) 的成立条件与原文同构：
+只要 $A_c$ 仍 Hurwitz 且中心系统在新的测量下仍可检测（detectable），
+内部模型原理（$(G_1,G_2)$ 含 $S$ 的副本）会迫使稳态速度收敛到 $v_0$。
+
+但需注意：原文中由 $X=I$ 推出的显式关系
+$(U\otimes I_2)\tilde\zeta_i=v_i-v_0$ 依赖 $X=I$；
+改用新 $e_i$ 后调节方程的 $C_c,D_c$ 改变，$X$ 一般不再为单位阵，
+该显式关系需由新的 Sylvester 方程解重新验证。
+稳妥起见，应检查新测量下 $(U^TU,A_c)$ 的可观性（原文 Lemma 1）是否仍成立。
+
+\subsection{小结}
+
+把 $e_i$ 改为分布式组合在“仅相对位置测量”框架内是可行的；
+合围可实现的关键条件是：通信图连通且为无向（或 balanced 有向），
+且至少有一个非负权值 $b_i>0$ 把目标“锚定”进车辆群体的平均关系。
+在此条件下，输出调节把平均误差归零等价于把目标放到车辆位置的加权质心，
+从而落在凸包之内。
+\strong{如果需要集群所有vehicle的中心收敛到目标，那么应增加观测器}

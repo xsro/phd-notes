@@ -1,0 +1,56 @@
+\usepackage{titlesec}   % 自定义章节格式
+
+\titleformat{\section}{\bfseries}{}{1.4em}{}
+\titlespacing{\section}{0pt}{1.5ex plus 0.5ex minus 0.2ex}{1ex plus 0.2ex minus 0.1ex}
+
+\usepackage{subfig}
+\usepackage{graphicx,xcolor}
+    \newcommand{\tB}{\textcolor{blue}}
+    \newcommand{\tR}{\textcolor{red}}
+    \newcommand{\tO}{\textcolor{olive}}
+    \newcommand{\tG}{\textcolor{gray}}
+    \newcommand{\tT}{\textcolor{teal}}
+\definecolor{matlabRGB1}{RGB}{0,114,189}
+\definecolor{matlabRGB2}{RGB}{217,83,25}
+\definecolor{matlabRGB3}{RGB}{237,177,32}
+\definecolor{matlabRGB4}{RGB}{126,47,142}
+\definecolor{matlabRGB5}{RGB}{119,172,48}
+
+%\renewcommand{\tO}{\textcolor{blue}}
+%\renewcommand{\tR}{\textcolor{blue}}
+
+\usepackage{amsmath,amssymb,amsfonts,amssymb}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{threeparttable}
+\usepackage{multirow}
+%\allowdisplaybreaks
+\usepackage{accents}
+\usepackage{subfig}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{quotes,angles}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.pathreplacing}
+
+\usepackage[normalem]{ulem} % 不加normalem会将em定义为下划线
+\newcommand{\NN}[0]{\mathbb{N}}
+\newcommand{\RR}[0]{\mathbb{R}}
+\newcommand{\KK}[0]{\mathbb{K}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\dd}{\operatorname{d}}
+\newcommand{\norm}[1]{\left\Vert #1 \right\Vert}
+
+\usepackage{amsthm}
+\newtheorem{assumption}{Assumption}
+\newtheorem{proposition}{Proposition}
+
+\usepackage{hyperref}   % 生成 PDF 书签（建议放在最后加载）
+
+\usepackage{cleveref}   % cleveref 必须在hyperref 之后
+\captionsetup[figure]{name=Fig.}
+\crefname{figure}{Fig.}{Figs.}
+\captionsetup[table]{name=Table}
+\crefname{table}{Table}{Tables}
+\crefname{assumption}{Assumption}{Assumptions}

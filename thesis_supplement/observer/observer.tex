@@ -1,0 +1,167 @@
+
+对于匀速运动的目标，如果所有个体（包括目标）所组成的网络是连通的，
+并且连通的时段足够长，那么可以设计观测器观测目标位置，
+观测值将会最终指数收敛到目标位置。
+
+\section{观测器设计}
+
+考虑目标动态为：
+\begin{equation}
+    \begin{cases}
+        \dot{x}_0=v_0\\
+        \dot{v}_0=a(t)+a_0(t)+\delta(t), x_0,v_0,\delta\in R^2\\
+        y=x_0
+    \end{cases}
+\end{equation}
+其中\(y\)是观测到的输出，\(a(t)\)是加速度输入。
+文献\cite{HONG20061177}中规定\(a_0(t)\)是已知的，而\(\delta(t)\)是未知的，
+满足\(\norm{\delta(t)}\leq \bar{\delta}\)。
+
+\begin{numcases}{\ }
+    \dot{\chi}_i = 
+    -k \left[
+        \sum_{j\in N_i(t)} a_{ij}(t)(x_i-x_j)+b_i(t)(x_i-x_0)
+    \right]+v_i, k>0
+    \label{feedback}
+    \\
+    \dot{v}_i=a_0-\gamma k \left[
+        \sum_{j\in N_i(t)} a_{ij}(t)(x_i-x_j)+b_i(t)(x_i-x_0)
+    \right]
+    \label{v0est}
+\end{numcases}
+\eqref{feedback}是基于邻居节点的反馈控制律，\eqref{v0est}是目标速度\(v_0\)的估计器。
+
+写成矩阵的形式为：
+\begin{numcases}{\ }
+\dot{x}=-k(L_\sigma + B_\sigma) \otimes I_2 x
+ + k B_\sigma \mathbf{1} \otimes x_0 + v
+ \\
+ \dot{v}= \mathbf{1} \otimes a_0 - \gamma k (L_\sigma+B_\sigma )\otimes I_2 x
+ +\gamma k (B_\sigma \mathbf{1})\otimes x_0
+\end{numcases}
+这里\(\sigma:[0,\infty)\rightarrow \mathscr{P},\mathscr{P}=\{1,2,\dots,N\}\)为恒值分段函数。
+\[
+    x=\begin{bmatrix}
+        x_1 \\\vdots\\x_n
+    \end{bmatrix},
+    v=\begin{bmatrix}
+        v_1 \\\vdots \\v_n
+    \end{bmatrix}
+    =I_n\otimes I_2 v
+\]
+记
+\[
+    \bar{x}=x-\mathbf{1} \otimes x_0,
+    \bar{v}=v-\mathbf{1} \otimes v_0,
+    \epsilon=\begin{pmatrix}
+        \bar{x}\\\bar{v}
+    \end{pmatrix}
+\]
+于是可以写出偏差动态方程：
+\begin{equation}
+    \dot{\epsilon} = F_\sigma \epsilon + g
+\end{equation}
+\[
+    F_\sigma=\begin{bmatrix}
+        -k(L_\sigma+B_\sigma) & I_n\\
+        -\gamma k (L_\sigma + B_\sigma) & 0
+    \end{bmatrix}\otimes I_2,
+    g=\begin{bmatrix}
+        0 \\ - \mathbf{1} \otimes \delta
+    \end{bmatrix}
+\]
+
+\section{匀速运动目标指数收敛}
+
+文献\cite{Kou2022tac,Kou2021}中使用的目标为匀速目标，因此可以忽略\(g\)，在此情况下估计位置值指数收敛到目标实际位置。
+
+记\(M_\sigma=L_\sigma+B_\sigma\)，
+\begin{equation}
+    \dot{\epsilon}=F_\sigma \epsilon,F_\sigma=\begin{bmatrix}
+        -kM_\sigma & I_n\\
+        -\gamma k M_\sigma & 0
+    \end{bmatrix}\otimes I_2
+\end{equation}
+
+
+选取如下Lyapunov函数，并做求导运算：
+\begin{equation}
+    V(\epsilon)=\epsilon^T P \epsilon,
+    P=\begin{bmatrix}
+        \gamma_1 I_n & - \gamma I_n\\
+        -\gamma I_n & I_n\\
+    \end{bmatrix},
+    \gamma_1>\gamma^2
+\end{equation}
+\begin{gather}
+    \dot{V}(\epsilon)=
+    (F_\sigma \epsilon)^TP\epsilon
+    +\epsilon^T P (F_\sigma \epsilon)=-\epsilon^T Q \epsilon,\\
+    Q_\sigma=\begin{bmatrix}
+        2k(\gamma_1-\gamma^2)M_\sigma & -\gamma_1 I_n \\
+        -\gamma_1 I_n & 2 \gamma I_N
+    \end{bmatrix}
+    \otimes I_2
+\end{gather}
+
+\begin{lemma}
+    \cite{HONG20061177}
+    对于连通的网络，矩阵\(M_\sigma\)正定，其最小的特征值大于零，\(\bar{\lambda}=\lambda_{min}(M_\sigma)>0\)
+\end{lemma}
+
+选择\(k>\frac{\gamma_1^2}{4\gamma(\gamma_1-\gamma^2)\bar{\lambda}}\)，
+于是有\[
+    Q_\sigma/(2k(\gamma_1-\gamma^2)M_\sigma)=2\gamma I_n - \frac{\gamma_1^2}{2k(\gamma_1-\gamma^2)}M_\sigma^{-1} >0
+\]
+
+\begin{theorem}
+    Schur分解\footnote{
+    Schur complement - Wikipedia. (2022) Retrieved December 12, 2022, from \url{https://en.wikipedia.org/wiki/Schur_complement}
+    }
+    对于矩阵\(X=\begin{bmatrix}
+        A & B \\ B^T & C
+    \end{bmatrix}\)，有：
+    当\(A\)可逆时，当且仅当A和X/A正定时，矩阵X正定：
+    \begin{equation}
+        X>0 \leftrightarrow 
+        A>0,
+        X/A=C-B^TA^{-1}B>0
+    \end{equation}
+\end{theorem}
+因此\(Q_\sigma\)正定。
+
+于是：
+\begin{gather}
+    V(\epsilon)=\epsilon^T P \epsilon \leq \epsilon^T \lambda_{max} (P) \epsilon \\
+    \dot{V}(\epsilon)=-\epsilon^T Q \epsilon \leq -\epsilon^T \lambda_{min}(Q) \epsilon
+    \leq - \epsilon^T(\beta \lambda_{max}(P))\epsilon
+    \\
+    \dot{V}(\epsilon) \leq -\beta V(\epsilon) \ for\ 0<\beta\leq \lambda_{min}(Q)/\lambda_{max} (P)
+\end{gather}
+
+因此，使用解微分方程的方法，分离变量再积分，得：
+\[
+    \dot{V}(\epsilon(t))\leq V(x(0))e^{-\beta t}
+\]
+\[
+    \begin{aligned}
+        \norm{\epsilon(t)}
+    &\leq \left[\frac{V(\epsilon(t))}{\lambda_{min}(P)} \right]^\frac{1}{2}
+    \\&\leq \left[\frac{V(x(0))e^{-\beta t}}{\lambda_{min}(P)} \right]^\frac{1}{2}
+    \\&\leq \left[\frac{\lambda_{max}(P)\norm{\epsilon(0)}^2e^{-\beta t}}{\lambda_{min}(P)} \right]^\frac{1}{2}
+    \\&=\left(\frac{\lambda_{max}(P)}{\lambda_{min}(P)}\right)^\frac{1}{2}
+    e^{-\frac{\beta}{2}t}
+    \norm{\epsilon(0)}
+\end{aligned}
+\]
+
+\[\lim_{t\to\infty} V(y(t))=0,\ \lim_{t\to\infty} \chi_i=x_0, exponentially\]
+
+\section{下一步工作}
+
+\begin{itemize}
+    \item 目标估计器器指数收敛，控制器指数收敛到估计值，那么总体算法也是指数收敛；
+    \item 是不是可以考虑文献\cite{HONG20061177}的目标动态，做一个一般收敛的结果。
+\end{itemize}
+
+\printbibliography[heading=subbibintoc]

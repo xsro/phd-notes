@@ -1,0 +1,426 @@
+\section{Result 1}
+\label{sec:design}
+
+This section constructs a distributed controller that simultaneously realizes
+P4 (enclosure within a prescribed 2-norm envelope), the hard collision fence
+P2, and velocity match P3. The design has three building blocks: (i) each
+agent estimates the swarm centroid via consensus; (ii) a prescribed-performance
+backstepping law is designed for the \emph{centroid} double-integrator
+dynamics, using the single scalar transformed error $\xi$ from
+\eqref{eq:xi-dyn}; (iii) these terms are assembled into a distributed control
+law that superimposes local collision-avoidance and velocity-match terms
+without disturbing the centroid control. The controller is summarized in
+\eqref{eq:ui}, and its stability and performance properties are established
+in \S\ref{sec:analysis}.  Technical limitations and implementation caveats
+are discussed in \S\ref{subsec:limits}.
+
+\subsection{Centroid estimation}
+\label{subsec:consensus}
+
+Each agent maintains a local estimate $\hat p_i$ of the swarm centroid
+$\bar p=\frac1N\sum_j p_j$ through standard average consensus on positions,
+so that $\hat p_i(t)\to \bar p(t)$ (exponentially, or in finite time using
+the finite-time centroid enhancer of the companion notes). Agent $i$ then
+forms its estimate of the centroid error
+\[
+\hat{\tilde p}_i = \hat p_i - p_0, \qquad
+\dot{\hat{\tilde p}}_i = \dot{\hat p}_i - v_0.
+\]
+In the centralized description below we write $\tilde p,\dot{\tilde p}$ for
+the (estimated) centroid error; in the distributed implementation every
+agent evaluates the same expressions from its own $\hat{\tilde p}_i$, which
+coincide under consensus.
+
+\subsection{PPC backstepping for the centroid}
+\label{subsec:ppc-design}
+
+Apply the transformation of \S\ref{subsec:ppc} to the centroid error norm:
+$e=\norm{\tilde p}$, $z=e/\rho$, $\xi=\operatorname{artanh}(z)$,
+with the scalar performance function $\rho(t)$ and
+$\zeta=1/(1-z^2)>0$, so that
+$\dot\xi = \frac{\zeta}{\rho}(\dot e - z\dot\rho)$ and
+$\dot e = \frac{\tilde p^T\dot{\tilde p}}{\norm{\tilde p}}$ for
+$\tilde p\neq0$.
+
+\paragraph{Step 1 (virtual centroid velocity).}
+Treat $\dot{\tilde p}$ as a virtual control. To make $\dot\xi=-c_1\xi$
+($c_1>0$) we require the desired norm derivative
+\[
+\dot e^* = \rho(1-z^2)(-c_1\xi) + z\dot\rho.
+\]
+Choose the virtual centroid velocity as the vector
+\begin{equation}
+\alpha_1 = \dot e^*\,\frac{\tilde p}{\norm{\tilde p}}
+= \bigl[\rho(1-z^2)(-c_1\xi) + z\dot\rho\bigr]\,
+  \frac{\tilde p}{\norm{\tilde p}},
+\qquad (\tilde p\neq 0),
+\label{eq:alpha1}
+\end{equation}
+so that $\frac{\tilde p^T}{\norm{\tilde p}}\alpha_1 = \dot e^*$ and hence
+$\dot\xi=-c_1\xi$. The apparent singularity at $\tilde p=0$ is removable:
+as $\tilde p\to0$, $\dot e^*\to -c_1 e = -c_1\norm{\tilde p}$, so
+$\alpha_1\to -c_1\tilde p$, which is bounded; we therefore take
+$\alpha_1(0)=0$ by continuous extension. \emph{Note, however, that
+$\dot\alpha_1$ (required in \eqref{eq:ubar}) is not differentiable at the
+origin; this smoothness caveat is discussed in \S\ref{subsec:limits}.}
+
+\paragraph{Step 2 (centroid control).}
+Define the velocity error $s=\dot{\tilde p}-\alpha_1$. Then
+$\dot s = \ddot{\tilde p} - \dot\alpha_1$. From
+\eqref{eq:centroid-dyn}, with the target acceleration $u_0$ assumed known
+(and canceled by feedforward in the distributed law), the centroid dynamics
+take the form
+\[
+\ddot{\tilde p} = \bar u + \delta,
+\]
+where $\bar u$ is the (yet to be designed) average control
+$\bar u=\frac1N\sum_i u_i$, and
+$\delta = \frac1N\sum_i d_i - d_0$ is a bounded disturbance satisfying
+$\norm{\delta}\le\bar\delta$ (the residual consensus error is folded into
+$\bar\delta$). Since
+$\dot e = \frac{\tilde p^T}{\norm{\tilde p}}(\alpha_1+s)
+       = \dot e^* + \frac{\tilde p^T}{\norm{\tilde p}}s$,
+the transformed error obeys
+\[
+\dot\xi = -c_1\xi + \frac{\zeta}{\rho}\,
+          \frac{\tilde p^T}{\norm{\tilde p}}\,s.
+\]
+
+Consider $V=\frac12\xi^2+\frac12\norm{s}^2$. Then
+$\xi\dot\xi = -c_1\xi^2 + \frac{\zeta}{\rho}\xi\,
+\frac{\tilde p^T}{\norm{\tilde p}}s$. Choose
+\begin{equation}
+\bar u = \dot\alpha_1 - c_2 s
+       - \frac{\zeta}{\rho}\,\frac{\tilde p}{\norm{\tilde p}}\,\xi
+       - k_r\,\mathrm{sat}(s/\varepsilon),
+\qquad c_2>0,
+\label{eq:ubar}
+\end{equation}
+where $\mathrm{sat}(\cdot)$ is the component-wise saturation
+($\mathrm{sat}(y)=y$ for $|y|\le1$, $\mathrm{sat}(y)=\mathrm{sign}(y)$
+otherwise) and $k_r\ge\bar\delta$, $\varepsilon>0$. Then
+\[
+\begin{aligned}
+s^T\dot s
+&= s^T(\bar u + \delta - \dot\alpha_1)\\
+&= -c_2\norm{s}^2
+   - \frac{\zeta}{\rho}s^T\frac{\tilde p}{\norm{\tilde p}}\xi
+   - k_r\,s^T\mathrm{sat}(s/\varepsilon) + s^T\delta .
+\end{aligned}
+\]
+The cross terms cancel because
+$\frac{\zeta}{\rho}\xi\frac{\tilde p^T}{\norm{\tilde p}}s
+ = \frac{\zeta}{\rho}s^T\frac{\tilde p}{\norm{\tilde p}}\xi$, yielding
+\[
+\dot V = -c_1\xi^2 - c_2\norm{s}^2
+        - k_r\,s^T\mathrm{sat}(s/\varepsilon) + s^T\delta.
+\]
+Since $s^T\delta\le\bar\delta\norm{s}\le k_r\norm{s}$ and
+$-k_r\,s^T\mathrm{sat}(s/\varepsilon)\le -k_r\norm{s}+k_r\varepsilon n/2$,
+\begin{equation}
+\dot V \le -c_1\xi^2 - c_2\norm{s}^2 + \tfrac{n}{2}k_r\varepsilon,
+\label{eq:Vdot}
+\end{equation}
+so $\xi,s$ are uniformly ultimately bounded; taking $\varepsilon\to0$ (or a
+signum implementation) recovers asymptotic boundedness, and PPC feasibility
+$\rho(0)>\norm{\tilde p(0)}$ guarantees $\xi$ never escapes, i.e.\
+$\norm{\tilde p(t)} < \rho(t)$ for all $t\ge0$ (P4).
+
+\subsection{Distributed control law}
+\label{subsec:distributed}
+
+The average control $\bar u$ from \eqref{eq:ubar} is realized distributively.
+Each agent computes (from its centroid estimate) the common term $\bar u$
+and the target feedforward $u_0$, and adds a zero-mean local term:
+\begin{equation}
+u_i = \bar u + u_0
+      - k_p(p_i - \hat p_i) - k_v(v_i - \dot{\hat p}_i)
+      + \phi_i + \psi_i,
+\label{eq:ui}
+\end{equation}
+where $\phi_i$ is the collision-avoidance APF of \S\ref{subsec:apf},
+$\psi_i$ is a configuration/connectivity term chosen so that
+$\sum_i\psi_i=0$ (e.g.\ a zero-sum formation-error term), and
+$k_p,k_v>0$. Because $\sum_i\phi_i=0$ and $\sum_i\psi_i=0$, while
+$\sum_i(p_i-\hat p_i)\to0$ and $\sum_i(v_i-\dot{\hat p}_i)\to0$ under
+consensus, the local terms are zero-sum asymptotically; hence
+$\frac1N\sum_i u_i = \bar u + u_0 + o(1)$ and the centroid dynamics reduce
+to the analyzed form. The local terms keep each agent near the (estimated)
+centroid---yielding the enclosing shape---and, together with
+$\dot{\hat p}_i\to\dot{\bar p}\to v_0$, enforce velocity match P3.
+
+\paragraph{Role of each term.}
+\begin{itemize}
+    \item $\bar u$ (PPC backstepping) $\Rightarrow$ P4 (enclosure within
+    $\rho(t)$) and thereby P1 (convex-hull fencing);
+    \item $\phi_i$ (APF fence) $\Rightarrow$ P2 (hard collision avoidance);
+    \item $-k_p(p_i-\hat p_i)-k_v(v_i-\dot{\hat p}_i)+\psi_i$
+    $\Rightarrow$ enclosing formation and P3 (velocity match).
+\end{itemize}
+
+\subsection{Prescribed-time variant}
+\label{subsec:pt}
+
+To reach the envelope by a user-specified finite time $T$, replace the
+constant gain $c_1$ in \eqref{eq:alpha1} by the time-varying gain
+\begin{equation}
+a(t) = \frac{\pi}{2T}\sec^2\!\left(\frac{\pi t}{2T}\right),
+\qquad t\in[0,T),
+\label{eq:at}
+\end{equation}
+and use the finite-time performance function \eqref{eq:rho-pt}. Then
+$\alpha_1 = [\rho(1-z^2)(-a(t)\xi)+z\dot\rho]\frac{\tilde p}{\norm{\tilde p}}$,
+giving $\dot\xi = -a(t)\xi$ whose solution is
+$\xi(t)=\xi(0)\cos(\frac{\pi t}{2T})$; hence $\xi(T)=0$ and
+$\xi(t)\equiv0$ for $t\ge T$. In \eqref{eq:ubar} the term
+$-c_1\xi$ is replaced by $-a(t)\xi$, and the Lyapunov derivative
+\eqref{eq:Vdot} becomes
+$\dot V = -a(t)\xi^2 - c_2\norm{s}^2 + \tfrac{n}{2}k_r\varepsilon$ with
+$-a(t)\xi^2 = -\frac{\pi}{2T}\xi(0)^2$ bounded as $t\to T^-$.
+As with all prescribed-time schemes, the gains $a(t)$ and the corresponding
+terms in $\dot\alpha_1$ grow without bound as $t\to T^-$; this must be
+respected by actuator limits (or by choosing $T$ conservatively). The
+idealised claim of \emph{exact} zero enclosure at $t=T$ is discussed in
+\S\ref{subsec:limits}.
+
+\subsection{Stability and Performance Analysis}
+\label{sec:analysis}
+
+We first state the standing assumptions and then prove that the closed loop
+satisfies P2--P4 (and hence P1).
+
+\begin{assumption}
+\label{as:target}
+The target acceleration and the agent disturbances are bounded,
+$\norm{u_0}\le\bar u_0$, $\norm{d_i}\le\bar d$, $\norm{d_0}\le\bar d_0$,
+so that the aggregate centroid disturbance
+$\delta=\frac1N\sum_i d_i-d_0$ satisfies $\norm{\delta}\le\bar\delta$.
+\end{assumption}
+
+\begin{assumption}
+\label{as:feas}
+(Initial PPC feasibility) The prescribed performance function satisfies
+$\rho(0)>\norm{\tilde p(0)}$.
+\end{assumption}
+
+\begin{assumption}
+\label{as:consensus}
+Each agent obtains a centroid estimate $\hat p_i$ with
+$\sum_i(p_i-\hat p_i)\to0$, $\sum_i(v_i-\dot{\hat p}_i)\to0$, and the
+configuration term is chosen zero-sum, $\sum_i\psi_i=0$.
+\end{assumption}
+
+\begin{theorem}
+\label{thm:main}
+Under Assumptions~\ref{as:target}--\ref{as:consensus}, the closed-loop system
+with the control law \eqref{eq:ui} satisfies, for all $t\ge0$,
+\begin{enumerate}
+    \item[\textbf{P4}] $\norm{\tilde p(t)}<\rho(t)$ (prescribed 2-norm
+    envelope);
+    \item[\textbf{P2}] $\norm{p_{ij}(t)}>d$ for all $i\neq j$ (collision
+    avoidance);
+\end{enumerate}
+and, as $t\to\infty$,
+\begin{enumerate}
+    \item[\textbf{P1}] $\dist(p(t),p_0(t))\to0$ (convex-hull fencing);
+    \item[\textbf{P3}] $\norm{v_i(t)-v_0(t)}\to0$ for all $i$ (velocity
+    match).
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\noindent\textbf{(i) Prescribed performance P4 and enclosure P1.}
+From the backstepping design in \S\ref{subsec:ppc-design}, the Lyapunov
+function $V_\xi=\frac12\xi^2+\frac12\norm{s}^2$ satisfies \eqref{eq:Vdot},
+i.e.
+\[
+\dot V_\xi \le -c_1\xi^2 - c_2\norm{s}^2 + \tfrac{n}{2}k_r\varepsilon.
+\]
+Since $V_\xi\ge\frac12\xi^2$, we have $-c_1\xi^2\ge -2c_1V_\xi$, and dropping
+the stabilizing $-c_2\norm{s}^2$ term gives
+$\dot V_\xi\le -2c_1V_\xi+\frac{n}{2}k_r\varepsilon$. By the comparison
+lemma,
+\[
+V_\xi(t)\le
+\Bigl(V_\xi(0)-\frac{n k_r\varepsilon}{4c_1}\Bigr)e^{-2c_1t}
++ \frac{n k_r\varepsilon}{4c_1},
+\]
+so $\xi,s$ are exponentially uniformly bounded; in particular $\xi(t)$ can
+never diverge. By the feasibility Assumption~\ref{as:feas},
+$\rho(0)>\norm{\tilde p(0)}$, hence $z(0)=e(0)/\rho(0)<1$ and
+$\xi(0)=\operatorname{artanh}(z(0))$ is finite. Because $\xi(t)$ remains
+finite for all $t$, we have $z(t)=\tanh\xi(t)\in(-1,1)$, and therefore
+\[
+\norm{\tilde p(t)} = \rho(t)\,|z(t)| < \rho(t), \qquad \forall\,t\ge0,
+\]
+which is P4. Moreover, taking $\varepsilon\to0$ (or a signum
+implementation, $k_r\ge\bar\delta$) yields $\xi\to0$ and $s\to0$
+exponentially, so $\norm{\tilde p(t)}=\rho(t)\tanh\xi(t)\to0$. Since
+$\dist(p,p_0)\le\norm{\tilde p}$ (see \eqref{eq:dist}),
+$\dist(p,p_0)\to0$, i.e.\ P1 holds.
+
+\noindent\textbf{(ii) Collision avoidance P2.}
+Consider the barrier-type Lyapunov function
+\begin{equation}
+V_c = \frac12\sum_{i\in\NN}\norm{v_{i0}}^2
+    + \frac12\sum_{i\in\NN}\sum_{j\in\NN_i(t)}
+      \int_{\norm{p_{ij}}}^\mu \alpha_r(s)\,ds,
+\label{eq:Vc}
+\end{equation}
+where $\alpha_r$ satisfies A1--A2 of \S\ref{subsec:apf}. Its derivative
+along the trajectories is
+\[
+\dot V_c = \sum_{i\in\NN} v_{i0}^T(u_i+d_i-u_0-d_0)
+         - \sum_{i\in\NN} v_{i0}^T\phi_i,
+\]
+where we used the symmetry identity
+\[
+\frac12\sum_i\sum_{j\in\NN_i}
+   \alpha_r(\norm{p_{ij}})
+   \frac{p_{ij}^T(v_i-v_j)}{\norm{p_{ij}}}
+ = \sum_i v_{i0}^T\phi_i,
+\]
+which follows from the antisymmetry of the pairwise repulsion and
+$\sum_i\phi_i=0$. Substituting the control law \eqref{eq:ui} and noting
+\[
+u_i-u_0-\phi_i
+= \bar u-k_p(p_i-\hat p_i)-k_v(v_i-\dot{\hat p}_i)+\psi_i,
+\]
+with $\sum_i\psi_i=0$ by Assumption~\ref{as:consensus}, gives
+\[
+\begin{aligned}
+\dot V_c
+&= N\bar u^T\dot{\tilde p}
+   - k_p\sum_{i} v_{i0}^T(p_i-\hat p_i)\\
+&\quad - k_v\sum_{i} v_{i0}^T(v_i-\dot{\hat p}_i)
+   + \sum_{i} v_{i0}^T(\psi_i+d_i-d_0).
+\end{aligned}
+\]
+Using $v_i=v_{i0}+v_0$,
+\[
+\begin{aligned}
+-k_v\sum_i v_{i0}^T(v_i-\dot{\hat p}_i)
+&= -k_v\sum_i\norm{v_{i0}}^2
+   - k_v\sum_i v_{i0}^Tv_0 \\
+&\quad + k_v\sum_i v_{i0}^T\dot{\hat p}_i .
+\end{aligned}
+\]
+From part (i), $\xi,s$ are bounded, so $\dot{\tilde p}=\alpha_1+s$ is
+bounded and, with the designed $\bar u$ of \eqref{eq:ubar}, $\bar u$ is
+bounded; by Assumptions~\ref{as:target}--\ref{as:consensus} the remaining
+terms $(\psi_i,d_i,p_i-\hat p_i,\dot{\hat p}_i,v_0)$ are bounded. Let
+$\norm{v_{i0}}\!:=\!\sqrt{\sum_i\norm{v_{i0}}^2}$. By Cauchy--Schwarz the
+bounded terms are majorized by $\beta\norm{v_{i0}}+\gamma$ for some
+$\beta,\gamma>0$, while
+$-k_v\sum_i v_{i0}^Tv_0\le \frac{k_v}{2}\norm{v_{i0}}^2+\frac{k_vN}{2}\norm{v_0}^2$.
+Hence
+\[
+\begin{aligned}
+  \dot V_c
+  &\le -k_v\norm{v_{i0}}^2 + \frac{k_v}{2}\norm{v_{i0}}^2
+            + \beta\norm{v_{i0}}
+            + \Bigl(\gamma+\tfrac{k_vN}{2}\norm{v_0}^2\Bigr)\\
+  &= -\frac{k_v}{2}\norm{v_{i0}}^2 + \beta\norm{v_{i0}} + M,
+\end{aligned}
+\]
+for a constant $M>0$. Since the quadratic dominates the linear term,
+$\dot V_c\le -c\norm{v_{i0}}^2+M$ for some $c>0$; consequently $V_c$ is
+uniformly bounded. In particular the barrier term
+$\frac12\sum_i\sum_{j\in\NN_i}\int_{\norm{p_{ij}}}^\mu\alpha_r(s)\,ds$ stays
+bounded. By A1,
+$\lim_{s\to d^+}\int_s^\mu\alpha_r(\sigma)\,d\sigma=+\infty$, so a bounded
+integral forces $\norm{p_{ij}(t)}>d$ for all active pairs and all
+$t\ge0$; since pairs entering the safety zone only enlarge the sum, P2 holds
+for every pair.
+
+\noindent\textbf{(iii) Velocity match P3.}
+From part (i), $\xi\to0$ and $s\to0$, so the centroid velocity error
+$\dot{\tilde p}=\alpha_1+s\to0$, i.e.\ $\dot{\bar p}\to v_0$. Define the
+local velocity error $\eta_i=v_i-\dot{\hat p}_i$. Using \eqref{eq:ui},
+\[
+\dot\eta_i = u_i-\ddot{\hat p}_i
+= \bar u + u_0 - k_p(p_i-\hat p_i) - k_v\eta_i + \phi_i + \psi_i
+  - \ddot{\hat p}_i.
+\]
+As $t\to\infty$: by Assumption~\ref{as:consensus} $p_i-\hat p_i\to0$ and
+$\dot{\hat p}_i\to\dot{\bar p}\to v_0$; by part (i) the centroid control
+$\bar u\to0$ (for the exponential performance function the gains
+$\dot\rho,\ddot\rho\to0$ and $\xi,s\to0$); and the agents settle into the
+enclosing formation so that $\phi_i\to0$ (distances exceed the activation
+radius $\mu$) and $\psi_i\to0$. Hence
+$\dot\eta_i = -k_v\eta_i + o(1)$, which implies $\eta_i\to0$, i.e.\
+$v_i\to\dot{\hat p}_i\to v_0$. Therefore $\norm{v_i-v_0}\to0$ for all $i$,
+which is P3.
+
+\noindent\textbf{Prescribed-time case.}
+If the performance function \eqref{eq:rho-pt} and the gain $a(t)$ of
+\eqref{eq:at} are used, then under the idealised condition $s\equiv0$ and no
+disturbance, $\xi(t)=\xi(0)\cos(\frac{\pi t}{2T})$ so that $\xi(T)=0$ and
+$\norm{\tilde p(T)}=0<\rho(T)=\bar\rho$; for $t\ge T$ the control may be
+switched to the steady formation hold ($\bar u=0$), preserving P2 and P3 and
+giving exact enclosure at the user-specified time $T$. The control gains
+diverge as $t\to T^-$, which must be respected by actuator limits. (With the
+full controller the convergence is only asymptotic/finite-time; see
+\S\ref{subsec:limits}.)
+\end{proof}
+
+\subsection{Limitations and discussion}
+\label{subsec:limits}
+
+The formulation above follows a standard prescribed-performance backstepping
+and artificial-potential-fence architecture.  It captures the intended
+closed-loop mechanism, but several technical points require additional care
+in a fully rigorous implementation.
+
+\begin{itemize}
+    \item \textbf{Non-smoothness at the origin.}
+    The transformation uses the error \emph{norm} $e=\norm{\tilde p}$ and the
+    virtual velocity contains the unit vector $\tilde p/\norm{\tilde p}$,
+    which is not differentiable at $\tilde p=0$. While $\alpha_1$ itself
+    admits a continuous extension ($\alpha_1\to -c_1\tilde p$), the control
+    law \eqref{eq:ubar} requires $\dot\alpha_1$, and $\dot\alpha_1$ carries
+    a $1/\norm{\tilde p}$ factor so it is in general unbounded in any
+    neighborhood of the origin. The P4 proof therefore implicitly assumes the
+    trajectory avoids needing a well-defined $\dot\alpha_1$ at $\tilde p=0$.
+    A fully smooth remedy is to transform the \emph{squared} norm
+    $e=\tfrac12\norm{\tilde p}^2$ (so $\dot e=\tilde p^T\dot{\tilde p}$ is
+    smooth everywhere) and choose $\alpha_1=\dot e^*\,\tilde p/\norm{\tilde p}^2$,
+    which is linear and smooth at the origin.
+
+    \item \textbf{Prescribed-time convergence is idealised.}
+    The formula $\xi(t)=\xi(0)\cos(\pi t/2T)$ and the claim of enclosure
+    ``exactly at $t=T$'' hold only when $\dot\xi=-a(t)\xi$ is satisfied
+    exactly, i.e.\ when the velocity-error subsystem is identically zero
+    ($s\equiv0$) and there is no disturbance. In the actual backstepping
+    controller the extra term $\frac{\zeta}{\rho}\frac{\tilde p^T}{\norm{\tilde p}}s$
+    and the robustifying saturation remain, so $\xi$ converges to zero only
+    asymptotically (or in finite time under further conditions); the envelope
+    $\norm{\tilde p}<\rho(t)$ is still guaranteed for all $t$, but exact zero
+    at the prescribed $T$ is not.
+
+    \item \textbf{Consensus--control coupling is not analyzed jointly.}
+    The proof treats $\frac1N\sum_i u_i=\bar u+u_0+o(1)$ and folds the
+    consensus residual into the disturbance bound $\bar\delta$. A rigorous
+    statement would use a composite Lyapunov function for the coupled
+    estimation--control dynamics, or explicitly assume the centroid estimate
+    converges on a faster time scale than the control loop.
+
+    \item \textbf{Initial collision-free configuration is assumed implicitly.}
+    Only the PPC feasibility $\rho(0)>\norm{\tilde p(0)}$ is stated; the
+    barrier proof also requires $\norm{p_{ij}(0)}>d$, otherwise the barrier
+    integral in $V_c$ is infinite at $t=0$. This should be added as an
+    explicit assumption.
+
+    \item \textbf{$\dot\alpha_1$ is not written out.}
+    The control law uses $\dot\alpha_1$ without giving its expression. For a
+    complete design one should either differentiate $\alpha_1$ explicitly or
+    replace the backstepping step by a command filter / dynamic-surface
+    control, which avoids computing $\dot\alpha_1$ and also mitigates the
+    origin non-smoothness in practice.
+
+    \item \textbf{Robustification introduces a boundary layer.}
+    The saturation term $-k_r\,\mathrm{sat}(s/\varepsilon)$ leaves a residual
+    $\tfrac n2k_r\varepsilon$ in $\dot V_\xi$; taking $\varepsilon\to0$ (or
+    using a signum) removes it but reintroduces chattering. The resulting PPC
+    bound is therefore conservative by $O(\varepsilon)$.
+\end{itemize}

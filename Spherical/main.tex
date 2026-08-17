@@ -1,0 +1,170 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
+
+\section{Problem Description}
+
+Consider homogeneous agents moving collectively in $N$-dimensional Euclidean space, $N \geq 2$. We design cooperative control laws such that agents are constrained to move on the sphere $\mathrm{S}^{(N-1)}$ with radius $r > 0$ for different spherical configurations.
+
+\begin{definition}[Rendezvous]
+The agents are said to \textit{Rendezvous} if
+\begin{equation}
+\lim_{t \to \infty} \|x_i - x_j\| = 0, \quad \lim_{t \to \infty} \dot{x}_i = 0, \quad i,j = 1,2,\dots,n
+\end{equation}
+where the \textit{Average Position} $\boldsymbol{x} \in \mathbb{R}^N$ of the agents is defined as:
+\begin{equation}
+\boldsymbol{x} := \frac{1}{n} \sum_{i=1}^n x_i.
+\end{equation}
+\end{definition}
+
+\begin{definition}[Deployment]
+The agents are said to \textit{Deploy} if
+\begin{equation}
+\lim_{t \to \infty} \boldsymbol{x} = 0, \quad \lim_{t \to \infty} \dot{x}_i = 0 \text{ for all } i
+\end{equation}
+\end{definition}
+
+\begin{definition}[Local Deployment/Formation]
+The agents are said to \textit{Deploy Locally} if
+\begin{equation}
+\lim_{t \to \infty} \|\boldsymbol{x}\| = r_0, \quad \lim_{t \to \infty} \dot{x}_i = 0, \quad i = 1,2,\dots,n
+\end{equation}
+where $0 < r_0 < r$.
+\end{definition}
+
+\section{First-Order Model}
+
+Consider agents governed by first-order integrators:
+\begin{equation}
+\dot{x}_i = u_i \in \mathbb{R}^N, \quad i = 1,2,\dots,n
+\end{equation}
+where $u_i$ is the control input of agent $i$, and initial conditions satisfy $\|x_i(0)\| = r$. Agent $i$ is constrained to lie on the sphere for $t > 0$ when $u_i$ is always perpendicular to $x_i$:
+\begin{equation}
+\langle u_i, x_i \rangle \equiv 0.
+\end{equation}
+
+\section{Control Law Design}
+
+Define the vector:
+\begin{equation}
+d_{ij} = x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i \in \mathbb{R}^N
+\end{equation}
+with properties: $\langle d_{ij}, x_i \rangle = 0$, $d_{ij} = 0$ when $x_i = x_j$ or $x_i = -x_j$, and
+\begin{equation}
+\|d_{ij}\| = \frac{\|x_i - x_j\| \sqrt{4r^2 - \|x_i - x_j\|^2}}{2r}.
+\end{equation}
+
+\begin{definition}[Force]
+Define the instantaneous force $f_{ij}$ on agent $i$ due to agent $j$ as:
+\begin{equation}
+f_{ij} = \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) d_{ij} \in \mathbb{R}^N
+\end{equation}
+where $k_a \geq 0$ is the attraction parameter, $k_r \geq 0$ is the repulsion parameter, and $\frac{k_r}{\|x_i - x_j\|}$ is the state-dependent repulsive coefficient.
+\end{definition}
+
+The overall control law is:
+\begin{equation}
+u_i = \sum_{j \in \mathcal{N}_i} w_{ij} \left(k_a - \frac{k_r}{\|x_i - x_j\|^2}\right) \left(x_j - \frac{\langle x_i, x_j \rangle}{r^2} x_i\right)
+\end{equation}
+where $\mathcal{N}_i$ is the neighbor set of agent $i$, $w_{ij} > 0$ when $j \in \mathcal{N}_i$, and $w_{ii} = 0$.
+
+\section{Main Results (First-Order Model)}
+
+\begin{theorem}[Stability Analysis]
+Consider the dynamics (5) with control input (12).
+
+\begin{enumerate}
+\item For $k_a = 0$, $k_r > 0$, the agents deploy on the whole sphere $\boldsymbol{x} \to 0$, and the average position satisfies:
+\begin{equation}
+\dot{\boldsymbol{x}} = -\frac{k_r(n-1)}{2r^2} \boldsymbol{x}
+\end{equation}
+
+\item For $k_a > 0$, $k_r > 0$, the agents deploy:
+\begin{itemize}
+\item on the whole sphere $\boldsymbol{x} \to 0$ if $\frac{k_r}{k_a} \geq \frac{2nr^2}{n-1}$;
+\item locally if $\frac{k_r}{k_a} < \frac{2nr^2}{n-1}$, in which case $\rho = \frac{(n-1)k_r}{2k_a} < nr^2$.
+\end{itemize}
+
+\item For $k_a > 0$, $k_r = 0$, the agents rendezvous, $\|\boldsymbol{x}\| \to r$.
+\end{enumerate}
+\end{theorem}
+
+\begin{remark}
+The agents cannot rendezvous when $k_r > 0$.
+\end{remark}
+
+\section{Proof of Theorem 1}
+
+Consider the dynamics of the average position:
+\begin{equation}
+\dot{\boldsymbol{x}} = \frac{k_a}{n} \sum_{i=1}^n \sum_{j=1}^n d_{ij} - \frac{k_r}{n} \sum_{i=1}^n \sum_{j=1, j \neq i}^n \frac{d_{ij}}{\|x_i - x_j\|^2}
+\end{equation}
+
+From the definition of $d_{ij}$, we have:
+\begin{equation}
+\frac{d_{ij} + d_{ji}}{\|x_i - x_j\|^2} = \frac{x_i + x_j}{2r^2}
+\end{equation}
+
+Thus,
+\begin{equation}
+\sum_{i=1}^n \sum_{j=1, j \neq i}^n \frac{d_{ij}}{\|x_i - x_j\|^2} = \frac{n(n-1)}{2r^2} \boldsymbol{x}
+\end{equation}
+
+and
+\begin{equation}
+\sum_{i=1}^n \sum_{j=1}^n d_{ij} = n^2 \boldsymbol{x} - \frac{n}{r^2} \sum_{i=1}^n \langle x_i, \boldsymbol{x} \rangle x_i
+\end{equation}
+
+Substituting into the average dynamics:
+\begin{equation}
+\dot{\boldsymbol{x}} = k_a n \boldsymbol{x} - \frac{k_a}{r^2} \sum_{i=1}^n \langle x_i, \boldsymbol{x} \rangle x_i - \frac{k_r(n-1)}{2r^2} \boldsymbol{x}
+\end{equation}
+
+Define $V := \|\boldsymbol{x}\|^2 / 2$. Then:
+\begin{equation}
+\dot{V} = k_a n \|\boldsymbol{x}\|^2 - \frac{k_a}{r^2} \sum_{i=1}^n \langle x_i, \boldsymbol{x} \rangle^2 - \frac{k_r(n-1)}{2r^2} \|\boldsymbol{x}\|^2
+\end{equation}
+
+Let $\vartheta_i$ be the angle between $x_i$ and $\boldsymbol{x}$ (when $\boldsymbol{x} \neq 0$), $0 \leq \vartheta_i \leq \pi$. Define $\lambda(t) := \sum_{i=1}^n \cos^2 \vartheta_i$ where $0 < \lambda(t) \leq n$. Then:
+\begin{equation}
+\sum_{i=1}^n \frac{\langle x_i, \boldsymbol{x} \rangle^2}{r^2} = \lambda(t) \|\boldsymbol{x}\|^2
+\end{equation}
+
+Thus,
+\begin{equation}
+\dot{V} = k_a \left(n - \lambda(t) - \frac{(n-1)k_r}{2r^2 k_a}\right) \|\boldsymbol{x}\|^2
+\end{equation}
+
+\begin{enumerate}
+\item When $k_a = 0$, $\dot{\boldsymbol{x}} = -\frac{k_r(n-1)}{2r^2} \boldsymbol{x}$ holds. $\boldsymbol{x} \to 0$ is the only equilibrium.
+
+\item When $k_a > 0$, $k_r > 0$:
+\begin{itemize}
+\item If $\frac{k_r}{k_a} \geq \frac{2nr^2}{n-1}$, then $\dot{V} < 0$ (since $\lambda(t) > 0$) and $\boldsymbol{x} \to 0$.
+\item If $\frac{k_r}{k_a} < \frac{2nr^2}{n-1}$, then $V \to V_0 < \frac{1}{2}r^2$ (note that $\|\boldsymbol{x}\| < r$ and $V < \frac{1}{2}r^2$ since $k_r > 0$). In this case, $\lambda(t) \to n - \frac{(n-1)k_r}{2r^2 k_a} := \bar{\lambda}_1 > 0$, and $\rho = \sum_{i=1}^n \rho_i^2 = r^2(n - \lambda_1) = \frac{(n-1)k_r}{2k_a}$.
+\end{itemize}
+
+\item When $k_a > 0$, $k_r = 0$: $\dot{V} > 0$ when $\|\boldsymbol{x}\| < r$, and $\dot{V} = 0$ when $\|\boldsymbol{x}\| = r$ (note that $\|\boldsymbol{x}\| = 0$ is an unstable equilibrium), so $\|\boldsymbol{x}\| \to r$.
+\end{enumerate}
+
+\begin{proposition}
+Consider the first-order dynamics (5) with control laws of only constant repulsive coefficient:
+\begin{equation}
+u_i = \sum_{j=1}^n -k_r d_{ij}, \quad i = 1,2,\dots,n
+\end{equation}
+then $\boldsymbol{x} \to 0$.
+\end{proposition}
+
+\begin{remark}
+In Proposition 2, although $\boldsymbol{x} \to 0$, the agents can rarely make uniform deployment on $\mathrm{S}^{(N-1)}$ even with all-to-all coupling.
+\end{remark}
+
+\end{document}

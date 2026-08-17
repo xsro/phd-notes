@@ -1,0 +1,370 @@
+
+
+![Elsevier logo featuring a tree and a person, with the word ELSEVIER below it.](/assist/api/documents/130/image/935eed7aa61f7777f62cfc032e11bee9_img.jpg)
+
+Elsevier logo featuring a tree and a person, with the word ELSEVIER below it.
+
+![Cover image of the journal Communications in Nonlinear Science and Numerical Simulation, showing a stylized 'C' logo.](/assist/api/documents/130/image/390120de4fe440c42fea8154fcaad334_img.jpg)
+
+Cover image of the journal Communications in Nonlinear Science and Numerical Simulation, showing a stylized 'C' logo.
+
+## Research paper
+
+# Cooperative fencing of second-order vehicles using relative position measurements for a target with time-varying velocity
+
+Liangdong Wen<sup>a,b</sup>, Zhiyong Chen<sup>b,\*</sup>, Wanglei Cheng<sup>c</sup>, Ziyang Zhen<sup>c</sup><sup>a</sup> College of Artificial Intelligence and Automation, Hohai University, Changzhou, 213000, China<sup>b</sup> School of Engineering, The University of Newcastle, Callaghan, NSW, 2308, Australia<sup>c</sup> College of Automation Engineering, Nanjing University of Aeronautics and Astronautics, Nanjing, 211106, China![Check for updates icon.](/assist/api/documents/130/image/fa6c61be003dfbb4ca5587e48a71de94_img.jpg)
+
+Check for updates icon.
+
+##### ARTICLE INFO
+
+### Keywords:
+
+Multi-agent systems  
+Autonomous vehicles  
+Cooperative fencing  
+Output feedback  
+Collision avoidance
+
+## ABSTRACT
+
+This paper investigates the distributed target-fencing problem for a group of autonomous vehicles and a target with time-varying velocity. A distributed controller is developed under sensing constraints, ensuring that the vehicles consistently maintain the target within their convex hull, without requiring a predefined formation. Each vehicle can only measure its relative position to neighboring vehicles or the target, and has knowledge of the target's system dynamics. The proposed controller comprises two key components: a dynamic target-approaching term that compensates for unmeasured target states and guides vehicles toward the target, and a repulsion regulation term that introduces nonlinear coupling to prevent collisions. The design's effectiveness is theoretically proven and verified through numerical simulations.
+
+## 1. Introduction
+
+Multi-agent systems, composed of numerous intelligent agents, are capable of accomplishing complex tasks through environmental feedback and information exchange [1]. By cooperating with one another, these systems often achieve significantly higher efficiency than a single agent operating alone. The underlying theories have found broad applications in areas such as robotics [2,3] and unmanned vehicles [4,5]. In particular, cooperative control strategies for target-chasing scenarios have attracted growing attention in recent years, including problems such as target tracking [6–8], target enclosing [9–11], and target fencing [12–14].
+
+The target-tracking problem focuses on designing control strategies that enable agents to regulate their output signals to track the state of a target in real time. In practical engineering applications, such as with unmanned aerial or surface vehicles, this typically involves maintaining a desired distance from the target while following its trajectory. As a result, the agents' velocities gradually converge to that of the target, making this approach both simple and effective. For instance, in [15], a formation control protocol based on Euler-Lagrange dynamics was developed to estimate and track a moving target. Additionally, a cooperative target-tracking framework using a bounded rational game-theoretic approach was introduced in [8], which extends to scenarios involving heterogeneous agents and multiple targets.
+
+To address the challenge of capturing a moving target, the target-enclosing problem was introduced. This problem requires all agents to surround the target within their moving trajectories [16]. In [17], a control scheme for target localization and enclosing was proposed, focusing on targets with unknown but constant velocity. In this scheme, each agent maintains a desired angular
+
+\* Corresponding author.
+
+E-mail addresses: [wenliangdong@hhu.edu.cn](/assist/api/documents/130/image/mailto:wenliangdong@hhu.edu.cn) (L. Wen), [zhiyong.chen@newcastle.edu.au](/assist/api/documents/130/image/mailto:zhiyong.chen@newcastle.edu.au) (Z. Chen), [cwl2020nuaa@163.com](/assist/api/documents/130/image/mailto:cwl2020nuaa@163.com) (W. Cheng), [zhenziyang@nuaa.edu.cn](/assist/api/documents/130/image/mailto:zhenziyang@nuaa.edu.cn) (Z. Zhen).<https://doi.org/10.1016/j.cnsns.2026.110182>
+
+Received 1 November 2025; Received in revised form 28 February 2026; Accepted 22 May 2026
+
+Available online 23 May 2026
+
+1007-5704/© 2026 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+
+position along a common circular path, relying solely on bearing angle measurements. Subsequently, an enclosing control protocol was developed in [11] to handle targets with time-varying velocity, with a particular emphasis on collision avoidance. Additionally, some target-enclosing problems can be addressed using advanced tracking algorithms.
+
+While target-enclosing schemes ensure that the target is enclosed within agents' moving trajectories, they do not guarantee that the target is always surrounded within the convex hull of agents' instantaneous positions. To address this limitation, the target-fencing problem was formulated first in [12]. The objective is to ensure that a group of agents maintains the target within their convex hull at all times. This problem is closely related to surrounding control [18,19], which typically involves estimating the target's center and maintaining predefined relative distances. A key feature of the target-fencing framework is that it does not rely on fixed stand-off distances or specific formations. Instead, each agent autonomously adjusts its distance to achieve and maintain the fencing configuration, without being assigned to a specific position. Furthermore, fencing controllers are well-suited for dynamic environments and uncertain conditions, making them applicable to a wide range of real-world scenarios.
+
+In recent years, several new developments have emerged in fencing control. Two fencing control protocols for a target moving at constant velocity were proposed in [13] and [20], designed for first-order and second-order vehicles, respectively. In [21], a label-free fencing controller was presented for a periodically moving target with time-varying velocity, under the assumption that the target's position and all agent states are fully available. Furthermore, [22,23] introduced a finite-time estimator capable of asymptotically observing the target's motion. By integrating this estimator with a fencing controller, a plug-and-play fencing strategy was developed and validated through real-world experiments.
+
+Following this line of research, this paper investigates the distributed target-fencing problem for a target with time-varying velocity, focusing specifically on second-order vehicles that rely solely on relative position measurements. The key technical distinctions between the proposed scheme and existing results in the literature are elaborated as follows.
+
+(1) A cooperative fencing controller is proposed that relies solely on relative position measurements. Unlike existing target-fencing schemes [12–14,20–23], each vehicle in this scheme can only measure the relative positions between itself and its neighboring vehicles or the target, due to sensing limitations. Despite this, the controller still guarantees key features of target fencing, including confinement within the convex hull, collision avoidance, and the absence of a preset formation.
+
+(2) Apart from the cases where targets have constant velocity [13], variable acceleration [22], or constrained system matrices [21], it is possible to extend the target model in a more general sense. For instance, [21] guarantees solvability only when all eigenvalues of the target's system matrix are purely imaginary. However, for more general dynamics, its controller parameters may not always obtain feasible solutions. In contrast, this paper relaxes the solvability conditions for the distributed target-fencing problem from the purely imaginary assumption to the more general requirement that the spectra of the target and closed-loop system matrices are disjoint.
+
+(3) The proposed controller consists of two main components: a dynamic target-approaching term and a repulsion regulation term. The first term drives the vehicles toward the target by estimating the unmeasured states of both the target and the vehicles. The second term prevents vehicle collisions. In contrast to the dynamic feedback regulator used in recent works [21], which relies on the full state composed of the agents' positions and velocities, the regulator in this paper is classified as an output feedback design.
+
+The rest of this paper is organized as follows. In Section 2, the distributed target-fencing problem is formulated, and some preliminaries are given. The design and stability proof of the cooperative fencing controller only relying on relative position are provided in Section 3. Section 4 discusses the performance of the proposed controller via numerical simulations. Finally, Section 5 concludes this paper.
+
+**Notations:** Throughout the paper,  $\mathbb{R}$  and  $\mathbb{R}^+$  denote the sets of real numbers and positive real numbers, respectively. The notation  $\mathbb{R}^{p \times q}$  represents the Euclidean space of  $p \times q$  real matrices. The symbols  $\|\cdot\|$  and  $\otimes$  denote the matrix 2-norm and the Kronecker product, respectively. For a symmetric matrix  $M$ ,  $M > 0$  ( $M \geq 0$ ) indicates that  $M$  is positive (semi-)definite, while  $M < 0$  ( $M \leq 0$ ) indicates that  $M$  is negative (semi-)definite.
+
+## 2. Problem description and preliminaries
+
+Considering the second-order models of both the vehicles and the target, the distributed target-fencing problem is formulated in this section. Suppose there are  $n \geq 2$  second-order vehicles whose kinematics are described by the continuous-time model:
+
+$$\begin{aligned}\dot{x}_i(t) &= v_i(t) \\ \dot{v}_i(t) &= u_i(t)\end{aligned}\tag{1}$$
+
+where  $x_i, v_i, u_i \in \mathbb{R}^2$  denote the position, velocity, and control input of the  $i$ th vehicle in a planar space, for  $i = 1, \dots, n$ . For simplicity, the time variable ( $t$ ) is omitted in the sequel.
+
+The dynamics of the time-varying target velocity are given by
+
+$$\dot{\theta} = (S \otimes I_2)\theta\tag{2}$$
+
+where  $\theta = [x_0^T, v_0^T]^T$  with  $x_0, v_0 \in \mathbb{R}^2$  denoting the position and velocity of the target, respectively. The system matrix  $S$  is defined as
+
+$$S = \begin{bmatrix} 0 & 1 \\ -s_1 & -s_2 \end{bmatrix}$$
+
+for two constants  $s_1$  and  $s_2$ .
+
+Although the system matrix  $S$  is known, each vehicle lacks direct access to the target's position  $x_0$  and velocity  $v_0$ . Specifically, the  $i$ th vehicle can only measure its relative position with respect to the target, defined as  $e_i = x_i - x_0$ . Likewise, the relative position between the  $i$ th and  $j$ th vehicles is given by  $x_{ij} = x_i - x_j$ .
+
+The geographical neighbor set of the  $i$ th vehicle is defined as
+
+$$\mathbb{N}_i = \{j \in \{1, 2, \dots, n\} \mid \|x_{ij}\| \leq r_c, j \neq i\} \quad (3)$$
+
+where  $r_c > 0$  denotes the communication range. Each vehicle can measure relative position information from neighbors within this range. For convenience, let  $x = [x_1^T, x_2^T, \dots, x_n^T]^T$  denote the complete position vector of the multi-vehicle system.
+
+Define the convex hull of the vehicle positions as
+
+$$\text{co}(x) = \left\{ \sum_{i=1}^n \kappa_i x_i \mid \sum_{i=1}^n \kappa_i = 1, \kappa_i \in [0, 1] \right\}. \quad (4)$$
+
+Let the relative distance between the target and the convex hull be
+
+$$r_{co} = \min_{s \in \text{co}(x)} \|x_0 - s\|.$$
+
+The distributed target-fencing problem is to design the control input  $u_i$  for each vehicle, using only the relative position information  $e_i$  and  $x_{ij}$  for  $j \in \mathbb{N}_i$ , such that the resulting closed-loop system satisfies the following properties:
+
+- (P1) The target is fenced exponentially within the convex hull of vehicles in the sense of  $\lim_{t \rightarrow \infty} r_{co}(t) = 0$ .
+- (P2) Collisions between vehicles are avoided, ensuring  $\|x_{ij}(t)\| > r_s, \forall t \geq 0$ , where  $r_s > 0$  is the minimum safe distance.
+- (P3) Each vehicle's velocity tracking error converges to zero in the sense of  $\lim_{t \rightarrow \infty} [v_i(t) - v_0(t)] = 0$ .
+
+Since only relative position information is available and the time-varying velocities are not directly accessible, the controller design becomes challenging. To address this, we appeal to output regulation theory, particularly to achieve velocity tracking in (P3). The simultaneous fencing and collision-avoidance requirements in (P1) and (P2) further complicate the design. At steady state, the three properties are balanced within an appropriate, though not predefined, formation. However, during transients, the corresponding control forces may conflict, posing additional challenges. The following lemmas are cited and will be used in developing the solution in the next section.
+
+**Lemma 1.** [24, Lemma 3.18] Assume that  $A_c$  is Hurwitz and the weighting matrix  $U^\top U \geq 0$ . If the pair  $(U^\top U, A_c)$  is observable, then the unique solution  $P$  to the following Lyapunov equation is positive definite:
+
+$$P A_c + A_c^\top P + U^\top U = 0, \quad (5)$$
+
+where the Lyapunov matrix  $P$  is also referred to as the observability Gramian.
+
+**Lemma 2.** [25, Lemma 1.27] Assume that the pair  $(G_1, G_2)$  incorporates a  $p$ -copy internal model of  $S$ , and define the closed-loop system matrix as  $\mathcal{A}_c = \begin{bmatrix} \mathcal{A} & B \\ G_2 C & G_1 + G_2 D \end{bmatrix}$ . Suppose  $A_c$  is Hurwitz and  $S$  has no eigenvalues with negative real parts. Then, the following equations
+
+$$\begin{aligned} \mathcal{X} S &= \mathcal{A} \mathcal{X} + B \mathcal{Z} + \mathcal{E} \\ \mathcal{Z} S &= G_1 \mathcal{Z} + G_2 D \mathcal{Z} + G_2 C \mathcal{X} + G_2 F \end{aligned} \quad (6)$$
+
+have unique solutions  $\mathcal{X}$  and  $\mathcal{Z}$ , and solutions satisfy
+
+$$0 = C \mathcal{X} + D \mathcal{Z} + F, \quad (7)$$
+
+where  $\mathcal{A}$ ,  $B$ ,  $C$ ,  $D$ ,  $\mathcal{E}$  and  $F$  are any constant matrices with conformable dimensions.
+
+**Lemma 3.** [25, Lemma 1.20] Consider a linear system
+
+$$\begin{aligned} \dot{x}_c &= \mathcal{A}_c x_c + B_c \theta \\ \dot{\theta} &= S \theta \\ e &= C_c x_c + D_c \theta, \end{aligned} \quad (8)$$
+
+where  $x_c \in \mathbb{R}^{n_c}$ ,  $\theta \in \mathbb{R}^q$ ,  $e \in \mathbb{R}^p$  and  $\mathcal{A}_c$ ,  $B_c$ ,  $C_c$ ,  $D_c$ ,  $S$  are constant matrices with conformable dimensions. The closed-loop system (8) is said to be exponentially stable and the error of system  $e$  converges to zero under the following assumptions:
+
+- (1)  $S$  has no eigenvalues with negative real parts;
+- (2)  $\mathcal{A}_c$  is a Hurwitz matrix;
+- (3) There exists a unique matrix  $\mathcal{X}_c$  that satisfies the following Sylvester matrix equations
+
+$$\begin{aligned} \mathcal{X}_c S &= \mathcal{A}_c \mathcal{X}_c + B_c \\ 0 &= C_c \mathcal{X}_c + D_c. \end{aligned} \quad (9)$$
+
+## 3. Main results
+
+A cooperative fencing framework under sensing limitations is developed in this section. The proposed controller relies solely on relative position information and does not require a predefined formation. The cooperative fencing controller is designed as follows:
+
+$$u_i = -(K \otimes I_2)z_i + \alpha_1 \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}, \quad (10)$$
+
+where  $K = [k_1, k_2, k_3, k_4]$ , and  $k_1, k_2, k_3, k_4, \alpha_1 \in \mathbb{R}$ . The first term in (10) drives all vehicles toward the target using the estimated information  $z_i \in \mathbb{R}^8$  derived from the available measurements, while the second term ensures collision avoidance among vehicles.
+
+For convenience, let  $z_i = [\hat{x}_i^\top, \hat{v}_i^\top, \hat{x}_{0i}^\top, \hat{v}_{0i}^\top]^\top$ , where  $\hat{x}_i, \hat{v}_i, \hat{x}_{0i}, \hat{v}_{0i} \in \mathbb{R}^2$  denote the estimated values of  $x_i, v_i, x_0, v_0$ , respectively. The dynamics of  $z_i$  are governed by the compensator:
+
+$$\dot{z}_i = (G_1 \otimes I_2)z_i + (G_2 \otimes I_2)e_i + (\alpha_2 \otimes I_2) \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}, \quad (11)$$
+
+where
+
+$$G_1 = \begin{bmatrix} -l_1 & 1 & 0 & 0 \\ -k_1 - l_2 & -k_2 & -k_3 & -k_4 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & -s_1 & -s_2 \end{bmatrix}, \quad G_2 = \begin{bmatrix} l_1 \\ l_2 \\ 0 \\ 1 \end{bmatrix}$$
+
+with  $l_1, l_2 \in \mathbb{R}$  being positive constants and  $\alpha_2 \in \mathbb{R}^4$  a constant vector.
+
+In (10) and (11), the collision-avoidance function is defined as
+
+$$\varpi(\|x_{ij}\|) = \begin{cases} \frac{\eta}{\|x_{ij}\| - r_s} - \frac{\eta}{r_c - r_s}, & r_s < \|x_{ij}\| \leq r_c, \\ 0, & \|x_{ij}\| > r_c, \end{cases} \quad (12)$$
+
+where  $\eta > 0$  is the repulsion factor.
+
+It is noted that the design relies on  $e_i$  and  $x_{ij}$  for  $j \in \mathbb{N}_i$ . Given that position is the measured output, and the full state consists of both position and velocity, the controller qualifies as an output-feedback design. The controller parameters consist of the real numbers  $k_1, k_2, k_3, k_4, l_1, l_2, \alpha_1$  and the vector  $\alpha_2$ . The main result is presented in the following theorem, which provides the explicit conditions on these parameters.
+
+**Assumption 1.** All the eigenvalues of  $S$  do not have negative real parts.
+
+**Assumption 2.** All initial relative distance between vehicles should exceed the minimum safe distance  $r_s$  in the sense of  $\|x_{ij}(0)\| > r_s$ .
+
+**Theorem 1.** For the systems (1) and (2) with the controller specified in (10) and (11), and under Assumptions 1 and 2, the distributed target-fencing problem is solved in the sense of (P1), (P2), and (P3) if the parameters satisfy the following conditions:
+
+1. The matrix  $A_c = \begin{bmatrix} A & -BK \\ G_2C & G_1 \end{bmatrix}$  is Hurwitz, and the pair  $(U^\top U, A_c)$  is observable, where
+
+$$A = \begin{bmatrix} 0 & 1 \\ 0 & 0 \end{bmatrix}, \quad B = \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \quad C = [1, 0], \quad U = [0, 1, 0, 0, 0, 0].$$
+
+2. There exists a positive definite matrix  $P$  satisfying (5). Then
+
+$$\alpha = [0, \alpha_1, \alpha_2^\top]^\top = \epsilon P^{-1} U^\top$$
+
+for any  $\epsilon > 0$ .
+
+**Proof.** First, note from Lemma 1 that a positive definite matrix  $P$  satisfying (5) always exists under Condition 1. Condition 2 further requires that the first element of  $P^{-1}U^\top$ , denoted by  $p_1$ , is zero. Since the first row of  $A_c$  is  $U$  and the remaining rows are denoted by  $W$ , Eq. (5) can be rewritten as
+
+$$\begin{bmatrix} U P^{-1} \\ W P^{-1} \end{bmatrix} + \begin{bmatrix} P^{-1} U^\top & P^{-1} W^\top \end{bmatrix} + P^{-1} U^\top U P^{-1} = 0,$$
+
+The equality of the (1, 1)-entry in this equation yields  $2p_1 + p_1^2 = 0$ , which is satisfied by  $p_1 = 0$ .
+
+Next, we analyze the distributed target-fencing problem with respect to each of the three properties.
+
+Let  $\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i$ ,  $\bar{v} = \frac{1}{n} \sum_{i=1}^n v_i$ ,  $\bar{u} = \frac{1}{n} \sum_{i=1}^n u_i$ ,  $\bar{z} = \frac{1}{n} \sum_{i=1}^n z_i$ , and  $\bar{e} = \bar{x} - x_0$  represent the average quantities for the multiple vehicles. Define the center state of the vehicles as  $\bar{\theta} = [\bar{x}^\top, \bar{v}^\top]^\top$ . The dynamics of  $\bar{\theta}$  and the associated error  $\bar{e}$  are then given by
+
+$$\begin{aligned} \dot{\bar{\theta}} &= (A \otimes I_2) \bar{\theta} + (B \otimes I_2) \bar{u}, \\ \dot{\bar{e}} &= (C \otimes I_2)(\bar{\theta} - \theta). \end{aligned} \quad (13)$$
+
+The control input for the center is derived from (10) as
+
+$$\bar{u} = -(K \otimes I_2)\bar{z}, \quad (14)$$
+
+using the fact that  $\sum_{i=1}^n \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) = 0$ . Similarly, the average dynamic compensator in (11) takes the form
+
+$$\dot{\bar{z}} = (G_1 \otimes I_2)\bar{z} + (G_2 \otimes I_2)\bar{e}. \quad (15)$$
+
+Define  $\bar{\zeta} = [\bar{\eta}^\top, \bar{z}^\top]^\top$ . The augmented closed-loop system of the center, combining (13), (14), and (15), is expressed as
+
+$$\begin{aligned} \dot{\bar{\zeta}} &= (A_c \otimes I_2)\bar{\zeta} + (B_c \otimes I_2)\theta \\ \dot{\theta} &= (S \otimes I_2)\theta \end{aligned} \quad (16)$$
+
+where  $\bar{e} = (C_c \otimes I_2)\bar{\zeta} + (D_c \otimes I_2)\theta$ , and
+
+$$B_c = \begin{bmatrix} \mathbf{0} \\ -G_2 C \end{bmatrix}, \quad C_c = [C, \mathbf{0}], \quad D_c = -C.$$
+
+It can be verified that the pair  $(G_1, G_2)$  incorporates an internal model of  $S$ . According to Lemma 2, if  $A_c$  is Hurwitz, then there exist solutions  $X$  and  $Z$  to the following matrix equations:
+
+$$\begin{aligned} XS &= AX - BKZ \\ ZS &= G_1 Z + G_2(CX - C) \\ 0 &= CX - C, \end{aligned} \quad (17)$$
+
+which can be equivalently rewritten as
+
+$$\begin{aligned} X_c S &= A_c X_c + B_c \\ 0 &= C_c X_c + D_c \end{aligned} \quad (18)$$
+
+for  $X_c = [X^\top, Z^\top]^\top$ .
+
+Furthermore, for the closed-loop system (16), Lemma 3 implies that the distributed target-fencing problem can be reformulated as an output regulation problem, which can be solved by a dynamic output feedback controller. Define  $\tilde{\zeta} = \bar{\zeta} - (X_c \otimes I_2)\theta$ . The resulting error system of the center is given by  $\dot{\tilde{\zeta}} = A_c \tilde{\zeta}$ . Since  $A_c$  is Hurwitz,  $\tilde{\zeta}$  converges to zero exponentially. Consequently, the center error  $\bar{e}$  also converges to zero, i.e.,  $\lim_{t \rightarrow \infty} [\frac{1}{n} \sum_{i=1}^n x_i(t) - x_0(t)] = 0$ . This further implies that  $\lim_{t \rightarrow \infty} r_{co}(t) = 0$ . Hence, property (P1) is established.
+
+Next, define  $\zeta_i = [x_i^\top, v_i^\top, \hat{x}_i^\top, \hat{v}_i^\top, \hat{x}_{0i}^\top, \hat{v}_{0i}^\top]^\top$ . Then, the augmented dynamics of the  $i$ th vehicle can be written as
+
+$$\dot{\zeta}_i = (A_c \otimes I_2)\zeta_i + (B_c \otimes I_2)\theta + (\alpha \otimes I_2) \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}. \quad (19)$$
+
+Define the error  $\tilde{\zeta}_i = \zeta_i - (X_c \otimes I_2)\theta$ . By combining the Sylvester Eq. (18) with the augmented system (19), the error dynamics are obtained as
+
+$$\dot{\tilde{\zeta}}_i = (A_c \otimes I_2)\tilde{\zeta}_i + (\alpha \otimes I_2) \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}. \quad (20)$$
+
+Then, define the potential energy function as
+
+$$V(t) = \frac{\epsilon}{2} \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} \int_{\|x_{ij}(t)\|}^{r_c} \varpi(s) ds + \frac{1}{2} \sum_{i=1}^n \tilde{\zeta}_i^\top(t) (P \otimes I_2) \tilde{\zeta}_i(t). \quad (21)$$
+
+Along the trajectory of (20), the time derivative of  $V(t)$  is given by
+
+$$\begin{aligned} \dot{V} &= -\epsilon \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} (\varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|})^\top v_i \\ &\quad + \frac{1}{2} \sum_{i=1}^n \tilde{\zeta}_i^\top [(PA_c + A_c^\top P) \otimes I_2] \tilde{\zeta}_i \\ &\quad + \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} (\varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|})^\top [(\alpha^\top P) \otimes I_2] \tilde{\zeta}_i. \end{aligned} \quad (22)$$
+
+The first item in Eq. (22) can be rewritten as
+
+$$\sum_{i=1}^n \sum_{j \in \mathbb{N}_i} (\varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|})^\top v_i = \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} (\varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|})^\top \tilde{v}_i \quad (23)$$
+
+where  $\tilde{v}_i = v_i - v_0$ .
+
+![Figure 1: Trajectories of vehicles and target in Case 1. The plot shows the X (m) vs Y (m) plane. The X-axis ranges from -30 to 30, and the Y-axis ranges from -50 to 50. A red solid line represents the 'Target'. Four vehicles are shown: Vehicle 1 (blue dotted line), Vehicle 2 (yellow dotted line), Vehicle 3 (green dotted line), and Vehicle 4 (black dotted line). Three specific time points are marked: t=200s (purple dashed line with triangles), t=30s (green dashed line with triangles), and t=160s (yellow dashed line with triangles). The trajectories show the vehicles moving towards the target area.](/assist/api/documents/130/image/55d2bfe1c3d04e86df8d7a104d802172_img.jpg)
+
+Figure 1: Trajectories of vehicles and target in Case 1. The plot shows the X (m) vs Y (m) plane. The X-axis ranges from -30 to 30, and the Y-axis ranges from -50 to 50. A red solid line represents the 'Target'. Four vehicles are shown: Vehicle 1 (blue dotted line), Vehicle 2 (yellow dotted line), Vehicle 3 (green dotted line), and Vehicle 4 (black dotted line). Three specific time points are marked: t=200s (purple dashed line with triangles), t=30s (green dashed line with triangles), and t=160s (yellow dashed line with triangles). The trajectories show the vehicles moving towards the target area.
+
+Fig. 1. Trajectories of vehicles and target in Case 1.
+
+From (17), it follows that  $X$  is the identity matrix. Consequently,  $UX_c = [0, 1]X = [0, 1]$ , and
+
+$$(U \otimes I_2)\tilde{\zeta}_i = (U \otimes I_2)(\zeta_i - (X_c \otimes I_2)\theta) = v_i - v_0 = \tilde{v}_i.$$
+
+Substituting this into (22) and (23), and applying Condition 2, we obtain
+
+$$\begin{aligned} \dot{V} &= \frac{1}{2} \sum_{i=1}^n \tilde{\zeta}_i^T [(PA_c + A_c^T P) \otimes I_2] \tilde{\zeta}_i \\ &\quad + \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} (\varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|})^T [(\alpha^T P - \epsilon U) \otimes I_2] \tilde{\zeta}_i \\ &= -\frac{1}{2} \sum_{i=1}^n \tilde{\zeta}_i^T [(U^T U) \otimes I_2] \tilde{\zeta}_i \\ &= -\frac{1}{2} \sum_{i=1}^n \|\tilde{v}_i\|^2 \leq 0. \end{aligned} \quad (24)$$
+
+Therefore,
+
+$$\frac{\epsilon}{2} \sum_{i=1}^n \sum_{j \in \mathbb{N}_i} \int_{\|x_{ij}(t)\|}^{r_s} \varpi(s) ds \leq V(t) \leq V(0) < \infty, \quad (25)$$
+
+which ensures that the relative distance  $\|x_{ij}(t)\|$  between vehicles always remains greater than  $r_s$  for all  $t \geq 0$  under Assumption 2. Hence, property (P2) is established.
+
+Finally, since  $V(t)$  is bounded, it follows that  $\tilde{\zeta}_i(t)$  is bounded for all  $t \geq 0$ . From (20),  $\dot{\tilde{\zeta}}_i(t)$  is also bounded, which in turn implies that  $\dot{V}(t)$  is bounded by (24). Therefore,  $\dot{V}(t)$  is uniformly continuous. By Barbalat's Lemma, we obtain  $\lim_{t \rightarrow \infty} \dot{V}(t) = 0$ , and hence  $\lim_{t \rightarrow \infty} \tilde{v}_i(t) = 0$ . Thus, property (P3) is proved.  $\square$
+
+**Theorem 1** provides the explicit conditions for the controller parameters. While  $\alpha_1$  and  $\alpha_2$  are directly computed in Condition 2, the remaining parameters  $k_1, k_2, k_3, k_4, l_1$ , and  $l_2$  are selected to satisfy Condition 1. Two cases are discussed below to further explain Condition 1.
+
+**Case 1:** For  $s_1 > 0$  and  $s_2 < 0$ , all eigenvalues of  $S$  have positive real parts. The parameters that satisfy Condition 1 can be chosen as follows:  $l_1 > 0$ ,  $0 < l_2 \leq \frac{l_1^2}{4}$ ,  $k_1 > -s_1 + s_2^2$ ,  $-s_2 < k_2 < \frac{-k_1 - s_1}{s_2}$ ,  $-k_1 s_1 < k_3 < \frac{\rho_0}{4}$ , and  $\frac{\rho_1}{2} - \frac{|k_2 + s_2|}{2} \sqrt{\rho_2} < k_4 < \frac{\rho_1}{2} + \frac{|k_2 + s_2|}{2} \sqrt{\rho_2}$ . Among these,  $\rho_0 = k_1^2 - 2k_1(s_1 - k_2 s_2) + (s_1 + k_2 s_2)^2$ ,  $\rho_1 = k_1(k_2 - s_2) + k_2^2 s_2 + s_1 s_2 + k_2(-s_1 + s_2^2)$ , and  $\rho_2 = k_1^2 - 4k_3 - 2k_1(s_1 - k_2 s_2) + (s_1 + k_2 s_2)^2$ .
+
+**Case 2:** For  $s_1 \geq 0$  and  $s_2 = 0$ , all eigenvalues of  $S$  are imaginary or zero. Similarly, the parameters that satisfy Condition 1 can be chosen as follows:  $l_1 > 0$ ,  $0 < l_2 \leq \frac{l_1^2}{4}$ ,  $k_1 > -s_1$ ,  $k_2 > 0$ ,  $-k_1 s_1 < k_3 < \frac{1}{4}(k_1 - s_1)^2$ , and  $\frac{k_2 \sigma_0}{2} < k_4 < \frac{k_2 \sigma_1}{2}$ . Among them,  $\sigma_0 = k_1 - s_1 - \sqrt{(k_1 - s_1)^2 - 4k_3}$  and  $\sigma_1 = k_1 - s_1 + \sqrt{(k_1 - s_1)^2 - 4k_3}$ .
+
+**Remark 1.** The dynamic control structure in Theorem 1 shares certain similarities with that in [21], but also exhibits fundamental differences. Specifically, while the observer in [21] estimates only the target's state under the assumption that the agents' velocities are known, our design further extends this by enabling estimation of the agents' velocities without relying on any velocity sensors. Moreover, the construction of the matrix  $P$  in [21] is intricate and cannot be directly applied in our setting due to the augmented dimension introduced by velocity estimation. Instead, we leverage Lemma 1 to develop an alternative solution.
+
+![Figure 2: Profile of position and velocity tracking errors in Case 1. The figure consists of three vertically stacked subplots. The top subplot shows position errors $\bar{e}_x$ (m) and $\bar{e}_y$ (m) over time $t$ (s) from 0 to 200. The middle and bottom subplots show velocity errors $\bar{v}_{ix}$ (m/s) and $\bar{v}_{iy}$ (m/s) over time $t$ (s) from 0 to 200. Each subplot contains four data series: Vehicle1 (solid black), Vehicle2 (dashed black), Vehicle3 (dotted black), and Vehicle4 (dash-dot black). All errors converge to zero over time.](/assist/api/documents/130/image/c0843c6d138705289960d9f53a6e72a1_img.jpg)
+
+Figure 2: Profile of position and velocity tracking errors in Case 1. The figure consists of three vertically stacked subplots. The top subplot shows position errors \$\bar{e}\_x\$ (m) and \$\bar{e}\_y\$ (m) over time \$t\$ (s) from 0 to 200. The middle and bottom subplots show velocity errors \$\bar{v}\_{ix}\$ (m/s) and \$\bar{v}\_{iy}\$ (m/s) over time \$t\$ (s) from 0 to 200. Each subplot contains four data series: Vehicle1 (solid black), Vehicle2 (dashed black), Vehicle3 (dotted black), and Vehicle4 (dash-dot black). All errors converge to zero over time.
+
+Fig. 2. Profile of position and velocity tracking errors in Case 1.
+
+![Figure 3: Profile of relative distances between vehicles in Case 1. The plot shows the relative distance $\|x_{ij}\|$ (m) between vehicles over time $t$ (s) from 0 to 200. The y-axis ranges from 5 to 35. The legend includes $\|x_{12}\|$ (dotted), $\|x_{13}\|$ (dashed), $\|x_{14}\|$ (solid), $\|x_{23}\|$ (blue dashed), $\|x_{24}\|$ (blue solid), $\|x_{34}\|$ (green dashed), and $r_s$ (red solid). An inset shows a zoomed-in view of the initial transient period from $t=0$ to $t=20$.](/assist/api/documents/130/image/c64e9e9f3b0b828a5f6ac70441877764_img.jpg)
+
+Figure 3: Profile of relative distances between vehicles in Case 1. The plot shows the relative distance \$\|x\_{ij}\|\$ (m) between vehicles over time \$t\$ (s) from 0 to 200. The y-axis ranges from 5 to 35. The legend includes \$\|x\_{12}\|\$ (dotted), \$\|x\_{13}\|\$ (dashed), \$\|x\_{14}\|\$ (solid), \$\|x\_{23}\|\$ (blue dashed), \$\|x\_{24}\|\$ (blue solid), \$\|x\_{34}\|\$ (green dashed), and \$r\_s\$ (red solid). An inset shows a zoomed-in view of the initial transient period from \$t=0\$ to \$t=20\$.
+
+Fig. 3. Profile of relative distances between vehicles in Case 1.
+
+![Figure 4: Trajectories of vehicles and target in Case 2. The plot shows the trajectories of a Target (red solid line), Vehicle1 (blue solid line), Vehicle2 (yellow dashed line), Vehicle3 (green dotted line), and Vehicle4 (black dash-dot line) in the $X$-$Y$ plane. The x-axis ranges from -40 to 30 and the y-axis from -30 to 40. The trajectories are shown at two time points: $t=30s$ (green label) and $t=200s$ (purple label).](/assist/api/documents/130/image/01da0d212fb571933f10f96556157745_img.jpg)
+
+Figure 4: Trajectories of vehicles and target in Case 2. The plot shows the trajectories of a Target (red solid line), Vehicle1 (blue solid line), Vehicle2 (yellow dashed line), Vehicle3 (green dotted line), and Vehicle4 (black dash-dot line) in the \$X\$-\$Y\$ plane. The x-axis ranges from -40 to 30 and the y-axis from -30 to 40. The trajectories are shown at two time points: \$t=30s\$ (green label) and \$t=200s\$ (purple label).
+
+Fig. 4. Trajectories of vehicles and target in Case 2.
+
+**Remark 2.** In this paper, the target may be unstable. The primary purpose of [Assumption 1](/assist/api/documents/130/image/#) is to guarantee that the spectra of both the target and the closed-loop system matrices are disjoint. This condition allows the application of [Lemma 3](/assist/api/documents/130/image/#) and ensures the existence of a unique solution  $\mathcal{X}_c$  to the Sylvester equations. Consequently, [Theorem 1](/assist/api/documents/130/image/#) is applicable not only to periodic or divergent target trajectories but also to targets with constant velocity. Additionally, this proposed controller can also be extended to vehicles with general linear dynamics, but the additional requirement is that the elements in the first four rows of  $\mathcal{X}_c$  are given by  $\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} \otimes I_2$ .
+
+![Figure 5: Profile of position and velocity tracking errors in Case 2. The figure consists of three vertically stacked subplots. The top subplot shows position tracking errors $\bar{e}_x$ (solid line) and $\bar{e}_y$ (dashed line) in meters over time $t$ in seconds from 0 to 200. Both errors start around 5m and converge to zero by 100s. The middle subplot shows velocity tracking errors $\bar{v}_{ix}$ (solid line) and $\bar{v}_{iy}$ (dashed line) in m/s for four vehicles (Vehicle1: solid, Vehicle2: dashed, Vehicle3: dotted, Vehicle4: dash-dot) over time $t$ from 0 to 200. All errors start around 5 m/s and converge to zero by 100s. The bottom subplot shows velocity tracking errors $\bar{v}_{iy}$ (solid line) and $\bar{v}_{ix}$ (dashed line) in m/s for the same four vehicles over time $t$ from 0 to 200. All errors start around 10 m/s and converge to zero by 100s.](/assist/api/documents/130/image/a71911ad87414271aeb190e0eebcb989_img.jpg)
+
+Figure 5: Profile of position and velocity tracking errors in Case 2. The figure consists of three vertically stacked subplots. The top subplot shows position tracking errors \$\bar{e}\_x\$ (solid line) and \$\bar{e}\_y\$ (dashed line) in meters over time \$t\$ in seconds from 0 to 200. Both errors start around 5m and converge to zero by 100s. The middle subplot shows velocity tracking errors \$\bar{v}\_{ix}\$ (solid line) and \$\bar{v}\_{iy}\$ (dashed line) in m/s for four vehicles (Vehicle1: solid, Vehicle2: dashed, Vehicle3: dotted, Vehicle4: dash-dot) over time \$t\$ from 0 to 200. All errors start around 5 m/s and converge to zero by 100s. The bottom subplot shows velocity tracking errors \$\bar{v}\_{iy}\$ (solid line) and \$\bar{v}\_{ix}\$ (dashed line) in m/s for the same four vehicles over time \$t\$ from 0 to 200. All errors start around 10 m/s and converge to zero by 100s.
+
+Fig. 5. Profile of position and velocity tracking errors in Case 2.
+
+![Figure 6: Profile of relative distances between vehicles in Case 2. The plot shows the relative distance $\|x_{ij}\|$ in meters on the y-axis (0 to 60) versus time $t$ in seconds on the x-axis (0 to 200). The legend includes $\|x_{12}\|$ (dotted), $\|x_{13}\|$ (dashed), $\|x_{14}\|$ (solid), $\|x_{23}\|$ (blue dashed), $\|x_{24}\|$ (blue solid), $\|x_{34}\|$ (green dashed), and $r_s$ (red solid). The safe distance $r_s$ is constant at 7m. The relative distances between vehicles start at various values (up to 60m) and converge to values between 15m and 30m after 100s, all remaining above the safe distance $r_s$.](/assist/api/documents/130/image/ecb25d766719ce041cf4cc390791a098_img.jpg)
+
+Figure 6: Profile of relative distances between vehicles in Case 2. The plot shows the relative distance \$\|x\_{ij}\|\$ in meters on the y-axis (0 to 60) versus time \$t\$ in seconds on the x-axis (0 to 200). The legend includes \$\|x\_{12}\|\$ (dotted), \$\|x\_{13}\|\$ (dashed), \$\|x\_{14}\|\$ (solid), \$\|x\_{23}\|\$ (blue dashed), \$\|x\_{24}\|\$ (blue solid), \$\|x\_{34}\|\$ (green dashed), and \$r\_s\$ (red solid). The safe distance \$r\_s\$ is constant at 7m. The relative distances between vehicles start at various values (up to 60m) and converge to values between 15m and 30m after 100s, all remaining above the safe distance \$r\_s\$.
+
+Fig. 6. Profile of relative distances between vehicles in Case 2.
+
+**Remark 3.** The fencing formation is primarily determined by the number of vehicles and targets, their initial positions and velocities, as well as the parameters of the proposed controller. If these factors change during the target-fencing process, the formation will adjust adaptively.
+
+## 4. Numerical examples
+
+Numerical examples involving four vehicles and one target are presented in this section to demonstrate the effectiveness of the proposed controller. In particular, we consider two different system matrices for the target. The safe distance and communication range are set as  $r_s = 7\text{m}$  and  $r_c = 20\text{m}$ , respectively. The target's initial position and velocity are  $[5\text{m}, 12\text{m}]$  and  $[1\text{m/s}, 1\text{m/s}]$ , respectively. The four vehicles are initially distributed arbitrarily. In the simulations, the symbols “o” and “☆” represent the target's initial and final positions, while the symbols “□” and “△” denote the initial and real-time positions of the vehicles, respectively.
+
+**Case 1:**  $s_1 > 0$ ,  $s_2 < 0$ : In this case, the target matrix is specified with  $s_1 = 0.5$  and  $s_2 = -0.01$ , indicating that the target trajectory is divergent. The controller parameters are chosen as  $k_1 = 2$ ,  $k_2 = 2$ ,  $k_3 = 0.1$ ,  $k_4 = 0.5$ ,  $l_1 = 0.2$ ,  $l_2 = 0.01$ ,  $\alpha_1 = 4.38$ ,  $\alpha_2 = [0.95, 4.02, 2.7, -1.25]^T$ , and  $c = 1$ .
+
+The simulation results are presented in Figs. 1–3. Trajectories of vehicles and target are shown in the Fig. 1. At the initial stage, four vehicles are randomly distributed at different positions, and have not formed an effective fencing formation. Owing to the combined effects of dynamic target-approaching and repulsion regulation, the formation emerges without prior specification. And vehicles gradually construct a suitable formation by changing their relative distances adaptively while approaching the target. At 30s, a preliminary formation shape is established, but the relative distances among the vehicles differ significantly. Subsequently, as the adaptive estimation of the target's trajectory gradually converges, the spatial distribution of vehicles becomes more coordinated. After 160s, vehicles achieve stable formation to fence the target while satisfying safe distance constraint. Results illustrate that the proposed controller is capable of forming a self-organized formation and maintaining it without manual pre-setting. The average position error, shown in Fig. 2, converges to zero, demonstrating that the target remains confined within the convex hull of the vehicles, with the error becoming negligible after 100s. Moreover, the vehicles synchronize their velocities with the target, despite having no prior knowledge of the target's velocity. In Fig. 3, the relative distances between vehicles consistently stay above the safe distance. Notably, at 2s and 8s, the relative distances approach the safe threshold but quickly increase again due to the repulsion regulation term.
+
+**Case 2:**  $s_1 \geq 0$ ,  $s_2 = 0$ : In this case, the target matrix is specified with  $s_1 = 1$  and  $s_2 = 0$ , indicating that the target trajectory is periodic. The controller parameters are set as  $k_1 = 12$ ,  $k_2 = 5$ ,  $k_3 = 0.5$ ,  $k_4 = 3$ ,  $l_1 = 0.12$ ,  $l_2 = 0.003$ ,  $\alpha_1 = 10.24$ ,  $\alpha_2 = [0.25, 10, 1.84, -0.53]^T$ , and  $\epsilon = 1$ .
+
+The simulation results are shown in Figs. 4–6. Among them, trajectories of vehicles and target are displayed in the Fig. 4. Similarly, four vehicles approach and surround the target in a rectangular formation while maintaining the same velocity as the target. The formation shape gradually changed from an irregular shape at 30s to a stable formation at 200s. Compared with Fig. 1, the resulting formation differs due to different initial position of four vehicles and the system matrix of target. These four vehicles are adaptively configured in the appropriate formation to fence the target within their convex hull. This again validates the effectiveness of the proposed controller without relying on a predefined formation.
+
+Moreover, from Figs. 5 and 6, both the average position and velocity errors eventually converge to zero, with no risk of collision. Since the target's movement is not as complex as in case 1, the convergence time and response speed are faster. The curves are also smoother.
+
+In both cases, the effectiveness of the proposed controller for cooperative fencing is verified under different target models. Regardless of the target's motion, all vehicles are able to form an appropriate formation instead of relying on a predefined one.
+
+## 5. Conclusion
+
+In this paper, we have presented a cooperative fencing controller for a time-varying velocity target. Unlike approaches that require predetermined formations or absolute states of each vehicle and the target, the proposed controller relies solely on relative information to achieve collision-free target fencing. Moreover, under the conditions established in the proposed theorem, a feasible solution can always be obtained for vehicles with different target models. Simulations are conducted to verify the feasibility of the proposed controller. Future research may extend the target-fencing framework to account for target uncertainties and disturbances, as well as nonlinear vehicle dynamics. In addition, incorporating prescribed-time control into the design presents a promising direction that warrants further investigation.
+
+## CRedit authorship contribution statement
+
+**Liangdong Wen:** Writing – original draft, Methodology, Investigation; **Zhiyong Chen:** Writing – review & editing, Supervision; **Wanglei Cheng:** Supervision, Software; **Ziyang Zhen:** Supervision.
+
+## Data availability
+
+Data will be made available on request.
+
+## Declaration of competing interest
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+## Acknowledgment
+
+This work was partially supported by the [Fundamental Research Funds for the Central Universities](/assist/api/documents/130/image/#) under Grant B250201232.
+
+## References
+
+- [1] Chen Z, Yan Y. Adaptive autonomous synchronization of a class of heterogeneous multiagent systems. *IEEE Trans Autom Control* 2025;70(3):2066–73.
+- [2] He X, Huang J. Distributed Nash equilibrium seeking with dynamics subject to disturbance of unknown frequencies over jointly strongly connected switching networks. *IEEE Trans Autom Control* 2024;69(1):606–13.
+- [3] Yu J, Zhang Z. Distributed region tracking formation control for multiple redundant robot manipulator systems: a potential energy approach. *Commun Nonlinear Sci Numer Simul* 2025;151:109009.
+- [4] Cheng W, Zhang K, Jiang B. Distributed adaptive fixed-time fault-tolerant formation control for heterogeneous multiagent systems with a leader of unknown input. *IEEE Trans Cybern* 2023;53(11):7285–94.
+- [5] Qian M, Ding W, Gao Z, Wang C. Learning-based collision-free cooperative fault-tolerant control for multiple UAVs under denial-of-service attacks. *Commun Nonlinear Sci Numer Simul* 2026;152:109354.
+- [6] Choi S-H, Kwon D, Seo H. Multi-agent system for target tracking on a sphere and its asymptotic behavior. *Commun Nonlinear Sci Numer Simul* 2023;117:106967.
+- [7] Wang B, Chen W, Zhang B, Shi P, Zhang H. A nonlinear observer-based approach to robust cooperative tracking for heterogeneous spacecraft attitude control and formation applications. *IEEE Trans Autom Control* 2023;68(1):400–7.
+- [8] Kokolakis N-MT, Vamvoudakis KG. Bounded rational Dubins vehicle coordination for target tracking using reinforcement learning. *Automatica* 2023;149:110732.
+- [9] Deng Y, Zhu B, Duan H. Bioinspired bearing-based target enclosing control for unmanned aerial vehicle swarm. *IEEE/ASME Trans Mechatron* 2025;30(4):2699–709.
+- [10] Ranjan PK, Sinha A, Cao Y. Self-organizing multiagent target enclosing under limited information and safety guarantees. *IEEE Trans Aerosp Electron Syst* 2025;61(1):1066–78.
+- [11] Dou L, Yu X, Liu L, Wang X, Feng G. Moving-target enclosing control for mobile agents with collision avoidance. *IEEE Trans Control Netw Syst* 2021;8(4):1669–79.
+- [12] Chen Z. A cooperative target-fencing protocol of multiple vehicles. *Automatica* 2019;107:591–4.
+
+- [13] Kou L, Chen Z, Xiang J. Cooperative fencing control of multiple vehicles for a moving target with an unknown velocity. *IEEE Trans Autom Control* 2022;67(2):1008–15.
+- [14] Wen L, Zhen Z, Tao C, Ding J. Distributed cooperative strategy of UAV swarm without speed measurement under saturation attack mission. *IEEE Trans Aerosp Electron Syst* 2024;60(4):4518–29.
+- [15] Viel C, Bertrand S, Kieffer M, Piet-Lahanier H. Distributed event-triggered control strategies for multi-agent formation stabilization and tracking. *Automatica* 2019;106:110–16.
+- [16] Zhang F, Yang G-H, Dimirovski GM. Performance-prescribed optimal control for target enclosing of vehicles via control barrier function-based reinforcement learning. *IEEE Trans Intell Transp Syst* 2025;26(4):5552–67.
+- [17] Dou L, Song C, Wang X, Liu L, Feng G. Target localization and enclosing control for networked mobile agents with bearing measurements. *Automatica* 2020;118:109022.
+- [18] Chen F, Ren W, Cao Y. Surrounding control in cooperative agent networks. *Syst Control Lett* 2010;59(11):704–12.
+- [19] Shoja S, Baradarannia M, Hashemzadeh F, Badamchizadeh M, Bagheri P. Surrounding control of nonlinear multi-agent systems with non-identical agents. *ISA Trans* 2017;70:219–27.
+- [20] Kou L, Huang Y, Chen Z, He S, Xiang J. Cooperative fencing control of multiple second-order vehicles for a moving target with and without velocity measurements. *Int J Robust Nonlinear Control* 2021;31(10):4602–15.
+- [21] Hu B-B, Zhang H-T, Shi Y. Cooperative label-free moving target fencing for second-order multi-agent systems with rigid formation. *Automatica* 2023;148:110788.
+- [22] Jiang S, Chi P, Yang L, Zhao J, Wang Y. Plug-and-play distributed fencing of multi-agent systems for an uncooperative target without velocity measurements. *IEEE Trans Autom Sci Eng* 2025;22:20098–111.
+- [23] Jiang S, Zhao J, Chi P, Wang Y. Distributed label-free fencing of second-order multi-agent systems for a moving target with an unknown time-varying acceleration. *IEEE Control Syst Lett* 2025;9:38–43.
+- [24] Zhou K, Doyle J, Glover K. Robust and optimal control. Prentice Hall; 1995.
+- [25] Huang J. Nonlinear output regulation: theory and applications. SIAM; 2004.

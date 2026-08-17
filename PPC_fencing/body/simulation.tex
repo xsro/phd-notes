@@ -1,0 +1,88 @@
+\section{Simulation Verification}
+\label{sec:simulation}
+
+The proposed controllers can be evaluated through a planar fencing scenario
+with $N$ double-integrator agents and one moving target.  The agents are
+initialized in a collision-free configuration, and the prescribed
+performance function is chosen either as the exponential profile
+\eqref{eq:rho-exp} or as the prescribed-time profile \eqref{eq:rho-pt}.  The
+same artificial-potential function is used in all tests so that the safety
+margin $d$ and activation radius $\mu$ are identical across controllers.
+
+The main performance index is the enclosure error
+\[
+e_c(t)=\norm{\bar p(t)-p_0(t)}.
+\]
+For a successful PPC fencing response, $e_c(t)$ must remain below the
+prescribed envelope $\rho(t)$ for the entire simulation interval.  Since
+$\dist(p,p_0)\le e_c(t)$, this also provides an upper bound on the distance
+from the target to the agents' convex hull.  The safety performance is
+checked by plotting
+\[
+d_{\min}(t)=\min_{i\neq j}\norm{p_i(t)-p_j(t)}
+\]
+and verifying $d_{\min}(t)>d$ for all $t$.
+
+To highlight the effect of prescribed performance, the PPC controllers
+should be compared with a baseline fencing controller that uses the same APF
+term but does not impose the envelope $\rho(t)$.  The comparison should
+report the maximum enclosure error, the settling time relative to a selected
+tolerance, the minimum pairwise distance, and the final velocity mismatch
+\[
+e_v(t)=\max_{i\in\NN}\norm{v_i(t)-v_0(t)}.
+\]
+These metrics directly correspond to the desired properties P4, P2, and P3.
+
+For the APF-filtered individual PPC algorithm in \S\ref{sec:result2}, an
+additional diagnostic is useful:
+\[
+e_{\eta,\max}(t)=\max_{i\in\NN}\norm{\eta_i(t)}.
+\]
+The local PPC constraints require $e_{\eta,\max}(t)<\max_i\rho_i(t)$, while
+the centroid bound follows from the averaged local envelopes in
+\eqref{eq:rho-split}.  This diagnostic separates the local tracking behavior
+from the induced centroid-level fencing performance.
+
+For the adaptive unknown-acceleration controller in \S\ref{sec:result3}, the
+simulation should also report the adaptive gains $\hat\kappa_i(t)$.  The
+test should include bounded but unknown target maneuvers and bounded agent
+disturbances, so that the controller is evaluated without using
+$u_0+d_0$ or $d_i$ in the feedback law.  Successful behavior is indicated by
+bounded adaptive gains, preservation of the PPC envelope, and maintenance of
+the minimum pairwise distance above $d$.
+
+\subsection{Result 3 numerical example}
+
+The MATLAB script \texttt{simulation/sim\_result3.m} implements the adaptive
+APF-filtered PPC controller of \S\ref{sec:result3}.  The target total
+acceleration and the agent disturbances are generated as bounded sinusoidal
+signals, but they are not used by the controller.  In the numerical
+implementation, the discontinuous sign function in \eqref{eq:r3-ui} is
+replaced by a saturation function with a small leakage term in the adaptive
+gain update, as discussed in Result~3.
+
+Figure~\ref{fig:result3-centroid} shows the centroid-to-target distance, the
+prescribed envelope, and the local filtered-error norms $\norm{\eta_i(t)}$.
+The centroid error remains below the envelope throughout the simulation.
+The final centroid error is $1.4\times10^{-3}$, while the final envelope
+value is $5.65\times10^{-1}$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{simulation/out/result3_centroid_ppc.pdf}
+    \caption{Result 3: centroid-to-target distance, local filtered-error
+    norms, and prescribed performance envelope.}
+    \label{fig:result3-centroid}
+\end{figure}
+
+Figure~\ref{fig:result3-pairwise} plots all inter-agent distances.  The
+minimum pairwise distance over the simulation is $1.0487$, which remains
+above the safety threshold $d=0.65$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{simulation/out/result3_pairwise_distances.pdf}
+    \caption{Result 3: pairwise inter-agent distances and the safety
+    threshold.}
+    \label{fig:result3-pairwise}
+\end{figure}

@@ -1,0 +1,68 @@
+
+\begin{proposition}
+Under the conditions that $\lim_{t\to\infty}\sum_{i\in\NN}\psi_i=\mathbf{0}$ and there exists $\bar\psi>0$ such that $\sup_{t\geq 0,i\in\NN}\norm{\psi_i}\leq\bar{\psi}$, the multi-agent system \eqref{eq agent} equipped with the fencing controller \eqref{eq 2 controller 2} can solve the fencing problem satisfying Properties P1–P2:
+\begin{enumerate}
+    \item[\textbf{P1}] (\textit{Convex hull fencing}) The agents asymptotically fence the target in a final convex hull formation, i.e., $ \lim_{ t \to \infty } \mathrm{dist}( p_0(t), \mathrm{co}(p) ) = 0$;
+    \item[\textbf{P2}] (\textit{Collision avoidance}) Every agent keeps a safety distance $d > 0$ from others, i.e., $\| p_{ij}(t) \| > d$, $\forall i, j \in \NN$, $j \neq i$, $\forall ~ t \ge 0$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+First, consider the relative position from the target to the agents' centroid, denoted as 
+$\tilde{p}= \frac{1}{N} \sum_{i\in\NN}p_i - p_0$.
+Substituting \eqref{eq agent} and \eqref{eq 2 controller 2} into the above expression yields
+\[
+\ddot{\tilde{p}}
+= \frac{1}{N} \sum_{i\in\NN}u_i - u_0 
+= \frac{1}{N} \sum_{i\in\NN}\left(-k_1 p_{i0} -k_2 v_{i0}  +u_0 +\phi_i+\psi_i\right) - u_0 
+= -k_1 \tilde{p} -k_2 \dot{\tilde{p}}+\zeta,
+\]
+where $\zeta=\frac{1}{N}\sum_{i\in\NN}\psi_i$.
+This is a Hurwitz linear system with $\lim_{t\to\infty}\zeta=0$.
+Therefore, $\lim_{t\to\infty} \tilde{p}=0$, which implies that
+$\lim_{t\to\infty}\bigl\|\frac{1}{N} \sum_{i\in\NN}p_i - p_0\bigr\|=0$.
+Since $\frac{1}{N} \sum_{i\in\NN}p_i \in \mathrm{co}(p)$, we have 
+$ \lim_{ t \to \infty } \mathrm{dist}( p_0(t), \mathrm{co}(p) ) = 0 $, 
+and thus Property~P1 is satisfied.
+
+Next, we prove the collision avoidance property using Lyapunov analysis.
+Consider the Lyapunov function candidate
+\[
+V
+= \frac{k_1}{2} \sum_{i \in \NN} \lVert p_{i0} \rVert^2 
++ \frac{1}{2} \sum_{i \in \NN} \lVert v_{i0} \rVert^2 
++ \frac{1}{2} \sum_{i \in \NN} \sum_{j \in \NN_i(t)} \int_{\lVert p_{ij} \rVert}^{\mu} \alpha_r(s) \, ds.
+\]
+Taking the time derivative of $V$ along the trajectories of \eqref{eq agent} and \eqref{eq 2 controller 2} gives
+\begin{align*}
+\dot{V}
+&= \sum_{i \in \NN} v_{i0}^T 
+\left(
+k_1 p_{i0} + u_i - u_0 - \phi_i
+\right) 
+= \sum_{i \in \NN} v_{i0}^T 
+\left(
+-k_2 v_{i0} + \psi_i
+\right) \\
+&= \frac{1}{k_2}\sum_{i \in \NN} 
+\left(
+k_2 v_{i0} +\tfrac{1}{2} \psi_i -\tfrac{1}{2} \psi_i
+\right)^T 
+\left(
+-k_2 v_{i0} +\tfrac{1}{2} \psi_i +\tfrac{1}{2} \psi_i
+\right) \\
+&= -\frac{1}{k_2} \sum_{i \in \NN} \norm{k_2 v_{i0}-\tfrac{1}{2}\psi_i}^2
++\frac{1}{4k_2}\sum_{i \in \NN} \norm{\psi_i}^2
+\leq \frac{1}{4k_2}\sum_{i \in \NN} \norm{\psi_i}^2
+\leq \frac{N}{4k_2}\bar\psi^2.
+\end{align*}
+Hence, for any $t\geq 0$ $i\in\NN$, and $j\in\NN_i(t)$, we have
+\[
+\int_{\norm{p_{ij}}}^\mu\alpha_r(s)\dd s
+\leq V(t)
+\leq V(0)+\frac{N}{4k_2}\bar\psi^2 t
+<\infty.
+\]
+This implies that $\norm{p_{ij}}>d$, and thus Property~P2 is satisfied.
+\end{proof}
+

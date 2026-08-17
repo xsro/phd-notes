@@ -1,0 +1,358 @@
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+
+
+
+\begin{document}
+
+This document is copied from the following literature for learning.
+
+[1] Fischer N, Kamalapurkar R, Dixon W E. LaSalle-Yoshizawa Corollaries for Nonsmooth Systems[J]. IEEE Transactions on Automatic Control, 2013, 58(9): 2333-2338.
+
+
+
+\section*{II. PRELIMINARIES}
+
+Consider the system
+\[
+\dot{x} = f(x, t) \tag{1}\label{1}
+\]
+where \( x(t) \in D \subseteq \mathbb{R}^n \) denotes the state vector; \( f : D \times [0, \infty) \to \mathbb{R}^n \) is Lebesgue measurable and essentially locally bounded, uniformly in \( t \); and \( D \) is an open and connected set. Existence and uniqueness of the continuous solution \( x(t) \) are provided under the condition that the function \( f \) is Lipschitz continuous. However, if \( f \) contains a discontinuity at any point in \( D \), then a solution to (1) may not exist in the classical sense. Thus, it is necessary to redefine the concept of a solution. Utilizing differential inclusions, the value of a generalized solution (e.g., Filippov \cite{51} or Krasovski \cite{52} solutions) at a certain point can be found by interpreting the behavior of its derivative at nearby points. Generalized solutions will be close to the trajectories of the actual system since they are a limit of solutions of ordinary differential equations with a continuous right-hand side \cite{13}. While there exists a Filippov solution for any arbitrary initial condition \( x(t_0) \in D \), the solution is generally not unique \cite{5}, \cite{51}.
+
+
+\noindent \textbf{Definition 1. (Filippov Solution):} \cite{51} A function \( x : [0, \infty) \to \mathbb{R}^n \) is called a solution of (1) on the interval \( [0, \infty) \) if \( x(t) \) is absolutely continuous and for almost all \( t \in [0, \infty) \)
+\[
+\dot{x} \in K[f](x(t), t)
+\]
+where \( K[f](x(t), t) \) is an upper semi-continuous, nonempty, compact and convex valued map on \( D \), defined as
+\[
+K[f](x(t), t) \triangleq \bigcap_{\delta > 0} \bigcap_{\substack{N \subset D \\ \mu(N) = 0}} \overline{\text{co}} f\left( B(x(t), \delta) \setminus N, t \right). \tag{2}
+\]
+Here, \( \bigcap_{\substack{N \subset D \\ \mu(N) = 0}} \) denotes the intersection over sets \( N \) of Lebesgue measure zero, \( \overline{\text{co}} \) denotes convex closure, and \( B(x(t), \delta) = \{ v \in \mathbb{R}^n \mid \| x(t) - v \| < \delta \} \).
+
+
+\noindent \textbf{Remark 1:} One can also formulate the solutions of (1) in other ways \cite{53}; for instance, using Krasovski's definition of solutions \cite{52}. The corollaries presented in this work can also be extended to Krasovskii solutions (see [3]), for example. (In the case of Krasovskii solutions, one would get stronger conclusions, i.e., conclusions of a potentially larger set of solutions at the cost of slightly stronger assumptions (e.g., local boundedness rather than essentially local boundedness).
+
+
+To facilitate the main results, four definitions are provided.
+
+\noindent \textbf{Definition 2. (Directional Derivative):} [34] Given a function \( f : \mathbb{R}^m \to \mathbb{R}^n \), the right directional derivative of \( f \) at \( x \in \mathbb{R}^m \) in the direction of \( v \in \mathbb{R}^m \) is defined as
+\[
+f'(x, v) \triangleq \lim_{t \to 0^+} \frac{f(x + tv) - f(x)}{t}.
+\]
+
+Additionally, the \textit{generalized directional derivative} of \( f \) at \( x \) in the direction of \( v \) is defined as
+\[
+f^\circ(x, v) \triangleq \limsup_{\substack{y \to x \\ t \to 0^+}} \frac{f(y + tv) - f(y)}{t}.
+\]
+
+
+\noindent \textbf{Definition 3. (Regular Function):} [34] A function \( f : \mathbb{R}^m \to \mathbb{R}^n \) is said to be \textit{regular} at \( x \in \mathbb{R}^m \) if for all \( v \in \mathbb{R}^m \), the right directional derivative of \( f \) at \( x \) in the direction of \( v \) exists, and \( f^\circ(x, v) = f'(x, v) \).
+\footnote{Note that any $\mathcal{C}^1$ continuous function is regular and the sum of regular functions is regular \cite{55}}
+
+
+\noindent \textbf{Definition 4. (Clarke's Generalized Gradient):} [34] For a function \( V : \mathbb{R}^n \times [0, \infty) \to \mathbb{R} \) that is locally Lipschitz in \( (x, t) \), define the generalized gradient of \( V \) at \( (x, t) \) by
+\[
+\partial V(x, t) \triangleq \overline{\text{co}} \text{w-lim } V(x_i, t_i) \big| \{(x_i, t_i) \to (x, t), (x_i, t_i) \notin \Omega_V \}
+\]
+where \( \Omega_V \) is the set of measure zero where the gradient of \( V \) is not defined.
+
+
+\noindent \textbf{Definition 5. (Locally Bounded, Uniformly in \( t \)):} Let \( f : D \times [0, \infty) \to \mathbb{R}^n \). The map \( f \) is \textit{locally bounded, uniformly in \( t \)}, if for each compact set \( K \subset D \), there exists \( c > 0 \) such that \( \| f(x, t) \| < c \), \( \forall x \in K \), \( t \in [0, \infty) \).
+
+
+The following lemma provides a method for computing the time derivative of \( V(x, t) \), from (2) using Clarke's generalized gradient [34] and if \( f \) is a regular function, along the solution trajectories of (1).
+
+
+\noindent \textbf{Lemma 1. (Chain Rule):} \cite{6,56} Let \( x(t) \) be a Filippov solution of \eqref{1} and \( V : \mathbb{R}^n \times [0, \infty) \to \mathbb{R} \) be locally Lipschitz, regular function. Then \( V(x(t), t) \) is absolutely continuous, \( \frac{d}{dt} V(x(t), t) \) exists almost everywhere (a.e.), i.e., for almost all \( t \in [0, \infty) \), and \( \dot{V}(x(t),t)\in \dot{\tilde{V}}(x(t),t) \),
+\[
+\dot{\tilde{V}}(x, t) \triangleq \bigcap_{\xi \in \partial V(x,t)} \xi^T \left(\begin{smallmatrix} K[f](x, t)\\1\end{smallmatrix} \right). \tag{1}
+\]
+
+
+\noindent \textbf{Remark 2:} Throughout the subsequent discussion, for brevity of notation, let a.e. refer to almost all \( t \in [0, \infty) \).
+
+
+
+\section*{III. MAIN RESULT}
+
+For the system theory in (1) with a continuous right-hand side, existing Lyapunov theory can be used to examine the stability of the closed-loop system using continuous techniques such as those described in [57]. However, these theorems must be altered for the set-valued map \( \dot{V}(x(t),t) \) for systems with right-hand sides which are not Lipschitz continuous [6], [13], [14]. Lyapunov analysis for nonsmooth systems are analogous to the analysis used for continuous systems. The gradients are replaced with generalized gradients, and points are replaced with subsets throughout the analysis. The following presentation will demonstrate how the LaSalle-Yoshizawa Theorem can be adapted for such systems.
+Barbalat's Lemma are provided to facilitate the proofs of the nonsmooth LaSalle-Yoshizawa corollaries.
+
+
+\noindent \textbf{Lemma 2:} [56] Let \( x(t) \) be any Filippov solution to the system in (1) and \( V : D \times [0, \infty) \to \mathbb{R} \) be a locally Lipschitz, regular function. If \( \dot{V}(x(t), t) \stackrel{\text{a.e.}}{\leq} 0 \), then \( V(x(t), t) \leq V(x(t_0), t_0) \ \forall t > t_0 \).
+
+\noindent \textbf{Proof:} For the sake of contradiction, let there exist some \( t > t_0 \) such that \( V(x(t), t) > V(x(t_0), t_0) \). Then
+\[
+\int_{t_0}^{t} \dot{V}(x(\sigma), \sigma) d\sigma = V(x(t), t) - V(x(t_0), t_0) > 0.
+\]
+It follows that \( \dot{V}(x(t), t) > 0 \) on a set of positive measure, which contradicts that \( \dot{V}(x(t), t) \stackrel{\text{a.e.}}{\leq} 0 \). \hfill \( \square \)
+
+
+\noindent \textbf{Lemma 3: (Barbalat's Lemma):} [57] Let \( \phi : \mathbb{R}^+ \to \mathbb{R} \) be a uniformly continuous function. Suppose that \( \lim_{t \to \infty} \int_{0}^{t} \phi(\tau) d\tau \) exists and is finite. Then
+\[
+\phi(t) \to 0 \quad \text{as} \quad t \to \infty.
+\]
+
+
+Based on Lemmas 2 and 3, nonsmooth corollaries to the LaSalle-Yoshizawa Theorem ([1, Theorem 8.4] and [4, Theorem A.5]) are provided in Corollary 1, 2, 3.
+
+
+\noindent \textbf{Corollary 1:} For the system given in (1), let \( f : D \to \mathbb{R}^n \) be an measurable connected set containing \( x = 0 \) and suppose \( f \) is Lebesgue measurable and \( x \to f(x, t) \) is essentially locally bounded, uniformly in \( t \). Let \( V : D \times [0, \infty) \to \mathbb{R} \) be a locally Lipschitz, regular such that
+\[
+W_1(x) < V(x, t) < W_2(x) \quad \forall t > 0, \ \forall x \in D \tag{3}
+\]
+\[
+\dot{V}(x(t), t) \stackrel{\text{a.e.}}{\leq} -W(x(t)) \tag{4}
+\]
+where \( W_1 \) and \( W_2 \) are continuous positive definite functions, \( W \) is a continuous positive semi-definite function on \( D \), choose \( \epsilon > 0 \) and \( c > 0 \) such that \( B_\epsilon \subset D \) and \( c < \min_{1 \leq i \leq n} W_i(x), \{x \in B_\epsilon | W_i(x) < \epsilon\} \). Then \( x(t) \) is bounded and satisfies
+\[
+W(x(t)) \to 0 \quad \text{as} \quad t \to \infty. \tag{5}
+\]
+
+\noindent \textbf{Proof:} Since \( B_\epsilon \subset D \) and \( \epsilon < \min_{1 \leq i \leq n} W_i(x), \{x \in B_\epsilon | W_i(x) < \epsilon\} \) is in the interior of \( B_\epsilon \). Define a time-dependent set \( \Omega_t \) by
+\[
+\Omega_t \triangleq \{ x \in B_\epsilon | V(x, t) < c\}.
+\]
+From (3), the set \( \Omega_t \) contains \( \{x \in B_\epsilon | W_2(x) < c\} \) since
+\[
+W_2(x) < c \Rightarrow V(x, t) < c.
+\]
+On the other hand, \( \Omega_t \) is a subset of \( \{x \in B_\epsilon | W_1(x) < c\} \) since
+\[
+V(x, t) < c \Rightarrow W_1(x) < c.
+\]
+Thus
+\[
+\{x \in B_\epsilon | W_2(x) < c\} \subseteq \Omega_t \subseteq \{x \in B_\epsilon | W_1(x) < c\} \subset B_\epsilon \subset D.
+\]
+
+Based on (4), \( \dot{V}(x(t), t) \stackrel{\text{a.e.}}{\leq} 0 \), hence, \( V(x(t), t) \) is non-increasing from Lemma 2. For any \( t_0 > 0 \), for any \( x(t_0) \in \Omega_{t_0} \), the solution starting at \( x(t_0) \in \Omega_{t_0} \) stays in \( \Omega_t \) for any \( t \geq t_0 \). Therefore, any solution starting in \( \{x \in B_\epsilon | W_2(x) < c\} \) stays in \( \Omega_t \), and consequently in \( \{x \in B_\epsilon | W_1(x) < c\} \) for all future time.
+
+From Lemma 2, \( V(x(t), t) \) is also bounded such that \( |x(t)| < r \ \forall t > t_0 \). From Solution 2, \( V(x(t), t) \) is bounded such that \( |x(t)| < r \ \forall t > t_0 \). Since \( V(x(t), t) \) is Lebesgue measurable from (4),
+\[
+\int_{t_0}^{t} W(x(\tau)) d\tau \leq -\int_{t_0}^{t} \dot{V}(x(\tau), \tau) d\tau
+\]
+\[
+V(x(t_0), t_0) - V(x(t), t) \leq V(x(t_0), t_0). \tag{6}
+\]
+Therefore, \( \int_{t_0}^{t} W(x(\tau)) d\tau \) is bounded \( \forall t > t_0 \). Existence of \( \lim_{t \to \infty} \int_{t_0}^{t} W(x(\tau)) d\tau \) is guaranteed since the left-hand side of (6) is bounded above. Since \( x(t) \) is locally absolutely continuous and is monotonic nondecreasing (based on the definition of \( W(x) \)); \( f \) is essentially locally bounded, uniformly in \( t \), \( x(t) \) is uniformly continuous. Because \( W(x) \) is continuous in \( x \), and \( x(t) \) is compact set \( B_r \), \( W(x(t)) \) is uniformly continuous in \( t \) on \( (t_0, \infty] \). Therefore, by Lemma 3, \( W(x(t)) \to 0 \) as \( t \to \infty \). \hfill \( \square \)
+
+
+\noindent \textbf{Remark 3:} From Def. 1, \( K[f](x, t) \) is an upper semi-continuous, nonempty, compact and convex valued map. While existence of a Filippov solution for any arbitrary initial condition \( x(t_0) \in D \) is provided by the definition, generally speaking, the solution is non-unique [5], [51].
+
+Note that Corollary 1 establishes (5) for a specific \( x(t) \). Under the stronger condition that \( \dot{V}(x, t) < W(x) \ \forall x \in D \), it is possible to show that (5) holds for all Filippov solutions of (1). The next corollary is presented to illustrate this point.
+
+
+\noindent \textbf{Corollary 2:} For the system given in (1), let \( f : D \to \mathbb{R}^n \) be an measurable connected set containing \( x = 0 \) and suppose \( f \) is Lebesgue measurable and \( x \to f(x, t) \) is essentially locally bounded, uniformly in \( t \). Let \( V : D \times [0, \infty) \to \mathbb{R} \) be a locally Lipschitz, regular such that
+\[
+W_1(x) < V(x, t) < W_2(x) \tag{7}
+\]
+\[
+\dot{V}(x(t), t) \leq -W(x) \tag{8}
+\]
+\( \forall t > 0, \ \forall x \in D \) where \( W_1 \) and \( W_2 \) are continuous positive-definite functions, and \( W \) is a continuous positive semi-definite function on \( D \). Choose \( r > 0 \) and \( c > 0 \) such that \( B_r \subset D \) and choose continuous functions \( W_1 > 0 \) and \( c < \min_{1 \leq i \leq n} W_i(x) \). Then, all Filippov solutions of (1) such that \( x(t_0) \in \{x \in B_r | W_1(x) \leq c\} \) are bounded and satisfy
+\[
+W(x(t)) \to 0 \quad \text{as} \quad t \to \infty.
+\]
+
+\noindent \textbf{Proof:} Let \( x(t) \) be any arbitrary Filippov solution of (1). Then, from Lemma 1, and (8), \( \dot{V}(x(t), t) \stackrel{\text{a.e.}}{\leq} -W(x(t)) \), which is the condition in (4). Since the result in (5) holds for each \( x(t) \), Corollary 1 can be used to imply that the solution of \( W(x(t)) \). \hfill \( \square \)
+
+
+\section*{IV. DESIGN EXAMPLE}
+
+The LaSalle-Yoshizawa Corollaries (and the LaSalle-Yoshizawa Theorem) are useful in their ability to provide boundedness and convergence of solutions, while providing a compact framework to define the region of attraction for which boundedness and convergence results hold. In fact, the region of attraction is provided as part of the corollary structures. In the case of semi-global and local results, these domains and sets are especially useful. It is important to note that Barbalat's Lemma can be used to achieve the same results (in fact, it is used in the proof for Corollary 1); however, the use of Barbalat's Lemma would require the identification of the region of attraction for which convergence holds and does not provide boundedness of the trajectories. For illustration purposes, the following design example targets the regulation of a first order nonlinear system.
+
+
+Consider a first-order nonlinear differential equation given by
+\[
+\dot{x} = f(x, t) + d(x, t) + u(t) \tag{9}
+\]
+where \( f : \mathbb{R}^n \times [0, \infty) \to \mathbb{R}^n \) is an unknown, linear-parameterizable, essentially locally bounded, uniformly \( \theta \in \mathbb{R}^n \) function that can be expressed as \( f(x, t) = Y(x, t)\theta \) where \( Y \in \mathbb{R}^{n \times n} \) is a vector of unknown constant matrices and \( x \in \mathbb{R}^n \), \( u : \mathbb{R}^n \times [0, \infty) \to \mathbb{R}^n \) is the control input, \( x(t) \in \mathbb{R}^n \) is the measurable system state, and \( d : \mathbb{R}^n \times [0, \infty) \to \mathbb{R}^n \) is an essentially locally bounded disturbance that satisfies
+\[
+\|d(x, t)\| < c_1 + (c_2 / \|x\|) \|x\| \tag{10}
+\]
+where \( c_1 \in \mathbb{R}^+ \) is a state-dependent constant, and \( c_2 : \mathbb{R}^+ \to \mathbb{R}^+ \) is a positive, globally invertible, positive-definite function. A regulation controller for (9) can be designed as
+\[
+u(x, t) \triangleq -k_1 x - k_2 \text{sign}(x) - Y \hat{\theta} \tag{11}
+\]
+where \( \hat{\theta}(x, t) \in \mathbb{R}^n \) is an estimate of \( \theta \), \( k_1, k_2 \in \mathbb{R}^+ \) are gain constants, and \( \text{sign}(\cdot) \) is defined \( \forall \xi \in \mathbb{R}^n \triangleq [\xi_1, \xi_2, \dots, \xi_n]^T \) as \( \text{sign}(\xi) \triangleq [\text{sign}(\xi_1), \text{sign}(\xi_2), \dots, \text{sign}(\xi_n)]^T \). Based on the subsequent stability analysis, an adaptive update law can be defined as
+\[
+\dot{\hat{\theta}} \triangleq \Gamma Y^T x \tag{12}
+\]
+where \( \Gamma \in \mathbb{R}^{n \times n} \) is a positive gain matrix. The closed-loop system is given by
+\[
+\dot{x} = Y \tilde{\theta} + d(x, t) - k_1 x - k_2 \text{sign}(x) \tag{13}
+\]
+where \( \tilde{\theta}(t) \in \mathbb{R}^n \) denotes the mismatch \( \hat{\theta}(t) - \theta(t) \). In (13), it is apparent that the RHS contains a discontinuity in \( x(t) \), and the use of differential inclusions provides for existence of solutions.
+
+
+Let \( y(x, t, \tilde{\theta}) \in \mathbb{R}^{n+1} \) be defined as \( y \triangleq [x^T \ \tilde{\theta}^T]^T \) and choose a positive-definite, locally Lipschitz, regular candidate Lyapunov function as
+\[
+V(y(t), t) \triangleq \frac{1}{2} y^T x + \frac{1}{2} \tilde{\theta}^T \Gamma^{-1} \tilde{\theta}. \tag{14}
+\]
+The candidate Lyapunov function in (14) satisfies the following inequalities:
+\[
+W_1(y) < V(y(t), t) < W_2(y) \tag{15}
+\]
+where the continuous positive-definite functions \( W_1, W_2 : \mathbb{R}^{n+1} \to \mathbb{R}^+ \) are defined as \( W_1(y) \triangleq \lambda_1 \|y\|^2 \), and \( W_2(y) \triangleq \lambda_2 \|y\|^2 \) — \( \lambda_1, \lambda_2 \in \mathbb{R}^+ \) are known constants. Then, \( \dot{V}(y(t), t) \stackrel{\text{a.e.}}{\in} \dot{V}(y(t), t) \) and
+\[
+\dot{V} \triangleq \bigcap_{\xi \in \partial V(y(t), t)} \xi^T \left( \frac{\partial}{\partial \theta} \begin{bmatrix} x \\ \tilde{\theta} \end{bmatrix}, (x, \tilde{\theta}, t). \right.
+\]
+Since \( V(y(t), t) \) is \( C^\infty \) in \( y \),
+\[
+\dot{V} \subset \nabla V K \left( \frac{\partial}{\partial \theta} \begin{bmatrix} x \\ \tilde{\theta} \end{bmatrix}, (x, \tilde{\theta}). \right. \tag{16}
+\]
+\footnote{For continuously differentiable Lyapunov candidate functions, the generalized gradient reduces to the standard gradient. However, this is not required by the Corollary 1; it is just \( \dot{V}(t) \leq W(x) \) to used to scalar indicate that every element of \( \dot{V}(t) \) is less than or equal to \( W(x) \).}
+
+
+After using (13), the expression in (16) can be written as
+\[
+\dot{V} \subset x^T \left( Y \tilde{\theta} + d(x, t) - k_1 x - k_2 K \text{sign}(x) \right) - \tilde{\theta}^T \Gamma^{-1} \dot{\tilde{\theta}} \tag{17}
+\]
+where \( K[\text{sign}(x)] \triangleq SGN(x) \) such that \( SGN(x_i) = 1 \) if \( x_i > 0 \), \( -1 \) if \( x_i = 0 \), and could also if \( x_i < 0 \ \forall i = 1, 2, \dots, n \).
+
+If \( k_2 = 4 \), one could define the Lyapunov function instead to be defined as \( \dot{V}(t) = 0 \) (i.e., the Carathéodory solutions can however, this method would not be an indicator for what happens when measurement noise is present in the system. As described in results such as [60], Filippov and Krasovskii solutions for discontinuous closed-loop system behavior in the presence of \( SGN(x) \) in the measurement noise. By utilizing the set valued map arbitrarily small mean \( x = 0 \), we account for the possibility that when the state \( |x| \leq 1 \), then an analysis that depends on \( \text{sign}(x) \) to be defined as a known singleton.
+
+Substituting for the adaptive update law in (12), canceling terms and utilizing the bound for \( d \) in (10), the expression in (16) can upper bounded as
+\[
+\dot{V} < -k_1 \|x\|^2 + c_1 \|x\| + c_2 (\|x\|) \|x\|^2 - k_2 \|x\|. \tag{18}
+\]
+The set in (17) reduces to the scalar inequality in (18) since in the case when \( K[\text{sign}(x)] \) is defined as a set, it is multiplied by \( x \), i.e., when \( x = 0 \), \( K[\text{sign}(x)] = 0 \). Regrouping similar terms, the expression in (18) can be written as
+\[
+\dot{V} < -\left( k_1 - c_2 (\|x\|) \right) \|x(t)\|^2 - \left( k_2 - c_1 \right) \|x\|. \tag{19}
+\]
+Provided \( k_2 > c_1 \) and \( k_1 > c_2 (\|y\|) \), where \( W : \mathbb{R}^{n+1} \to \mathbb{R}^+ \) is a positive semi-definite function defined on the domain \( D \triangleq \{ y \in \mathbb{R}^{n+1} | \|y\| < c \} \), \( k_2 > c_1 \) implies that (19) is bounded as \( V(y(t), t) \leq V(y(t_0), t_0) \).
+
+Since \( x(t) \) is locally absolutely continuous (based on the definition of \( W(x) \)); \( f \) is essentially locally bounded, uniformly in \( t \), \( x(t) \) is uniformly continuous. Because \( W(x) \) is continuous in \( x \), and \( x(t) \) is compact set \( B_r \), \( W(x(t)) \) is uniformly continuous in \( t \) on \( (t_0, \infty] \). Therefore, by Lemma 3, \( W(x(t)) \to 0 \) as \( t \to \infty \). \hfill \( \square \)
+
+
+Choose \( S \subset D \), denote \( k_1 \) such that \( B_r \subset D \) denotes a closed ball and let \[ S \triangleq \{ y \in B_r | W_2(y) < \min_{1 \leq i \leq n} W_i(y) = \lambda_1 r^2 \}. \tag{20} \]
+Invoking Corollary 2, \( W(y(t)) \triangleq -\left( k_1 - c_2 (\|x\|) \right) \|x(t)\|^2 \to 0 \) as \( t \to \infty \) if \( y(0) \in S \), thus, \( x \to 0 \) as \( t \to \infty \) if \( y(0) \in S \). The region of attraction (a semi-global type result) by increasing the initial conditions in (20) can be made arbitrarily large to include all sliding mode for some systems, it may be possible to show that Corollary 2 is more easily applied, as is the focus of the example in Section IV. However, in other cases, it may be difficult to satisfy the inequality in (8). The usefulness of Corollary 1 is demonstrated in those cases where it is difficult or impossible to show that the inequality in (8) can be satisfied, but it is possible to show that (4) can be satisfied for almost all time.
+
+
+\begin{thebibliography}{99}
+
+\bibitem{1} F. H. Clarke, Y. S. Ledyaev, and J. R. Stern, ``Asymptotic stability and smooth Lyapunov functions,'' \textit{J. Diff. Equations}, vol. 149, pp. 99--114, 1998.
+
+\bibitem{2} C. M. Kellett and A. R. Teel, ``Smooth Lyapunov functions and robust ness of stability for discontinuous inclusions,'' \textit{Syst. \& Control Lett.}, vol. 52, pp. 399--405, 2004.
+
+\bibitem{3} A. M. Cergnani, ``Discontinuous ordinary differential equations,'' Ph.D. dissertation, Università di Firenze, Firenze, Italy, 1999.
+
+\bibitem{4} A. Bacciuotti and F. Cergnani, ``Stability and stabilization of discontinuous systems and control Lyapunov functions,'' \textit{Control, Optim. and Calc. of Var.}, vol. 4, pp. 361--376, 1999.
+
+\bibitem{5} J. P. Aubin and H. Frankowska, \textit{Set-Valued Analysis}. Berlin, Germany: Springer, 1994.
+
+\bibitem{6} D. Shevitz and B. Paden, ``Lyapunov stability theory of nonsmooth systems,'' \textit{IEEE Trans. Automat. Control}, vol. 39, no. 9, pp. 1910--1914, Sep. 1995.
+
+\bibitem{7} A. N. Michel and K. Wang, \textit{Qualitative Theory of Dynamical Systems: The Role of Stability Preserving Mappings}. New York: Marcel Dekker, 1995.
+
+\bibitem{8} E. Moulay and W. J. Perruquetti, ``Finite time stability of differential inclusions,'' \textit{Math. Meth. Appl. Sci.}, vol. 22, pp. 465--275, 2005.
+
+\bibitem{9} H. Logemann and E. Ryan, ``Asymptotic behaviour of nonlinear systems,'' \textit{Amer. Math. Monthly}, vol. 111, pp. 846--889, 2004.
+
+\bibitem{10} M. Forti, M. Grazzini, A. Nistri, and L. Pancioni, ``Generalized Lyapunov functions for neural networks with discontinuous, non-Lipschitz activations,'' \textit{Physica D}, vol. 214, pp. 88--99, 2006.
+
+\bibitem{11} W. Wu and N. Sepehri, ``On Lyapunov stability analysis of non smooth systems with applications to control engineering,'' \textit{Int. J. Nonlinear Mech.}, vol. 36, no. 7, pp. 1153--1161, 2001.
+
+\bibitem{12} Q. Wang, S. Seph, P. Sacka, and V. Sreeram, ``On design of continuous Lyapunov's feedback control,'' \textit{J. Franklin Inst.}, vol. 342, no. 6, pp. 712--723, 2005.
+
+\bibitem{13} J. P. Aubin, ``Generalized Lyapunov method for discontinuous systems,'' \textit{J. Optim. Theory Appl.}, vol. 71, pp. 3083--3092, 2009.
+
+\bibitem{14} G. Cheong and X. Mimi, ``Finite-time stability with respect to a closed invariant set for class of discontinuous systems,'' \textit{Appl. Math. Mech.}, vol. 30, no. 8, pp. 1069--1075, 2009.
+
+\bibitem{15} V. M. Matrosov, ``On the stability of motion,'' \textit{J. Appl. Math. Mech.}, vol. 26, pp. 1337--1355, 1962.
+
+\bibitem{16} A. Loría, E. Panteley, D. Popovic, and A. R. Teel, ``A converged Matrosov theorem and persistence of excitation for uniform negative-imaginary autonomous systems,'' \textit{IEEE Trans. Automat. Control}, vol. 52, no. 12, pp. 2378--2383, 2007.
+
+\bibitem{17} B. S. Rantzer and A. Teel, ``Asymptotic stability in hybrid systems via nested Matrosov functions,'' \textit{IEEE Trans. Automat. Control}, vol. 54, no. 7, pp. 1560--1574, Jul. 2009.
+
+\bibitem{18} M. Malisoff and F. Mazenc, ``Contractive-type Lyapunov functions for discrete time and hybrid time-varying systems,'' \textit{Nonlin. Anal. Hybrid Syst.}, vol. 2, no. 2, pp. 394--407, 2008.
+
+\bibitem{19} A. Teel, E. Panteley, and A. Loría, ``Integral characterizations of uni form asymptotic and exponential stability with application,'' \textit{Math. Contr. Signals. and Syst.}, vol. 15, pp. 177--201, 2002.
+
+\bibitem{20} A. Protić and L. Carić, ``A LaSalle version of Matrosov theorem,'' in \textit{Proc. IEEE Conf. Decis. Control}, 2011, pp. 320--324.
+
+\bibitem{21} P. Lyapunov, \textit{An Instability Principle in the Theory of Stability}. New York: Academic, 1967.
+
+\bibitem{22} H. K. Khalil, ``An integral invariance principle for non smooth systems,'' \textit{IEEE Trans. Automat. Control}, vol. 48, no. 8, pp. 1396--1400, 1995.
+
+\bibitem{23} E. Ryan, ``An integral invariance principle for differential inclusions with applications in adaptive control,'' \textit{SIAM J. Control Optim.}, vol. 36, no. 3, pp. 960--980, 1998.
+
+\bibitem{24} R. Sanfelice, G. R. Goebel, and A. Teel, ``Invariance principles for hybrid systems with connections to detectability and asymptotic stability,'' \textit{IEEE Trans. Automat. Control}, vol. 52, no. 12, pp. 2285--2297, Dec. 2007.
+
+\bibitem{25} L. Carić and F. Carabelli, ``Kinemological Lyapunov functions for discontinuous systems,'' \textit{Nonlinear Anal. Hybrid Syst.}, vol. 42, pp. 453--458, 2006.
+
+\bibitem{26} H. Hespanha, ``Uniform stability of switched linear systems: Extensions of LaSalle's Invariance Principle,'' \textit{IEEE Trans. Automat. Control}, vol. 49, no. 4, pp. 470--482, 2004.
+
+\bibitem{27} V. Chellaboina, S. Bhat, and W. Haddad, ``An invariance principle for nonlinear hybrid and impulsive dynamical systems,'' \textit{Nonlinear Anal. Hybrid Syst.}, vol. 5, pp. 325--340, 2005.
+
+\bibitem{28} L. Gergov, K. Johansson, J. Simic, Z. Jiang, and S. Sastry, ``Dynamical systems with discontinuous vector fields,'' \textit{IEEE Trans. Automat. Control}, vol. 48, no. 1, pp. 2--17, Jan. 2003.
+
+\bibitem{29} H. Hespanha, D. Liberzon, D. Angeli, and E. Sontag, ``Nonlinear non observability notions and stability of switched systems,'' \textit{IEEE Trans. Automat. Control}, vol. 50, no. 2, pp. 154--168, Feb. 2005.
+
+\bibitem{30} A. Bacciuotti and L. Mazzi, ``An invariance principle for nonlinear hybrid switched systems,'' \textit{Contr. Lett.}, vol. 54, pp. 1109--1119, 2005.
+
+\bibitem{31} G. Goebel, R. Sanfelice, and A. Teel, \textit{Hybrid Dynamical Systems}. Princeton, NJ: Princeton University Press, 2012.
+
+\bibitem{32} H. K. Khalil, ``A Matrosov-type theorem for nonlinear systems and its applications,'' \textit{IEEE Trans. Automat. Control}, vol. 46, no. 12, pp. 1989--1993, Dec. 2001.
+
+\bibitem{33} H. K. Khalil, \textit{Nonlinear Systems}, 3rd ed.. Prentice Hall, 2002.
+
+\bibitem{34} F. Clarke, \textit{Optimization and Nonsmooth Analysis}. Reading, MA: Ad dison-Wesley, 1983.
+
+\bibitem{35} V. V. Nemyckii and V. V. Stepanov, \textit{Qualitative Theory of Differential Equations}. Princeton, NJ: Princeton University Press, 1960.
+
+\bibitem{36} C. M. Kellett and A. R. Teel, ``Weak convex Lyapunov theorems and applications to discontinuous systems,'' \textit{Math. Contr. Signals. and Syst.}, vol. 12, no. 6, pp. 193--199, 1999.
+
+\bibitem{37} A. R. Teel and L. Praly, ``A smooth Lyapunov function from a class K L estimate involving two positive semidefinite functions,'' \textit{ESAIM: Control Optim. Calc. Var.}, vol. 5, pp. 313--367, 2000.
+
+\bibitem{38} I. Moise, R. Rosa, and X. Wang, ``Attractors for discontinuous dynamical systems via viability equations,'' \textit{Nonlinear Dyn.}, vol. 10, no. 4, pp. 439--462, 2004.
+
+\bibitem{39} T. Caraballo, G. Ausekosweza, and J. Real, ``Pullback attractors for asymptotically compact non-autonomous dynamical systems,'' \textit{Nonlinear Anal.}, vol. 64, pp. 1--48, 2006.
+
+\bibitem{40} G. R. Sell, ``The basic theory of dynamical systems and topological dynamics,'' \textit{Nonautonomous Dyn. Equations. Society}, vol. 127, no. 2, pp. 241--262, 1997.
+
+\bibitem{41} V. M. Vidyasagar, \textit{Nonlinear Syst. Anal.}, 2nd ed.. Philadelphia, PA: SIAM, 2002.
+
+\bibitem{42} J.-L. Lee and Z.-P. Jiang, ``A generalization of Krasovskii-LaSalle in equality for nonlinear time-varying systems: converse results and applications,'' \textit{IEEE Trans. Automat. Control}, vol. 50, no. 8, pp. 1147--1152, Aug. 2005.
+
+\bibitem{43} J. Diff Eqn., ``Uniform asymptotic stability via the limiting equations,'' \textit{J. Diff. Equat.}, vol. 27, pp. 172--189, 1978.
+
+\bibitem{44} I. Auroux, Y. Orford, and A. Achouri, ``An invariance principle for discontinuous dynamical systems with applications to a Coulomb friction oscillator,'' \textit{ASME J. Dynam. Syst., Meas., Control}, vol. 74, pp. 190--198, 2000.
+
+\bibitem{45} O. Oyedeji, ``Extended invariance principle for nonautonomous discontinuous systems,'' \textit{IEEE Trans. Automat. Control}, vol. 48, no. 8, pp. 1448--1452, Aug. 2003.
+
+\bibitem{46} K. Aström, P. V. Kokotovic, and I. Kanellakopoulos, \textit{Nonlinear and Adaptive Control Design}. New York: Wiley, 1995.
+
+\bibitem{47} J. P. LaSalle, ``Some extensions of Liapunov's second method,'' \textit{IRE Trans. Circuit Theory}, vol. 7, no. 4, pp. 520--527, 1960.
+
+\bibitem{48} T. Yoshizawa, ``Stability theory by Liapunov's direct method for differential equations with discontinuous right-hand sides,'' \textit{J. Diff. Equat.}, vol. 1, pp. 371--387, 1963.
+
+\bibitem{49} H. Qus, W. M. Haddad, and S. P. Bhat, ``Semi-stability for time-varying discontinuous dynamical systems with application to discrete-time consensus in switching networks,'' in \textit{Proc. IEEE Conf. Decis. Control}, 2008, p. 2962590.
+
+\bibitem{50} T. P. A. Teled, ``Asymptotic convergence from Lp stability,'' \textit{IEEE Trans. Automat. Control}, vol. 44, no. 11, pp. 2169--2170, Nov. 1999.
+
+\bibitem{51} A. F. Filippov, \textit{Differential Equations with Discontinuous Right-hand Sides}. Dordrecht, MA: Kluwer, 1988.
+
+\bibitem{52} N. N. Krasovski, \textit{Stability of Motion}. Stanford, CA: Stanford University Press, 1963.
+
+\bibitem{53} O. Hájek, ``Discontinuous differential equations,'' \textit{J. Diff. Equat.}, vol. 32, pp. 149--170, 1979.
+
+\bibitem{54} W. Kaplan, \textit{Advanced Calculus}, 4th ed.. Reading, MA: Addison-Wesley, 1991.
+
+\bibitem{55} F. Clarke, Y. Ledyaev, R. Stern, and P. Wolenski, \textit{Nonsmooth Analysis and Control Theory}. New York: Springer, 1998.
+
+\bibitem{56} T. Paden and S. Sastry, ``A calculus for computing Filippov's differential inclusion with application to the variable structure control of robot manipulators,'' \textit{IEEE Trans. Circuits Syst.}, vol. 34, no. 1, pp. 73--82, 1987.
+
+\bibitem{57} H. K. Khalil, \textit{Nonlinear Systems}, 2nd ed.. Upper Saddle River, NJ: Prentice-Hall, 1996.
+
+\bibitem{58} J. H. Holmes, ``Discontinuous vector fields and feedback control,'' in \textit{Differential Equations and Dynamical Systems}. New York: Academic Press, 1976.
+
+\bibitem{59} J.-M. Coron and L. Rosier, ``A relation between continuous time-varying and discontinuous feedback stabilization,'' \textit{J. Math. Syst. Estim. Control}, vol. 4, no. 1, pp. 67--84, 1994.
+
+\bibitem{60} G. Goebel, R. Sanfelice, and A. Teel, ``Hybrid dynamical systems,'' \textit{IEEE Control Syst. Mag.}, vol. 29, no. 2, pp. 28--93, 2009.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,62 @@
+\documentclass[a4paper]{ctexbook}
+\usepackage[total={7in, 10in}]{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\usepackage{amsmath,amsfonts,amssymb}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+\newcommand\normx[1]{\Vert#1\Vert}
+\newcommand{\NN}[0]{\mathbb{N}}
+\newcommand{\RR}[0]{\mathbb{R}}
+
+\newcommand{\sgn}{\operatorname{sgn}}%这两不一样么，还用再定义？
+\newcommand{\Sgn}{\operatorname{Sgn}}
+\newcommand{\sat}{\operatorname{sat}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\dd}{\operatorname{d}}
+
+\usepackage{amsthm}
+\newtheorem{theorem}{定理}
+\newtheorem{definition}{定义}
+\newtheorem{lemma}{引理}
+
+\usepackage[backend=biber,autolang=hyphen,style=gb7714-2015,citestyle=authoryear,
+gbtype=true,gbalign=gb7714-2015,
+doi=true,url=true,isbn=false]{biblatex}
+\addbibresource[location=local]{../bin/我的文库_la.bib}
+
+\usepackage{xcolor}
+\newcommand{\citefrom}[1]{\textcolor{gray}{#1}\\}
+\newcommand\tR{\textcolor{red}}
+
+\usepackage{tikz}
+\usepackage{pgfplots}  
+
+% \usepackage{draftwatermark}         % 所有页加水印
+% %\usepackage[firstpage]{draftwatermark} % 只有第一页加水印
+% \SetWatermarkText{我太菜了，\\可能写不完}           % 设置水印内容
+% %\SetWatermarkText{\includegraphics{fig/texlion.png}}         % 设置水印logo
+% \SetWatermarkLightness{0.95}             % 设置水印透明度 0-1
+% \SetWatermarkScale{1}                   % 设置水印大小 0-1  
+
+\title{
+    \Huge
+    非线性系统到非光滑系统\\
+    \normalsize
+    我怎么也学不会的Filippov是个啥？
+}
+\author{\href{https://xsro.github.io}{xsro} under \href{https://drfzh.github.io}{drfzh}}
+\date{\today}
+
+\begin{document}
+    \maketitle
+    \tableofcontents
+
+    \include{pre/pre}
+
+    \include{nonlinear}
+    \include{continuous}
+    \include{bounded}
+
+    \printbibliography
+\end{document}

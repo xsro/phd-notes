@@ -1,0 +1,97 @@
+
+\section{使用输出调节的合围控制方法}
+
+\subsection{简要算法回顾}
+
+\begin{enumerate}
+  \item Hu B B, Zhang H T, Shi Y. Cooperative label-free moving target fencing for second-order multi-agent systems with rigid formation[J]. Automatica, 2023, 148: 110788.
+  \item Pan Z, Chen B M. Cooperative target fencing of multiple double-integrator systems with connectivity preservation[J]. International Journal of Robust and Nonlinear Control, 2024, 34(12): 8163-8179.
+  \item Wen L, Chen Z, Cheng W, et al. Cooperative Fencing of Second-Order Vehicles Using Relative Position Measurements for a Target with Time-Varying Velocity[J]. Communications in Nonlinear Science and Numerical Simulation, 2026: 110182.
+\end{enumerate}
+
+\subsection{Hu et al. 2023}
+
+\textbf{目标模型}：目标运动建模为线性外系统
+\[
+\dot{x}_d = v_d, \quad \dot{v}_d = s_1 x_d
+\]
+其中 $s_1 \leq 0$ 为常数。$s_1 = 0$ 时目标匀速运动，$s_1 < 0$ 时目标做周期性变速运动。等价地，目标状态 $\theta = [x_d^\top, v_d^\top]^\top$ 满足 $\dot{\theta} = (S \otimes I_2)\theta$，其中 $S = \begin{bmatrix} 0 & 1 \\ s_1 & 0 \end{bmatrix}$。
+
+\textbf{智能体模型}：$n$ 个二阶智能体
+\[
+\dot{x}_i = v_i, \quad \dot{v}_i = u_i, \quad i \in \mathcal{V}
+\]
+
+\textbf{控制算法}：控制器由三部分组成
+\[
+u_i = -\underbrace{([k_1, k_2] \otimes I_2)\begin{bmatrix} x_i \\ v_i \end{bmatrix}}_{\text{动态调节器}} - \underbrace{([k_3, k_4] \otimes I_2)\begin{bmatrix} \epsilon_i \\ \zeta_i \end{bmatrix}}_{\text{内模补偿}} + \underbrace{k_5 \sum_{k \in \mathcal{N}_i} \alpha(\|x_{ik}\|) \frac{x_{ik}}{\|x_{ik}\|}}_{\text{排斥力}}
+\]
+其中 $(\epsilon_i, \zeta_i)$ 为内模状态，满足 $\dot{\epsilon}_i = \zeta_i,\; \dot{\zeta}_i = s_1 \epsilon_i+e_i - k_5 \sum_{k \in \mathcal{N}_i} \alpha(\|x_{ik}\|) \frac{x_{ik}}{\|x_{ik}\|}$，与目标外系统同构。$\alpha(\cdot)$ 为势函数，保证碰撞避免。该设计基于输出调节理论：内模重构目标动态，调节器驱动智能体跟踪目标，排斥力维持刚性编队间距。需要全状态反馈（位置和速度）。
+
+\subsection{Pan \& Chen 2024}
+
+\textbf{目标模型}：目标动态为线性系统
+\[
+\ddot{q}_0 = S_{01} q_0 + S_{02} \dot{q}_0
+\]
+等价地 $\dot{x}_0 = S_0 x_0$，其中 $S_0 = \begin{bmatrix} 0 & I \\ S_{01} & S_{02} \end{bmatrix}$，$S_{01}, S_{02} \in \mathbb{R}^{n \times n}$ 为常数矩阵。该模型可生成任意多项式和正弦函数类轨迹，包含静止目标、匀速目标和时变速度目标为特例。\textbf{要求 $S_0$ 已知}：目标分布式观测器 (16d) 显式使用 $S_0$，且输出调节的可解性要求观测器包含 $S_0$ 的内模。
+
+\textbf{智能体模型}：$N$ 个双积分器智能体，含外部扰动
+\[
+\ddot{q}_i = u_i + d_i, \quad i = 1, \cdots, N
+\]
+其中扰动 $d_i$ 由线性外系统 $\dot{\omega}_i = S_i \omega_i,\; d_i = D_i \omega_i$ 生成，可建模多项式、正弦、指数及其有限组合的扰动信号。
+
+\textbf{控制算法}：分布式位置反馈控制律，由四部分组成
+\[
+u_i = \underbrace{-(q_i - \eta_{1i})}_{\text{位置反馈}} - \underbrace{\alpha \sum_{j \in \mathcal{N}_i} \nabla_{\bar{q}_i} \psi(\|\bar{q}_i - \bar{q}_j\|)}_{\text{连通性保持}} - \underbrace{\sum_{j \in \mathcal{N}_i} \nabla_{\bar{q}_i} \rho(\|\bar{q}_i - \bar{q}_j\|)}_{\text{碰撞避免}} - \underbrace{\sum_{j \in \overline{\mathcal{N}}_i} (\xi_{2i} - \xi_{2j})}_{\text{速度共识}} + U_i \begin{bmatrix} \eta_i \\ \hat{\omega}_i \end{bmatrix}
+\tag{16a}
+\]
+配套三个分布式观测器：
+\begin{itemize}
+  \item \textbf{车辆状态观测器}：$\dot{\xi}_i = A\xi_i + Bu_i + E_i\hat{\omega}_i + L_{i1}(C\xi_i - y_i)$，估计自身状态。$\xi_i=\mathrm{col}(\xi_{1i},\xi_{2i})$, $\xi_{20}=p_0$
+  \item \textbf{扰动观测器}：$\dot{\hat{\omega}}_i = S_i\hat{\omega}_i + L_{i2}(C\xi_i - y_i)$，估计外部扰动。
+  \item \textbf{目标分布式观测器}：$\dot{\eta}_i = S_0\eta_i + \gamma \sum_{j\in \overline{\mathcal{N}}_i} a_{ij}(\eta_j - \eta_i)$，估计目标状态；仅需至少一个智能体可获取目标轨迹。$\eta_i=\mathrm{col}(\eta_{1i},\eta_{2i})$, $\eta_0=x_0$, $x_0=\mathrm{col}(q_0,p_0)$（公式 8 上方说明），也就是需要部分 vehicle 知道目标的绝对位置速度。
+\end{itemize}
+
+仅使用位置反馈，不依赖智能体速度测量。适用于 $n$ 维系统，可完全抑制由线性外系统生成的外部扰动。
+
+\textbf{注意}： 原文只说了没有自身的速度测量，但是至少从原文公式 (16a) 中，可以看到 $j\in \overline{\mathcal{N}}_i$ 中的集合 $\overline{\mathcal{N}}_i$ 是可以包含目标的速度的。
+
+\begin{quote}
+We establish a distributed control law for multiple double-integrator systems to asymptotically fence a moving target over a state-dependent communication network without using the velocity measurements of the vehicles.
+\end{quote}
+
+\subsection{Wen et al. 2026}
+
+\textbf{目标模型}：目标动态建模为线性外系统
+\[
+\dot{\theta} = (S \otimes I_2)\theta, \quad \theta = [x_0^\top, v_0^\top]^\top
+\]
+其中 $S = \begin{bmatrix} 0 & 1 \\ -s_1 & -s_2 \end{bmatrix}$。与 [1] 相比，增加了阻尼项 $s_2$，且可解性条件从特征值为纯虚数放宽为：目标系统矩阵与闭环系统矩阵的谱不相交。允许目标轨迹发散或不稳定。
+
+\textbf{智能体模型}：$n$ 个二阶智能体，$\dot{x}_i = v_i,\; \dot{v}_i = u_i$。
+
+\textbf{控制算法}：控制器由两部分组成
+\[
+u_i = -(K \otimes I_2) z_i + \alpha_1 \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}
+\]
+其中第一项为动态目标趋近项，第二项为碰撞避免排斥项。$K = [k_1, k_2, k_3, k_4]$，$z_i = [\hat{x}_i^\top, \hat{v}_i^\top, \hat{x}_{0i}^\top, \hat{v}_{0i}^\top]^\top$ 为对智能体位置、速度及目标位置、速度的估计。
+
+\textbf{动态补偿器}（输出反馈核心）：
+\[
+\dot{z}_i = (G_1 \otimes I_2) z_i + (G_2 \otimes I_2) e_i + (\alpha_2 \otimes I_2) \sum_{j \in \mathbb{N}_i} \varpi(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}
+\]
+其中 $e_i = x_i - x_0$ 为智能体与目标的相对位置（仅有的测量量之一），$G_1, G_2$ 的结构为
+\[
+G_1 = \begin{bmatrix} -l_1 & 1 & 0 & 0 \\ -k_1 - l_2 & -k_2 & -k_3 & -k_4 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & -s_1 & -s_2 \end{bmatrix}, \quad G_2 = \begin{bmatrix} l_1 \\ l_2 \\ 0 \\ 1 \end{bmatrix}
+\]
+$(G_1, G_2)$ 包含目标外系统 $S$ 的内模，使得观测器能估计目标的时变速度。
+
+\textbf{参数设计条件}：
+\begin{enumerate}
+  \item 闭环矩阵 $A_c = \begin{bmatrix} A & -BK \\ G_2C & G_1 \end{bmatrix}$ 为 Hurwitz 矩阵，且 $(U^\top U, A_c)$ 可观测。
+  \item 存在正定矩阵 $P$ 满足 Lyapunov 方程 $PA_c + A_c^\top P + U^\top U = 0$，则 $\alpha = \epsilon P^{-1} U^\top$（$\epsilon > 0$）。
+\end{enumerate}
+
+与 [1] 的关键区别：不使用智能体自身速度，属于输出反馈设计；不要求预设编队构型。

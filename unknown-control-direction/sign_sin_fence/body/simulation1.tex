@@ -1,0 +1,60 @@
+\section{仿真结果：滑模方法1}
+
+本节给出滑模方法1的 MATLAB 仿真结果。仿真采用动态邻居集合
+\(\mathcal N_i(t)=\{j\ne i:\|p_i-p_j\|<\mu\}\)，并记录所有智能体之间的距离以及智能体中心到目标的距离。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig1_trajectories.png}
+    \caption{智能体与目标的运动轨迹。实线为各智能体轨迹，虚线为目标轨迹。}
+    \label{fig:result1-trajectories}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{simulation/result1/out/fig2_all_pair_distances.png}
+    \caption{所有智能体两两之间的距离变化曲线。红色虚线为安全距离 \(d\)，黑色点线为避碰作用距离 \(\mu\)。}
+    \label{fig:result1-all-pair-distances}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig3_min_pair_distance.png}
+    \caption{智能体之间的最小距离。曲线始终位于安全距离 \(d\) 以上，说明仿真中未发生碰撞。}
+    \label{fig:result1-min-distance}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig4_center_to_target.png}
+    \caption{智能体几何中心到目标的距离 \(\|\bar p-p_0\|\)。}
+    \label{fig:result1-center-to-target}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig5_sliding_variables.png}
+    \caption{滑模变量各分量变化曲线。}
+    \label{fig:result1-sliding-variables}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig6_sdot_norms.png}
+    \caption{滑模变量导数范数 \(\|\dot s_{i0}\|\)。}
+    \label{fig:result1-sdot-norms}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig7_input_gains.png}
+    \caption{未知输入增益 \(b_{i\ell}(t)\) 的符号切换过程。}
+    \label{fig:result1-input-gains}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{simulation/result1/out/fig8_controls.png}
+    \caption{控制输入 \(u_{i\ell}\) 的变化曲线。}
+    \label{fig:result1-controls}
+\end{figure}
