@@ -29,7 +29,7 @@
 \dot{\tilde{\eta}} = [(I_N \otimes S) - \mu_2(H \otimes I_q)] \tilde{\eta} + \tilde{S}_d \tilde{\eta} + \tilde{S}_d (1_N \otimes v). \tag{11}
 \end{equation}
 
-论文把 (11) 套用 Lemma 1，即系统 $\dot{x} = \epsilon F x + F_1(t)x + F_2(t)$）。要由 Lemma 1 推出 $\tilde{\eta}(t) \to 0$ \textbf{指数地}，必须保证两个扰动项都\textbf{指数衰减到 0}：
+论文把 (11) 套用 Lemma 1，即系统 $\dot{x} = \epsilon F x + F_1(t)x + F_2(t)$。要由 Lemma 1 推出 $\tilde{\eta}(t) \to 0$ \textbf{指数地}，必须保证两个扰动项都\textbf{指数衰减到 0}：
 \begin{itemize}
   \item $F_1(t) = \tilde{S}_d(t)$ $\to$ 由 Lemma 2(i) 直接得到（$\tilde{S}_i \to 0$ 指数），\textbf{不需要} $\mu_1 > \gamma/\alpha_H$；
   \item \textbf{$F_2(t) = \tilde{S}_d(t)(1_N \otimes v(t))$ $\to$ 这正是要解释的交叉项}，要用统一的速率估计保证它指数衰减，需取 $\mu_1 > \gamma/\alpha_H$。
@@ -88,7 +88,7 @@ Leader 信号（式 (1)）：
 H = L + \operatorname{diag}(a_{10},\dots,a_{N0}).
 \]
 
-其中 $L$ 是 follower 子图 Laplacian，$H$ 因 Assumption 4（含 leader 为根的有向生成树）而\textbf{所有特征值实部为正}引 Hu \& Hong 2007 Lemma 4）。定义图连通性 / 谱隙
+其中 $L$ 是 follower 子图 Laplacian，$H$ 因 Assumption 4（含 leader 为根的有向生成树）而\textbf{所有特征值实部为正}（引 Hu \& Hong 2007 Lemma 4）。定义图连通性 / 谱隙
 \begin{equation}
 \alpha_H = \min\bigl(\Re(\sigma(H))\bigr) > 0. \tag{alphaH}
 \end{equation}
@@ -169,7 +169,7 @@ Lemma 2(i)给出逐块估计：对某个 $\beta_H > 0$，
 
 \section{对接 Lemma 1：$F_2(t)$ 就是该交叉项}
 
-现在把 (11) 与 Lemma 1 的 $\dot{x} = \epsilon F x + F_1(t)x + F_2(t)$ 逐一对齐，式 (6)）：
+现在把 (11) 与 Lemma 1 的 $\dot{x} = \epsilon F x + F_1(t)x + F_2(t)$ 逐一对齐（式 (6)）：
 
 \begin{table}[h]
 \centering
@@ -186,7 +186,7 @@ $F_1(t)$ & $\tilde{S}_d(t)$ & 需 $\to 0$ 指数 \\
 \end{table}
 
 \begin{itemize}
-  \item \textbf{$F_1(t) = \tilde{S}_d \to 0$ 指数}：直接来自 Lemma 2(i) 的 (S-tilde-decay)，\textbf{与 $\mu_1 > \gamma/\alpha_H$ 无关}（对任意 $\mu_1 > 0$ 都成立。所以 $F_1$ 这一项不带来 $\mu_1$ 的下界。
+  \item \textbf{$F_1(t) = \tilde{S}_d \to 0$ 指数}：直接来自 Lemma 2(i) 的 (S-tilde-decay)，\textbf{与 $\mu_1 > \gamma/\alpha_H$ 无关}（对任意 $\mu_1 > 0$ 都成立）。所以 $F_1$ 这一项不带来 $\mu_1$ 的下界。
   \item \textbf{$F_2(t) = \tilde{S}_d(1_N \otimes v) \to 0$ 指数}：正是 \S 3--\S 4 证明的结论；要用该统一速率估计保证它指数衰减，只需 $\mu_1 \alpha_H - \gamma > 0$，即 $\mu_1 > \gamma / \alpha_H$。
 \end{itemize}
 
