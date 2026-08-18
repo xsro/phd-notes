@@ -24,12 +24,9 @@ $$
 &\le \|\tilde{S}_d(t)\| \cdot \|1_N \otimes v(t)\| \\[2mm]
 &\le \bigl(C \, e^{-\mu_1 \alpha_H t}\bigr)
    \cdot \bigl(c' \, e^{\gamma t} \, t^{\,m-1}\bigr)
-   && \text{代入 (S-d-decay) 与 (v-bound)} \\[2mm]
-&= C c' \cdot t^{\,m-1} \cdot e^{-(\mu_1 \alpha_H - \gamma)\, t}. \tag{cross-bound}
+   &&\\[2mm]
+&= C c' \cdot t^{\,m-1} \cdot e^{-(\mu_1 \alpha_H - \gamma)\, t}. % \tag{cross-bound}
 \end{aligned}
 $$
 
 要保证指数收敛需要$\mu_1 \alpha_H - \gamma>0$。
-
-- 指数部分的净指数为 $-(\mu_1 \alpha_H - \gamma) t$；
-- 多项式部分 $t^{m-1}$ 只来自 $S$ 的非半单纯性，且**完全不依赖** $\mu_1, \alpha_H, \gamma$。
