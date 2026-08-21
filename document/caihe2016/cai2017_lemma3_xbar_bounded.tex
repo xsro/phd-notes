@@ -313,7 +313,48 @@ z(t)
 +c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\|z(s)\|\,ds
 +c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\,ds.
 \]
-由于 $e^{-\alpha(t-t_0)}$ 可积，Gronwall 不等式给出
+
+下面明确说明 Gronwall 不等式在此处的使用。积分形式的 Gronwall
+不等式是指：若非负函数 $y(t)$ 满足
+\[
+y(t)\leq a+\int_{t_0}^{t}b(s)y(s)\,ds,
+\qquad a\geq0,\quad b(s)\geq0,
+\]
+则
+\[
+y(t)\leq a\exp\left(\int_{t_0}^{t}b(s)\,ds\right).
+\]
+在当前问题中，先估计上式中的最后一项：
+\[
+c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\,ds
+\leq \frac{c_0}{\alpha}.
+\]
+因此，令
+\[
+y(t)\triangleq\|z(t)\|,\qquad
+a\triangleq\|z(t_0)\|+\frac{c_0}{\alpha},\qquad
+b(s)\triangleq c_0e^{-\alpha(s-t_0)},
+\]
+就得到
+\[
+y(t)\leq a+\int_{t_0}^{t}b(s)y(s)\,ds.
+\]
+应用上述 Gronwall 不等式，并利用
+\[
+\int_{t_0}^{t}b(s)\,ds
+=c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\,ds
+\leq\frac{c_0}{\alpha},
+\]
+可得显式估计
+\begin{equation}
+\|z(t)\|
+\leq
+\left(\|z(t_0)\|+\frac{c_0}{\alpha}\right)
+e^{c_0/\alpha},
+\qquad t\geq t_0.
+\tag{C5}
+\end{equation}
+右端与 $t$ 无关，故
 \begin{equation}
 \sup_{t\geq t_0}\|z(t)\|<\infty.
 \tag{B}
