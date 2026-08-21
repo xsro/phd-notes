@@ -228,7 +228,7 @@ G&0\\
 
 \section{非循环的有界性证明}
 
-\subsection{以一个精确解为中心化变量}
+\subsection{关键：不要把 $d(t)$ 当作外部输入}
 
 取上面构造的任意解 $x^*$，满足 $Ax^*=b$，并令
 \[
@@ -253,7 +253,6 @@ C(t)\triangleq P^{T}\mathcal{A}(t)^{T}\mathcal{A}(t)P,
 r(t)\triangleq-\varepsilon P^{T}\mathcal{A}(t)^{T}\tilde{A}(t)x^*.
 \]
 
-因为 $\mathcal{A}(t)\to A$ 指数快速，且 $\mathcal{A}(t)$ 有界，
 \begin{equation}
 \begin{aligned}
 C(t)&\to
@@ -268,54 +267,61 @@ G&0\\
 \tag{C1}
 \end{equation}
 
-将 $C(t)$ 按照 $z=\col(z_1,z_2)$ 分块：
+定义
+\[
+A_0\triangleq-\varepsilon C_\infty,
+\qquad
+\Delta(t)\triangleq-\varepsilon\bigl(C(t)-C_\infty\bigr).
+\]
+则 (C) 可以改写为
 \begin{equation}
-\begin{aligned}
-\dot{z}_1&=-\varepsilon C_{11}(t)z_1
-             -\varepsilon C_{12}(t)z_2+r_1(t),\\
-\dot{z}_2&=-\varepsilon C_{21}(t)z_1
-             -\varepsilon C_{22}(t)z_2+r_2(t).
-\end{aligned}
+\dot{z}=A_0z+\Delta(t)z+r(t),
 \tag{C2}
 \end{equation}
-
-\subsection{先证明 $z$ 有界}
-
-取足够大的 $T$，使得对所有 $t\geq T$，
+且由 (C1) 存在常数 $c_0>0$ 使得
 \[
-C_{11}(t)\succeq \frac{1}{2}G>0.
+\|\Delta(t)\|+\|r(t)\|
+\leq c_0e^{-\alpha(t-t_0)}. \tag{C3}
 \]
-记
+
+这里的关键是：$A_0$ 虽然不是 Hurwitz，但它是半稳定的，且零特征值是半单的。
+事实上，
 \[
-a\triangleq\frac{\varepsilon}{2}\lambda_{\min}(G)>0.
+e^{A_0t}
+=
+\begin{bmatrix}
+e^{-\varepsilon Gt}&0\\
+0&I_{n-k}
+\end{bmatrix},
+\qquad
+\|e^{A_0t}\|\leq1,\quad t\geq0. \tag{C4}
 \]
-由变分常数公式和 (C1)，存在常数 $c>0$ 使得
+
+\subsection{用变分公式和 Gronwall 先证明有界性}
+
+由 (C2) 的变分常数公式，
+\[
+z(t)
+=e^{A_0(t-t_0)}z(t_0)
++\int_{t_0}^{t}e^{A_0(t-s)}
+\bigl(\Delta(s)z(s)+r(s)\bigr)\,ds.
+\]
+结合 (C3)--(C4)，得到
+\[
+\|z(t)\|
+\leq\|z(t_0)\|
++c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\|z(s)\|\,ds
++c_0\int_{t_0}^{t}e^{-\alpha(s-t_0)}\,ds.
+\]
+由于 $e^{-\alpha(t-t_0)}$ 可积，Gronwall 不等式给出
 \begin{equation}
-\begin{aligned}
-\|z_1(t)\|
-&\leq ce^{-a(t-T)}\|z_1(T)\|\\
-&\quad+c\int_T^t e^{-a(t-s)}e^{-\alpha(s-T)}
-\bigl(\|z_2(s)\|+1\bigr)\,ds,\\
-\|z_2(t)\|
-&\leq \|z_2(T)\|
-+c\int_T^t e^{-\alpha(s-T)}
-\bigl(\|z_1(s)\|+\|z_2(s)\|+1\bigr)\,ds.
-\end{aligned}
-\tag{C3}
-\end{equation}
-
-由于 $e^{-\alpha(t-T)}$ 可积，(C3) 配合 Gronwall 不等式给出
-\[
-\sup_{t\geq T}\bigl(\|z_1(t)\|+\|z_2(t)\|\bigr)<\infty.
-\]
-在有限区间 $[t_0,T]$ 上，这是一个系数分段连续的线性系统，不会发生有限时间逃逸，
-因此 $z(t)$ 也有界。于是
-\begin{equation}
-z(t)\ \text{以及}\ x(t)=x^*+Pz(t)\ \text{均有界}.
+\sup_{t\geq t_0}\|z(t)\|<\infty.
 \tag{B}
 \end{equation}
+于是 $x(t)=x^*+Pz(t)$ 也有界。
 
-这一步补上了论文原证明中被 Remark 2 一句话略去的关键环节。
+这一步完全没有使用原文定义的 $d(t)$，因此不存在“先假设 $\bar{x}$ 有界”
+再证明 $d(t)$ 衰减的循环。
 
 \subsection{再证明收敛速度}
 
