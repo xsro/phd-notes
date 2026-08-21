@@ -48,22 +48,24 @@ $$\dot{V} \le -\|x\|^2 + 2\|P\|\|F_1\|\|x\|^2 + 2\|P\|\|x\|\|F_2\|$$
 
 ---
 
-## 五、Lemma 4：调节器方程向量化存在**维度错误**（重大问题）
+## 五、Lemma 4：向量化公式**符号歧义**（非错误）
 
-这是本文最严重的数学错误之一。
+经过重新推导，之前指出的"维度不匹配"问题**并不成立**——公式本身在数学上是正确的。问题出在**符号歧义**：
 
-- 论文将调节器方程 (3) 向量化为：
-  $$Q_i \chi_i = b_i$$
-  其中
-  $$Q_i = S^T \otimes \begin{bmatrix} I_{n_i} & 0 \\ 0 & 0 \end{bmatrix} - I_q \otimes \begin{bmatrix} A_i & B_i \\ C_i & D_i \end{bmatrix}$$
-- **维度不匹配**：
-  - 第一项 $S^T \otimes \begin{bmatrix} I_{n_i} & 0 \\ 0 & 0 \end{bmatrix}$ 的维度是 $q(n_i + m_i) \times q(n_i + m_i)$（假设零块为 $m_i \times m_i$）；
-  - 第二项 $I_q \otimes \begin{bmatrix} A_i & B_i \\ C_i & D_i \end{bmatrix}$ 的维度是 $q(n_i + p_i) \times q(n_i + m_i)$。
-  - **两者维度不同，无法相减！**
+- 论文将调节器方程 (3) 写为：
+  $$\begin{bmatrix} I_{n_i} & 0 \\ 0 & 0 \end{bmatrix} \begin{bmatrix} X_i \\ U_i \end{bmatrix} S - \begin{bmatrix} A_i & B_i \\ C_i & D_i \end{bmatrix} \begin{bmatrix} X_i \\ U_i \end{bmatrix} = \begin{bmatrix} E_i \\ F_i \end{bmatrix}$$
+  其中块矩阵 $\begin{bmatrix} I_{n_i} & 0 \\ 0 & 0 \end{bmatrix}$ 的维度**未明确说明**。
 
-- **正确的向量化形式**应为：
-  $$\begin{bmatrix} S^T \otimes I_{n_i} - I_q \otimes A_i & -I_q \otimes B_i \\ -I_q \otimes C_i & -I_q \otimes D_i \end{bmatrix} \begin{bmatrix} \operatorname{vec}(X_i) \\ \operatorname{vec}(U_i) \end{bmatrix} = \begin{bmatrix} \operatorname{vec}(E_i) \\ \operatorname{vec}(F_i) \end{bmatrix}$$
-  这无法写成单个 Kronecker 积的差的形式。论文的公式 (21)/(26) 是错误的，直接影响了后续自适应算法 (22) 的设计和 Lemma 4 的正确性。
+- **正确解释**：该块矩阵应为 $(n_i+p_i) \times (n_i+m_i)$，即：
+  $$\begin{bmatrix} I_{n_i} & 0_{n_i \times m_i} \\ 0_{p_i \times n_i} & 0_{p_i \times m_i} \end{bmatrix}$$
+  这样第一项 $S^T \otimes M$ 和第二项 $I_q \otimes N$ 的维度均为 $q(n_i+p_i) \times q(n_i+m_i)$，**可以相减**。
+
+- **验证**：展开后得到 $X_i S - A_i X_i - B_i U_i = E_i$ 和 $-C_i X_i - D_i U_i = F_i$，与原始调节器方程一致。
+
+**实际问题**：论文未标注零块的具体维度，读者容易误认为 $M$ 是 $(n_i+m_i) \times (n_i+m_i)$ 方阵，从而得出"维度不匹配"的错误结论。建议明确写为：
+$$M_i = \begin{bmatrix} I_{n_i} & 0_{n_i \times m_i} \\ 0_{p_i \times n_i} & 0_{p_i \times m_i} \end{bmatrix}$$
+
+**结论**：向量化公式本身正确，但符号不规范，需要修正表述而非修改数学。
 
 ---
 
@@ -86,11 +88,11 @@ $$\dot{V} \le -\|x\|^2 + 2\|P\|\|F_1\|\|x\|^2 + 2\|P\|\|x\|\|F_2\|$$
 
 | 严重程度 | 问题 | 位置 |
 |---------|------|------|
-| 🔴 严重 | 调节器方程向量化维度不匹配，公式 (21)/(26) 错误 | Lemma 4 |
 | 🟠 较重 | Lemma 1 证明循环论证、ISS 推理不严谨 | Lemma 1 |
 | 🟠 较重 | Lemma 3 证明依赖未验证的 Remark 2，循环依赖 | Lemma 3 |
 | 🟡 中等 | Lemma 2 未建立一致指数界，乘积衰减论证不充分 | Lemma 2(ii) |
+| 🟡 中等 | Lemma 4 块矩阵维度标注歧义（非错误，但易误导） | Lemma 4 |
 | 🟡 中等 | 大量 LaTeX 格式和符号不一致 | 全文 |
 | 🟢 轻微 | Theorem 1/2 证明细节缺失、Example 数据不完整 | Theorems & Sec 5 |
 
-**核心结论**：论文的**思路有价值**（自适应分布式观测器 + 在线调节器方程求解），但 Lemma 4 的向量化错误是致命的——如果该公式确实错误，则整个自适应调节器方程求解算法 (22) 的设计基础不成立，需要重新推导。建议作者优先修复该维度问题，并简化 Lemma 1 的证明。
+**核心结论**：论文的**思路有价值**（自适应分布式观测器 + 在线调节器方程求解），Lemma 4 的向量化公式在正确解释下是成立的，但符号标注不规范。更实质性的问题集中在 Lemma 1 的证明循环和 Lemma 3 的循环依赖上，建议作者优先简化并重构这两个证明。
