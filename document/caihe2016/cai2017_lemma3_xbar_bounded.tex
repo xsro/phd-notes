@@ -599,6 +599,35 @@ e^{At} = \sum_{k=0}^{\infty} \frac{(At)^k}{k!}.
 
 由性质 2，齐次方程 $\dot{x} = Ax$ 的解为 $x(t) = e^{A(t-t_0)} x(t_0)$。
 
+\subsubsection*{特征值的关系}
+
+矩阵指数最重要的性质之一是：\textbf{$A$ 的特征值决定了 $e^{At}$ 的特征值}。
+
+\begin{enumerate}
+  \item 若 $\lambda$ 是 $A$ 的特征值，则 $e^{\lambda t}$ 是 $e^{At}$ 的特征值（重数相同）；
+  \item 对应的特征向量不变：若 $A v = \lambda v$，则 $e^{At} v = e^{\lambda t} v$。
+\end{enumerate}
+
+\subsubsection*{推导（可对角化情形）}
+
+若 $A$ 可对角化：$A = P \Lambda P^{-1}$，$\Lambda = \operatorname{diag}(\lambda_1,\dots,\lambda_n)$，则
+
+\[
+e^{At} = P e^{\Lambda t} P^{-1}, \qquad
+e^{\Lambda t} = \operatorname{diag}(e^{\lambda_1 t}, \dots, e^{\lambda_n t}).
+\]
+
+$e^{At}$ 相似于 $e^{\Lambda t}$，故特征值就是 $e^{\lambda_i t}$。对不可对角化的情形，通过 Jordan 标准型可得相同结论。
+
+\subsubsection*{几个直接推论}
+
+\begin{itemize}
+  \item $e^{At}$ 总是可逆的，且 $(e^{At})^{-1} = e^{-At}$。这是因为 $\det(e^{At}) = e^{\operatorname{tr}(A)t} \neq 0$。
+  \item 若 $A$ 的特征值实部全为负（Hurwitz），则 $e^{At} \to 0$（当 $t \to \infty$）。
+  \item 若 $A$ 有零特征值，则 $e^{At}$ 对应特征值为 $1$——不衰减。这正是本文 $A_0$ 的情况：$-\varepsilon G$ 的特征值为负（衰减），$0$ 矩阵的特征值为 $0$（对应 $e^{0\cdot t}=1$，不衰减）。
+  \item 若 $A$ 对称，则 $e^{At}$ 也对称，特征值均为实数，且 $e^{At}$ 正定（当 $t$ 有限时）。
+\end{itemize}
+
 \subsubsection*{分块对角阵的情形}
 
 若 $A = \operatorname{diag}(A_1, A_2, \dots, A_m)$ 为分块对角，则
@@ -624,11 +653,30 @@ e^{A_0 t} = \begin{bmatrix} e^{-\varepsilon G t} & 0 \\ 0 & e^{0 \cdot t} \end{b
 = \begin{bmatrix} e^{-\varepsilon G t} & 0 \\ 0 & I_{n-k} \end{bmatrix}.
 \]
 
-由于 $G$ 正定，$-\varepsilon G$ 的特征值全为负，故 $e^{-\varepsilon G t} \to 0$（指数衰减）；而零空间部分的 $e^{0\cdot t} = I$ 保持恒等。因此
+由于 $G$ 正定，$-\varepsilon G$ 的特征值全为负，故 $e^{-\varepsilon G t} \to 0$（指数衰减）；而零空间部分的 $e^{0\cdot t} = I$ 保持恒等。
+
+\subsubsection*{为什么 $\|e^{A_0 t}\| \leq 1$}
+
+这里使用的是\textbf{谱范数}（即算子 2-范数，记作 $\|\cdot\|_2$）。对任意对称矩阵，谱范数等于其谱半径：
 
 \[
-\|e^{A_0 t}\| \leq 1, \qquad t \geq 0,
+\|M\|_2 = \max_{i} |\lambda_i(M)|.
 \]
+
+$A_0$ 是对称的（因为 $G$ 对称），故 $e^{A_0 t}$ 也对称。其特征值为：
+
+\begin{itemize}
+  \item $e^{-\varepsilon \lambda_i(G) t}$，其中 $\lambda_i(G) > 0$ 是 $G$ 的特征值。由于 $t \geq 0$，有 $0 < e^{-\varepsilon \lambda_i(G) t} \leq 1$；
+  \item $1$（重数 $n-k$），来自零空间分量 $I_{n-k}$。
+\end{itemize}
+
+因此所有特征值的绝对值均不超过 $1$，谱半径为 $1$，即
+
+\[
+\|e^{A_0 t}\|_2 = 1, \qquad t \geq 0.
+\]
+
+特别地，$\|e^{A_0 t}\|_2 \leq 1$ 成立。需注意：若使用其他范数（如 Frobenius 范数），该结论不一定成立；但本文的 Gronwall 论证只需算子范数满足该有界性即可。
 
 即 $A_0$ 是\textbf{半稳定}的（值域分量衰减，零空间分量有界但不衰减）。这正是不能直接套用 Remark 2（要求 Hurwitz）的原因，也是整个证明需要分块处理的根源。
 
