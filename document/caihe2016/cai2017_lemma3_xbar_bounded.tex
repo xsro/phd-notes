@@ -267,11 +267,78 @@ G&0\\
 \tag{C1}
 \end{equation}
 
+下面对 (C1) 的衰减估计给出详细推导。
+
+\subsubsection*{估计 $\|C(t)-C_\infty\|$}
+
+将 $\mathcal{A}(t)=A+\tilde{A}(t)$ 代入 $C(t)$：
+
+\[
+\begin{aligned}
+C(t) &= P^T(A+\tilde{A})^T(A+\tilde{A})P \\
+&= P^T(A^TA + A^T\tilde{A} + \tilde{A}^TA + \tilde{A}^T\tilde{A})P
+\end{aligned}
+\]
+
+减去 $C_\infty = P^TA^TAP$：
+
+\[
+C(t)-C_\infty = P^T(A^T\tilde{A} + \tilde{A}^TA + \tilde{A}^T\tilde{A})P
+\]
+
+取范数，利用 $P$ 正交（$\|P\|=\|P^T\|=1$）和 $\|XY\|\leq\|X\|\|Y\|$：
+
+\[
+\begin{aligned}
+\|C(t)-C_\infty\|
+&\leq \|A^T\tilde{A}\| + \|\tilde{A}^TA\| + \|\tilde{A}^T\tilde{A}\| \\
+&\leq 2\|A\|\,\|\tilde{A}(t)\| + \|\tilde{A}(t)\|^2
+\end{aligned}
+\]
+
+代入 $\|\tilde{A}(t)\|\leq c_A e^{-\alpha(t-t_0)}$，并注意 $e^{-2\alpha\tau}\leq e^{-\alpha\tau}$（$\tau\geq0$）：
+
+\[
+\|C(t)-C_\infty\|
+\leq 2\|A\|c_A e^{-\alpha(t-t_0)} + c_A^2 e^{-2\alpha(t-t_0)}
+\leq (2\|A\|c_A + c_A^2)\, e^{-\alpha(t-t_0)}
+\]
+
+\subsubsection*{估计 $\|r(t)\|$}
+
+\[
+r(t) = -\varepsilon P^T\mathcal{A}(t)^T\tilde{A}(t)x^*
+\]
+
+取范数：
+
+\[
+\begin{aligned}
+\|r(t)\|
+&\leq \varepsilon \|P^T\|\,\|\mathcal{A}(t)^T\|\,\|\tilde{A}(t)\|\,\|x^*\| \\
+&= \varepsilon \|\mathcal{A}(t)\|\,\|\tilde{A}(t)\|\,\|x^*\|
+\end{aligned}
+\]
+
+由于 $\|\mathcal{A}(t)\| = \|A+\tilde{A}(t)\| \leq \|A\| + \|\tilde{A}(t)\| \leq \|A\| + c_A$（常数，与 $t$ 无关），代入得：
+
+\[
+\|r(t)\| \leq \varepsilon(\|A\|+c_A)\|x^*\|\,c_A e^{-\alpha(t-t_0)}
+\]
+
+\subsubsection*{合并}
+
+两项均以 $O(e^{-\alpha(t-t_0)})$ 衰减，故存在常数 $c_0>0$（例如 $c_0 = 2\|A\|c_A + c_A^2 + \varepsilon(\|A\|+c_A)\|x^*\|c_A$）使得
+
+\[
+\|C(t)-C_\infty\| + \|r(t)\| \leq c_0 e^{-\alpha(t-t_0)}
+\]
+
+由此，令 $\Delta(t) = -\varepsilon(C(t)-C_\infty)$，则 $\|\Delta(t)\| \leq \varepsilon c_0 e^{-\alpha(t-t_0)}$，与 $\|r(t)\|$ 一起满足 (C3)。
+
 定义
 \[
 A_0\triangleq-\varepsilon C_\infty,
-\qquad
-\Delta(t)\triangleq-\varepsilon\bigl(C(t)-C_\infty\bigr).
 \]
 则 (C) 可以改写为
 \begin{equation}
@@ -502,5 +569,172 @@ $\tilde{S}_i(t)$ 的指数衰减速率。
   \item 若只要求指数收敛，任意 $\varepsilon>0$ 足够；若要求收敛速率至少为
   $\alpha$，需要满足类似 (R) 的条件。
 \end{itemize}
+
+\appendix
+
+\section{矩阵指数、变分公式与 Gronwall 不等式}
+
+\subsection{矩阵指数}
+
+\subsubsection*{定义}
+
+对任意方阵 $A \in \R^{n\times n}$，\textbf{矩阵指数}定义为幂级数
+
+\[
+e^{A} = \sum_{k=0}^{\infty} \frac{A^k}{k!},
+\qquad
+e^{At} = \sum_{k=0}^{\infty} \frac{(At)^k}{k!}.
+\]
+
+该级数对任意 $t$ 绝对收敛，且 $e^{At}$ 关于 $t$ 光滑。
+
+\subsubsection*{基本性质}
+
+\begin{enumerate}
+  \item $e^{A \cdot 0} = I$（单位阵）；
+  \item $\displaystyle \frac{d}{dt} e^{At} = A e^{At} = e^{At} A$；
+  \item $e^{A(t+s)} = e^{At} e^{As}$（半群性质）；
+  \item 若 $A$ 与 $B$ 可交换（$AB=BA$），则 $e^{A+B} = e^A e^B$。
+\end{enumerate}
+
+由性质 2，齐次方程 $\dot{x} = Ax$ 的解为 $x(t) = e^{A(t-t_0)} x(t_0)$。
+
+\subsubsection*{分块对角阵的情形}
+
+若 $A = \operatorname{diag}(A_1, A_2, \dots, A_m)$ 为分块对角，则
+
+\[
+e^{At} = \operatorname{diag}\bigl(e^{A_1 t}, e^{A_2 t}, \dots, e^{A_m t}\bigr).
+\]
+
+\subsubsection*{本文的关键例子}
+
+在有界性证明中，
+
+\[
+A_0 = -\varepsilon C_\infty
+= -\varepsilon \begin{bmatrix} G & 0 \\ 0 & 0 \end{bmatrix}
+= \operatorname{diag}(-\varepsilon G,\; 0_{n-k}),
+\]
+
+其中 $G = \bar{A}^T\bar{A} > 0$。由分块对角性质：
+
+\[
+e^{A_0 t} = \begin{bmatrix} e^{-\varepsilon G t} & 0 \\ 0 & e^{0 \cdot t} \end{bmatrix}
+= \begin{bmatrix} e^{-\varepsilon G t} & 0 \\ 0 & I_{n-k} \end{bmatrix}.
+\]
+
+由于 $G$ 正定，$-\varepsilon G$ 的特征值全为负，故 $e^{-\varepsilon G t} \to 0$（指数衰减）；而零空间部分的 $e^{0\cdot t} = I$ 保持恒等。因此
+
+\[
+\|e^{A_0 t}\| \leq 1, \qquad t \geq 0,
+\]
+
+即 $A_0$ 是\textbf{半稳定}的（值域分量衰减，零空间分量有界但不衰减）。这正是不能直接套用 Remark 2（要求 Hurwitz）的原因，也是整个证明需要分块处理的根源。
+
+\subsection{变分公式（常数变易法）}
+
+考虑非齐次线性常微分方程
+
+\[
+\dot{x}(t) = A x(t) + f(t), \qquad x(t_0) = x_0,
+\]
+
+其中 $A \in \R^{n\times n}$ 为常矩阵，$f(t)$ 分段连续。其解可表示为
+
+\begin{equation}
+x(t) = e^{A(t-t_0)} x_0 + \int_{t_0}^{t} e^{A(t-s)} f(s)\,ds.
+\tag{V}
+\end{equation}
+
+这就是\textbf{变分公式}（variation of constants formula，亦称 Duhamel 原理或常数变易法）。
+
+\subsubsection*{推导思路}
+
+令 $x(t) = e^{A(t-t_0)} y(t)$，则 $y(t_0) = x_0$。求导：
+
+\[
+\dot{x} = A e^{A(t-t_0)} y + e^{A(t-t_0)} \dot{y}
+= A x + e^{A(t-t_0)} \dot{y}.
+\]
+
+与 $\dot{x} = Ax + f(t)$ 对比得 $e^{A(t-t_0)} \dot{y} = f(t)$，即 $\dot{y} = e^{-A(t-t_0)} f(t)$。积分：
+
+\[
+y(t) = y(t_0) + \int_{t_0}^{t} e^{-A(s-t_0)} f(s)\,ds
+= x_0 + \int_{t_0}^{t} e^{-A(s-t_0)} f(s)\,ds.
+\]
+
+代回 $x(t) = e^{A(t-t_0)} y(t)$ 即得 (V)。
+
+\subsubsection*{在有界性证明中的应用}
+
+本文在 (C2) 中处理的是
+
+\[
+\dot{z} = A_0 z + \Delta(t) z + r(t),
+\]
+
+其中 $A_0$ 为常矩阵，而 $\Delta(t)z + r(t)$ 扮演了 $f(t)$ 的角色。应用变分公式：
+
+\[
+z(t) = e^{A_0(t-t_0)} z(t_0)
++ \int_{t_0}^{t} e^{A_0(t-s)} \bigl(\Delta(s) z(s) + r(s)\bigr)\,ds.
+\]
+
+这正是文中 Gronwall 论证的起点。
+
+\subsection{Gronwall 不等式}
+
+\subsubsection*{积分形式}
+
+若非负函数 $y(t)$ 满足
+
+\[
+y(t) \leq a + \int_{t_0}^{t} b(s) y(s)\,ds,
+\qquad a \geq 0,\; b(s) \geq 0,
+\]
+
+则
+
+\[
+y(t) \leq a \exp\!\left(\int_{t_0}^{t} b(s)\,ds\right).
+\]
+
+\subsubsection*{微分形式（等价）}
+
+若 $y(t) \geq 0$ 且 $\dot{y}(t) \leq \beta(t) y(t)$，则
+
+\[
+y(t) \leq y(t_0) \exp\!\left(\int_{t_0}^{t} \beta(s)\,ds\right).
+\]
+
+\subsubsection*{在本文中的使用}
+
+取 $y(t) = \|z(t)\|$，$a = \|z(t_0)\| + c_0/\alpha$，$b(s) = c_0 e^{-\alpha(s-t_0)}$。由于
+
+\[
+\int_{t_0}^{t} b(s)\,ds
+= c_0 \int_{t_0}^{t} e^{-\alpha(s-t_0)}\,ds
+\leq \frac{c_0}{\alpha} < \infty,
+\]
+
+Gronwall 给出与 $t$ 无关的一致有界估计：
+
+\[
+\|z(t)\| \leq \left(\|z(t_0)\| + \frac{c_0}{\alpha}\right) e^{c_0/\alpha}.
+\]
+
+这正是 (C5) 和 (B) 的来源。
+
+\subsection{小结}
+
+变分公式 + Gronwall 不等式是处理"标称矩阵非 Hurwitz 但半稳定 + 扰动指数衰减"这类问题的标准工具组合：
+
+\begin{enumerate}
+  \item 用变分公式将解表示为"自由演化 + 扰动卷积"；
+  \item 自由演化部分由 $e^{A_0 t}$ 的范数控制（此处 $\|e^{A_0 t}\| \leq 1$）；
+  \item 扰动卷积部分通过 Gronwall 吸收进指数因子，得到一致有界性。
+\end{enumerate}
 
 \end{document}
