@@ -1,0 +1,428 @@
+
+\section{Kou et al.\cite{kouCooperativeFencingControl2022} 算法分析}
+
+Kou 等\cite{kouCooperativeFencingControl2022} 研究了单积分器多智能体对匀速运动目标的协同 fencing 问题。其控制器 (a) 只要求平均速度跟踪目标速度：
+\begin{align}
+u_i^a &= \phi_i + k_1 (x_0 - x_i) + v_i, \label{eq:kou-ctrl} \\
+\dot{v}_i &= k_2 (x_0 - x_i), \label{eq:kou-adapt} \\
+\phi_i &= \sum_{j \in \mathcal{N}_i} \alpha(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}, \label{eq:kou-phi} \\
+\alpha(r) &= \frac{1}{r - d} - \frac{1}{\mu - d}, \quad r \in (d, \mu]. \label{eq:kou-alpha}
+\end{align}
+其中 $\dot{x}_i=u_i$，$\dot{x}_0=v_0$，$v_0\in\mathbb{R}^2$ 为未知常值；$\phi_i$ 为邻居间的排斥项，$k_1(x_0-x_i)$ 为目标吸引项，$v_i$ 为目标速度估计。
+
+论文\cite{kouCooperativeFencingControl2022} 的定理 1 证明了以下性质：
+\begin{itemize}
+    \item[(P1)] 目标被指数合围：$\lim\limits_{t\to\infty} P_{x_0(t)}(x(t)) = 0$；
+    \item[(P2)] 碰撞避免：$\|x_{ij}(t)\| > d$ 对所有 $t$ 成立；
+    \item[(P3)] 平均速度收敛：$\frac{1}{N}\sum_{i=1}^N u_i(t) \to v_0$。
+\end{itemize}
+注意 (P3) 是平均速度收敛，而不是每个智能体速度分别收敛。因此，定理 1 本身并不推出最终队形相对目标静止。
+
+\subsection{碰撞避免的证明}
+
+性质 (P2)（碰撞避免）是算法安全性的关键，其成立的根源在于排斥函数\eqref{eq:kou-alpha}在 $r\to d^+$ 时的奇异性：
+\begin{equation}
+\lim_{r\to d^+}\alpha(r)
+=\lim_{r\to d^+}\Bigl(\frac{1}{r-d}-\frac{1}{\mu-d}\Bigr)
+=+\infty.
+\end{equation}
+即排斥力在接近碰撞距离时发散，构成一道``无穷位势壁垒''。下面用势函数与 Gronwall 不等式给出严格证明；该证明\textbf{不要求}首次碰撞孤立，对多对智能体同时逼近碰撞距离的情形同样成立。
+
+\begin{theorem}[碰撞避免]
+考虑闭环系统\eqref{eq:kou-ctrl}--\eqref{eq:kou-alpha}。若初始时刻满足 $\|x_{ij}(0)\|>d$（$\forall\,i\neq j$），则对所有 $t\geq 0$ 均有
+\begin{equation}
+\|x_{ij}(t)\|>d,\qquad \forall\,i\neq j. \label{eq:kou-collision-free}
+\end{equation}
+\end{theorem}
+
+证明的核心是下述``强制性''（coercivity）引理：排斥力向量的总能量与所有排斥强度平方之和同阶。这样当多对距离同时趋于 $d$ 时，负的平方阶项仍能压过其余一阶项。
+
+\begin{lemma}[排斥力的强制性]\label{lem:kou-coercivity}
+存在仅依赖于智能体数目 $N$、安全距离 $d$ 与作用半径 $\mu$ 的常数 $c>0$，使得对任意满足 $\|x_{ij}\|>d$（$\forall\,i\neq j$）的构型 $\{x_i\}_{i=1}^{N}$，成立
+\begin{equation}
+\sum_{i=1}^{N}\|\phi_i\|^2\ge c\sum_{i<j}\alpha(\|x_{ij}\|)^2, \label{eq:kou-coercivity}
+\end{equation}
+其中 $\phi_i$ 由式\eqref{eq:kou-phi} 定义。
+\end{lemma}
+
+\begin{proof}
+记 $M=\binom{N}{2}$，把 $\mathbf a=(\alpha(\|x_{ij}\|))_{i<j}\in\mathbb{R}^{M}$ 视为向量，并记 $\hat{x}_{ij}=x_{ij}/\|x_{ij}\|$。因 $\phi_i=\sum_{j\neq i}a_{ij}\hat{x}_{ij}$ 是 $\mathbf a$ 各分量的线性组合，故
+\begin{equation}
+\sum_{i=1}^{N}\|\phi_i\|^2=\mathbf a^{\mathrm{T}}Q\,\mathbf a,
+\end{equation}
+其中 $Q$ 半正定且只依赖于单位向量组 $\{\hat{x}_{ij}\}$。
+
+反设式\eqref{eq:kou-coercivity}不成立，则存在一列构型与单位向量 $\mathbf a^{(n)}$（$\|\mathbf a^{(n)}\|=1$）使 $\mathbf a^{(n)\mathrm{T}}Q^{(n)}\mathbf a^{(n)}\to0$，从而 $\phi_i^{(n)}\to0$（$\forall\,i$）。取子列使 $\mathbf a^{(n)}\to\mathbf a^{\ast}\neq0$。对任一满足 $a_{ij}^{\ast}>0$ 的``活跃''对 $(i,j)$，由 $a_{ij}^{(n)}=\alpha(\|x_{ij}^{(n)}\|)\to a_{ij}^{\ast}>0$ 可知对充分大的 $n$ 有 $\alpha(\|x_{ij}^{(n)}\|)\ge a_{ij}^{\ast}/2$；因 $\alpha(r)=\tfrac{1}{r-d}-\tfrac{1}{\mu-d}$ 在 $(d,\mu]$ 上从 $+\infty$ 单调递减到 $0$，这给出 $\|x_{ij}^{(n)}\|$ 的一致上界（严格小于 $\mu$）与下界 $d$。设 $S$ 为与活跃边相连的智能体集合，则 $S$ 内任意两点的距离一致有界，平移后 $S$ 中各位置一致有界，故可抽子列使 $x_i^{(n)}\to x_i^{\ast}$（$i\in S$），且 $\|x_{ij}^{\ast}\|\ge d$（活跃边处实际 $\|x_{ij}^{\ast}\|>d$）。
+
+对 $i\in S$，$\phi_i^{(n)}$ 中与 $S$ 外智能体相连的项因 $a_{ij}^{(n)}\to0$ 而趋于零，故
+\begin{equation}
+\phi_i^{(n)}\to\phi_i^{\ast}=\sum_{j\in S\setminus\{i\}}a_{ij}^{\ast}\hat{x}_{ij}^{\ast}.
+\end{equation}
+由 $\phi_i^{(n)}\to0$ 得 $\phi_i^{\ast}=0$（$\forall\,i\in S$）。于是
+\begin{equation}
+0=\sum_{i\in S}x_i^{\ast\mathrm{T}}\phi_i^{\ast}
+=\sum_{\substack{i<j\\ i,j\in S}}a_{ij}^{\ast}\|x_{ij}^{\ast}\|,
+\end{equation}
+其中第二个等号是因为每条无向边 $(i,j)$ 的贡献为 $a_{ij}^{\ast}(x_i^{\ast}-x_j^{\ast})^{\mathrm{T}}\hat{x}_{ij}^{\ast}=a_{ij}^{\ast}\|x_{ij}^{\ast}\|$。但 $\mathbf a^{\ast}\neq0$ 且 $a_{ij}^{\ast}\ge0$、$\|x_{ij}^{\ast}\|>0$，故右端严格为正，矛盾。引理得证。
+\end{proof}
+
+\begin{proof}[定理的证明]
+定义碰撞势
+\begin{equation}
+\psi(r)=-\log(r-d)+\frac{r}{\mu-d},\qquad r\in(d,\mu],
+\label{eq:kou-psi}
+\end{equation}
+并在 $r>\mu$ 上取 $\psi(r)=\psi(\mu)$ 作常数延拓。则 $\psi$ 连续可微、下有界，且 $\psi'(r)=-\alpha(r)$；当 $r\to d^+$ 时 $\psi(r)\to+\infty$。
+
+记误差坐标 $z_i=x_i-x_0$、$w_i=v_i-v_0$。因 $x_{ij}=z_{ij}$，$\phi_i$ 对 $z$ 与对 $x$ 相同。由式\eqref{eq:kou-ctrl}、\eqref{eq:kou-adapt} 及 $\dot{x}_0=v_0$ 得
+\begin{equation}
+\dot{z}_i=\phi_i-k_1z_i+w_i,\qquad \dot{w}_i=-k_2z_i.
+\label{eq:kou-error-dyn-local}
+\end{equation}
+构造 Lyapunov 函数
+\begin{equation}
+V=\sum_{i<j}\psi(\|z_{ij}\|)+\frac{k_2}{2}\sum_{i=1}^{N}\|z_i\|^2+\frac{1}{2}\sum_{i=1}^{N}\|w_i\|^2.
+\label{eq:kou-lyap}
+\end{equation}
+记 $r_{ij}=\|z_{ij}\|$、$\hat{z}_{ij}=z_{ij}/r_{ij}$。沿轨迹求导，先用成对中心力的恒等式
+\begin{equation}
+\sum_{i<j}\psi'(r_{ij})\dot{r}_{ij}
+=-\sum_{i<j}\alpha(r_{ij})\hat{z}_{ij}^{\mathrm{T}}(\dot{z}_i-\dot{z}_j)
+=-\sum_{i=1}^{N}\phi_i^{\mathrm{T}}\dot{z}_i,
+\end{equation}
+再代入式\eqref{eq:kou-error-dyn-local}，并利用
+\begin{equation}
+\sum_i z_i^{\mathrm{T}}\phi_i=\sum_{i<j}\alpha(r_{ij})r_{ij},
+\end{equation}
+得
+\begin{equation}
+\dot{V}
+=-\sum_i\|\phi_i\|^2
++(k_1+k_2)\sum_{i<j}\alpha(r_{ij})r_{ij}
+-\sum_i w_i^{\mathrm{T}}\phi_i
+-k_1k_2\sum_i\|z_i\|^2.
+\label{eq:kou-dotv}
+\end{equation}
+
+下面把式\eqref{eq:kou-dotv}中的交叉项吸收掉。记 $\|\mathbf a\|_2^2=\sum_{i<j}\alpha(r_{ij})^2$、$\|\phi\|_2^2=\sum_i\|\phi_i\|^2$。因仅当 $r_{ij}\le\mu$ 时 $\alpha(r_{ij})>0$，故
+\begin{equation}
+(k_1+k_2)\sum_{i<j}\alpha(r_{ij})r_{ij}
+\le(k_1+k_2)\mu\sum_{i<j}\alpha(r_{ij})
+\le(k_1+k_2)\mu\sqrt{M}\,\|\mathbf a\|_2 .
+\end{equation}
+又由 $\phi_i=\sum_{j\neq i}\alpha(r_{ij})\hat{z}_{ij}$ 得 $\|\phi\|_2^2\le2N\|\mathbf a\|_2^2$。取 $\epsilon=c/(8N)$，由 Young 不等式
+\begin{equation}
+\Bigl|\sum_i w_i^{\mathrm{T}}\phi_i\Bigr|
+\le\epsilon\|\phi\|_2^2+\frac{1}{4\epsilon}\|w\|_2^2
+\le\frac{c}{4}\|\mathbf a\|_2^2+\frac{2N}{c}\|w\|_2^2 .
+\end{equation}
+结合式\eqref{eq:kou-coercivity}，得
+\begin{equation}
+\dot{V}
+\le-\frac{3c}{4}\|\mathbf a\|_2^2
++(k_1+k_2)\mu\sqrt{M}\,\|\mathbf a\|_2
++\frac{2N}{c}\|w\|_2^2 .
+\end{equation}
+对 $\|\mathbf a\|_2$ 配方，$-\frac{3c}{4}s^2+(k_1+k_2)\mu\sqrt{M}\,s\le\frac{(k_1+k_2)^2\mu^2M}{3c}$；再由 $\|w\|_2^2\le2V$（因 $V\ge\tfrac12\|w\|_2^2$），得
+\begin{equation}
+\dot{V}\le C_1+C_2V,
+\qquad
+C_1=\frac{(k_1+k_2)^2\mu^2M}{3c},\quad
+C_2=\frac{4N}{c}.
+\label{eq:kou-gronwall}
+\end{equation}
+
+在解的最大存在区间 $[0,T_{\max})$ 上对式\eqref{eq:kou-gronwall}应用 Gronwall 不等式：
+\begin{equation}
+V(t)\le\Bigl(V(0)+\frac{C_1}{C_2}\Bigr)e^{C_2t}-\frac{C_1}{C_2}<+\infty,
+\qquad \forall\,t\in[0,T_{\max}).
+\end{equation}
+故 $V$ 在 $[0,T_{\max})$ 上有界。由此可知：（i）所有 $r_{ij}(t)$ 一致有下界 $d+\delta$（$\delta>0$），否则存在某对距离趋于 $d$，则 $\psi(r_{ij})\to+\infty$，与 $V\ge\psi(r_{ij})$ 有界矛盾；（ii）$\|z\|_2^2\le2V/k_2$、$\|w\|_2^2\le2V$ 给出 $z,w$ 有界。于是轨迹位于 $\{\|z_{ij}\|>d\}$ 的一个紧子集中。若 $T_{\max}<\infty$，据常微分方程解的延拓定理，解可延拓到 $T_{\max}$ 之后，与最大性矛盾。故 $T_{\max}=\infty$，且对所有 $t\ge0$ 有 $\|x_{ij}(t)\|=\|z_{ij}(t)\|>d$，即式\eqref{eq:kou-collision-free}成立。
+\end{proof}
+
+\begin{remark}[关于同时碰撞]
+上述证明通过强制性引理\ref{lem:kou-coercivity} 处理了同时碰撞情形，无需预先假设``至多一对智能体同时达到距离 $d$''。直观上，当多个距离同时趋于 $d$ 时，$\dot{V}$ 中 $-\sum_i\|\phi_i\|^2\sim-(r-d)^{-2}$ 的负项仍强于 $+\sum_{i<j}\alpha(r_{ij})r_{ij}\sim(r-d)^{-1}$ 的正项；交叉项 $\sum_i w_i^{\mathrm{T}}\phi_i$ 则由 Young 不等式吸收。这里的关键是引理\ref{lem:kou-coercivity}：尽管 $\sum_i\|\phi_i\|^2$ 中的交叉项 $\hat{z}_{ij}^{\mathrm{T}}\hat{z}_{ik}$ 可能发生部分抵消（例如某智能体被两侧邻居对称挤压时），但恒等式 $\sum_i x_i^{\mathrm{T}}\phi_i=\sum_{i<j}\alpha(r_{ij})r_{ij}>0$ 排除了完全抵消，从而 $\sum_i\|\phi_i\|^2$ 与 $\sum_{i<j}\alpha(r_{ij})^2$ 同阶。若改用逐对反证法（考察某对距离 $\dot r$ 并令 $2\alpha(r)$ 主导其余项），则的确需要假设该对碰撞孤立；这正是本证明与逐对反证法的区别所在。
+\end{remark}
+
+\subsection{可严格推出的平均动力学}
+
+记
+\begin{equation}
+z_i=x_i-x_0,\quad w_i=v_i-v_0,\quad
+\hat{x}=\frac{1}{N}\sum_{i=1}^N z_i,\quad
+\hat{v}=\frac{1}{N}\sum_{i=1}^N w_i .
+\end{equation}
+则闭环误差系统为
+\begin{equation}
+\dot{z}_i=\phi_i-k_1z_i+w_i,\qquad \dot{w}_i=-k_2z_i. \label{eq:kou-error-dyn}
+\end{equation}
+
+\begin{theorem}[平均误差动力学]
+对系统\eqref{eq:kou-ctrl}--\eqref{eq:kou-alpha}，平均位置误差 $\hat{x}$ 满足
+\begin{equation}
+\ddot{\hat{x}}+k_1\dot{\hat{x}}+k_2\hat{x}=0. \label{eq:2nd-order}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+由邻接规则可知 $j\in\mathcal{N}_i$ 当且仅当 $i\in\mathcal{N}_j$。同时 $x_{ji}=-x_{ij}$ 且 $\alpha(\|x_{ij}\|)=\alpha(\|x_{ji}\|)$，故排斥力成对抵消：
+\begin{equation}
+\sum_{i=1}^N\phi_i=0. \label{eq:sum-phi-zero}
+\end{equation}
+因此
+\begin{align}
+\dot{\hat{x}}
+&=\frac{1}{N}\sum_{i=1}^N(\phi_i-k_1z_i+w_i)
+=-k_1\hat{x}+\hat{v}, \label{eq:avg-pos-dyn}\\
+\dot{\hat{v}}
+&=\frac{1}{N}\sum_{i=1}^N(-k_2z_i)
+=-k_2\hat{x}. \label{eq:avg-vel-dyn}
+\end{align}
+对式\eqref{eq:avg-pos-dyn} 求导并代入式\eqref{eq:avg-vel-dyn}，即得式\eqref{eq:2nd-order}。
+\end{proof}
+
+\begin{remark}
+原分析中把 $\sum_i\phi_i=0$ 解释为“队形对称时的近似”是不准确的。只要邻接关系由距离阈值给出并且作用力成对中心对称，式\eqref{eq:sum-phi-zero} 就是恒等式，与队形是否关于目标对称无关。
+\end{remark}
+
+\begin{theorem}[平均误差的振荡条件]
+系统\eqref{eq:2nd-order} 的平均位置误差呈振荡衰减的充要条件为
+\begin{equation}
+k_1^2<4k_2
+\quad\Longleftrightarrow\quad
+\zeta=\frac{k_1}{2\sqrt{k_2}}<1 .
+\end{equation}
+此时
+\begin{equation}
+\hat{x}(t)=e^{-\alpha t}\left[A\cos(\omega_dt)+B\sin(\omega_dt)\right],
+\quad
+\alpha=\frac{k_1}{2},\quad
+\omega_d=\frac{\sqrt{4k_2-k_1^2}}{2},
+\end{equation}
+其中 $A,B\in\mathbb{R}^2$ 由初始条件决定。
+\end{theorem}
+
+\begin{proof}
+式\eqref{eq:2nd-order} 的特征方程为 $s^2+k_1s+k_2=0$。当且仅当 $k_1^2<4k_2$ 时，特征根为 $-k_1/2\pm \mathrm{i}\sqrt{4k_2-k_1^2}/2$，平均位置误差呈指数衰减振荡；否则特征根为实数，平均位置误差不呈正弦型振荡。
+\end{proof}
+
+\begin{remark}
+这个振荡条件只描述平均误差 $\hat{x}$，不能直接等同于“队形必然旋转”的条件。$\hat{x}\to0$ 和 $\dot{\hat{x}}\to0$ 只说明集群中心与平均速度收敛到目标，并不约束每个 $z_i$ 的切向运动。
+\end{remark}
+
+\subsection{为什么平均速度收敛不保证刚性}
+
+若最终形成相对目标静止的非退化刚性队形，则应有
+\begin{equation}
+\dot{z}_i(t)\to0,\qquad z_i(t)\to z_i^\ast
+\end{equation}
+且至少存在某个 $z_i^\ast\neq0$。但由 $\dot{w}_i=-k_2z_i$ 可知，若 $z_i(t)\to z_i^\ast\neq0$，则 $w_i(t)$ 不可能收敛到常值；若进一步要求 $\dot{w}_i(t)\to0$，则必须有 $z_i^\ast=0$。这与碰撞避免和非退化 fencing 队形不相容。
+
+因此，控制器 (a) 的结构本身就不支持“每个智能体相对目标静止且保持非零距离”的静态刚性平衡。它能保证的是平均速度跟踪，而不是
+\begin{equation}
+\lim_{t\to\infty}u_i(t)=v_0,\quad i=1,\ldots,N .
+\end{equation}
+这也是该算法可能产生绕目标运动的根本原因。
+
+\subsection{条件性旋转稳态}
+
+虽然平均动力学不能单独证明所有轨迹都会收敛到旋转队形，但可以说明：如果闭环系统收敛到一个保持形状的匀速旋转状态，则其角速度由 $k_2$ 决定。
+
+\begin{theorem}[匀速旋转稳态的必要条件]
+设二维旋转矩阵
+\begin{equation}
+J=\begin{bmatrix}0&-1\\1&0\end{bmatrix}.
+\end{equation}
+若存在非退化匀速旋转状态，使得
+\begin{equation}
+\dot{z}_i=\Omega Jz_i,\qquad \dot{w}_i=\Omega Jw_i,\qquad \Omega\neq0,
+\end{equation}
+则必须有
+\begin{equation}
+\Omega^2=k_2. \label{eq:kou-omega-necessary}
+\end{equation}
+并且该旋转形状还必须满足
+\begin{equation}
+\phi_i=k_1z_i,\qquad i=1,\ldots,N . \label{eq:kou-shape-balance}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+由 $\dot{w}_i=-k_2z_i$ 和 $\dot{w}_i=\Omega Jw_i$ 得
+\begin{equation}
+w_i=\frac{k_2}{\Omega}Jz_i .
+\end{equation}
+代入 $\dot{z}_i=\phi_i-k_1z_i+w_i=\Omega Jz_i$，得到
+\begin{equation}
+\phi_i=k_1z_i+\left(\Omega-\frac{k_2}{\Omega}\right)Jz_i . \label{eq:kou-phi-decomp}
+\end{equation}
+对式\eqref{eq:kou-phi-decomp} 两边与 $z_i$ 作二维叉积并对 $i$ 求和，有
+\begin{equation}
+\sum_{i=1}^Nz_i\times\phi_i
+=\left(\Omega-\frac{k_2}{\Omega}\right)\sum_{i=1}^N\|z_i\|^2 .
+\end{equation}
+由于 $\phi_i$ 是成对中心力，类似式\eqref{eq:sum-phi-zero} 可得
+\begin{equation}
+\sum_{i=1}^Nz_i\times\phi_i=0.
+\end{equation}
+非退化队形满足 $\sum_i\|z_i\|^2>0$，故 $\Omega-k_2/\Omega=0$，即 $\Omega^2=k_2$。再代回式\eqref{eq:kou-phi-decomp} 得 $\phi_i=k_1z_i$。
+\end{proof}
+
+\begin{remark}
+式\eqref{eq:kou-omega-necessary} 是条件性结论：它说明一旦出现保持形状的非零匀速旋转，角速度大小必须为 $\sqrt{k_2}$。它并不证明任意初始条件都会收敛到这种旋转状态，也不证明存在某个只由阻尼比决定的全局旋转阈值。
+\end{remark}
+
+\begin{theorem}[旋转稳态的附加性质]
+若非退化匀速旋转稳态存在，则还满足以下性质：
+\begin{enumerate}
+    \item 目标位于智能体质心：
+    \begin{equation}
+    \sum_{i=1}^N z_i=0,\qquad x_0=\frac{1}{N}\sum_{i=1}^N x_i .
+    \end{equation}
+    \item 每个智能体相对目标作纯切向运动：
+    \begin{equation}
+    u_i-v_0=w_i=\Omega Jz_i,\qquad z_i^\mathrm{T}(u_i-v_0)=0 .
+    \end{equation}
+    因而个体速度估计 $v_i$ 一般不收敛到 $v_0$，而是包含了绕目标旋转的切向速度。
+    \item 相对距离保持常数：
+    \begin{equation}
+    \frac{d}{dt}\|z_i\|^2=0,\qquad
+    \frac{d}{dt}\|z_i-z_j\|^2=0 .
+    \end{equation}
+    \item 记 $I=\sum_i\|z_i\|^2$，总角动量和相对动能分别为
+    \begin{equation}
+    L=\sum_{i=1}^Nz_i\times(u_i-v_0)=\Omega I,\qquad
+    K=\frac{1}{2}\sum_{i=1}^N\|u_i-v_0\|^2=\frac{1}{2}k_2 I .
+    \end{equation}
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+由式\eqref{eq:kou-shape-balance} 对 $i$ 求和，并利用 $\sum_i\phi_i=0$，可得 $k_1\sum_i z_i=0$，故 $\sum_i z_i=0$。结合 $\Omega^2=k_2$ 和 $w_i=(k_2/\Omega)Jz_i$，得到 $w_i=\Omega Jz_i$；再由 $\dot{z}_i=u_i-v_0$ 得 $u_i-v_0=\Omega Jz_i$。由于 $J$ 反对称，$z_i^\mathrm{T}Jz_i=0$，相对速度为纯切向速度。相对距离保持常数由
+\begin{equation}
+\frac{d}{dt}\|z_i-z_j\|^2
+=2(z_i-z_j)^\mathrm{T}\Omega J(z_i-z_j)=0
+\end{equation}
+直接得到，$\|z_i\|$ 的情形同理。角动量和动能公式由 $u_i-v_0=\Omega Jz_i$ 与 $\Omega^2=k_2$ 直接代入可得。
+\end{proof}
+
+\begin{theorem}[形状方程的能量型刻画]
+在固定邻接图 $\mathcal{E}$ 上，令
+\begin{equation}
+U(r)=\log(r-d)-\frac{r}{\mu-d}.
+\end{equation}
+则旋转稳态的形状方程 $\phi_i=k_1z_i$ 等价于 $z=(z_1,\ldots,z_N)$ 是函数
+\begin{equation}
+\Psi(z)=\sum_{(i,j)\in\mathcal{E}}U(\|z_i-z_j\|)
+-\frac{k_1}{2}\sum_{i=1}^N\|z_i\|^2
+\end{equation}
+的临界点，即
+\begin{equation}
+\nabla_{z_i}\Psi=0,\qquad i=1,\ldots,N .
+\end{equation}
+此外，任一旋转稳态都满足维里型恒等式
+\begin{equation}
+k_1\sum_{i=1}^N\|z_i\|^2
+=\sum_{(i,j)\in\mathcal{E}}\alpha(\|z_i-z_j\|)\|z_i-z_j\| . \label{eq:kou-virial}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+因 $U'(r)=\alpha(r)$，对 $z_i$ 求梯度得
+\begin{equation}
+\nabla_{z_i}\Psi
+=\sum_{j\in\mathcal{N}_i}\alpha(\|z_i-z_j\|)
+\frac{z_i-z_j}{\|z_i-z_j\|}-k_1z_i
+=\phi_i-k_1z_i .
+\end{equation}
+因此 $\nabla_{z_i}\Psi=0$ 等价于 $\phi_i=k_1z_i$。式\eqref{eq:kou-virial} 由 $\phi_i=k_1z_i$ 两边与 $z_i$ 作内积后对 $i$ 求和得到；其中每条无向边 $(i,j)$ 的贡献为
+\begin{equation}
+\frac{\alpha(r_{ij})}{r_{ij}}
+\left[z_i^\mathrm{T}(z_i-z_j)+z_j^\mathrm{T}(z_j-z_i)\right]
+=\alpha(r_{ij})r_{ij}.
+\end{equation}
+\end{proof}
+
+\begin{theorem}[正多边形旋转稳态]
+若 $N$ 个智能体在目标周围形成半径为 $R$ 的正 $N$ 边形，即
+\begin{equation}
+z_i=R
+\begin{bmatrix}
+\cos\theta_i\\
+\sin\theta_i
+\end{bmatrix},
+\qquad
+\theta_i=\theta_0+\frac{2\pi(i-1)}{N},
+\end{equation}
+则形状方程 $\phi_i=k_1z_i$ 化为一个标量方程
+\begin{equation}
+k_1R=
+\sum_{\substack{m=1\\ d<\ell_m\leq\mu}}^{N-1}
+\alpha(\ell_m)\sin\frac{\pi m}{N},
+\qquad
+\ell_m=2R\sin\frac{\pi m}{N}. \label{eq:kou-polygon-radius}
+\end{equation}
+在只有相邻两个智能体属于邻居的情形，令 $s=\sin(\pi/N)$，上式简化为
+\begin{equation}
+k_1R=2s\left(\frac{1}{2Rs-d}-\frac{1}{\mu-d}\right). \label{eq:kou-neighbor-radius}
+\end{equation}
+该方程在 $R\in(d/(2s),\,\mu/(2s))$ 上存在唯一解；该解对应“仅相邻邻接”的稳态还需要满足非相邻顶点距离均大于 $\mu$。
+\end{theorem}
+
+\begin{proof}
+正多边形对称性保证 $\phi_i$ 与 $z_i$ 同方向。对第 $i$ 个智能体，角间隔为 $2\pi m/N$ 的邻居与其距离为 $\ell_m=2R\sin(\pi m/N)$，对应排斥力在径向单位向量 $z_i/R$ 上的投影为 $\alpha(\ell_m)\sin(\pi m/N)$。将所有满足 $d<\ell_m\leq\mu$ 的邻居贡献相加，即得式\eqref{eq:kou-polygon-radius}。若仅相邻两个智能体是邻居，则只保留 $m=1$ 和 $m=N-1$ 两项，得到式\eqref{eq:kou-neighbor-radius}。此时左边随 $R$ 严格增大，右边随 $R$ 严格减小；当 $R\downarrow d/(2s)$ 时右边趋于 $+\infty$，当 $R=\mu/(2s)$ 时右边为零，故唯一解存在。
+\end{proof}
+
+\subsection{能否证明最终保持形状}
+
+上述结论刻画的是“若闭环已经进入保持形状的匀速旋转稳态，则该稳态必须满足什么性质”。它还不是全局收敛证明。Kou 等\cite{kouCooperativeFencingControl2022} 的定理 1 证明了目标合围和平均速度收敛，但并未直接证明
+\begin{equation}
+\lim_{t\to\infty}\frac{d}{dt}\|z_i(t)-z_j(t)\|=0
+\quad\text{或}\quad
+\lim_{t\to\infty}\|z_i(t)-z_j(t)\|\ \text{存在}.
+\end{equation}
+因此，不能仅由该定理推出最终队形保持形状。
+
+从闭环误差方程\eqref{eq:kou-error-dyn} 可得二阶形式
+\begin{equation}
+\ddot{z}_i
+=\sum_{j=1}^N\frac{\partial\phi_i}{\partial z_j}\dot{z}_j
+-k_1\dot{z}_i-k_2z_i .
+\end{equation}
+记 $\Phi(z)=(\phi_1^\mathrm{T},\ldots,\phi_N^\mathrm{T})^\mathrm{T}$，则可写为
+\begin{equation}
+\ddot{z}+\bigl(k_1I-D\Phi(z)\bigr)\dot{z}+k_2z=0. \label{eq:kou-second-order-full}
+\end{equation}
+若能证明沿轨迹有
+\begin{equation}
+k_1I-D\Phi(z)\succeq0, \label{eq:kou-dissipativity-condition}
+\end{equation}
+则能量
+\begin{equation}
+E=\frac{1}{2}\|\dot{z}\|^2+\frac{k_2}{2}\|z\|^2
+\end{equation}
+满足
+\begin{equation}
+\dot{E}=-\dot{z}^\mathrm{T}\bigl(k_1I-D\Phi(z)\bigr)\dot{z}\leq0.
+\end{equation}
+在这种额外耗散性条件下，才有机会进一步使用 LaSalle 不变性原理证明闭环极限集落在相对平衡集合中，并由前述定理推出最终保持形状。
+
+然而，条件\eqref{eq:kou-dissipativity-condition} 并非 Kou 等算法原始假设的一部分，且邻接图会随距离变化而切换。因此，目前可严格表述的结论是：\textbf{本文已经给出了保持形状旋转稳态的必要结构，但尚不能从原文定理 1 无条件推出所有闭环轨迹最终保持形状。} 要完成该证明，还需要额外证明形状子系统的耗散性、极限集不变性，以及邻接切换不会破坏上述 LaSalle 型论证。
+
+\subsection{结论}
+
+原分析中正确的部分是平均动力学
+\[
+\ddot{\hat{x}}+k_1\dot{\hat{x}}+k_2\hat{x}=0
+\]
+及其阻尼比判据。但以下说法需要修正：
+\begin{itemize}
+    \item $\sum_i\phi_i=0$ 不是对称队形下的近似，而是成对中心力导致的恒等式。
+    \item $\zeta<1$ 只表示平均位置误差振荡衰减，不能作为队形旋转的充分条件。
+    \item “存在临界阻尼比 $\zeta^\ast$，其两侧分别收敛到旋转平衡或静态平衡”没有由当前推导证明，不应作为定理写入。
+    \item 非退化静态相对平衡实际上与 $\dot{w}_i=-k_2z_i$ 不相容；控制器 (a) 保证平均速度收敛，但不保证每个智能体速度收敛到目标速度。
+    \item 若存在保持形状的匀速旋转稳态，则角速度由 $k_2$ 决定，形状由 $\phi_i=k_1z_i$ 决定；因此 $k_2$ 主要决定旋转快慢，$k_1$ 和排斥函数主要决定稳态尺度与形状。
+    \item 最终保持形状仍是一个额外收敛性问题；原文定理 1 和本文平均动力学分析尚不足以证明所有闭环轨迹收敛到保持形状的相对平衡。
+\end{itemize}
+
+因此，对 Kou 等控制器 (a) 更稳妥的结论是：该算法可以实现目标合围和平均速度跟踪，但平均意义的收敛不足以保证刚性队形；若闭环最终呈现保持形状的匀速旋转，则其角速度必须满足 $|\Omega|=\sqrt{k_2}$，质心位于目标处，个体相对速度为纯切向速度，且队形形状需满足排斥力与目标吸引力的平衡关系 $\phi_i=k_1z_i$。

@@ -1,0 +1,47 @@
+
+\section{关于Hu et al.\cite{huCooperativeLabelfreeMoving2023} 的分析}
+原文献的证明过程对一维系统成立，但在二维空间中，该证明仍需进一步补充说明。
+本节针对队形旋转现象展开分析，为简洁起见，沿用文献\cite{huCooperativeLabelfreeMoving2023}证明过程中的所有符号，且省略相关符号的定义介绍。
+原文生成公式(hu-59)和式(hu-61)矛盾。
+该现象的根本原因可归结为文献\cite{huCooperativeLabelfreeMoving2023}中式(hu-59)和式(hu-61)所体现的收缩特性，但这一现象与实际情况并不矛盾。
+
+式(hu-59)由不变性原理推导得到，仅与位置误差相关，定义位置误差$\tilde{x}_{i}=x_{i}-x_{d}'(t)$，智能体间相对位置$x_{i,k}=x_{i}-x_{k}=\tilde{x}_{i}-\tilde{x}_{k}$。记$x_{d}'(t), v_{d}'(t) \in \mathbb{R}^{2}$，满足$[x_{d}'(t), v_{d}'(t)]^{\text{T}}=\chi_{c} \sigma(t)$，则式(hu-59)为：
+\[
+\tilde{x}_{i}(t)-k_{5} \sum_{k \in \mathcal{N}_{i}}\left\{\alpha\left(\left\| x_{i,k}\right\| \right) \frac{x_{i,k}}{\left\| x_{i,k}\right\| }\right\}=m_{i}, \quad \forall i \in \mathcal{V}.
+\tag{hu-59}
+\]
+
+式(hu-61)为关于时间$t$的表达式，其中$c_{i,1}, c_{i,2}, d_{i} \in \mathbb{R}^{2}$，表达式为：
+\[
+\tilde{x}_{i}(t)=\frac{c_{i,1}}{\sqrt{-s_{1}}} \sin \left(\sqrt{-s_{1}} t\right)+\frac{c_{i,2}}{\sqrt{-s_{1}}} \cos \left(\sqrt{-s_{1}} t\right)+d_{i}.
+\tag{hu-61}
+\]
+
+式(hu-59)为纯位置相关的方程。显然，若$\tilde{x}_{i}(t)=\tilde{x}_{i}^{*} \in \mathbb{R}^{2} \ (\forall i \in \mathcal{V})$是式(hu-59)的解，则$\tilde{x}_{i}(t)=R(t) \tilde{x}_{i}^{*} \ (\forall i \in \mathcal{V})$也是该方程的解，其中映射$t \mapsto R(t): \mathbb{R} \mapsto \mathbb{R}^{2 \times 2}$满足$\|R(t) x\|=\|x\| \ (\forall x \in \mathbb{R}^{2})$。$R(t)$的典型形式为旋转矩阵，例如逆时针旋转矩阵$R(\theta)$为：
+\[
+R(\theta )=\begin{bmatrix}
+\cos (\theta ) & \sin (\theta )\\
+-\sin (\theta ) & \cos (\theta )
+\end{bmatrix}.
+\]
+
+令$\theta(t)=t$，则满足下述形式的位置向量是式(hu-61)的一个解：
+\[
+\begin{aligned}
+\tilde{x}_{i}(t) & =R(t) \tilde{x}_{i}^{*}=\begin{bmatrix}
+\cos (t) & \sin (t) \\
+-\sin (t) & \cos (t)
+\end{bmatrix} \tilde{x}_{i}^{*} \\
+& =\begin{bmatrix}
+\tilde{x}_{i,1}^{*} & 0 \\
+0 & \tilde{x}_{i,2}^{*}
+\end{bmatrix} \cos (t)+\begin{bmatrix}
+0 & \tilde{x}_{i,2}^{*} \\
+-\tilde{x}_{i,1}^{*} & 0
+\end{bmatrix} \sin (t).
+\end{aligned}
+\]
+
+该形式与式(hu-61)的形式一致，因此原文献中关于``刚性队形''的结论并不成立。
+
+综上，所设计的算法得到的最终 fencing 队形不具备足够的刚性：智能体间的相对距离保持刚性不变，但队形整体可能围绕目标发生旋转。

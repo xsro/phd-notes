@@ -1,0 +1,106 @@
+\documentclass[12pt]{ctexart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\usepackage[backend=biber, doi=true, sorting=ydnt]{biblatex}
+\addbibresource[datatype=bibtex]{ref.bib}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+% 定理环境
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{remark}{注}[section]
+
+\geometry{a4paper, margin=1in}
+
+\title{fencing队形是否具有刚性？}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+本文评注针对文献\cite{huCooperativeLabelfreeMoving2023}中算法的队形刚性问题展开研究。
+核心结论为：从$\lim\limits_{t \to \infty} v_{i}=v_{0}$的角度来看，该算法中的 fencing 控制策略不具备足够的刚性。
+在最终的 fencing 队形中，智能体将与目标保持恒定距离，但队形可能围绕目标发生旋转。
+为了继续探讨fencing中队形的旋转现象，本文继续讨论\cite{kouCooperativeFencingControl2022}的第一算法的旋转现象，发现当编队最终可以形成稳定队形的时候，编队将以线性系统$\ddot{x}+k_1 \dot{x} + k_2=0$的自然频率$\sqrt{k_2}$为角速率运动。
+\cite{kouCooperativeFencingControl2022}第一个算法的最终队形是否
+
+
+\section{引言}
+文献\cite{chenCooperativeTargetfencingProtocol2019}提出的协同 fencing 问题已被拓展至更多复杂场景。研究发现，下述算法得到的最终 fencing 队形会围绕目标发生旋转：
+\begin{itemize}
+    \item 文献\cite{kouCooperativeFencingControl2022}中采用单积分器控制多智能体，对匀速运动的单个目标实施 fencing ，其第一种算法得到的队形会围绕目标旋转；
+    \item 文献\cite{huCooperativeLabelfreeMoving2023}中采用双积分器控制多智能体，对速度周期性变化的单个目标实施 fencing ，该文献声称所设计的算法能实现刚性队形，但本文发现该算法在部分情形下会导致队形围绕目标旋转。
+\end{itemize}
+
+首先，本文针对文献\cite{huCooperativeLabelfreeMoving2023}的算法设置两种仿真情形进行验证：
+\textbf{情形1}：智能体初始位置为$p_{1}=[-7,-7]^{\text{T}}$，$p_{2}=[7,-7]^{\text{T}}$，$p_{3}=[7,7]^{\text{T}}$，$p_{4}=[-7,7]^{\text{T}}$，与原文献的仿真设置一致。
+
+\textbf{情形2}：智能体初始位置为$p_{1}=[-7,-7]^{\text{T}}$，$p_{2}=[7,-7]^{\text{T}}$，$p_{3}=[7,7.1]^{\text{T}}$，$p_{4}=[-7,7.2]^{\text{T}}$。
+
+图~\ref{fig:traj} 展示了两种情形下智能体与目标的运动轨迹。可以观察到，智能体的集群中心$\bar{x}=\sum\limits_{i=1}^{N} x_{i}$均收敛至目标位置$x_{d}$，但队形并未静止，而是持续围绕目标旋转。
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/1traj.pdf}
+\caption{情形1：与原文献一致的初始条件}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/2traj.pdf}
+\caption{情形2：扰动后的初始条件}
+\end{subfigure}
+\caption{运动轨迹图。智能体集群中心收敛至目标，但队形围绕目标持续旋转，表明 fencing 队形不具备刚性。}
+\label{fig:traj}
+\end{figure}
+
+如图~\ref{fig:convergence} 所示，两种情形下智能体的中心位置$\bar{x}=\sum\limits_{i=1}^{N} x_{i}$均收敛至目标位置$x_{d}$，智能体的平均速度也呈现相同的收敛特性。
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/1p1.pdf}
+\caption{情形1}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/2p1.pdf}
+\caption{情形2}
+\end{subfigure}
+\caption{集群中心收敛性。上：$\|\bar{x}-x_d\|$；下：$\|\bar{v}-v_d\|$。两种情形下集群中心均收敛至目标。}
+\label{fig:convergence}
+\end{figure}
+
+但如图~\ref{fig:velocity} 所示，单个智能体的速度并未收敛至目标速度。具体而言，智能体速度$v_{i0}$沿位置向量$x_{i0}$的平行分量收敛至0，而垂直分量则不收敛，这表明 fencing 队形会围绕目标发生旋转。
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/1pv.pdf}
+\caption{情形1}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{simu/hu2025/out/2pv.pdf}
+\caption{情形2}
+\end{subfigure}
+\caption{速度分量。上：平行分量；下：垂直分量。平行分量收敛至0，垂直分量振荡收敛到恒定值，表明队形围绕目标旋转。}
+\label{fig:velocity}
+\end{figure}
+
+\input{body/hu.tex}
+
+\input{body/kou.tex}
+
+\printbibliography
+\end{document}
