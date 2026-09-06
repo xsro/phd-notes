@@ -29,9 +29,6 @@ the predefined desired formation limit its application in some scenarios.
 Typically, when a fencing task begins, there may not be enough agents gathered, or during the fencing process, some agents may malfunction and need to be replaced with other agents or leave the task. 
 In such cases, the formation-tracking control with the predefined formation needs to change the desired formation.
 Besides, none of the above results can ensure that collisions between EL systems will not occur.
-% 这一点以后可以细说一下，比如初始状态所有智能体在一条线上如....1...0...2....
-% 如果像formation-tracking 一样转化为镇定问题，期望队形是...2...0...1....
-% 如果不加一些随机信号，只用一般的镇定策略，那么这就无法实现合围。
 The solution in \cite{chenCooperativeTargetfencingProtocol2019} simplifies the requirement to fence one target with in the agents' convex hull and designs three terms to fence one static target with collision avoidance.
 The first term is the target tracking controller, the second term is the collision avoidance controller.
 The third term therein is a rotational term to ensure that the final formation is not a line.
