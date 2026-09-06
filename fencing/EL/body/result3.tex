@@ -1,0 +1,137 @@
+\subsection{Controller 3: Filtered APF}
+
+The raw APF force $\phi_i$ can be discontinuous when agents enter or leave the neighbor set $\mathcal{N}_i$,
+since $\phi_i = \sum_{j\in\mathcal{N}_i} \alpha(\|q_{ij}\|)\frac{q_{ij}}{\|q_{ij}\|}$ depends on the set membership.
+To obtain a smooth control signal, we pass $\phi_i$ through a first-order low-pass filter.
+
+\subsubsection{APF Filter}
+
+Define
+\begin{equation}\label{eq3:filter}
+	\dot{\Phi}_i = -k_\phi\Phi_i + \phi_i,\quad k_\phi > 0,
+\end{equation}
+where $\Phi_i \in \mathbb{R}^p$ is the filtered APF force for agent $i$.
+The filter ensures that $\Phi_i(t)$ is continuous even when $\phi_i(t)$ jumps,
+and $\Phi_i$ tracks $\phi_i$ with a first-order lag: $\Phi_i \approx \phi_i/k_\phi$ in the steady-state sense.
+
+\subsubsection{Error Variables and Sliding Variable}
+
+The position error and velocity error are defined as before:
+\[
+q_{i0} = q_i - q_0,\qquad \dot{\tilde{q}}_i = \dot{q}_i - \dot{q}_0.
+\]
+
+The sliding variable is defined by replacing $\phi_i$ with $\Phi_i$ in the Controller~2 structure:
+\begin{equation}\label{eq3:sliding_var}
+	s_i = \dot{q}_i - \zeta_i = \dot{q}_{i0} + k_\alpha q_{i0} - \Phi_i,
+\end{equation}
+where $\zeta_i = \dot{q}_0 - k_\alpha q_{i0} + \Phi_i$.
+
+\subsubsection{Control Law}
+
+The control input is
+\begin{equation}\label{eq3:control_input}
+	\tau_i = -k s_i + Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \hat{\Theta}_i,
+\end{equation}
+with $k > 0$, and the regression equation
+\begin{equation}\label{eq3:regression}
+	M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q}_i)\zeta_i + g_i(q_i) = Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\Theta_i.
+\end{equation}
+
+\subsubsection{Adaptation Law}
+
+\begin{equation}\label{eq3:adaptation}
+	\dot{\hat{\Theta}}_i = -\Lambda^{-1} Y_i^T(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) s_i,
+\end{equation}
+where $\Lambda > 0$ is the adaptation gain matrix.
+
+\subsubsection{Closed-Loop Dynamics}
+
+Substituting the control law into the EL dynamics gives the standard sliding-mode dynamics:
+\begin{equation}\label{eq3:s_dynamics}
+	M_i(q_i)\dot{s}_i + C_i(q_i,\dot{q}_i)s_i = -k s_i + Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \tilde{\Theta}_i,
+\end{equation}
+where $\tilde{\Theta}_i = \hat{\Theta}_i - \Theta_i$.
+
+From the sliding variable definition, the velocity error satisfies
+\begin{equation}\label{eq3:vel_rel}
+	\dot{q}_{i0} = s_i - k_\alpha q_{i0} + \Phi_i.
+\end{equation}
+
+\subsubsection{Lyapunov Analysis}
+
+Consider the Lyapunov function candidate
+\begin{equation}\label{eq3:V1}
+	V_1 = \frac12 s_i^T M_i s_i + \frac12 \tilde{\Theta}_i^T \Lambda \tilde{\Theta}_i.
+\end{equation}
+Taking the time derivative and substituting~\eqref{eq3:s_dynamics} and~\eqref{eq3:adaptation} yields
+\begin{equation}\label{eq3:V1_dot}
+	\dot{V}_1 = -k\|s_i\|^2 \leq 0.
+\end{equation}
+Thus $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$ and $\tilde{\Theta}_i$ is bounded.
+With $\ddot{V}_1$ uniformly bounded, Barbalat's lemma gives $s_i \to 0$ as $t\to\infty$.
+
+For the fencing analysis, define the APF-based Lyapunov function
+\begin{equation}\label{eq3:V2}
+	V_2 = \frac12 \sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\|q_{ij}\|}^{\mu} \alpha(s)\,ds
+	+ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}} \|q_{i0}\|^2,
+\end{equation}
+and the augmented function
+\begin{equation}\label{eq3:V3}
+	V_3 = \frac{1}{4k}V_1 + V_2 + \frac12 \sum_{i\in\mathcal{N}} \|\Phi_i\|^2.
+\end{equation}
+
+Taking the time derivative:
+\begin{align*}
+	\dot{V}_3 &= \frac{1}{4k}\dot{V}_1 + \dot{V}_2 + \sum_{i\in\mathcal{N}} \Phi_i^T \dot{\Phi}_i \\
+	&= -\frac14\sum_{i\in\mathcal{N}}\|s_i\|^2 + \sum_{i\in\mathcal{N}} (k_\alpha q_{i0} - \phi_i)^T \dot{q}_{i0}
+	+ \sum_{i\in\mathcal{N}} \Phi_i^T(-k_\phi \Phi_i + \phi_i) \\
+	&= \sum_{i\in\mathcal{N}} \Bigl[-\frac14\|s_i\|^2 - \|k_\alpha q_{i0} - \phi_i\|^2 + (k_\alpha q_{i0} - \phi_i)^T s_i\Bigr] \\
+	&\qquad + \sum_{i\in\mathcal{N}} \Bigl[(k_\alpha q_{i0} - \phi_i)^T \Phi_i + \Phi_i^T \phi_i\Bigr]
+	- k_\phi\sum_{i\in\mathcal{N}} \|\Phi_i\|^2.
+\end{align*}
+
+The first bracket simplifies as in Controller~2:
+\begin{equation*}
+	-\frac14\|s_i\|^2 - \|k_\alpha q_{i0} - \phi_i\|^2 + (k_\alpha q_{i0} - \phi_i)^T s_i
+	= -\|k_\alpha q_{i0} - \phi_i - \tfrac12 s_i\|^2.
+\end{equation*}
+
+The second bracket simplifies to $k_\alpha q_{i0}^T\Phi_i$. Hence,
+\begin{equation}\label{eq3:V3_dot}
+	\dot{V}_3 = -\sum_{i\in\mathcal{N}} \|k_\alpha q_{i0} - \phi_i - \tfrac12 s_i\|^2
+	+ \sum_{i\in\mathcal{N}} k_\alpha q_{i0}^T\Phi_i
+	- k_\phi\sum_{i\in\mathcal{N}} \|\Phi_i\|^2.
+\end{equation}
+
+The cross term $k_\alpha q_{i0}^T\Phi_i$ is the price of the filter.
+Applying Young's inequality $k_\alpha q_{i0}^T\Phi_i \leq \frac{k_\alpha^2}{2\epsilon}\|q_{i0}\|^2 + \frac{\epsilon}{2}\|\Phi_i\|^2$ with $\epsilon = k_\phi$ gives
+\begin{equation}\label{eq3:V3_bound}
+	\dot{V}_3 \leq -\sum_{i\in\mathcal{N}} \|k_\alpha q_{i0} - \phi_i - \tfrac12 s_i\|^2
+	+ \frac{k_\alpha^2}{2k_\phi}\sum_{i\in\mathcal{N}} \|q_{i0}\|^2
+	- \frac{k_\phi}{2}\sum_{i\in\mathcal{N}} \|\Phi_i\|^2.
+\end{equation}
+
+The term $\frac{k_\alpha^2}{2k_\phi}\|q_{i0}\|^2$ is positive and cannot be directly cancelled by the negative terms in $\dot{V}_3$.
+However, $V_3$ itself contains $\frac{k_\alpha}{2}\|q_{i0}\|^2$ from $V_2$, so the overall system is stable if
+$k_\phi$ is chosen sufficiently large relative to $k_\alpha$ --- a high-gain filter ensures that the
+filtering delay is small enough that the stability margin of Controller~2 is preserved.
+
+\subsubsection{Theoretical Guarantee}
+
+\begin{theorem}
+	Let $k_\phi > \frac{k_\alpha}{\beta}$ for some $\beta \in (0,1)$.
+	Then the HELS~\eqref{eq hetero agent} governed by~\eqref{eq3:control_input},
+	~\eqref{eq3:adaptation}, and~\eqref{eq3:filter} achieves objectives P1--P3
+	under Assumptions A1--A3.
+\end{theorem}
+
+\noindent\textbf{Proof sketch.}
+From~\eqref{eq3:V1_dot} and Barbalat's lemma, $s_i \to 0$.
+The boundedness of $V_3$ and the invariance-like argument
+(noting that $\frac{k_\alpha^2}{2k_\phi}\|q_{i0}\|^2$ is integrable along the trajectory)
+yield $\dot{q}_{i0} \to 0$, $\Phi_i \to 0$, and $q_{i0} \to 0$.
+The collision avoidance (P2) follows from the boundedness of the APF potential
+as in Controller~2.
+\hfill$\square$

@@ -15,7 +15,7 @@ where $q_i\in\mathbb{R}^p$ is the generalized coordinate, $M_i$ is the inertia m
 - **A1 (Boundedness):** $0 < k_{\underline{m}}I_p \leq M_i(q_i) \leq k_{\overline{m}}I_p$, $\|C_i(x,y)z\| \leq k_C\|y\|\|z\|$, $\|g_i(q_i)\| \leq k_{g_i}$.
 - **A2 (Skew-symmetry):** $\dot{M}_i(q_i) - 2C_i(q_i,\dot{q}_i)$ is skew-symmetric.
 - **A3 (Linearization):** $M_i(q_i)x + C_i(q_i,\dot{q})y + g_i(q_i) = Y_i(q_i,\dot{q}_i,x,y)\Theta_i$ with regressor $Y_i$ and unknown constant parameter vector $\Theta_i$.
-- **PE Condition:** The signal $[\dot{q}_0^T, \ddot{q}_0^T]^T$ is sufficiently rich such that $\int_t^{t+T} Y_i^T Y_i\,d\tau \geq \alpha I$ for some $T>0$, $\alpha>0$.
+- **A4 (Maneuvering target):** $\ddot{q}_0$ or $\dot{q}_0$ is not a constant value.
 
 ### Control Objectives
 
@@ -26,6 +26,8 @@ where $q_i\in\mathbb{R}^p$ is the generalized coordinate, $M_i$ is the inertia m
 ---
 
 ## Controller 1: Integral APF
+
+**Requires PE condition:** Yes — the ISS argument for (P1) needs $\dot{s}_i\to0$, which requires $Y_i\tilde{\Theta}_i\to0$; without PE the parameter error does not vanish.
 
 ### Error Variables
 
@@ -67,11 +69,13 @@ where $\Lambda > 0$ is the adaptation gain matrix.
 
 ### Theorem
 
-> Under Assumptions A1–A3 and the PE condition, the HELS governed by the control law and adaptation law above achieves objectives P1–P3.
+> Under Assumptions A1–A3 and the PE condition (the signal $[\dot{q}_0^T,\ddot{q}_0^T]^T$ is sufficiently rich such that $\int_t^{t+T} Y_i^T Y_i\,d\tau \geq \alpha I$ for some $T>0$, $\alpha>0$), the HELS governed by the control law and adaptation law above achieves objectives P1–P3.
 
 ---
 
 ## Controller 2: Differential APF
+
+**Requires PE condition:** No — the proof uses direct completion of squares on a combined Lyapunov function $V = V_1/(4k) + V_2$, yielding $\dot{V} = -\sum_i\|{-k_\alpha q_{i0} + \phi_i + s_i/2}\|^2 \leq 0$. Barbalat's lemma then gives $q_{i0}\to0$, $\phi_i\to0$, $s_i\to0$, and $\dot{q}_{i0}\to0$ without requiring parameter convergence.
 
 ### Error Variables
 
@@ -107,7 +111,7 @@ where $\Lambda > 0$ is the adaptation gain matrix.
 
 ### Theorem
 
-> Under Assumptions A1–A3 and the PE condition, the HELS governed by the control law and adaptation law above achieves objectives P1–P3.
+> Under Assumptions A1–A3, the HELS governed by the control law and adaptation law above achieves objectives P1–P3. The PE condition is **not required**; parameter estimates need not converge to their true values.
 
 ---
 
@@ -118,4 +122,5 @@ where $\Lambda > 0$ is the adaptation gain matrix.
 | $\zeta_i$ | Contains integral of $-k_\alpha q_{i0} + \phi_i$ | Direct algebraic expression |
 | Sliding var | $s_i = \dot{q}_i - \zeta_i$ | $s_i = \dot{q}_{i0} + k_\alpha q_{i0} - \phi_i$ |
 | Lyapunov $V_2$ | Includes $\frac12\sum_i\|\dot{q}_{i0}\|^2$ | Potential-only (no velocity term) |
-| Proof technique | $W = V_2 - \int h\,dt$ with Barbalat | Direct completion of squares |
+| Proof technique | $W = V_2 - \int h\,dt$ with Barbalat + ISS | Direct completion of squares |
+| **PE required?** | **Yes** — needed for $\dot{s}_i\to0$ in ISS argument | **No** — Barbalat on $\dot{V}$ gives $q_{i0}\to0$ directly |
