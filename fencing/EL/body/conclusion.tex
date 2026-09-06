@@ -1,4 +1,13 @@
-
-
 \section{Conclusion}
 \label{sec conclusion}
+
+In this paper, a self-organizing fencing control strategy has been proposed for heterogeneous Euler-Lagrange systems with uncertain parameters.
+The controller enables the agents to fence a moving target within their convex hull without requiring any predefined formation.
+Key features of the proposed method include:
+\begin{itemize}
+    \item Collision avoidance is guaranteed through an artificial potential function that tends to infinity as agents approach the safety distance.
+    \item The self-organizing formation naturally adapts to dynamic participation, allowing agents to join or leave the task while the remaining agents continue fencing.
+    \item The control framework accommodates parametric uncertainties via adaptive parameter estimation.
+\end{itemize}
+Lyapunov stability analysis demonstrates that the velocity of the multi-agent system converges to the target's velocity, and the target asymptotically enters the convex hull formed by the agents.
+Numerical simulations confirm the effectiveness of the proposed approach.

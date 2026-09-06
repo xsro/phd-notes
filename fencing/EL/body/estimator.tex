@@ -1,1 +1,14 @@
 \subsection{Estimator}
+
+The estimator is designed to estimate the unknown parameters of the Euler-Lagrange systems.
+Under Assumption A3 (Parameter Linearization), the regressor matrix $Y_i(q_i,\dot{q}_i,x,y)$ and the unknown parameter vector $\Theta_i$ satisfy
+\begin{equation}
+    M_i(q_i)x + C_i(q_i,\dot{q}_i)y + g_i(q_i) = Y_i(q_i,\dot{q}_i,x,y)\Theta_i.
+\end{equation}
+The parameter estimate $\hat{\Theta}_i$ is updated via the adaptation law
+\begin{equation}
+    \dot{\hat{\Theta}}_i = -\Lambda^{-1} Y_i^T(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) s_i,
+\end{equation}
+where $\Lambda > 0$ is the adaptation gain matrix, $s_i$ is the sliding variable, and $\zeta_i$ is the auxiliary variable defined in the controller sections.
+
+Under the PE condition (Assumption~1), the parameter estimation error $\tilde{\Theta}_i = \hat{\Theta}_i - \Theta_i$ converges to zero asymptotically, which together with the sliding-mode dynamics guarantees that the closed-loop system achieves the fencing objectives.

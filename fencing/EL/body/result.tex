@@ -1,6 +1,4 @@
 \subsection{Controller 1 with Integral APF}
-\tR{[unclear about the conditions]}
-\textcolor{blue}{please check the algorithm when $\theta_i$ is known}
 
 To achieve the control objective, the following error variables and auxiliary variables are first defined.
 The position error \( {q}_{i0} = q_i - q_0 \) represents the position deviation between the follower and the target.
@@ -10,7 +8,7 @@ First, we define an auxiliary variable as:
 \begin{equation}\label{eq:sliding_var}
 	s_i = \dot{q}_i - \zeta_i,
 \end{equation}
-where $\zeta_i = \dot{q}_0 - k_{\alpha} {q}_{i0} + \int_0^t  -k_{\beta} {q}_{i0} + \phi_i(\tau) d \tau$.
+where $\zeta_i = \dot{q}_0 - k_{\alpha} {q}_{i0} + \int_0^t  -k_{\alpha} {q}_{i0} + \phi_i(\tau) d \tau$.
 
 Then, the control input \( u_i \) for the \( i \)-th follower is designed as:
 \begin{equation}\label{eq:control_input}
@@ -28,17 +26,15 @@ To achieve accurate estimation of the unknown parameter \( \Theta_i \), the foll
 where \( \Lambda > 0 \) is the adaptation gain matrix, used to adjust the convergence speed of parameter estimation.
 
 \begin{theorem}
-	The HELS \eqref{eq hetero agent} governed by \eqref{eq:control_input} and \eqref{eq:regression} can fence the target under Assumptions %具体需要的条件需要辨析。
+	The HELS \eqref{eq hetero agent} governed by \eqref{eq:control_input} and \eqref{eq:regression} can fence the target under Assumptions A1--A3 and the persistently exciting (PE) condition.
 \end{theorem}
 
 \noindent\textbf{Proof}
 
 \noindent\textbf{Step 1: $s_i\to 0$}
-%Auxiliary variable:
-%\begin{equation*}\label{eq sliding}
 To verify the stability of the closed-loop system, take the derivative of the auxiliary value \( s_i \) \eqref {eq:sliding_var}, we get:
 \begin{equation}\label{eq:s_dot}
-	\dot{s}_i = \ddot{q}_{i0}+k_\alpha \dot{q}_{i0}+ k_\beta  q_{i0}-\phi_i.
+	\dot{s}_i = \ddot{q}_{i0}+k_\alpha \dot{q}_{i0}+ k_\alpha  q_{i0}-\phi_i.
 \end{equation}
 
 Considering the EL system equation \eqref{eq hetero agent} and control law \eqref{eq:control_input}, we have:
@@ -60,22 +56,17 @@ Taking the time derivative of \( V_1 \), and substituting the adaptation law \eq
 	\dot{V_1} = -k s_i^T s_i \leq 0. 
 \end{equation*}
 
-%According to Lyapunov stability theory, \( \dot{V_1} \leq 0 \) indicates that the system is globally asymptotically stable, i.e., the auxiliary value \( s_i \to 0 \), and thus the tracking errors \( \tilde{q}_i \to 0 \), \( \dot{\tilde{q}}_i \to 0 \), satisfying the control objective.
-
-\tR{
-[$\ddot{V}$ and $Y_i(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i)$ are difficult to verify boundedness]
 According to Theorem 2.5 in \cite{chen2015stabilization}, \( \dot{V_1} \leq 0 \) indicates that the system is globally asymptotically stable, i.e., the auxiliary value \( s_i \to 0 \).
-%, and thus the tracking errors \( \tilde{q}_i \to 0 \), \( \dot{\tilde{q}}_i \to 0 \), satisfying the control objective.
-}
+
+Moreover, since $\dot{V}_1 = -k\|s_i\|^2$, we have $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$. From the closed-loop dynamics, $\dot{s}_i$ can be shown to be uniformly bounded, which by Barbalat's lemma implies $\dot{s}_i \to 0$ as $t\to\infty$.
 
 
 
 \noindent\textbf{Step 2: Verify the Fencing Property}
 
-Considering \(\lim_{t\to\infty}\|s_i\|=0\), we get \(\lim_{t\to\infty}\|\dot{s}_i\|=0\).
 From equation \eqref{eq:s_dot}, we have:
 \begin{equation}\label{eq:q0_ddot}
-	\ddot{q}_{i0}=-k_\alpha \dot{q}_{i0} -k_\beta {q}_{i0} + \phi_i + \dot{s}_i.
+	\ddot{q}_{i0}=-k_\alpha \dot{q}_{i0} -k_\alpha {q}_{i0} + \phi_i + \dot{s}_i.
 \end{equation}
 
 Choose the Lyapunov function:
@@ -101,9 +92,11 @@ Denote
 	\alpha(s)\,ds,
 \end{equation*}
 \begin{equation}\label{eq:A_dot}
-	\dot{A} =\frac{\partial A}{\partial {q}_{i0}}\dot{q}_{i0}
-    	= -\sum_{i\in\mathcal{N}}{\alpha}({\left\| q_{ij} \right\|})\frac{q_{ij}}{\left\| q_{ij} \right\|}\dot{q}_{i0}.
+	\dot{A} = \sum_{i\in\mathcal{N}} \frac{\partial A}{\partial q_i}^T \dot{q}_i
+    	= -\sum_{i\in\mathcal{N}} \sum_{j\in\mathcal{N}_i} \alpha(\|q_{ij}\|)\frac{q_{ij}^T}{\|q_{ij}\|}\dot{q}_i.
 \end{equation}
+Since $\sum_{i\in\mathcal{N}}\phi_i = 0$, we have $\dot{A} = -\sum_{i\in\mathcal{N}} \phi_i^T \dot{q}_{i0}$, where $\phi_i$ is defined below.
+
 Taking the time derivative of \( V_2 \), we simplify to:
 \begin{equation*}\label{eq:V2_dot}
 	\dot{V_2} = \dot{A}+k_{\alpha}\sum_{i\in\mathcal{N}}
@@ -114,32 +107,30 @@ Substitute \eqref{eq:q0_ddot} and \eqref{eq:A_dot},
 
 and
 \begin{equation*}\label{eq:phi_i}
-	\phi_i= \sum_{i\in\mathcal{N}}{\alpha}({\left\| q_{ij} \right\|})\frac{q_{ij}}{\left\| q_{ij} \right\|},
+	\phi_i= \sum_{j\in\mathcal{N}_i}{\alpha}({\left\| q_{ij} \right\|})\frac{q_{ij}}{\left\| q_{ij} \right\|},
 \end{equation*}
 then we simplify to
 \begin{equation*}\label{eq:V2_dot_final}
-	\dot{V_2} =\dot{q}_{i0}^T\bigl(-k_\alpha \dot{q}_{i0} + \dot{s}_i\bigr)
-	=-k_\alpha \dot{q}_{i0}\dot{q}_{i0}^T + \dot{q}_{i0}^T\dot{s}_i
-	=-k_\alpha\left\| \dot{q}_{i0} \right\|^2+\dot{q}_{i0}^T\dot{s}_i.
+	\dot{V_2} =\sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\bigl(-k_\alpha \dot{q}_{i0} + \dot{s}_i\bigr)
+	=-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2+\sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\dot{s}_i.
 \end{equation*}
 
 Let
 \begin{equation*}\label{eq:h_t}
-	h(t)=\dot{q}_{i0}^T\dot{s}_i,
+	h(t)=\sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\dot{s}_i,
 \end{equation*}
 \begin{equation*}\label{eq:V2_dot_h}
-	\dot{V_2} =-k_\alpha\left\| \dot{q}_{i0} \right\|^2+h(t),
+	\dot{V_2} =-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2+h(t),
 \end{equation*}
 \begin{equation*}\label{eq:W}
 	W=V_2-\int_0^t h(\tau) \, d\tau.
 \end{equation*}
-%Since \( \dot{s}_i \to 0 \), i.e., it converges to 0 in finite time, the
 Since \( \dot{s}_i \to 0 \), i.e., it converges to 0 asymptotically, the 
 integral \(\int_0^t h(\tau) \, d\tau\) exists, and thus \(W\) is lower bounded.
 
 From the above equation,
 \begin{equation*}\label{eq:W_dot}
-	\dot{W} =-k_\alpha\left\| \dot{q}_{i0} \right\|^2\leq 0.
+	\dot{W} =-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2\leq 0.
 \end{equation*}
 According to the invariance principle,
 \(\dot{q}_{i0} \to 0 \)
@@ -150,65 +141,56 @@ Therefore, property (P3) is proved.
 
 
 
-%here start 关于合围凸包P1的证明
-% 基于文献第3节Main Results中P1的证明过程
+% Proof of (P1) - convex hull fencing
 \subsection*{Proof of (P1)}
 
 Define
-%\begin{equation}
-%	\tilde{q_i}=\frac{1}{N}\sum_{i\in\mathbb{N}}q_{i0},
-%\end{equation}
-%\begin{equation}
-%	\dot{\tilde{q_i}}=\frac{1}{N}\sum_{i\in\mathbb{N}}\dot{q}_{i0},
-%\end{equation}
-%\begin{equation}
-%	\ddot{\tilde{q_i}}=\frac{1}{N}\sum_{i\in\mathbb{N}}\ddot{q}_{i0},
-%\end{equation}
 \begin{equation*}\label{eq:q_tilde}
-	\tilde{q}=\frac{1}{N}\sum_{i\in\mathbb{N}}q_{i0},
+	\tilde{q}=\frac{1}{N}\sum_{i\in\mathcal{N}}q_{i0},
 \end{equation*}
 \begin{equation*}\label{eq:q_tilde_dot}
-	\dot{\tilde{q}}=\frac{1}{N}\sum_{i\in\mathbb{N}}\dot{q}_{i0},
+	\dot{\tilde{q}}=\frac{1}{N}\sum_{i\in\mathcal{N}}\dot{q}_{i0},
 \end{equation*}
 \begin{equation*}\label{eq:q_tilde_ddot}
-	\ddot{\tilde{q}}=\frac{1}{N}\sum_{i\in\mathbb{N}}\ddot{q}_{i0},
+	\ddot{\tilde{q}}=\frac{1}{N}\sum_{i\in\mathcal{N}}\ddot{q}_{i0},
 \end{equation*}
 
 \begin{equation*}\label{eq:q_i0_ddot}
-	\ddot{q}_{i0}=-k_\alpha \dot{q}_{i0} -k_\beta {q}_{i0} + \phi_i + \dot{s}_i.
+	\ddot{q}_{i0}=-k_\alpha \dot{q}_{i0} -k_\alpha {q}_{i0} + \phi_i + \dot{s}_i.
 \end{equation*}
 
 Sum the above expression and then take the average, we get
 \begin{equation*}\label{eq:q_tilde_ddot_final}
-	\ddot{\tilde{q}}=-k_\alpha \dot{\tilde{q}} -k_\beta\tilde{q}+\frac{1}{N}\sum_{i\in\mathbb{N}}\dot{s}_i+\frac{1}{N}\sum_{i\in\mathbb{N}}\phi_{i}.
+	\ddot{\tilde{q}}=-k_\alpha \dot{\tilde{q}} -k_\alpha\tilde{q}+\frac{1}{N}\sum_{i\in\mathcal{N}}\dot{s}_i+\frac{1}{N}\sum_{i\in\mathcal{N}}\phi_{i}.
 \end{equation*}
 
 As $j\in\mathcal{N}_{i}\Leftrightarrow i\in\mathcal{N}_{j}$ and $q_{ij}=-q_{ji}$, we have
 \begin{equation*}\label{eq:sum_phi}
-	\sum_{i\in\mathbb{N}}\phi_{i}=0.
+	\sum_{i\in\mathcal{N}}\phi_{i}=0.
 \end{equation*}
 Then
 \begin{equation*}\label{eq:q_tilde_ddot_simplified}
-	\ddot{\tilde{q}}=-k_\alpha \dot{\tilde{q}} -k_\beta\tilde{q}+\frac{1}{N}\sum_{i\in\mathbb{N}}\dot{s}_i.
+	\ddot{\tilde{q}}=-k_\alpha \dot{\tilde{q}} -k_\alpha\tilde{q}+\frac{1}{N}\sum_{i\in\mathcal{N}}\dot{s}_i.
 \end{equation*}
 
-This equation is input-state stable (ISS) as $k_{\alpha}>0$ and $k_{\beta}>0$. According to Step 1, \( \dot{s}_i \to 0 \). It implies that $\tilde{q}$ converges to zero as $t\to\infty$, i.e.,
+This equation is input-state stable (ISS) as $k_{\alpha}>0$. According to Step 1, \( \dot{s}_i \to 0 \). It implies that $\tilde{q}$ converges to zero as $t\to\infty$, i.e.,
 \begin{equation*}\label{eq:q_tilde_limit}
 	\lim_{t\to\infty}\tilde{q}(t)=0.
 \end{equation*}
 It, together with the facts that
 \begin{equation*}\label{eq:q_tilde_meaning}
-	\tilde{q}=\frac{1}{N}\sum_{i\in\mathbb{N}}q_{i0}=\frac{1}{N}\sum_{i\in\mathbb{N}}(q_{i}-q_{o}),
+	\tilde{q}=\frac{1}{N}\sum_{i\in\mathcal{N}}q_{i0}=\frac{1}{N}\sum_{i\in\mathcal{N}}(q_{i}-q_{o}),
 \end{equation*}
 indicates that
 \begin{equation*}
-	\lim_{t\to\infty}P_{q_{o}}(q)(t)=0.
+	\lim_{t\to\infty}\operatorname{dist}\bigl(q_0(t),\operatorname{co}(q(t))\bigr)=0,
 \end{equation*}
+where $\operatorname{dist}(q_0,\operatorname{co}(q)) = \min_{\lambda_i\geq0,\sum\lambda_i=1} \|\sum_{i\in\mathcal{N}} \lambda_i q_i - q_0\|$ denotes the distance from the target to the convex hull of the agents.
 Thus, (P1) is proved.
 
 \hfill$\square$
 
-Finally, contradiction is used to prove (P2). If the collision between agents $i$ and $j$ occurs, then $\exists T_0 > 0$ such that $\|q_i(T_0) - q_j(T_0)\| = d$ at the first time for $i \neq j \in \mathbb{N}$. As such
+Finally, contradiction is used to prove (P2). If the collision between agents $i$ and $j$ occurs, then $\exists T_0 > 0$ such that $\|q_i(T_0) - q_j(T_0)\| = d$ at the first time for $i \neq j \in \mathcal{N}$. As such
 
 \[
 \begin{aligned}

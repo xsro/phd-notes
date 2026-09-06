@@ -1,50 +1,48 @@
 \documentclass{article}
-\usepackage{float}  % 导言区加这一行,放图片
-\bibliographystyle{plain}%参考文献用
-% 核心：保留中文支持，移除旧版ctex不兼容的格式配置
-\usepackage{amsmath,amssymb} % 数学公式支持
-\usepackage{geometry} % 页面边距配置
-\usepackage{multirow} % 表格多行合并
-\usepackage{graphicx} % 可选：插入图片用
 
-% 页面布局：简化配置，避免格式冲突
-\geometry{a4paper, margin=1.2in} % A4纸+1.2英寸边距（适配中文）
-\usepackage{xcolor}
+% ── Packages ──────────────────────────────────────────────
+\usepackage{float}            % [H] float placement
+\usepackage{amsmath,amssymb}  % math fonts & environments
+\usepackage{geometry}         % page margins
+\usepackage{graphicx}         % images
+\usepackage{xcolor}           % colors
+\usepackage{amsthm}           % theorem environments
+\usepackage{hyperref}         % clickable links
+\usepackage{bm}               % bold math
+\usepackage{fontspec}         % xelatex font selection
+\usepackage{xeCJK}            % Chinese support (optional, for comments)
 
-\usepackage{amsthm}
+% ── Page layout ───────────────────────────────────────────
+\geometry{a4paper, margin=1.2in}
+
+% ── Theorem environments ──────────────────────────────────
+\theoremstyle{plain}
 \newtheorem{assumption}{Assumption}
 \newtheorem{theorem}{Theorem}
-\theoremstyle{plain}
+
+% ── Custom commands ───────────────────────────────────────
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
-\newcommand{\NN}[0]{\mathbb{N}}
-\newcommand{\sgn}[0]{\mathrm{sgn}}
+\newcommand{\NN}{\mathbb{N}}
 
-\usepackage{cleveref}
-\crefname{table}{Table}{Tables}
-\crefname{figure}{Fig.}{Figures}
-\crefname{section}{Section}{Sections}
-\crefname{subsection}{Subsection}{Subsections}
-
-
-\newcommand{\tR}{\textcolor{red}}
-
-% 文档标题：用基础命令，不依赖ctexset
-\title{Flexible formation fencing algorithm for Euler-Lagrange swarms } % 标题居中加粗
+% ── Document info ─────────────────────────────────────────
+\title{Flexible formation fencing algorithm for Euler-Lagrange swarms}
 \author{}
-%\date{\today} % 自动填充日期
+\date{\today}
 
 \begin{document}
-	\maketitle % 生成标题
-	
-	\input{body/introduction.tex}
-	\input{body/problem.tex}
+\maketitle
 
-    \section{Main Result}
-    \label{sec result}
-	\input{body/estimator.tex}
-    \input{body/result.tex}
-    \input{body/result2.tex}
-    
-	\input{body/conclusion.tex}
-	\bibliography{body/reference.bib}%参考文献用
+\input{body/introduction.tex}
+\input{body/problem.tex}
+
+\section{Main Result}
+\label{sec result}
+\input{body/result.tex}
+\input{body/result2.tex}
+\input{body/estimator.tex}
+
+\input{body/simulation.tex}
+
+\input{body/conclusion.tex}
+\bibliography{body/reference.bib}
 \end{document}

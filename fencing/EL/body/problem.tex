@@ -1,12 +1,11 @@
-
 \section{Problem Description}
 \label{sec problem}
 
 Suppose there are $N$ ($N\geq 3$) agents in a HELS, labeled with numbers $1$ to  $N$ respectively, and a target labeled with number 0.
-The set of all agents are denoted as $\NN=\{1,\dots,N\}$.
+The set of all agents are denoted as $\mathcal{N}=\{1,\dots,N\}$.
 These $N$ agents are represented by the Euler-Lagrange equations of the following form:
 \begin{equation}	
-    M_i(q_i)\ddot{q}_i+C_i(q_i,\dot{q}_i)\dot{q}_i+g_i(q_i)=\tau_i,\quad i \in\NN,
+    M_i(q_i)\ddot{q}_i+C_i(q_i,\dot{q}_i)\dot{q}_i+g_i(q_i)=\tau_i,\quad i \in\mathcal{N},
     \label{eq hetero agent}
 \end{equation}
 where $q_i\in\mathbb{R}^p$ is the vector of generalized coordinates,
@@ -25,37 +24,40 @@ In the subsequent analysis, we will assume that the dynamics of these MHELSs sat
 
 The problem addressed in this paper is formulated as follows: 
 we consider HELSs \eqref{eq hetero agent} with a moving target.
-The  target is moving in following sense.
+The target is moving in the following sense.
+
 \begin{assumption}
-    $\ddot{q}_0$ or $\dot{q}_0$ is not a  constant value.
-    \label{assump: not constant}
+    $\ddot{q}_0$ or $\dot{q}_0$ is not a constant value, and the signal $[\dot{q}_0^T, \ddot{q}_0^T]^T$ is sufficiently rich such that the regressor $Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)$ satisfies the persistently exciting (PE) condition
+    \begin{equation*}
+        \int_t^{t+T} Y_i^T Y_i \, d\tau \geq \alpha I, \quad \forall t \geq 0,
+    \end{equation*}
+    for some constants $T>0$ and $\alpha>0$.
+    \label{assump: pe}
 \end{assumption}
 
 The goal is to design the control input $u_i$ to satisfy the following two conditions:
 \begin{enumerate} 
-%	\item[\textbf{P1}] (Convex hull fencing) The agents asymptotically fence the target in a convex hull formation, i.e. \( \lim_{t\to\infty} \mathrm{co}(q(t)) \ni \lim_{t\to\infty} q_0(t)\);
 \item[\textbf{P1}] (Convex hull fencing) The agents asymptotically fence the target in a convex hull formation, i.e.\ \( \lim_{t\to\infty} q_0(t)\in\lim_{t\to\infty}\mathrm{co}(q(t)) \);
-	\item[\textbf{P2}] (Collision avoidance) Every agent keeps a safety distance $d > 0$ from others, i.e. $\| q_{ij}(t) \| > d$, $i, j \in \NN$, $j \neq i$, $\forall ~ t \ge 0$.
+	\item[\textbf{P2}] (Collision avoidance) Every agent keeps a safety distance $d > 0$ from others, i.e. $\| q_{ij}(t) \| > d$, $i, j \in \mathcal{N}$, $j \neq i$, $\forall ~ t \ge 0$.
 	\item[\textbf{P3}] (Velocity match) Every agent's velocity converges to the target's, i.e. $\lim_{t\to\infty} \|\dot{q}_i-\dot{q}_0\|=0$, $\forall t\geq 0$.
 \end{enumerate}
 \noindent Here the convex hull is defined as 
 \begin{equation*}
     \mathrm{co}(q(t))=\left\{\left.
-        \sum_{i\in\NN}\lambda_i q_i  \right|\lambda_i\geq 0,~\forall~ i\in\NN \textrm{ and } \sum_{i\in\NN}\lambda_i=1
+        \sum_{i\in\mathcal{N}}\lambda_i q_i  \right|\lambda_i\geq 0,~\forall~ i\in\mathcal{N} \textrm{ and } \sum_{i\in\mathcal{N}}\lambda_i=1
     \right\}.
 \end{equation*}
 In this sense, the fencing control releases the requirement of desired formation and only requires agents to fence the target with it's convex hull.
 All agents with distance smaller than $\mu$ to the agent $i$ are agent $i$'s neighbors.
 Here, the communication distance $\mu$ are a positive value bigger than the safety distance $d$.
-The set of all neighbors of $i$ is defined as $\NN_i=\left\{j|j\in\NN,\|q_{ij}\|\leq\mu\right\}$.
+The set of all neighbors of $i$ is defined as $\mathcal{N}_i=\left\{j|j\in\mathcal{N},\|q_{ij}\|\leq\mu\right\}$.
 
 To avoid collisions, it is required that no agents have collided with each other at the initial moment.
 This requires the initial positions between two agents are bigger than the safety distance.
 
 \begin{assumption}	\label{assump initially_no_collision}
-	For all agents $i,j \in \NN$ and $i\neq j$, $\| p_{ij}(0) \| > d$.
+	For all agents $i,j \in \mathcal{N}$ and $i\neq j$, $\| p_{ij}(0) \| > d$.
 \end{assumption}
 
 
 \hfill$\square$
-
