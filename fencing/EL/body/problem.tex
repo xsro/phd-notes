@@ -24,21 +24,11 @@ In the subsequent analysis, we will assume that the dynamics of these MHELSs sat
 
 The problem addressed in this paper is formulated as follows: 
 we consider HELSs \eqref{eq hetero agent} with a moving target.
-The target is moving in the following sense.
+The target's acceleration is assumed to be bounded.
 
 \begin{assumption}
-    $\ddot{q}_0$ or $\dot{q}_0$ is not a constant value.
-    \label{assump: pe}
-\end{assumption}
-
-For Controller 1, the following additional condition is required to guarantee $\dot{s}_i\to0$ in the ISS argument:
-\begin{assumption}
-    The signal $[\dot{q}_0^T, \ddot{q}_0^T]^T$ is sufficiently rich such that the regressor $Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)$ satisfies the persistently exciting (PE) condition
-    \begin{equation*}
-        \int_t^{t+T} Y_i^T Y_i \, d\tau \geq \alpha I, \quad \forall t \geq 0,
-    \end{equation*}
-    for some constants $T>0$ and $\alpha>0$.
-    \label{assump: pe2}
+    $\ddot{q}_0$ is bounded and $\dot{q}_0$ is continuous.
+    \label{assump: target}
 \end{assumption}
 
 The goal is to design the control input $u_i$ to satisfy the following two conditions:

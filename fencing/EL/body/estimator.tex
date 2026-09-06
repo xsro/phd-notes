@@ -11,4 +11,4 @@ The parameter estimate $\hat{\Theta}_i$ is updated via the adaptation law
 \end{equation}
 where $\Lambda > 0$ is the adaptation gain matrix, $s_i$ is the sliding variable, and $\zeta_i$ is the auxiliary variable defined in the controller sections.
 
-Under the PE condition (Assumption~2), the parameter estimation error $\tilde{\Theta}_i = \hat{\Theta}_i - \Theta_i$ converges to zero asymptotically, which together with the sliding-mode dynamics guarantees that the closed-loop system achieves the fencing objectives.
+The parameter estimation error $\tilde{\Theta}_i = \hat{\Theta}_i - \Theta_i$ is guaranteed to be bounded by the Lyapunov analysis in the controller sections. Without additional persistently exciting (PE) conditions, the estimation error does not necessarily converge to zero, but the closed-loop system still achieves the fencing objectives in a practical sense.
