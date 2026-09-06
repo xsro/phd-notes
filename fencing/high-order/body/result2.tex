@@ -1,5 +1,10 @@
 \section{基于 APF 滤波的全状态反馈}
 
+反步法中也需要对一些信号进行求导，传统的方法中是通过解析的方法来求导。
+现在很多论文通过使用指令滤波（command filter）来求导，这些方法需要虚拟信号满足一些连续性的条件。
+例如\cite{huPrescribedTimeAdaptiveTracking2026}就要求虚拟信号是一阶连续可导C1的（first-order derivative continuous）。
+但是在我们的证明中，我们的避碰也是依赖这些条件的，所以这里无法给出严谨的避碰证明。
+
 \subsection{APF 滤波}
 
 定义 $\bar{m}=\max_{i\in\NN} m_i$。
