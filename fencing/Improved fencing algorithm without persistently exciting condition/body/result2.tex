@@ -1,0 +1,153 @@
+\subsection{Controller 2 with Differential APF}
+
+\tR{[require neighbors' velocity for computing $\dot\phi_i$.] 1) we can use numerical differentiation in implementation like \cite{jiangAdaptiveDistributedLabelfree2025}. 2) The neighbor's velocity is measurable in EL-related systems like \cite{wangFinitetimeFormationTracking2025}.}
+
+To achieve the control objective, the following error variables and auxiliary variables are first defined.
+The position error \( {q}_{i0} = q_i - q_0 \) represents the position deviation between the follower and the target.
+The velocity error: \( \dot{\tilde{q}}_i = \dot{q}_i - \dot{q}_0 \), representing the velocity deviation between the follower and the target.
+
+First, we define an auxiliary variable as:
+\begin{equation}\label{eq2:sliding_var}
+	s_i = \dot{q}_i - \zeta_i=\dot{q}_{i0}+k_\alpha \mu(t) q_{i0}-\phi_i,
+\end{equation}
+where $\zeta_i = \dot{q}_0 - k_{\alpha} {q}_{i0} + \phi_i$.
+
+Then, the control input \( \tau_i \) for the \( i \)-th follower is designed as:
+\begin{equation}\label{eq2:control_input}
+	\tau_i = -k s_i + Y_i \hat{\Theta}_i 
+ \end{equation}
+where \( k > 0 \) and \( Y_i \): regression matrix, used to separate unknown parameters from known signals, and its expression is given by the following formula:
+	\begin{equation}\label{eq2:regression}
+		M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q})\zeta_i + g_i(q_i)=Y_{i}(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i)\Theta_{i}.
+	\end{equation}
+The term \( \hat{\theta}_i \) is the estimate of the unknown parameter \( \Theta_i \)  of  each agent;
+To achieve accurate estimation of the unknown parameter \( \Theta_i \), the following parameter adaptation law is designed:
+\begin{equation}\label{eq2:adaptation}
+	\dot{\hat{\theta}}_i = -\Lambda^{-1} Y_i^T(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i) s_i, 
+\end{equation}
+where \( \Lambda > 0 \) is the adaptation gain matrix, used to adjust the convergence speed of parameter estimation.
+
+\begin{theorem}
+	The HELS \eqref{eq hetero agent} governed by \eqref{eq2:control_input} and \eqref{eq2:regression} can fence the target under Assumptions %具体需要的条件需要辨析。
+\end{theorem}
+
+\noindent\textbf{Proof}
+
+Considering the EL system equation \eqref{eq hetero agent} and control law \eqref{eq2:control_input}, we have:
+\begin{equation*}\label{eq2:EL_control}
+	M_i(q_i)\ddot{q}_i+C_i(q_i,\dot{q}_i)\dot{q}_i+g_i(q_i)= -k s_i + Y_i(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i) \hat{\theta}_i. 
+\end{equation*}
+Combining \eqref{eq2:control_input} and \eqref{eq2:regression}, we get:
+\begin{equation}\label{eq2:s_dynamics}
+	M_i(q_i)\dot{s}_i+C_i(q_i,\dot{q}_i)s_i= -k s_i + Y_i(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i) \tilde{\theta}_i, 
+\end{equation}
+where \(\tilde{\theta}=\hat{\theta}-\theta\).
+
+Choose the Lyapunov function:
+\begin{equation*}\label{eq2:V1}
+	V_1 = \frac{1}{2} s_i^T M_i s_i + \frac{1}{2} (\theta_i - \hat{\theta}_i)^T \Lambda (\theta_i - \hat{\theta}_i).
+\end{equation*}
+Taking the time derivative of \( V_1 \), and substituting the adaptation law \eqref{eq2:adaptation} and equation \eqref{eq2:s_dynamics}, we simplify to:
+\begin{equation*}\label{eq2:V1_dot}
+	\dot{V_1} = -k s_i^T s_i \leq 0. 
+\end{equation*}
+
+
+Choose another Lyapunov function:
+\begin{equation*}\label{eq2:V2}
+	V_2 = \frac{1}{2} \sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\left\| q_{ij} \right\|}^{\mu}
+	\alpha(s)\,ds
+	+ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}
+	\left\| q_{i0} \right\|^2.
+\end{equation*}
+
+Denote
+\begin{equation*}\label{eq2:A}
+	A=\frac{1}{2} \sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\left\| q_{ij} \right\|}^{\mu}
+	\alpha(s)\,ds,
+\end{equation*}
+\begin{equation}\label{eq2:A_dot}
+	\dot{A} =\frac{\partial A}{\partial {q}_{i0}}\dot{q}_{i0}
+    	= -\sum_{i\in\mathcal{N}}{\alpha}({\left\| q_{ij} \right\|})\frac{q_{ij}}{\left\| q_{ij} \right\|}\dot{q}_{i0}.
+\end{equation}
+Taking the time derivative of \( V_2 \), we simplify to:
+\begin{equation*}\label{eq2:V2_dot_final}
+	\dot{V}_2 =\sum_{i\in\mathbb{N}}(k_\alpha q_{i0}-\phi_i)^T\dot{q}_{i0}.
+\end{equation*}
+With \eqref{eq2:sliding_var}, we have
+\[
+\dot{V}_2=\sum_{i\in\mathbb{N}} \left(-\|k_\alpha q_{i0}-\phi_i\|^2 
+    +(k_\alpha q_{i0}-\phi_i)^T s_i
+\right)
+\]
+
+Consider $V=\frac{1}{4k}V_1+V_2$, we have 
+\[\dot{V}=-\sum_{i\in\mathbb{N}} \lVert -k_\alpha q_{i0} +\phi_i + \frac{1}{2}s_i\rVert^2.
+\]
+
+%写q_{ij}上界:
+So $V\leq V(0)$ is uniformly bounded,
+with \eqref{eq2:V1},$\ V_1\geq 0$, 
+and  with \eqref{eq2:V2},$\ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}\left\| q_{i0} \right\|^2\geq 0$,
+then $\frac{1}{2} \sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}\int_{\left\| q_{ij} \right\|}^{\mu}\alpha(s)\,ds\leq V\leq V(0)$.
+
+Let the function $F(x)$ be defined as the definite integral:
+$$
+F(x) = \int_{x}^{\mu} \alpha(s) \, ds,
+$$
+%Let $F(x)=\int_{\left\| q_{ij} \right\|}^{\mu}\alpha(s)\,ds$,
+
+then $\frac{1}{2}F({\left\| q_{ij} \right\|})\leq V(0)$,
+with $\frac{dF(x)}{dx} = -\alpha(x) \leq 0$,
+so we have
+$$
+\| q_{ij} \| \geq F^{-1}(V(0)).
+$$
+
+
+
+As $V\leq V(0)$ is uniformly bounded,
+% V中的三项都是非负的，所以都是有界的
+then we know $s_i$, $q_{i0}$ and $\int_{\|q_{ij}\|}^\mu\alpha(s)\mathrm{d} s$ are uniformly bounded.
+Since $\alpha(s)\geq 0$, we have $\alpha(\|q_{ij}\|)$ is uniformly bounded, which implies $\|q_{ij}\|>d$ and (P2) is proved. 
+From $q_{i0}$ and $\alpha(\|q_{ij}\|)$ are uniformly bounded, we have $\phi_i$ is uniformly bounded.
+Together with $s_i$ is uniformly bounded and \eqref{eq2:sliding_var} we have $\dot{q}_{i0}$ is also uniformly bounded. 
+We know 
+\[ 
+\dot{\phi}_i=\sum_{i\in\mathbb{N}} \frac{\mathrm{d}}{\mathrm{d}t}\alpha(\|q_{ij}\|) \frac{q_{ij}}{\|q_{ij}\|}
+=\sum_{i\in\mathbb{N}} \left(\frac{\mathrm{d}}{\mathrm{d}t} \frac{\alpha(\|q_{ij}\|)}{\|q_{ij}\|}\right)q_{ij}+\sum_{i\in\mathbb{N}}  \frac{\alpha(\|q_{ij}\|)}{\|q_{ij}\|}\dot{q}_{ij}
+\]
+
+Consider the first term and denote $\beta(s)=\alpha(s)/s$, we have
+\[
+\frac{\mathrm{d}}{\mathrm{d}t} \frac{\alpha(\|q_{ij}\|)}{\|q_{ij}\|}
+=\frac{\mathrm{d}}{\mathrm{d}\|q_{ij}\|} 
+\frac{\alpha(\|q_{ij}\|)}{\|q_{ij}\|}
+\frac{\mathrm{d} \|q_{ij}\|}{\mathrm{d}t}
+= \dot{\beta}(\|q_{ij}\|)\frac{q_{ij}^T\dot{q}_{ij}}{\|q_{ij}\|}
+\]
+\tR{Assume that $\dot{\beta}$ is a continuous function satisfy B1-2,} together with $\|q_{ij}\|>d$ we have $\dot{\beta}(\|q_{ij}\|)$ is uniformly bounded.
+Then, the first term is uniformly bounded.
+
+Consider the second term,  obviously we have it is bounded from $\dot{q}_{i0}$ is uniformly bounded, $\|q_{ij}\|>d$.
+
+Consider $
+\zeta_i = \dot{q}_0 - k_{\alpha} {q}_{i0} + \phi_i
+$
+and 
+$
+\dot{\zeta}_i = \ddot{q}_0 - k_{\alpha} \dot{q}_{i0} + \dot{\phi}_i
+$.
+\tR{Assume that $\dot{q}_0$ and $\ddot{q}_0$ are uniformly bounded}, we have $\zeta_i$ and $\dot{\zeta}_i$ are both uniformly bounded.
+Together with \eqref{eq2:regression}, we have $Y_{i}(q_{i},\dot{q}_{i},\dot{\zeta}_i,\zeta_i)$ is uniformly bounded.
+From \eqref{eq2:s_dynamics}, the $\dot{s}_i$ is uniformly bounded.
+Then, $\ddot{V}_1$ is uniformly bounded.
+Given $V_1\geq 0$ and $\dot{V}_1\leq 0$, we obtain $s_i\to0$.
+Similarly, since $\ddot{V}$ is uniformly bounded and $V\geq 0$, $\dot{V}\leq 0$, we have $-k_\alpha q_{i0} +\phi_i +\frac12 s_i\to0$, 
+which yields $q_{i0}\to0$ and $\phi_i\to0$.
+Combining this with \eqref{eq2:sliding_var} and the fact that $s_i\to0$,  we get $\dot{q}_{i0}\to0$ and then (P3) is proved.
+From $q_{i0}\to0$, with $q_{i0}=q_{i} - q_{0}$, it indicates that $\lim_{t\to\infty}P_{q_{o}}(q)(t)=0$. 
+Thus, (P1) is proved.
+%

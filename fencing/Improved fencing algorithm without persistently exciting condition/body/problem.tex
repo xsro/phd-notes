@@ -1,0 +1,61 @@
+
+\section{Problem Description}
+\label{sec problem}
+
+Suppose there are $N$ ($N\geq 3$) agents in a HELS, labeled with numbers $1$ to  $N$ respectively, and a target labeled with number 0.
+The set of all agents are denoted as $\NN=\{1,\dots,N\}$.
+These $N$ agents are represented by the Euler-Lagrange equations of the following form:
+\begin{equation}	
+    M_i(q_i)\ddot{q}_i+C_i(q_i,\dot{q}_i)\dot{q}_i+g_i(q_i)=\tau_i,\quad i \in\NN,
+    \label{eq hetero agent}
+\end{equation}
+where $q_i\in\mathbb{R}^p$ is the vector of generalized coordinates,
+$M_i(q_i)\in\mathbb{R}^{p\times p}$ is a symmetric positive-definite inertia matrix,
+$C_i(q_i,\dot{q}_i)\dot{q}_i\in\mathbb{R}^p$ represents Coriolis and centrifugal forces,
+$g_i(q_i)$ is the gravitational force vector,
+and $\tau_i\in\mathbb{R}^p$ is the control force vector on the $i$-th agent.
+The generalized coordinates and their derivative of the target are denoted by $q_0$ and $\dot{q}_0$ respectively.
+In the subsequent analysis, we will assume that the dynamics of these MHELSs satisfy the following assumptions \cite{spongRobotModelingControl2020}:
+\begin{enumerate}
+    \item[A1] \textbf{Boundedness}: For any $i$, there exist positive constants $k_{\underline m}$, $k_{\overline{m}}$, $k_{C}$ and $k_{g_{i}}$ such that $0 < k_{\underline{m}}I_{p}\leq M_{i}(q_{i})\leq k_{\overline{m}}I_{p}$, where $I_{p}$ represents the $p\times p$ identity matrix. For all vectors $x,y,z\in\mathbb{R}^p$, we have $\|C_i(x,y)z\|\leq k_{C}\|y\|\|z\|$, and $\|g_i(q_i)\|\leq k_{g_i}$. Hereafter, we use $\|\cdot\|$ to denote the Euclidean norm.
+    \item[A2] \textbf{Skew-symmetric Property}: $\dot{M}_i(q_{i}) - 2C_{i}(q_{i},\dot{q}_{i})$ is skew-symmetric.
+    \item[A3] \textbf{Parameter Linearization}: For all vectors $x,y\in\mathbb{R}^{p}$, we have $M_i(q_i)x + C_i(q_i,\dot{q})y + g_i(q_i)=Y_{i}(q_{i},\dot{q}_{i},x,y)\Theta_{i}$, where $Y_i(q_{i},\dot{q}_{i},x,y)$ is the regressor and $\Theta_i$ is the unknown but constant parameter vector associated with the $i$-th agent.
+\end{enumerate}
+
+
+The problem addressed in this paper is formulated as follows: 
+we consider HELSs \eqref{eq hetero agent} with a moving target.
+The  target is moving in following sense.
+\begin{assumption}
+    $\ddot{q}_0$ or $\dot{q}_0$ is not a  constant value.
+    \label{assump: not constant}
+\end{assumption}
+
+The goal is to design the control input $u_i$ to satisfy the following two conditions:
+\begin{enumerate} 
+%	\item[\textbf{P1}] (Convex hull fencing) The agents asymptotically fence the target in a convex hull formation, i.e. \( \lim_{t\to\infty} \mathrm{co}(q(t)) \ni \lim_{t\to\infty} q_0(t)\);
+\item[\textbf{P1}] (Convex hull fencing) The agents asymptotically fence the target in a convex hull formation, i.e.\ \( \lim_{t\to\infty} q_0(t)\in\lim_{t\to\infty}\mathrm{co}(q(t)) \);
+	\item[\textbf{P2}] (Collision avoidance) Every agent keeps a safety distance $d > 0$ from others, i.e. $\| q_{ij}(t) \| > d$, $i, j \in \NN$, $j \neq i$, $\forall ~ t \ge 0$.
+	\item[\textbf{P3}] (Velocity match) Every agent's velocity converges to the target's, i.e. $\lim_{t\to\infty} \|\dot{q}_i-\dot{q}_0\|=0$, $\forall t\geq 0$.
+\end{enumerate}
+\noindent Here the convex hull is defined as 
+\begin{equation*}
+    \mathrm{co}(q(t))=\left\{\left.
+        \sum_{i\in\NN}\lambda_i q_i  \right|\lambda_i\geq 0,~\forall~ i\in\NN \textrm{ and } \sum_{i\in\NN}\lambda_i=1
+    \right\}.
+\end{equation*}
+In this sense, the fencing control releases the requirement of desired formation and only requires agents to fence the target with it's convex hull.
+All agents with distance smaller than $\mu$ to the agent $i$ are agent $i$'s neighbors.
+Here, the communication distance $\mu$ are a positive value bigger than the safety distance $d$.
+The set of all neighbors of $i$ is defined as $\NN_i=\left\{j|j\in\NN,\|q_{ij}\|\leq\mu\right\}$.
+
+To avoid collisions, it is required that no agents have collided with each other at the initial moment.
+This requires the initial positions between two agents are bigger than the safety distance.
+
+\begin{assumption}	\label{assump initially_no_collision}
+	For all agents $i,j \in \NN$ and $i\neq j$, $\| p_{ij}(0) \| > d$.
+\end{assumption}
+
+
+\hfill$\square$
+

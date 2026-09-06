@@ -1,0 +1,57 @@
+\section{Introduction}
+\label{sec:introduction}
+
+
+Distributed coordination of multi-agent systems has spurred a broad interest in many research fields, including control theory, robotics, and computer science.
+Researchers found that agents with simple individual behaviors can emerge useful collective behaviors in tasks like flocking, consensus and rendezvous. 
+Such emergent behaviors of distributed coordination have drawn considerable attention on account of their stronger maneuverability, better flexibility and higher efficiency compared with a single controlled agent \cite{olfati-saberConsensusProblemsNetworks2004}.
+Among the various types of agents, Euler Lagrange (EL) systems stand out as particularly important dynamical models, which can describe many physical systems such as robot manipulators, unmanned aerial vehicles, and rigid body systems.
+
+
+Diving into the distributed coordination of HELSs, a widely studied topic is driving EL systems to capture a target within a specified formation.
+A typical example is the formation-tracking problem, which requires forming a desired formation that encloses the target.
+The desired formation is defined by the EL systems' desired relative positions to the target named displacement vectors, and the problem is transformed into a multi-agent stabilization problem.
+Numerous studies have been published, each addressing different considerations, see \cite{liuDistributedFormationControl2015,zhaoDistributedFinitetimeTracking2015a,wangModelindependentFormationTracking2021,huangHierarchicalPredefinedtimeControl2021,jinEventtriggeredFormationControl2022,wangFinitetimeFormationTracking2025}. 
+For instance, the work in \cite{liuDistributedFormationControl2015} considers bounded additive noise and fault diagnosis using differential geometry tools. 
+It also demonstrates that a distributed leader-follower protocol enables all EL systems to track a time-varying trajectory while maintaining the prescribed formation. 
+Subsequently, the problems of actuator saturation and unknown disturbances are considered in \cite{wangModelindependentFormationTracking2021}, which requires no prior model knowledge. 
+Later, the work in \cite{huangHierarchicalPredefinedtimeControl2021} enhances these results by introducing a predefined-time hierarchical control architecture. 
+This approach achieves output-space time-varying formation tracking for HELSs subject to parametric uncertainties and external disturbances, while guaranteeing that the convergence time can be arbitrarily predefined and is independent of initial conditions. 
+Event-triggered control is employed in \cite{jinEventtriggeredFormationControl2022}, utilizing only local agent information to avoid continuous communication and eliminate Zeno behavior. 
+More recently, the paper \cite{Wang2025} proposes a distributed observer-based  formation tracking control framework that does not require knowledge of the target.
+The result has been verified through experiments with air-ground systems, where four ground robots track one aerial robot with a time-varying formation.
+Later, this result is extended to finite time convergence in  \cite{wangFinitetimeFormationTracking2025}.
+Two novel classes of finite-time adaptive distributed observers are proposed to estimate both the state and unknown dynamics of the target under an initial excitation condition. 
+Based on these observers, a finite-time formation tracking controller is developed to achieve finite-time, time-varying formation tracking.
+
+Although the swarm under formation-tracking control can establish arbitrarily time-varying formation enclosing the target,
+the predefined desired formation limit its application in some scenarios.
+Typically, when a fencing task begins, there may not be enough agents gathered, or during the fencing process, some agents may malfunction and need to be replaced with other agents or leave the task. 
+In such cases, the formation-tracking control with the predefined formation needs to change the desired formation.
+Besides, none of the above results can ensure that collisions between EL systems will not occur.
+% 这一点以后可以细说一下，比如初始状态所有智能体在一条线上如....1...0...2....
+% 如果像formation-tracking 一样转化为镇定问题，期望队形是...2...0...1....
+% 如果不加一些随机信号，只用一般的镇定策略，那么这就无法实现合围。
+The solution in \cite{chenCooperativeTargetfencingProtocol2019} simplifies the requirement to fence one target with in the agents' convex hull and designs three terms to fence one static target with collision avoidance.
+The first term is the target tracking controller, the second term is the collision avoidance controller.
+The third term therein is a rotational term to ensure that the final formation is not a line.
+With these terms, the agents can fence one target with a self-organizing formation.
+The agents' center asymptotically converges to the target while no collision occurs in the whole fencing process.
+Recent years have seen numerous publications advancing this line of research.
+They studied single integrator systems \cite{kouCooperativeFencingControl2022}, double integrator systems \cite{kouCooperativeFencingControl2021,huCooperativeLabelfreeMoving2023,panCooperativeTargetFencing2024a},
+and practical systems which can be transformed to double integrator systems like \cite{wenDistributedCooperativeFencing2023}.
+However, HELSs with parameter uncertainties have not been considered in fencing control yet.
+
+The contribution of this paper centers on self-organizing fencing control using HELSs with uncertain parameters.
+A control strategy is proposed that enables HELSs to fence a target without any predefined formation.
+It is shown that the target must be maneuvering, and the corresponding condition is characterized using persistently exciting  (PE) condition.
+Compared with the well-studied formation-tracking control, the proposed fencing algorithm produces a self-organizing formation while ensuring collision avoidance between any two agents, thereby satisfying the safety requirements of the fencing task.
+Moreover, the method accommodates dynamic participation, allowing the remaining agents to continue fencing the target around their collective center even when some agents join or leave the task.
+
+The remaining structure of this paper is as follows: 
+Section \ref{sec problem} describes the scenario and problem formulation for the fencing control of HELSs. 
+In Section \ref{sec result}, we present the design of the fencing control algorithm and provide a Lyapunov analysis of the controller.
+Next, numerical simulations and analysis are presented in Section \ref{sec simulation} to demonstrate the performance of the controller and its self-organizing properties during formation reorganization. 
+Finally, Section \ref{sec conclusion} summarizes the key findings and concludes the paper.
+
+
