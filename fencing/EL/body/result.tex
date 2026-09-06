@@ -26,7 +26,12 @@ To achieve accurate estimation of the unknown parameter \( \Theta_i \), the foll
 where \( \Lambda > 0 \) is the adaptation gain matrix, used to adjust the convergence speed of parameter estimation.
 
 \begin{theorem}
-	The HELS \eqref{eq hetero agent} governed by \eqref{eq:control_input} and \eqref{eq:regression} can fence the target under Assumptions A1--A3 and the persistently exciting (PE) condition.
+	Under Assumptions A1--A3 and A4, the HELS \eqref{eq hetero agent} governed by \eqref{eq:control_input} and \eqref{eq:regression} fences the target in the sense that:
+	\begin{enumerate}
+		\item[\textbf{P1}] $\limsup_{t\to\infty} \operatorname{dist}(q_0(t), \operatorname{co}(q(t))) \leq \frac{1}{k_\alpha N}\sum_{i\in\mathcal{N}} \limsup_{t\to\infty}\|\dot{s}_i(t)\|$;
+		\item[\textbf{P2}] $\|q_{ij}(t)\| > d$ for all $t \geq 0$, $i \neq j$;
+		\item[\textbf{P3}] The velocity error $\|\dot{q}_i(t) - \dot{q}_0(t)\|$ is ultimately bounded by $\sigma\sqrt{N}/k_\alpha$ where $\sigma = \max_i \sup_t \|\dot{s}_i(t)\|$.
+	\end{enumerate}
 \end{theorem}
 
 \noindent\textbf{Proof}
@@ -58,7 +63,7 @@ Taking the time derivative of \( V_1 \), and substituting the adaptation law \eq
 
 According to Theorem 2.5 in \cite{chen2015stabilization}, \( \dot{V_1} \leq 0 \) indicates that the system is globally asymptotically stable, i.e., the auxiliary value \( s_i \to 0 \).
 
-Moreover, since $\dot{V}_1 = -k\|s_i\|^2$, we have $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$. From the closed-loop dynamics, $\dot{s}_i$ can be shown to be uniformly bounded, which by Barbalat's lemma implies $\dot{s}_i \to 0$ as $t\to\infty$.
+Moreover, since $\dot{V}_1 = -k\|s_i\|^2$, we have $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$. From the closed-loop dynamics, $\dot{s}_i$ can be shown to be uniformly bounded, which by Barbalat's lemma implies $s_i \to 0$ as $t\to\infty$.
 
 
 
@@ -115,29 +120,16 @@ then we simplify to
 	=-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2+\sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\dot{s}_i.
 \end{equation*}
 
-Let
-\begin{equation*}\label{eq:h_t}
-	h(t)=\sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\dot{s}_i,
+Let $\sigma = \max_{i\in\mathcal{N}} \sup_{t\geq 0} \|\dot{s}_i(t)\|$, which is finite since $\dot{s}_i$ is uniformly bounded.
+Then
+\begin{equation*}\label{eq:V2_bound}
+	\dot{V_2} \leq -k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2 + \sigma\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|.
 \end{equation*}
-\begin{equation*}\label{eq:V2_dot_h}
-	\dot{V_2} =-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2+h(t),
+By Young's inequality $\sigma\|\dot{q}_{i0}\| \leq \frac{k_\alpha}{2}\|\dot{q}_{i0}\|^2 + \frac{\sigma^2}{2k_\alpha}$, we obtain
+\begin{equation*}\label{eq:V2_practical}
+	\dot{V_2} \leq -\frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2 + \frac{N\sigma^2}{2k_\alpha}.
 \end{equation*}
-\begin{equation*}\label{eq:W}
-	W=V_2-\int_0^t h(\tau) \, d\tau.
-\end{equation*}
-Since \( \dot{s}_i \to 0 \), i.e., it converges to 0 asymptotically, the 
-integral \(\int_0^t h(\tau) \, d\tau\) exists, and thus \(W\) is lower bounded.
-
-From the above equation,
-\begin{equation*}\label{eq:W_dot}
-	\dot{W} =-k_\alpha\sum_{i\in\mathcal{N}}\left\| \dot{q}_{i0} \right\|^2\leq 0.
-\end{equation*}
-According to the invariance principle,
-\(\dot{q}_{i0} \to 0 \)
-that is,
-\(\dot{q_i}  - \dot{q}_0 \to 0 \), the velocity of the multi-agent system will converge to the target velocity.
-
-Therefore, property (P3) is proved.
+Hence $\dot{V_2} \leq 0$ whenever $\sum_i\|\dot{q}_{i0}\|^2 > N\sigma^2/k_\alpha^2$, which implies that $\|\dot{q}_{i0}\|$ is ultimately bounded by $\sigma\sqrt{N}/k_\alpha$. That is, the velocity error $\|\dot{q}_i - \dot{q}_0\|$ is ultimately bounded, establishing property (P3).
 
 
 
@@ -173,9 +165,9 @@ Then
 	\ddot{\tilde{q}}=-k_\alpha \dot{\tilde{q}} -k_\alpha\tilde{q}+\frac{1}{N}\sum_{i\in\mathcal{N}}\dot{s}_i.
 \end{equation*}
 
-This equation is input-state stable (ISS) as $k_{\alpha}>0$. According to Step 1, \( \dot{s}_i \to 0 \). It implies that $\tilde{q}$ converges to zero as $t\to\infty$, i.e.,
-\begin{equation*}\label{eq:q_tilde_limit}
-	\lim_{t\to\infty}\tilde{q}(t)=0.
+This equation is input-state stable (ISS) as $k_{\alpha}>0$ with input $d(t)=\frac{1}{N}\sum_i\dot{s}_i(t)$. Since $\dot{s}_i$ is bounded, $d(t)$ is bounded. The ISS property gives
+\begin{equation*}\label{eq:q_tilde_bound}
+	\limsup_{t\to\infty} \|\tilde{q}(t)\| \leq \frac{1}{k_\alpha N}\sum_{i\in\mathcal{N}} \limsup_{t\to\infty} \|\dot{s}_i(t)\|.
 \end{equation*}
 It, together with the facts that
 \begin{equation*}\label{eq:q_tilde_meaning}
@@ -183,7 +175,7 @@ It, together with the facts that
 \end{equation*}
 indicates that
 \begin{equation*}
-	\lim_{t\to\infty}\operatorname{dist}\bigl(q_0(t),\operatorname{co}(q(t))\bigr)=0,
+	\limsup_{t\to\infty}\operatorname{dist}\bigl(q_0(t),\operatorname{co}(q(t))\bigr) \leq \frac{1}{k_\alpha N}\sum_{i\in\mathcal{N}} \limsup_{t\to\infty} \|\dot{s}_i(t)\|,
 \end{equation*}
 where $\operatorname{dist}(q_0,\operatorname{co}(q)) = \min_{\lambda_i\geq0,\sum\lambda_i=1} \|\sum_{i\in\mathcal{N}} \lambda_i q_i - q_0\|$ denotes the distance from the target to the convex hull of the agents.
 Thus, (P1) is proved.
@@ -199,4 +191,4 @@ Finally, contradiction is used to prove (P2). If the collision between agents $i
 \end{aligned}
 \]
 
-which implies a contradiction with the boundedness of $W$. Thus, the collision between any pair of agents is avoided and (P2) is proved. This completes the proof.
+which implies $V_2(T_0) = \infty$, contradicting the fact that $V_2(t)$ grows at most linearly on any finite time interval (from \eqref{eq:V2_practical}). Thus, the collision between any pair of agents is avoided and (P2) is proved. This completes the proof.

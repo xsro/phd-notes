@@ -27,7 +27,7 @@ where $q_i\in\mathbb{R}^p$ is the generalized coordinate, $M_i$ is the inertia m
 
 ## Controller 1: Integral APF
 
-**Requires PE condition:** Yes — the ISS argument for (P1) needs $\dot{s}_i\to0$, which requires $Y_i\tilde{\Theta}_i\to0$; without PE the parameter error does not vanish.
+**Requires PE condition:** No — the proof uses a practical stability argument (Young's inequality bound on $\dot{V}_2$) instead of the $W$ argument, avoiding the need for $\dot{s}_i\to0$. The velocity error $\|\dot{q}_i-\dot{q}_0\|$ is ultimately bounded by $\sigma\sqrt{N}/k_\alpha$ where $\sigma = \max_i \sup_t \|\dot{s}_i(t)\|$.
 
 ### Error Variables
 
@@ -69,7 +69,10 @@ where $\Lambda > 0$ is the adaptation gain matrix.
 
 ### Theorem
 
-> Under Assumptions A1–A3 and the PE condition (the signal $[\dot{q}_0^T,\ddot{q}_0^T]^T$ is sufficiently rich such that $\int_t^{t+T} Y_i^T Y_i\,d\tau \geq \alpha I$ for some $T>0$, $\alpha>0$), the HELS governed by the control law and adaptation law above achieves objectives P1–P3.
+> Under Assumptions A1–A3 and A4, the HELS governed by the control law and adaptation law above achieves objectives P1–P3 in the practical sense:
+> - P1: $\limsup_{t\to\infty} \operatorname{dist}(q_0(t), \operatorname{co}(q(t))) \leq \frac{1}{k_\alpha N}\sum_i \limsup \|\dot{s}_i(t)\|$
+> - P2: Collision avoidance $\|q_{ij}(t)\| > d$ for all $t \geq 0$
+> - P3: $\|\dot{q}_i(t) - \dot{q}_0(t)\|$ ultimately bounded by $\sigma\sqrt{N}/k_\alpha$
 
 ---
 
@@ -123,4 +126,4 @@ where $\Lambda > 0$ is the adaptation gain matrix.
 | Sliding var | $s_i = \dot{q}_i - \zeta_i$ | $s_i = \dot{q}_{i0} + k_\alpha q_{i0} - \phi_i$ |
 | Lyapunov $V_2$ | Includes $\frac12\sum_i\|\dot{q}_{i0}\|^2$ | Potential-only (no velocity term) |
 | Proof technique | $W = V_2 - \int h\,dt$ with Barbalat + ISS | Direct completion of squares |
-| **PE required?** | **Yes** — needed for $\dot{s}_i\to0$ in ISS argument | **No** — Barbalat on $\dot{V}$ gives $q_{i0}\to0$ directly |
+| **PE required?** | **No** — practical stability with Young's bound on $\dot{V}_2$ | **No** — Barbalat on $\dot{V}$ gives $q_{i0}\to0$ directly |
