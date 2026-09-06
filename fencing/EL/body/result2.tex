@@ -1,4 +1,5 @@
 \subsection{Controller 2 with Differential APF}
+\label{sec: controller2}
 
 To achieve the control objective, the following error variables and auxiliary variables are first defined.
 The position error \( {q}_{i0} = q_i - q_0 \) represents the position deviation between the follower and the target.
@@ -26,7 +27,7 @@ To achieve accurate estimation of the unknown parameter \( \Theta_i \), the foll
 where \( \Lambda > 0 \) is the adaptation gain matrix, used to adjust the convergence speed of parameter estimation.
 
 \begin{theorem}
-	The HELS \eqref{eq hetero agent} governed by \eqref{eq2:control_input} and \eqref{eq2:regression} can fence the target under Assumptions A1--A3 and the persistently exciting (PE) condition.
+	The HELS \eqref{eq hetero agent} governed by \eqref{eq2:control_input} and \eqref{eq2:regression} can fence the target under Assumptions A1--A3.
 \end{theorem}
 
 \noindent\textbf{Proof}
