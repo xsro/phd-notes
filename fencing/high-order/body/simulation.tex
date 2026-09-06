@@ -1,0 +1,170 @@
+\section{仿真}
+
+本节为前述讨论提供数值证据。
+仿真目的并非从数值上声称完整的安全定理，而是分离两个容易混淆的现象：
+围捕误差的收敛性与无碰集合的前向不变性。
+因此，我们对每个控制器在两种情形下进行测试：
+第一种是良性情形，具有充分的初始间距、适中的初始速度、较强的 APF 排斥力
+以及快速的滤波器；
+第二种是压力情形，智能体彼此迎面运动、排斥力较弱、滤波器较慢。
+压力情形旨在展示控制器在暂态后仍可能收敛，但此时已违反安全距离。
+
+\subsection{APF 滤波滑模设计}
+
+第一个仿真对应 APF 滤波滑模设计。
+使用四个异构阶的智能体：
+\[
+    (m_1,m_2,m_3,m_4)=(1,2,3,4)
+\]
+良性情形采用标称参数
+\[
+    d=1.25,\quad \mu=10,\quad k_r=50,
+    \quad \gamma_1=\cdots=\gamma_4=2.5,
+\]
+以及相对较大的滑模增益。
+压力情形保持相同的智能体阶和安全距离，但降低滤波带宽和反馈强度，
+并将第三阶和第四阶智能体初始化为近乎迎面的相对运动。
+
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation3/out/safe_case/weighted_center_distance.pdf}
+        \caption{仿真 3，良性情形}
+        \label{fig:sim3-safe-center}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation3/out/stress_case/weighted_center_distance.pdf}
+        \caption{仿真 3，压力情形}
+        \label{fig:sim3-stress-center}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation4/out/safe_case/weighted_center_distance.pdf}
+        \caption{仿真 4，良性情形}
+        \label{fig:sim4-safe-center}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation4/out/stress_case/weighted_center_distance.pdf}
+        \caption{仿真 4，压力情形}
+        \label{fig:sim4-stress-center}
+    \end{subfigure}
+    \caption{智能体加权中心到目标的距离。}
+    \label{fig:simulation-center-distance}
+\end{figure*}
+
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation3/out/safe_case/pairwise_distances.pdf}
+        \caption{仿真 3，良性情形}
+        \label{fig:sim3-safe-pairwise}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation3/out/stress_case/pairwise_distances.pdf}
+        \caption{仿真 3，压力情形}
+        \label{fig:sim3-stress-pairwise}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation4/out/safe_case/pairwise_distances.pdf}
+        \caption{仿真 4，良性情形}
+        \label{fig:sim4-safe-pairwise}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{../simulation/simulation4/out/stress_case/pairwise_distances.pdf}
+        \caption{仿真 4，压力情形}
+        \label{fig:sim4-stress-pairwise}
+    \end{subfigure}
+    \caption{智能体之间的成对距离。虚线为规定的安全距离。}
+    \label{fig:simulation-pairwise-distance}
+\end{figure*}
+
+结果如
+\cref{fig:simulation-center-distance,fig:simulation-pairwise-distance} 所示。
+在良性情形下，加权中心距离收敛到零，且所有成对距离保持在安全距离之上。
+最小智能体间距离为
+\[
+    \min_{i<j,t}\|p_i(t)-p_j(t)\|=1.593820>d=1.25 .
+\]
+因此，在此良性初始条件和足够响应的 APF 滤波器下，仿真同时满足围捕
+要求和数值避碰要求。
+
+然而，在压力情形下，同一控制器不再能保持安全性。
+加权中心误差最终收敛到较小值，但最小成对距离满足
+\[
+    \min_{i<j,t}\|p_i(t)-p_j(t)\|=0.000975<d=1.25 ,
+\]
+由智能体 $3$ 和 $4$ 在 $t\approx0.64$ 秒附近达到。
+因此，滤波滑模变量的收敛，或暂态后加权中心的收敛，并不意味着无碰集合
+是前向不变的。
+这与理论分析中的障碍完全相同：APF 项在到达高阶输入通道之前被滤波，
+因此当智能体以大相对速度或高阶惯性趋近边界时，奇异排斥效应可能来得太晚。
+
+\subsection{指令滤波反步设计}
+
+第二个仿真对应指令滤波反步尝试。
+使用五个智能体，其阶为
+\[
+    (m_1,m_2,m_3,m_4,m_5)=(3,3,3,4,4).
+\]
+良性情形使用较小的滤波时间常数和适中的初始速度。
+压力情形使用较慢的指令滤波器、较弱的排斥力以及近乎迎面的初始条件。
+该情形直接测试结果 4 中识别出的扰动项
+\[
+    r_i=e_{1,i}+\varepsilon_{1,i}
+\]
+
+对于良性情形，最小成对距离为
+\[
+    \min_{i<j,t}\|p_i(t)-p_j(t)\|=3.525914>d=1 .
+\]
+加权中心误差收敛到零，且目标在所有采样时刻保持在凸包内。
+这表明当理想的阶一 APF 运动被足够精确地跟踪时，
+即当残余 $r_i$ 保持较小且初始间距给控制器足够的反应时间时，
+指令滤波反步设计可以良好工作。
+
+对于具有 $100$ 秒时间 horizon 的压力情形，行为则非常不同。
+最小成对距离为
+\[
+    \min_{i<j,t}\|p_i(t)-p_j(t)\|=0.011129<d=1 ,
+\]
+在智能体 $1$ 和 $2$ 之间、约 $t=95.12$ 秒附近达到。
+在此运行中残余变得非常大，且沿实际滤波闭环的理想 APF 能量增加而不是
+保持单调。
+这在数值上吻合结果 4 的估计，
+\[
+    \dot W
+    =
+    -\sum_i\|\kappa_i p_{i0}-\phi_i\|^2
+    +\sum_i(\kappa_i p_{i0}-\phi_i)^T r_i ,
+\]
+其中第二项可以主导标称耗散。
+
+\subsection{讨论}
+
+这些仿真表明，仅靠跟踪变量的收敛性之外，还需要额外条件才能保证安全性。
+具体而言，良性情形具有以下共同特征：
+\begin{itemize}
+    \item 初始构型与碰撞边界有明显的距离裕量；
+    \item 初始相对速度和高阶状态并非激进地指向边界；
+    \item APF 或指令滤波器足够快，使得排斥项不会被过度延迟；
+    \item 反馈增益足够大，使得暂态期间实现的阶一 APF 残余较小；
+    \item 数值屏障相对于趋近速度足够强。
+\end{itemize}
+在此条件下，轨迹保持在安全集合的紧致子集内，因此 APF 导数和滤波命令
+是正则的。
+闭环行为接近理想的阶一 APF 运动，且数值上观察到避碰。
+
+压力情形恰恰违反了这些非正式条件。
+智能体可以以高于高阶闭环将奇异 APF 信号转化为位置级分离的速度
+趋近安全边界。
+因此，控制器在暂态后仍可能恢复收敛，但安全性已经丧失。
+因此，这些仿真支持本笔记的主要结论：基于 APF 的高阶跟踪控制器在有利
+情形下可以满足围捕，但严格的避碰保证需要额外的前向不变性机制，
+例如直接控制碰撞边界的高阶 CBF 层或障碍李雅普诺夫设计。
