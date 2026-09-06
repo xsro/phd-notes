@@ -1,0 +1,126 @@
+\section{问题描述}
+
+我们考虑一个在 $\RR^n$ 中由 $N$ 个智能体组成的群体。
+令 $\NN=\{1,\dots,N\}$ 表示智能体索引集合。
+每个智能体的位置记为 $p_i\in\RR^n$，其动力学由 $m_i$ 阶系统建模
+\begin{equation}
+    p_i^{(m_i)}=u_i+d_i,
+\end{equation}
+目标的位置记为 $p_0\in\RR^n$，并记
+$p_{ij}=p_i-p_j$，$p_{i0}=p_i-p_0$。
+
+\begin{definition}[围捕性质]
+    （改编自 \cite{chenCooperativeTargetfencingProtocol2019}）
+    自组织围捕问题被求解，如果
+    \begin{enumerate}
+        \item[\textbf{P1}] \textbf{凸包围捕：}  $p_0(\infty)\in \mathrm{co}(p(\infty))$；
+        \item[\textbf{P2}] \textbf{避碰：}  对给定的安全距离 $d>0$，
+              $\| p_{ij}(t) \| > d$，$i, j \in \NN$，$j \neq i$，$\forall ~ t \ge 0$；
+        \item[\textbf{P3}] \textbf{速度匹配（刚性编队）：}
+              $\lim_{t\to\infty}\|v_i-v_0\|=0$，$\forall i\in\NN$。
+    \end{enumerate}
+
+    这里，
+        $v_i=\dot p_i$，$v_0=\dot p_0$，且
+        $
+        \mathrm{co}(p) = \left\{ \sum_{i=1}^N \lambda_i p_i
+        : \lambda_i \geq 0, \forall ~ i \in \NN ~ \textrm{且} \sum_{i=1}^N \lambda_i = 1 	\right\}
+        $
+        是由所有智能体张成的凸包，
+        $\mu(S)$ 是集合 $S$ 的勒贝格测度。
+        在 $\RR^2$ 中它是凸多边形的面积，在 $\RR^3$ 中它是多面体的体积。
+\end{definition}
+
+
+
+\subsection{APF 函数}
+
+下文尝试中使用的排斥型 APF 项为
+\[
+    \phi_i^r = \sum_{j \in \NN, j\neq i} \alpha_r(\| p_{ij} \|)
+                                     \frac{p_{ij}}{\|p_{ij}\|}
+    = \sum_{j \in \NN_i(t)} \alpha_r(\| p_{ij} \|)
+                                     \frac{p_{ij}}{\|p_{ij}\|},
+\]
+其中
+\[
+    \NN_i(t)=\{j\in\NN\setminus\{i\}:\|p_{ij}(t)\|<\mu\}
+\]
+是激活邻域集合。
+连续函数 $\alpha_r: (d, \infty) \to [0, \infty)$ 满足
+\begin{enumerate}
+    \item[A1.] $\lim_{s \to d^+} \int_s^\mu \alpha_r(\sigma)\mathrm{d}\sigma = +\infty$；
+    \item[A2.] $\alpha_r(s) = 0$，$\forall ~ s \in [\mu, \infty)$。
+\end{enumerate}
+下文中我们令 $\phi_i=\phi_i^r$。
+由于成对项是反对称的，在安全集合
+$\{p:\|p_{ij}\|>d,\ i\ne j\}$ 上有 $\sum_{i=1}^N\phi_i=0$。
+
+\subsection{APF 函数的微分}
+
+为说明为何直接对原始 APF 项求导是不可取的，考虑一个邻域集合固定且
+所有成对距离均大于 $d$ 的时间区间。
+在本段中，额外假设 $\alpha_r$ 在 $(d,\mu)$ 上是 $C^2$ 的；
+这比 A1--A2 更强，仅用于展示形式导数。
+令
+\[
+    v_{ij}:=\dot p_{ij},\quad
+    a_{ij}:=\ddot p_{ij},
+\]
+\[
+    r_{ij}:=\|p_{ij}\|,
+\]
+并定义
+\[
+    \beta(r):=\frac{\alpha_r(r)}{r}.
+\]
+则
+\[
+    \phi_i
+    =\sum_{j\in\mathbb N_i}\alpha_r(r_{ij})
+      \frac{p_{ij}}{r_{ij}}
+    =\sum_{j\in\mathbb N_i}\beta(r_{ij})p_{ij}.
+\]
+对每一对定义雅可比矩阵
+\[
+    A_{ij}
+    :=\beta(r_{ij})I
+      +\frac{\beta'(r_{ij})}{r_{ij}}p_{ij}p_{ij}^{T}.
+\]
+则一阶导数可简洁地写作
+\[
+    \dot\phi_i
+    =\sum_{j\in\mathbb N_i}A_{ij}v_{ij}.
+\]
+二阶导数已明显更复杂：
+\[
+    \ddot\phi_i
+    =\sum_{j\in\mathbb N_i}
+    \left(A_{ij}a_{ij}+\dot A_{ij}v_{ij}\right),
+\]
+其中，记 $r=r_{ij}$，$p=p_{ij}$，$v=v_{ij}$ 且
+$\dot r=p^T v/r$，
+\[
+\begin{aligned}
+    \dot A_{ij}
+    =&\ \beta'(r)\dot r\, I
+      +\frac{\beta'(r)}{r}
+       \left(vp^T+pv^T\right)\\
+     &+\frac{\beta''(r)r-\beta'(r)}{r^2}
+       \dot r\,pp^T .
+\end{aligned}
+\]
+因此，计算 $\dot\phi_i$ 需要所有激活邻域的相对速度以及导数 $\alpha_r'$。
+计算 $\ddot\phi_i$ 进一步需要相对加速度、$\alpha_r''$ 以及
+相对位置与速度的乘积。
+对于高阶反步，仍需要 $\phi_i$ 的更高阶导数。
+
+这在控制器中难以使用，原因如下。
+首先，邻域集合 $\mathbb N_i(t)$ 在成对距离跨越影响半径时会发生变化，
+因此 $\phi_i$ 通常仅分段光滑。
+其次，在安全边界 $r_{ij}=d$ 附近，$\alpha_r$ 及其导数可能变得奇异，
+使得 $\dot\phi_i$ 和 $\ddot\phi_i$ 在数值上病态或无界。
+第三，$\ddot\phi_i$ 依赖于相对加速度，其中包含其他智能体的控制和干扰；
+这并非纯局部的位置信息。
+最后，要求这些导数与 APF 围捕的原始动机（即基于主要相对位置的
+简单分布式律）相冲突。

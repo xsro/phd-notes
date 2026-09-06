@@ -1,0 +1,189 @@
+\section{基于 APF 滤波的全状态反馈}
+
+\subsection{APF 滤波}
+
+定义 $\bar{m}=\max_{i\in\NN} m_i$。
+我们采用如下 APF 滤波：
+\begin{align}
+    &\dot{\Phi}_{1,i}=-\gamma_1 \Phi_{1,i} + \Phi_{2,i},\\
+    &\dot{\Phi}_{k,i}=-\gamma_k \Phi_{k,i} + \Phi_{k+1,i},
+      \quad k=2,\dots,\bar{m}-1,\\
+    &\dot{\Phi}_{\bar{m},i}=-\gamma_{\bar{m}} \Phi_{\bar{m},i} + \phi_i.
+\end{align}
+其中 $\Phi_{k,i}(0)=\mathbf{0}$ 对所有 $k=1,\dots,\bar{m}$ 和 $i\in\NN$ 成立。
+则我们有
+\begin{equation}
+    \prod_{k=1}^{\bar{m}}\left(\frac{\dd}{\dd t}+\gamma_k\right)\Phi_{1,i}=\phi_i,
+\end{equation}
+等价地，
+\begin{equation}
+    \Phi_{1,i}^{(\bar{m})}+\sum_{r=0}^{\bar{m}-1} c_r\,\Phi_{1,i}^{(r)}=\phi_i,
+\end{equation}
+其中 $c_r$ 是多项式
+\begin{equation}
+    \prod_{k=1}^{\bar{m}} (s+\gamma_k)=s^{\bar{m}}+\sum_{r=0}^{\bar{m}-1} c_r s^r
+\end{equation}
+的系数。
+$\Phi_{1,i}$ 可视为 $\phi_i$ 经过传递函数 $G(s)$
+\begin{equation}
+    G(s)=\frac{1}{\prod_{k=1}^{\bar{m}} (s+\gamma_k)}.
+\end{equation}
+这里 $s$ 是拉普拉斯变量。
+若 $\phi_i$ 收敛到常向量 $\phi_i^{ss}$，则 $\Phi_{1,i}$ 收敛到
+\begin{equation}
+    \Phi_{1,i}^{ss}=\frac{1}{\prod_{k=1}^{\bar{m}} \gamma_k}\phi_i^{ss}.
+\end{equation}
+此外，由于 $\sum_i\phi_i=0$ 且所有滤波器均自零启动，
+\begin{equation}
+    \sum_{i=1}^N \Phi_{k,i}(t)=0,\qquad k=1,\dots,\bar m,\quad t\ge0.
+\end{equation}
+
+\subsection{有限时间控制器设计}
+
+令 $\kappa_i>0$ 并记 $x_i=\kappa_i p_{i0}-\Phi_{1,i}$。
+求导得
+\begin{equation}
+    x_i^{(m_i)}=\kappa_i  u_i+ \kappa_i  d_i- \kappa_i p_0^{(m_i)} - \Phi_{1,i}^{(m_i)}
+\end{equation}
+
+为使滑模流形上的约化动力学对任意阶 $m_i$ 渐近稳定，
+我们采用二项式系数选择滑模变量：
+\begin{equation}
+    s_i=\sum_{k=0}^{m_i-1}\binom{m_i-1}{k}x_i^{(k)},
+    \qquad \delta_i=d_i-p_0^{(m_i)}.
+\end{equation}
+其导数为
+\begin{align}
+\dot{s}_i
+&= \sum_{k=0}^{m_i-1}\binom{m_i-1}{k}x_i^{(k+1)} \notag\\
+&= x_i^{(m_i)}
+   +\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}x_i^{(k)}\\
+&= \kappa_i  u_i+\kappa_i  \delta_i-\Phi_{1,i}^{(m_i)} \notag\\
+&\quad
+   +\kappa_i \sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}p_{i0}^{(k)}
+   \notag\\
+&\quad
+   -\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}\Phi_{1,i}^{(k)},
+\end{align}
+其中利用了 $x_i^{(m_i)}=\kappa_i u_i+\kappa_i\delta_i-\Phi_{1,i}^{(m_i)}$ 以及
+对 $k=1,\dots,m_i-1$ 的 $x_i^{(k)}=\kappa_i p_{i0}^{(k)}-\Phi_{1,i}^{(k)}$。
+定义前馈项
+\begin{align}
+    u_i^{eq}= \Phi_{1,i}^{(m_i)}
+    &-\kappa_i\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}p_{i0}^{(k)}
+    \notag\\
+    &+\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}\Phi_{1,i}^{(k)}.
+\end{align}
+以 $u_i=\kappa_i^{-1}(u_i^{STA}+u_i^{eq})$，已知项被精确抵消，
+得到 $\dot{s}_i=u_i^{STA}+\kappa_i\delta_i$。
+我们随后采用控制器
+\begin{align}
+    u_i & =\frac{1}{\kappa_i}\,u_i^{STA}+\frac{1}{\kappa_i}\,u_i^{eq},\\
+    u_i^{STA}& =-k_{a,i} \sig(s_i)^{1/2} + w_i,\\
+    \dot{w}_i& =-k_{b,i} \sgn(s_i).
+\end{align}
+
+超螺旋算法（STA）~\cite{seeberStabilityProofWellestablished2017}
+按分量方式应用。
+为保证滑模变量的精确有限时间收敛，匹配干扰
+$\xi_i(t):=\kappa_i\delta_i(t)$ 必须有有界导数。
+因此我们假设 $\delta_i$ 是利普希茨的，且满足
+$\sup_t\|\dot\delta_i(t)\|\le \bar L_{1,i}$，从而
+$\|\dot\xi_i(t)\|\le L_{1,i}:=\kappa_i\bar L_{1,i}$。
+增益 $k_{a,i},k_{b,i}$ 按此界选取以满足标准 STA 充分条件。
+
+\begin{theorem}[有限时间滤波 APF 跟踪]
+假设 A1--A2 在安全集合
+$\Omega_d=\{p:\|p_{ij}\|>d,\ i\ne j\}$ 上成立，
+$\kappa_i>0$，
+对所有 $k=1,\dots,\bar m$ 有 $\Phi_{k,i}(0)=\mathbf{0}$，且
+$\delta_i(t)=d_i(t)-p_0^{(m_i)}(t)$ 是利普希茨的，
+满足对每个 $i\in\NN$ 有
+$\sup_t\|\dot\delta_i(t)\|\le \bar L_{1,i}$。
+令 $\gamma_k>0$ 并选择
+\begin{align}
+    u_i & =\frac{1}{\kappa_i}\,u_i^{STA}+\frac{1}{\kappa_i}\,u_i^{eq},\\
+    u_i^{STA}& =-k_{a,i} \sig(s_i)^{1/2} + w_i,\\
+    \dot{w}_i& =-k_{b,i} \sgn(s_i),
+\end{align}
+其中 $\sig(y)^{1/2}=|y|^{1/2}\sgn(y)$ 按分量定义。
+若 $k_{a,i},k_{b,i}$ 满足针对界
+$L_{1,i}=\kappa_i\bar L_{1,i}$ 的 STA 有限时间条件，
+则 $s_i$ 在有限时间内到达零，且 $x_i$ 在滑模流形上指数收敛到零。
+ consequently，
+\begin{equation}
+    \sum_{i=1}^N \kappa_i p_{i0}(t)\to0.
+\end{equation}
+因此智能体的 $\kappa$ 加权中心渐近跟踪目标。
+此外，若相对编队收敛且 $\dot\Phi_{1,i}(t)\to0$，则 P1 和 P3 成立。
+若安全集合 $\Omega_d$ 是前向不变的，则 P2 也成立，从而实现目标围捕目标。
+\end{theorem}
+
+\begin{proof}
+对每个智能体 $i$，微分 $s_i=\sum_{k=0}^{m_i-1}\binom{m_i-1}{k}x_i^{(k)}$
+并利用 $x_i=\kappa_i p_{i0}-\Phi_{1,i}$ 得
+\begin{align}
+\dot s_i
+&=\kappa_i u_i+\kappa_i\delta_i-\Phi_{1,i}^{(m_i)} \notag\\
+&\quad
+   +\kappa_i\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}p_{i0}^{(k)}
+   -\sum_{k=1}^{m_i-1}\binom{m_i-1}{k-1}\Phi_{1,i}^{(k)}.
+\end{align}
+代入 $u_i=\kappa_i^{-1}(u_i^{STA}+u_i^{eq})$ 精确抵消前馈项，得到
+\begin{align}
+\dot s_i
+&=u_i^{STA}+\kappa_i\delta_i
+ =-k_{a,i}\sig(s_i)^{1/2}+w_i+\xi_i(t),\\
+\dot w_i&=-k_{b,i}\sgn(s_i),
+\end{align}
+其中 $\xi_i(t)=\kappa_i\delta_i(t)$。
+
+由于 $\delta_i$ 是利普希茨的且 $\|\dot\delta_i\|\le\bar L_{1,i}$，
+匹配干扰满足 $\|\dot\xi_i(t)\|\le L_{1,i}:=\kappa_i\bar L_{1,i}$。
+由超螺旋算法的有限时间稳定性定理（见例如~\cite{seeberStabilityProofWellestablished2017}
+及其参考文献），满足有效 STA 充分条件的增益使二阶滑模集合
+$\{s_i=0,\dot s_i=0\}$ 在有限时间内可达。
+因此存在 $T_i>0$ 使得对所有 $t\ge T_i$ 有 $s_i(t)=0$。
+
+一旦 $s_i(t)\equiv 0$ 在 $[T_i,\infty)$ 上成立，运动被约束在滑模流形上。
+由 $s_i$ 的构造，
+\[
+0=s_i=\sum_{k=0}^{m_i-1}\binom{m_i-1}{k}x_i^{(k)}
+   =\Bigl(\frac{\mathrm d}{\mathrm dt}+1\Bigr)^{m_i-1}x_i,
+\]
+对 $m_i=1$，直接给出 $x_i=0$。
+对 $m_i\ge2$，给出 $(D+1)^{m_i-1}x_i=0$，其中 $D=\mathrm d/\mathrm dt$；
+所有根均等于 $-1$，因此约化动力学指数稳定。
+故 $x_i(t)\to0$，且对 $m_i\ge2$，$x_i^{(k)}(t)\to0$，
+$k=1,\dots,m_i-1$。
+ consequently，
+\[
+\kappa_i p_{i0}=\Phi_{1,i}+x_i\longrightarrow \Phi_{1,i}.
+\]
+
+对关系 $x_i=\kappa_i p_{i0}-\Phi_{1,i}$ 在所有智能体上求和并利用
+$\sum_i\Phi_{1,i}(t)=0$ 得
+\[
+    \sum_{i=1}^N\kappa_i p_{i0}(t)=\sum_{i=1}^Nx_i(t)\to0.
+\]
+因此，以 $\lambda_i=\kappa_i/\sum_{j=1}^N\kappa_j$，有
+\[
+    \sum_{i=1}^N\lambda_i p_i(t)-p_0(t)\to0.
+\]
+由于 $\lambda_i>0$ 且 $\sum_i\lambda_i=1$，加权中心对每个 $t$ 均属于
+$\mathrm{co}(p(t))$。
+若相对编队收敛，这蕴含极限凸包围捕性质 P1。
+
+最后，若 $\dot\Phi_{1,i}(t)\to0$，则
+$\kappa_i(v_i-v_0)=\dot x_i+\dot\Phi_{1,i}\to0$，从而证明 P3。
+P2 由所假设的 $\Omega_d$ 前向不变性得出。
+证毕。
+\end{proof}
+
+\begin{remark}
+A1--A2 定义了一个障碍型排斥场，但对于目前的高阶闭环，
+它们本身并不能证明 $\Omega_d$ 的前向不变性。
+严格的全时避碰保证需要额外的不变性论证，例如控制障碍函数或
+障碍李雅普诺夫条件。
+上文的有限时间跟踪证明独立于该额外的安全证书。
+\end{remark}
