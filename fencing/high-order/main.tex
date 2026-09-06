@@ -1,0 +1,75 @@
+\documentclass[twocolumn]{IEEEtran}
+\usepackage{ctex}
+\usepackage{geometry}
+\geometry{a4paper, left=2cm, right=2cm, top=1cm, bottom=1cm}
+
+
+%--------------------数学环境-----------------------------------------
+\usepackage{amssymb,amsmath,latexsym,amsfonts,mathtools}
+\usepackage{amsthm}
+
+\newcommand{\NN}[0]{\mathbb{N}}
+\newcommand{\RR}[0]{\mathbb{R}}
+\newcommand{\KK}[0]{\mathbb{K}}
+
+\newcommand{\norm}[1]{\left\Vert #1 \right\Vert}
+
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\sig}{\operatorname{sig}}
+\newcommand{\Sgn}{\operatorname{Sgn}}
+\newcommand{\SGN}{\operatorname{SGN}}
+\newcommand{\sat}{\operatorname{sat}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\dd}{\operatorname{d}}
+\newcommand{\trunc}{\operatorname{trunc}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
+
+
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{cleveref}
+
+
+
+\title{异构高阶系统的目标围捕控制难点}
+\author{刘程}
+
+
+
+\begin{document}
+\maketitle
+    \begin{abstract}
+        本笔记研究异构高阶智能体自组织目标围捕控制为何变得困难。
+        对于一阶和二阶系统，人工势场（APF）项通常可以直接嵌入闭环动力学中，
+        从而利用清晰的李雅普诺夫或障碍论证来支持凸包围捕和避碰。
+        然而，对于异构高阶系统，同样的直觉并不能直接迁移：
+        滤波、积分或反步变换可能会保留围捕中心关系，同时破坏全时避碰所需的
+        障碍能量结构。
+        我们记录了若干自然的尝试，包括基于积分的设计、APF滤波滑模设计、
+        精确反步尝试以及指令滤波反步尝试。
+        分析澄清了哪些性质可以被证明、哪些主张仍缺乏支撑，
+        以及要实现完整的围捕控制器，可能还需要结合高阶跟踪机制与
+        显式的安全性证明（如障碍李雅普诺夫函数）。
+    \end{abstract}
+
+    \input{body/introduction.tex}
+    \input{body/problem.tex}
+
+    \input{body/result1.tex}
+    \input{body/result2.tex}
+
+    \input{body/result3.tex}
+    \input{body/result4.tex}
+
+    % \input{body/simulation.tex}
+
+    \input{body/conclusion.tex}
+
+    \bibliographystyle{plain}
+	\bibliography{main.bib}
+
+\end{document}

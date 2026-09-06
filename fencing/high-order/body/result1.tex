@@ -1,0 +1,227 @@
+\section{基于积分的全状态反馈}
+
+本节完成基于积分的思想。
+主要目的是在不预先规定固定编队的情况下获得凸包围捕。
+缺点也很明显：由于 APF 项被反复积分，所得的凸包可能持续扩大。
+只有当围捕要求被理解为目标包含而非有界刚性编队时，这才是可接受的。
+
+\subsection{公共积分 APF 参考量}
+
+定义
+\[
+    \bar m=\max_{i\in\NN}m_i.
+\]
+为每个智能体引入积分链
+\begin{align}
+    \dot\eta_{1,i}&=\phi_i,\qquad \eta_{1,i}(0)=0,\\
+    \dot\eta_{\ell,i}&=\eta_{\ell-1,i},\qquad
+    \eta_{\ell,i}(0)=0,\quad \ell=2,\dots,\bar m.
+\end{align}
+等价地，
+\[
+    \eta_{\ell,i}(t)=I^\ell\phi_i(t)
+    =\int_0^t\frac{(t-\tau)^{\ell-1}}{(\ell-1)!}\phi_i(\tau)\,\mathrm d\tau .
+\]
+期望的相对位置选为公共的 $\bar m$ 重积分
+\[
+    p_{i0}^{d}:=\eta_{\bar m,i}.
+\]
+这个公共积分阶数很重要。
+由于 APF 成对项是反对称的，
+\[
+    \sum_{i=1}^{N}\phi_i=0.
+\]
+在积分链初始条件为零的情况下，这给出
+\[
+    \sum_{i=1}^{N}\eta_{\ell,i}(t)=0,\qquad
+    \ell=1,\dots,\bar m,\quad t\ge0.
+\]
+因此，
+\[
+    \sum_{i=1}^{N}p_{i0}^{d}(t)=0.
+\]
+如果 $p_{i0}$ 跟踪 $p_{i0}^d$，则目标渐近地成为智能体的算术中心，
+因此位于其凸包内部。
+
+\subsection{跟踪误差与滑模变量}
+
+令
+\[
+    e_i:=p_{i0}-p_{i0}^{d}
+        =p_{i0}-\eta_{\bar m,i}.
+\]
+对 $k=0,\dots,m_i$，定义
+\[
+    (p_{i0}^{d})^{(k)}
+    =
+    \begin{cases}
+        \eta_{\bar m-k,i}, & 0\le k<\bar m,\\
+        \phi_i, & k=\bar m,
+    \end{cases}
+\]
+其中仅需 $k\le m_i\le\bar m$。因此
+\[
+    e_i^{(m_i)}
+    =u_i+d_i-p_0^{(m_i)}-(p_{i0}^{d})^{(m_i)}.
+\]
+
+选择系数 $a_{i,0},\dots,a_{i,m_i-2}$ 使得
+\[
+    \lambda^{m_i-1}
+    +a_{i,m_i-2}\lambda^{m_i-2}
+    +\cdots+a_{i,0}
+\]
+是赫尔维茨的。
+对于 $m_i=1$，下述求和项为空，我们令 $s_i=e_i$。
+对于 $m_i\ge2$，定义
+\[
+    s_i=e_i^{(m_i-1)}
+    +\sum_{k=0}^{m_i-2}a_{i,k}e_i^{(k)}.
+\]
+
+\subsection{控制器}
+
+假设干扰有界：
+\[
+    \|d_i(t)\|\le\bar d_i .
+\]
+选择 $c_i>0$ 和 $\rho_i>\bar d_i$。控制器为
+\begin{equation}\label{eq:int-controller}
+\begin{aligned}
+    u_i
+    =&\ p_0^{(m_i)}+(p_{i0}^{d})^{(m_i)}
+       -\sum_{k=0}^{m_i-2}a_{i,k}e_i^{(k+1)}\\
+     &-c_i s_i-\rho_i\operatorname{sgn}(s_i).
+\end{aligned}
+\end{equation}
+对于 $m_i=1$，求和项不存在且 $s_i=e_i$。
+
+将~\eqref{eq:int-controller} 代入 $s_i$ 的导数得
+\[
+    \dot s_i=-c_i s_i-\rho_i\operatorname{sgn}(s_i)+d_i.
+\]
+取 $V_{s,i}=\frac12\|s_i\|^2$，
+\[
+    \dot V_{s,i}
+    \le -c_i\|s_i\|^2-(\rho_i-\bar d_i)\|s_i\|.
+\]
+因此 $s_i$ 在有限时间内到达零，并在 Filippov 意义下保持在其上。
+在滑模流形上，
+\[
+    e_i^{(m_i-1)}
+    +\sum_{k=0}^{m_i-2}a_{i,k}e_i^{(k)}=0,
+\]
+由系数的赫尔维茨选择，该系统指数稳定。
+因此
+\[
+    e_i(t)\to0,\qquad
+    e_i^{(k)}(t)\to0,\quad k=1,\dots,m_i-1.
+\]
+
+\subsection{凸包围捕性质}
+
+由于 $e_i=p_{i0}-p_{i0}^{d}$ 且 $\sum_i p_{i0}^{d}=0$，我们有
+\[
+    \sum_{i=1}^{N}p_{i0}(t)=\sum_{i=1}^{N}e_i(t)\to0.
+\]
+等价地，
+\[
+    p_0(t)-\frac1N\sum_{i=1}^{N}p_i(t)\to0.
+\]
+因此目标收敛到智能体的算术中心。
+由于 $1/N\ge0$ 且 $\sum_i1/N=1$，算术中心属于 $\mathrm{co}(p(t))$。
+故
+\[
+    \mathrm{dist}\bigl(p_0(t),\mathrm{co}(p(t))\bigr)\to0.
+\]
+在此意义上，基于积分的控制器实现了凸包围捕要求。
+
+\subsection{为何凸包可能扩展}
+
+参考量 $p_{i0}^{d}=\eta_{\bar m,i}=I^{\bar m}\phi_i$ 是由排斥场驱动的积分链。
+即使 $\phi_i$ 保持有界或收敛到非零向量，其重复积分可能随时间多项式增长。
+因此 $p_{i0}$ 可以无界增长，同时仍满足
+\[
+    \sum_i p_{i0}\to0.
+\]
+从几何上看，智能体可能沿相反方向离目标越来越远，
+因此凸包无限扩展。
+目标仍位于凸包内，因为它保持在智能体的算术中心附近，
+但编队不是有界的或刚性的。
+
+\subsection{为何避碰仍不保证}
+
+基于积分的设计仅通过参考量
+\[
+    p_{i0}^{d}=I^{\bar m}\phi_i
+\]
+使用排斥场。
+因此跟踪证明给出
+\[
+    p_{i0}-I^{\bar m}\phi_i\to0,
+\]
+但它不能直接证明安全集合
+\[
+    \Omega_d=\{p:\|p_{ij}\|>d,\ i\ne j\}
+\]
+的前向不变性。
+难点在于 $\phi_i$ 的奇异性可能被积分削弱。
+如果一对智能体在有限时间 $T$ 处接近边界，则 $\phi_i(t)$ 可能当
+$t\to T^-$ 时爆破，但 $I^{\bar m}\phi_i(t)$ 在奇异性可积时
+仍可保持有限。
+例如，
+\[
+    \phi_i(t)\sim\frac{1}{\sqrt{T-t}}
+\]
+无界，但其时间积分在 $[0,T]$ 上有限。
+因此不能论证碰撞蕴含 $I^{\bar m}\phi_i\to\infty$，
+进而与跟踪误差的有界性矛盾。
+
+有人可能会问，对 $\alpha_r$ 施加更强的条件是否能解决此问题。
+假设 $\alpha_r(s)\to+\infty$ 当 $s\to d^+$ 时可任意快。
+仅靠这一点仍然不够。
+事实上，对于任意有限值的递增奇异函数 $\alpha_r$，
+可以构造一个趋近速率 $q(t)>0$，当 $t\to T^-$ 时 $q(t)\to0$，使得
+\[
+    \alpha_r(d+q(t))=\frac{1}{\sqrt{T-t}},
+\]
+在 $[0,T]$ 上可积。
+因此 $\alpha_r$ 的爆破速率本身不能保证 $\phi_i$ 或其重复积分
+沿每个趋近安全边界的轨迹都是不可积的。
+
+更强的 $\alpha_r$ 仅当同时附加对趋近速率的界时才可能有帮助。
+例如，若预先已知在首次碰撞时间附近有
+\[
+    \|p_{ij}(t)\|-d\le C(T-t)^\beta
+\]
+并选择
+\[
+    \alpha_r(d+q)\ge \frac{c}{q^a},
+\]
+则 $\alpha_r(\|p_{ij}(t)\|)$ 的行为至少为
+$(T-t)^{-a\beta}$。
+当 $a\beta\ge1$ 时这是不可积的。
+然而，这种趋近速率估计本身是一个安全性/动力学命题，
+并非 A1--A2 的推论。
+
+因此，仅仅加快 $\alpha_r$ 的奇异性并不能完成证明。
+要获得严格的全时避碰结果，仍需要显式的不变性论证，
+例如对 $U(p)$ 的障碍李雅普诺夫估计或对
+\[
+    h_{ij}(p)=\|p_{ij}\|^2-d^2
+\]
+的高阶 CBF 条件。
+
+\begin{remark}
+该算法作为凸包围捕的可行性演示是有用的：
+目标可被保持在自组织的凸包内，而无需分配标签或多边形。
+然而，它本身并不给出刚性速度匹配性质 P3。
+事实上，
+\[
+    \dot p_{i0}\to\dot p_{i0}^{d}=\eta_{\bar m-1,i},
+\]
+这不一定收敛到零。
+此外，避碰仍需要额外的安全论证，如障碍能量证明或 CBF 层。
+因此，该设计满足宽松的包含部分围捕要求，但它不是令人满意的
+有界刚性编队控制器。
+\end{remark}

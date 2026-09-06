@@ -1,0 +1,253 @@
+\section{指令滤波反步尝试}
+
+本节尝试通过指令滤波反步来实现阶一 APF 运动
+\[
+    \dot{\bm p}_{i0}= -\kappa_i\bm p_{i0}+\bm\phi_i
+\]
+目的是避免反复微分 $\bm\phi_i$。
+
+\subsection{理想的阶一 APF 运动}
+
+定义
+\[
+    \bm\psi_i := -\kappa_i\bm p_{i0}+\bm\phi_i .
+\]
+若相对位置动力学可直接设为 $\dot{\bm p}_{i0}=\bm\psi_i$，
+则加权 APF 能量
+\[
+    W(\bm p)
+    :=\frac12\sum_{i=1}^{N}\kappa_i\|\bm p_{i0}\|^2+U(\bm p),
+    \qquad
+    \frac{\partial U}{\partial \bm p_i}=-\bm\phi_i,
+\]
+将满足，利用 $\sum_i\bm\phi_i=0$，
+\[
+\begin{aligned}
+    \dot W
+    &=\sum_i\kappa_i\bm p_{i0}^{T}\dot{\bm p}_{i0}
+      -\sum_i\bm\phi_i^T\dot{\bm p}_i\\
+    &=\sum_i\kappa_i\bm p_{i0}^{T}
+      (-\kappa_i\bm p_{i0}+\bm\phi_i)
+      -\sum_i\bm\phi_i^T
+      (\dot{\bm p}_0-\kappa_i\bm p_{i0}+\bm\phi_i)\\
+    &=-\sum_i\|\kappa_i\bm p_{i0}-\bm\phi_i\|^2\le0.
+\end{aligned}
+\]
+因此理想的阶一运动具有直接的障碍能量论证。
+由于 $U(\bm p)$ 在碰撞边界处爆破，$W$ 的有界性蕴含避碰。
+
+\subsection{指令滤波器}
+
+对 $m_i$ 阶相对链，定义
+\[
+    \bm z_{1,i}=\bm p_{i0},\quad
+    \bm z_{r,i}=\bm p_{i0}^{(r-1)},\quad r=2,\dots,m_i.
+\]
+则
+\[
+    \dot{\bm z}_{r,i}=\bm z_{r+1,i},\quad r=1,\dots,m_i-1,
+    \qquad
+    \dot{\bm z}_{m_i,i}=\bm u_i+\bm\delta_i,
+\]
+其中 $\bm\delta_i=\bm d_i-\bm p_0^{(m_i)}$。
+
+第一个指令滤波器由原始 APF 命令 $\bm\psi_i$ 驱动：
+\[
+    \tau_{1,i}\dot{\bm\chi}_{1,i}
+    =-\bm\chi_{1,i}+\bm\psi_i,\qquad \tau_{1,i}>0.
+\]
+第一个实际导数的跟踪误差为
+\[
+    \bm e_{1,i}:=\bm z_{2,i}-\bm\chi_{1,i}.
+\]
+对 $r=1,\dots,m_i-2$，定义原始虚拟命令
+\[
+    \bar{\bm\chi}_{r+1,i}
+    :=\dot{\bm\chi}_{r,i}
+      -a_{r,i}\bm e_{r,i}
+      -\bm e_{r-1,i},
+    \qquad \bm e_{0,i}:=\bm 0,
+\]
+并将其通过另一个指令滤波器
+\[
+    \tau_{r+1,i}\dot{\bm\chi}_{r+1,i}
+    =-\bm\chi_{r+1,i}+\bar{\bm\chi}_{r+1,i},
+    \qquad r=1,\dots,m_i-2.
+\]
+对 $r=2,\dots,m_i-1$，定义
+\[
+    \bm e_{r,i}:=\bm z_{r+1,i}-\bm\chi_{r,i}.
+\]
+
+\subsection{标称控制律}
+
+对 $m_i\ge2$，最后一个误差满足
+\[
+    \dot{\bm e}_{m_i-1,i}
+    =\bm u_i+\bm\delta_i-\dot{\bm\chi}_{m_i-1,i}.
+\]
+一种鲁棒指令滤波反步控制候选为
+\[
+\begin{aligned}
+    \bm u_i
+    =&\ \dot{\bm\chi}_{m_i-1,i}
+      -a_{m_i-1,i}\bm e_{m_i-1,i}
+      -\bm e_{m_i-2,i} \\
+     &-\rho_i\operatorname{sgn}(\bm e_{m_i-1,i}),
+\end{aligned}
+\]
+其中 $a_{r,i}>0$ 且 $\rho_i>\sup_t\|\bm\delta_i(t)\|$。
+若 $\bm p_0^{(m_i)}$ 已知，则项 $\bm p_0^{(m_i)}$ 可等价地加到 $\bm u_i$ 中，
+并将 $\bm\delta_i$ 替换为 $\bm d_i$。
+
+\subsection{误差估计}
+
+令指令滤波失配为
+\[
+    \bm\varepsilon_{r,i}
+    :=\bm\chi_{r,i}-\bar{\bm\chi}_{r,i},
+    \qquad r=2,\dots,m_i-1,
+\]
+其中 $\bar{\bm\chi}_{1,i}:=\bm\psi_i$ 且
+$\bm\varepsilon_{1,i}:=\bm\chi_{1,i}-\bm\psi_i$。
+对 $r=1,\dots,m_i-2$，递归构造给出
+\[
+    \dot{\bm e}_{r,i}
+    =-a_{r,i}\bm e_{r,i}
+      -\bm e_{r-1,i}
+      +\bm e_{r+1,i}
+      +\bm\varepsilon_{r+1,i}.
+\]
+最后一个误差满足
+\[
+    \dot{\bm e}_{m_i-1,i}
+    =-a_{m_i-1,i}\bm e_{m_i-1,i}
+      -\bm e_{m_i-2,i}
+      +\bm\delta_i
+      -\rho_i\operatorname{sgn}(\bm e_{m_i-1,i}).
+\]
+因此，对
+\[
+    V_{e,i}:=\frac12\sum_{r=1}^{m_i-1}\|\bm e_{r,i}\|^2,
+\]
+交叉项按标准反步方式抵消，且
+\[
+\begin{aligned}
+    \dot V_{e,i}
+    \le&
+    -\sum_{r=1}^{m_i-1}a_{r,i}\|\bm e_{r,i}\|^2
+    +\sum_{r=1}^{m_i-2}\bm e_{r,i}^{T}\bm\varepsilon_{r+1,i}\\
+    &-(\rho_i-\|\bm\delta_i\|)\|\bm e_{m_i-1,i}\|.
+\end{aligned}
+\]
+因此，若指令滤波失配为零，则导数跟踪误差收敛到零。
+使用有限滤波带宽时，误差关于滤波失配是输入状态稳定的，
+且可通过选择小的 $\tau_{r,i}$ 使其任意小，
+前提是滤波命令保持正则。
+
+\subsection{该尝试实现了什么}
+
+实际相对速度为
+\[
+    \dot{\bm p}_{i0}
+    =\bm z_{2,i}
+    =\bm\psi_i+\bm e_{1,i}+\bm\varepsilon_{1,i}.
+\]
+因此闭环实现
+\[
+    \dot{\bm p}_{i0}
+    =-\kappa_i\bm p_{i0}+\bm\phi_i
+      +\bm e_{1,i}+\bm\varepsilon_{1,i}.
+\]
+若 $\bm e_{1,i}\to0$ 且 $\bm\varepsilon_{1,i}\to0$，则恢复期望的
+阶一 APF 运动。
+若滤波失配仅较小，则系统实现一个受扰的阶一 APF 运动。
+
+\subsection{残留难点}
+
+该尝试避免了对 $\bm\phi_i$ 的显式高阶导数，这是指令滤波反步的主要优点。
+然而，它仍不能自动给出完整的避碰证明。
+沿受扰的阶一运动，
+\[
+    \dot{\bm p}_{i0}
+    =-\kappa_i\bm p_{i0}+\bm\phi_i+\bm r_i,
+    \qquad
+    \bm r_i:=\bm e_{1,i}+\bm\varepsilon_{1,i},
+\]
+理想能量导数变为
+\[
+    \dot W
+    =-\sum_i\|\kappa_i\bm p_{i0}-\bm\phi_i\|^2
+      +\sum_i(\kappa_i\bm p_{i0}-\bm\phi_i)^T\bm r_i .
+\]
+最后一项可能破坏 $W$ 的单调性。
+因此，要将该尝试转化为严格的围捕定理，仍需要以下额外论证之一：
+\begin{itemize}
+    \item 证明 $\bm r_i$ 足够小或可积，使得 $W(t)$ 对所有时间保持有界；
+    \item 添加一个补偿项以恢复精确的障碍能量抵消；
+    \item 添加一个强制 $\|\bm p_{ij}\|^2-d^2>0$ 的高阶 CBF 层。
+\end{itemize}
+
+因此，指令滤波反步是实现期望阶一 APF 律的有前景的实现机制，
+但其本身仍不是完整的避碰证书。
+
+\subsection{能否使 $\bm r_i$ 小或可积？}
+
+答案是有条件的。
+指令滤波构造给出标准的小增益估计，但这些估计需要 APF 命令
+\[
+    \bm\psi_i=-\kappa_i\bm p_{i0}+\bm\phi_i
+\]
+的正则性。
+对于第一个指令滤波器，
+\[
+    \tau_{1,i}\dot{\bm\chi}_{1,i}
+    =-\bm\chi_{1,i}+\bm\psi_i,\qquad
+    \bm\varepsilon_{1,i}:=\bm\chi_{1,i}-\bm\psi_i,
+\]
+我们有
+\[
+    \tau_{1,i}\dot{\bm\varepsilon}_{1,i}
+    =-\bm\varepsilon_{1,i}-\tau_{1,i}\dot{\bm\psi}_i.
+\]
+因此
+\[
+    \|\bm\varepsilon_{1,i}(t)\|
+    \le e^{-t/\tau_{1,i}}\|\bm\varepsilon_{1,i}(0)\|
+    +\tau_{1,i}\sup_{0\le s\le t}\|\dot{\bm\psi}_i(s)\|.
+\]
+因此，在 $\dot{\bm\psi}_i$ 有界的任何区间上，选择小的 $\tau_{1,i}$ 可使
+$\bm\varepsilon_{1,i}$ 一致地小。
+更强地，若 $\dot{\bm\psi}_i\in L^1[0,\infty)$ 且滤波器初始化一致，则
+\[
+    \|\bm\varepsilon_{1,i}\|_{L^1}
+    \le \tau_{1,i}\|\dot{\bm\psi}_i\|_{L^1}.
+\]
+只要其输入命令足够正则，类似的估计对更高阶指令滤波器也成立。
+
+导数跟踪误差关于滤波失配是 ISS 的。
+事实上，对 $V_{e,i}$ 的估计意味着对合适的常数 $c_{1,i},c_{2,i}>0$，
+\[
+    \dot V_{e,i}
+    \le -c_{1,i}\sum_{r=1}^{m_i-1}\|\bm e_{r,i}\|^2
+       +c_{2,i}\sum_{r=2}^{m_i-1}\|\bm\varepsilon_{r,i}\|^2 .
+\]
+因此，小的滤波失配蕴含小的 $\bm e_{1,i}$；
+平方可积的滤波失配蕴含 $\bm e_{1,i}\in L^2$。
+故
+\[
+    \bm r_i=\bm e_{1,i}+\bm\varepsilon_{1,i}
+\]
+可被做小，或做成平方可积的，前提是所有滤波输入足够正则且
+滤波时间常数选得足够小。
+
+然而，这仍不是避碰证明。
+$\dot{\bm\psi}_i$ 的正则性包含 $\dot{\bm\phi}_i$ 的正则性。
+由于 $\bm\phi_i$ 在 $\|\bm p_{ij}\|=d$ 附近是奇异的，
+$\dot{\bm\psi}_i$ 的有界性或可积性仅在安全集合的紧致子集上被保证，
+即当智能体已被知远离碰撞边界时。
+使用该假设来证明避碰将导致循环论证。
+
+因此，$\bm r_i$ 的小性/可积性可作为一个局部正则结果来建立，
+或在已独立证明安全裕度之后建立。
+它本身不能替代前向不变性或障碍证明。
