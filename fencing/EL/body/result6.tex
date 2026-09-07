@@ -1,9 +1,9 @@
-\subsection{Controller 5-2: Adaptive Robust Gain (Asymptotic)}
-\label{sec: controller5-2}
+\subsection{Controller 6: Adaptive Robust Gain (Asymptotic)}
+\label{sec: controller6}
 
 Controller 5-1 requires the robust gain to satisfy
 $\rho_i \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$, which presupposes knowledge of the uncertain
-term $Y_i\tilde{\Theta}_i$. Controller 5-2 removes this requirement by letting the gain be
+term $Y_i\tilde{\Theta}_i$. Controller 6 removes this requirement by letting the gain be
 adapted online, at the price of losing the finite-time sliding property: $s_i$ now converges
 to zero asymptotically (rather than in finite time), so the fencing objectives become
 practical rather than asymptotic \cite{slotineLiAppliedNonlinearControl1991}.
@@ -11,27 +11,27 @@ practical rather than asymptotic \cite{slotineLiAppliedNonlinearControl1991}.
 \subsubsection{Integral APF and Sliding Variable}
 
 As in Controller 5-1, define
-\begin{equation}\label{eq5-2:zeta}
+\begin{equation}\label{eq6:zeta}
 	\zeta_i = \dot{q}_0 - k_\alpha q_{i0}
 	+ \int_0^t \bigl(-k_\alpha q_{i0} + \phi_i(\tau)\bigr)\,d\tau,
 \end{equation}
 so that
-\begin{equation}\label{eq5-2:zeta_dot}
+\begin{equation}\label{eq6:zeta_dot}
 	\dot{\zeta}_i = \ddot{q}_0 - k_\alpha \dot{q}_{i0} - k_\alpha q_{i0} + \phi_i
 \end{equation}
 contains $\phi_i$ but not $\dot{\phi}_i$. The sliding variable is
-\begin{equation}\label{eq5-2:sliding_var}
+\begin{equation}\label{eq6:sliding_var}
 	s_i = \dot{q}_i - \zeta_i,
 \end{equation}
 with
-\begin{equation}\label{eq5-2:s_dot_def}
+\begin{equation}\label{eq6:s_dot_def}
 	\dot{s}_i = \ddot{q}_{i0} + k_\alpha \dot{q}_{i0} + k_\alpha q_{i0} - \phi_i.
 \end{equation}
 
 \subsubsection{Control Law and Adaptation Laws}
 
 The control input is
-\begin{equation}\label{eq5-2:control_input}
+\begin{equation}\label{eq6:control_input}
 	\tau_i = -k s_i - \hat{\rho}_i\,\mathrm{sgn}(s_i)
 	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \hat{\Theta}_i,\qquad k>0,
 \end{equation}
@@ -39,40 +39,40 @@ where $\hat{\rho}_i$ is an online estimate of the true bound
 $\rho_i^* = \sup_t\|Y_i(t)\tilde{\Theta}_i(t)\|$. The adaptation laws are
 \begin{align}
 	\dot{\hat{\Theta}}_i &= -\Lambda^{-1} Y_i^T(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) s_i,
-	\label{eq5-2:adaptation}\\
+	\label{eq6:adaptation}\\
 	\dot{\hat{\rho}}_i &= \gamma\,\|s_i\|_1,\qquad \hat{\rho}_i(0) > 0,
-	\label{eq5-2:rho_adapt}
+	\label{eq6:rho_adapt}
 \end{align}
 with $\Lambda > 0$ and $\gamma > 0$. The regression equation is
-\begin{equation}\label{eq5-2:regression}
+\begin{equation}\label{eq6:regression}
 	M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q}_i)\zeta_i + g_i(q_i)
 	= Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\Theta_i.
 \end{equation}
 
 \subsubsection{Closed-Loop Dynamics and Lyapunov Analysis}
 
-Substituting \eqref{eq5-2:control_input} into \eqref{eq hetero agent} and using
-\eqref{eq5-2:regression} gives
-\begin{equation}\label{eq5-2:s_dynamics}
+Substituting \eqref{eq6:control_input} into \eqref{eq hetero agent} and using
+\eqref{eq6:regression} gives
+\begin{equation}\label{eq6:s_dynamics}
 	M_i(q_i)\dot{s}_i + C_i(q_i,\dot{q}_i)s_i
 	= -k s_i - \hat{\rho}_i\,\mathrm{sgn}(s_i)
 	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\tilde{\Theta}_i.
 \end{equation}
 Let $\tilde{\rho}_i = \hat{\rho}_i - \rho_i^*$ and consider
-\begin{equation}\label{eq5-2:V}
+\begin{equation}\label{eq6:V}
 	V_{1i} = \frac12 s_i^T M_i s_i
 	+ \frac12 \tilde{\Theta}_i^T \Lambda \tilde{\Theta}_i
 	+ \frac{1}{2\gamma}\tilde{\rho}_i^2.
 \end{equation}
-Differentiating and using \eqref{eq5-2:s_dynamics}, \eqref{eq5-2:adaptation},
-\eqref{eq5-2:rho_adapt} and the skew-symmetry property A2,
+Differentiating and using \eqref{eq6:s_dynamics}, \eqref{eq6:adaptation},
+\eqref{eq6:rho_adapt} and the skew-symmetry property A2,
 \begin{align}
 	\dot{V}_{1i}
 	&= -k\|s_i\|^2 - \hat{\rho}_i\|s_i\|_1
 		+ s_i^T Y_i\tilde{\Theta}_i
 		- \tilde{\Theta}_i^T Y_i^T s_i
 		+ \tilde{\rho}_i\|s_i\|_1 \notag\\
-	&= -k\|s_i\|^2 - \rho_i^*\|s_i\|_1 \le 0. \label{eq5-2:V_dot}
+	&= -k\|s_i\|^2 - \rho_i^*\|s_i\|_1 \le 0. \label{eq6:V_dot}
 \end{align}
 Hence $V_{1i}$ is bounded, so $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$,
 $\tilde{\Theta}_i$ bounded, and $\hat{\rho}_i$ bounded. Since $\dot{s}_i$ is uniformly
@@ -83,19 +83,19 @@ condition is required.
 
 \begin{theorem}
 	Let Assumptions A1--A3 hold. The HELS \eqref{eq hetero agent} governed by
-	\eqref{eq5-2:control_input}, \eqref{eq5-2:adaptation} and \eqref{eq5-2:rho_adapt}
+	\eqref{eq6:control_input}, \eqref{eq6:adaptation} and \eqref{eq6:rho_adapt}
 	achieves practical fencing: $s_i \to 0$ without the PE condition, and the fencing
 	objectives P1--P3 hold in the practical sense, with ultimate bounds proportional to
 	$\sup_t\|\dot{s}_i(t)\|$. No a~priori bound on $\|Y_i\tilde{\Theta}_i\|$ is needed.
 \end{theorem}
 
 \noindent\textbf{Proof}
-The identity \eqref{eq5-2:V_dot} gives $s_i \to 0$ via Barbalat's lemma, with no PE
+The identity \eqref{eq6:V_dot} gives $s_i \to 0$ via Barbalat's lemma, with no PE
 condition, as argued above.
 
 \noindent\textit{Practical fencing.}
 Because $s_i \to 0$ only asymptotically (not in finite time), $\dot{s}_i$ does not vanish
-identically. From \eqref{eq5-2:s_dot_def},
+identically. From \eqref{eq6:s_dot_def},
 $\ddot{q}_{i0} = -k_\alpha\dot{q}_{i0} - k_\alpha q_{i0} + \phi_i + \dot{s}_i$, and the
 fencing Lyapunov function
 \begin{equation*}
@@ -118,7 +118,7 @@ intervals, exactly as in Controller 1.
 \hfill$\square$
 
 \begin{remark}
-	The gain $\hat{\rho}_i$ grows monotonically according to \eqref{eq5-2:rho_adapt} and
+	The gain $\hat{\rho}_i$ grows monotonically according to \eqref{eq6:rho_adapt} and
 	remains bounded because $s_i \in \mathcal{L}_1$ (from $\dot{V}_{1i} \le -k\|s_i\|^2$).
 	No a~priori specification of $\rho_i$ is required. The price is that $s_i$ converges
 	only asymptotically, so the finite-time sliding property of Controller 5-1 is lost
