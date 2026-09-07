@@ -1,0 +1,448 @@
+\subsection{Controller 7: Projection-Based Adaptive with State-Dependent Robust Gain (Finite Time)}
+\label{sec: controller7}
+
+Controller 5-1 needs a bound on $\|Y_i\tilde{\Theta}_i\|$, while Controller 6 avoids any
+a~priori gain specification at the cost of losing finite-time convergence. Controller 7
+recovers finite-time sliding by combining two mechanisms:
+\begin{itemize}
+	\item \textbf{Projection operator} on the parameter estimate, which keeps
+		$\|\hat{\Theta}_i\| \le \Theta_{i,\max}$ using only the physical bound
+		$\|\Theta_i\| \le \Theta_{i,\max}$;
+	\item \textbf{State-dependent robust gain} $\rho_i(t)$, which dominates
+		$\|Y_i\tilde{\Theta}_i\|$ using the known structural bounds from Assumption~A1,
+		without requiring a global bound on $\|Y_i\|$.
+\end{itemize}
+
+\subsubsection{Motivation: Why a State-Dependent Gain Is Necessary}
+
+The regressor $Y_i$ depends on $\zeta_i$ and $\dot{\zeta}_i$.  In the integral APF approach,
+\begin{equation*}
+	\zeta_i = \dot{q}_0 - k_\alpha q_{i0} + \int_0^t \bigl(-k_\alpha q_{i0} + \phi_i(\tau)\bigr)\,d\tau,
+\end{equation*}
+the integral term can accumulate over time, potentially making $\zeta_i$ and hence $Y_i$
+unbounded even on collision-free trajectories.  Consequently, a constant bound
+$\|Y_i\| \le k_Y$ is not justified for a general EL system with the integral APF.\footnote{In
+the standard Slotine--Li adaptive controller \cite{slotineAdaptiveControlRobot1987}, the
+reference velocity $\dot{q}_r = \dot{q}_d - \Lambda\tilde{q}$ contains no integral term and
+is bounded a~priori by the boundedness of $\dot{q}_d$ and $\tilde{q}$.  The integral APF
+relinquishes this property.}
+
+Instead, we exploit the structural bounds of the EL system (Assumption~A1) to construct a
+robust gain that depends only on known, measurable signals.
+
+\subsubsection{Structural Bound on $\|Y_i\tilde{\Theta}_i\|$}
+
+From Assumption~A3, the unknown term in the sliding dynamics is
+\begin{equation}
+	Y_i\tilde{\Theta}_i = Y_i\hat{\Theta}_i - Y_i\Theta_i
+	= Y_i\hat{\Theta}_i - \bigl(M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q}_i)\zeta_i + g_i(q_i)\bigr).
+	\label{eq7:Ytb_split}
+\end{equation}
+The second term is bounded by Assumption~A1:
+\begin{equation}
+	\|M_i\dot{\zeta}_i + C_i\zeta_i + g_i\|
+	\le k_{\overline m}\|\dot{\zeta}_i\| + k_C\|\dot{q}_i\|\|\zeta_i\| + k_{g_i}.
+	\label{eq7:Miz_bound}
+\end{equation}
+The first term $Y_i\hat{\Theta}_i$ is the known regressor term evaluated at the estimated
+parameter $\hat{\Theta}_i$; it is computed in the control law and its norm is available
+in real time.  Although $\|Y_i\|$ itself may be large, the product $Y_i\hat{\Theta}_i$ is
+a known vector whose norm can be measured directly.
+
+Now express $\zeta_i$ and $\dot{\zeta}_i$ in terms of available signals.  From $s_i = \dot{q}_i - \zeta_i$,
+\begin{equation}
+	\|\zeta_i\| \le \|\dot{q}_i\| + \|s_i\|.
+	\label{eq7:zeta_bound}
+\end{equation}
+From $\dot{\zeta}_i = \ddot{q}_0 - k_\alpha\dot{q}_{i0} - k_\alpha q_{i0} + \phi_i$,
+\begin{equation}
+	\|\dot{\zeta}_i\| \le \bar{a}_0 + k_\alpha\|\dot{q}_{i0}\| + k_\alpha\|q_{i0}\| + \|\phi_i\|,
+	\label{eq7:zetadot_bound}
+\end{equation}
+where $\bar{a}_0 = \sup_{t\ge0}\|\ddot{q}_0(t)\|$ is finite by Assumption~A4.
+The APF force $\phi_i$ is bounded as long as no collision occurs (its norm is finite
+when $\|q_{ij}\| > d$), and this will be verified a posteriori for all $t\ge0$.
+
+Substituting \eqref{eq7:zeta_bound} and \eqref{eq7:zetadot_bound} into \eqref{eq7:Miz_bound},
+\begin{align}
+	\|M_i\dot{\zeta}_i + C_i\zeta_i + g_i\|
+	&\le k_{\overline m}\bigl(\bar{a}_0 + k_\alpha\|\dot{q}_{i0}\| + k_\alpha\|q_{i0}\| + \|\phi_i\|\bigr) \notag\\
+	&\qquad + k_C\|\dot{q}_i\|\bigl(\|\dot{q}_i\| + \|s_i\|\bigr) + k_{g_i} \notag\\
+	&\le \kappa_0 + \kappa_1\|\dot{q}_{i0}\| + \kappa_2\|q_{i0}\|
+		+ \kappa_3\|\dot{q}_i\|^2 + \kappa_4\|\dot{q}_i\|\|s_i\|,
+		\label{eq7:Miz_bound_expanded}
+\end{align}
+where $\kappa_0 = k_{\overline m}(\bar{a}_0 + \bar{\phi}) + k_{g_i}$,
+$\kappa_1 = k_{\overline m}k_\alpha$, $\kappa_2 = k_{\overline m}k_\alpha$,
+$\kappa_3 = k_C$, $\kappa_4 = k_C$, and $\bar{\phi} = \max_i\sup_t\|\phi_i(t)\|$ is
+finite on any collision-free trajectory.\footnote{The boundedness of $\bar{\phi}$ on
+$[0,T^*]$ is established in Step~3 below via a no-finite-escape argument, independent
+of the robust gain.}
+
+Therefore, the total uncertain term satisfies
+\begin{equation}
+	\|Y_i\tilde{\Theta}_i\| \le
+	\|Y_i\hat{\Theta}_i\| + \kappa_0 + \kappa_1\|\dot{q}_{i0}\| + \kappa_2\|q_{i0}\|
+	+ \kappa_3\|\dot{q}_i\|^2 + \kappa_4\|\dot{q}_i\|\|s_i\|.
+	\label{eq7:Ytb_total_bound}
+\end{equation}
+The right-hand side is a known function of measurable signals: $\|Y_i\hat{\Theta}_i\|$ is
+computed in the controller, and all other quantities are directly measured.
+
+\subsubsection{State-Dependent Robust Gain}
+
+Based on \eqref{eq7:Ytb_total_bound}, we design the robust gain as
+\begin{equation}
+	\rho_i(t) = \|Y_i\hat{\Theta}_i\| + \rho_{i0} + \rho_{i1}\|\dot{q}_{i0}\|
+		+ \rho_{i2}\|q_{i0}\| + \rho_{i3}\|\dot{q}_i\|^2 + \rho_{i4}\|\dot{q}_i\|\|s_i\| + \eta_i,
+	\qquad \eta_i > 0,
+	\label{eq7:rho_state_dep}
+\end{equation}
+where $\rho_{i0} \ge \kappa_0$, $\rho_{i1} \ge \kappa_1$, $\rho_{i2} \ge \kappa_2$,
+$\rho_{i3} \ge \kappa_3$, $\rho_{i4} \ge \kappa_4$ are chosen based on the known
+structural bounds $k_{\overline m}$, $k_C$, $k_{g_i}$, $k_\alpha$, $\bar{a}_0$, $\bar{\phi}$
+from Assumptions~A1 and~A4.  With this choice, the inequality
+\begin{equation}
+	\rho_i(t) \ge \|Y_i\tilde{\Theta}_i\| + \eta_i
+	\label{eq7:rho_ineq}
+\end{equation}
+holds pointwise in time, without requiring any global bound on $\|Y_i\|$.
+
+\begin{remark}
+	The gain \eqref{eq7:rho_state_dep} is \emph{implementable} because all quantities
+	on the right-hand side are either known constants ($\rho_{i0},\dots,\rho_{i4}$) or
+	measured/ computed signals ($\|Y_i\hat{\Theta}_i\|$, $\|\dot{q}_{i0}\|$, $\|q_{i0}\|$,
+	$\|\dot{q}_i\|$, $\|s_i\|$).  No differentiation of $\phi_i$ is required.  The
+	coefficients $\rho_{i0},\dots,\rho_{i4}$ are conservative over-estimates of the
+	structural constants $\kappa_0,\dots,\kappa_4$, which are known from the physical
+	properties of the EL system (inertia bounds, Coriolis bound, gravity bound, target
+	acceleration bound, and APF bound).
+\end{remark}
+
+\subsubsection{Projection Operator}
+
+The parameter estimate is kept inside the ball $\mathcal{B}_i = \{\Theta \in \mathbb{R}^p : \|\Theta\| \le \Theta_{i,\max}\}$ using the standard projection operator \cite{ioannouSunRobustAdaptiveControl1996}:
+\begin{equation}\label{eq7:proj}
+	\mathrm{Proj}_{\hat{\Theta}_i}(v) =
+	\begin{cases}
+		v, & \|\hat{\Theta}_i\| < \Theta_{i,\max}
+		\;\text{or}\; \hat{\Theta}_i^T v \le 0,\\[2pt]
+		v - \dfrac{\hat{\Theta}_i(\hat{\Theta}_i^T v)}{\Theta_{i,\max}^2},
+		& \|\hat{\Theta}_i\| = \Theta_{i,\max}
+		\;\text{and}\; \hat{\Theta}_i^T v > 0.
+	\end{cases}
+\end{equation}
+The key property of this projection is
+\begin{equation}\label{eq7:proj_prop}
+	\tilde{\Theta}_i^T \Lambda\,\mathrm{Proj}_{\hat{\Theta}_i}(-\Lambda^{-1}Y_i^T s_i)
+	\le -\tilde{\Theta}_i^T Y_i^T s_i,
+\end{equation}
+which holds for all $\hat{\Theta}_i \in \mathcal{B}_i$ whenever $\Theta_i \in \mathcal{B}_i$.
+
+\subsubsection{Assumption}
+
+We make the following assumption, which is considerably weaker than requiring a global bound
+on $\|Y_i\|$:
+
+\begin{assumption}
+	The true parameter vector satisfies $\|\Theta_i\| \le \Theta_{i,\max}$ for some known
+	$\Theta_{i,\max} > 0$.
+\end{assumption}
+
+\noindent The structural constants $k_{\overline m}$, $k_C$, $k_{g_i}$ in Assumption~A1,
+the target acceleration bound $\bar{a}_0$ in Assumption~A4, and the APF bound $\bar{\phi}$
+are known from the physical system.  No bound on $\|Y_i\|$ is required.
+
+\subsubsection{Integral APF, Sliding Variable and Control Law}
+
+The integral APF and sliding variable are identical to those of Controller 5-1:
+\begin{equation}\label{eq7:zeta}
+	\zeta_i = \dot{q}_0 - k_\alpha q_{i0}
+	+ \int_0^t \bigl(-k_\alpha q_{i0} + \phi_i(\tau)\bigr)\,d\tau,\qquad
+	s_i = \dot{q}_i - \zeta_i.
+\end{equation}
+The control input is
+\begin{equation}\label{eq7:control_input}
+	\tau_i = -k s_i - \rho_i(t)\,\mathrm{sgn}(s_i)
+	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \hat{\Theta}_i,\qquad k>0,
+\end{equation}
+with $\rho_i(t)$ given by \eqref{eq7:rho_state_dep}.  The adaptation law is the projected version
+\begin{equation}\label{eq7:adaptation}
+	\dot{\hat{\Theta}}_i = \mathrm{Proj}_{\hat{\Theta}_i}\bigl(-\Lambda^{-1}Y_i^T s_i\bigr).
+\end{equation}
+The regression equation is the same as in \eqref{eq5:regression}.
+
+\subsubsection{Closed-Loop Dynamics and Finite-Time Sliding}
+
+Substituting \eqref{eq7:control_input} into \eqref{eq hetero agent} gives
+\begin{equation}\label{eq7:s_dynamics}
+	M_i(q_i)\dot{s}_i + C_i(q_i,\dot{q}_i)s_i
+	= -k s_i - \rho_i(t)\,\mathrm{sgn}(s_i)
+	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\tilde{\Theta}_i.
+\end{equation}
+Consider $V_{1i} = \frac12 s_i^T M_i s_i + \frac12 \tilde{\Theta}_i^T \Lambda \tilde{\Theta}_i$.
+Differentiating and using \eqref{eq7:s_dynamics}, \eqref{eq7:adaptation} and A2,
+\begin{align}
+	\dot{V}_{1i}
+	&= s_i^T M_i \dot{s}_i + \tfrac12 s_i^T \dot{M}_i s_i
+		+ \tilde{\Theta}_i^T \Lambda \dot{\tilde{\Theta}}_i \notag\\
+	&= s_i^T\bigl(-k s_i - C_i s_i - \rho_i\,\mathrm{sgn}(s_i) + Y_i\tilde{\Theta}_i\bigr)
+		+ \tfrac12 s_i^T \dot{M}_i s_i
+		- \tilde{\Theta}_i^T \Lambda \dot{\hat{\Theta}}_i \notag\\
+	&= -k\|s_i\|^2 - \rho_i\|s_i\|_1 + s_i^T Y_i\tilde{\Theta}_i
+		+ \tfrac12 s_i^T(\dot{M}_i - 2C_i)s_i
+		- \tilde{\Theta}_i^T \Lambda \dot{\hat{\Theta}}_i. \label{eq7:V1_dot_raw}
+\end{align}
+The skew-symmetry property A2 gives $\tfrac12 s_i^T(\dot{M}_i - 2C_i)s_i = 0$.
+Using the projection adaptation \eqref{eq7:adaptation} and the projection property
+\eqref{eq7:proj_prop},
+\begin{equation}
+	-\tilde{\Theta}_i^T \Lambda \dot{\hat{\Theta}}_i
+	= -\tilde{\Theta}_i^T \Lambda\,\mathrm{Proj}_{\hat{\Theta}_i}\bigl(-\Lambda^{-1}Y_i^T s_i\bigr)
+	\le \tilde{\Theta}_i^T Y_i^T s_i = s_i^T Y_i\tilde{\Theta}_i. \label{eq7:proj_ineq}
+\end{equation}
+Substituting \eqref{eq7:proj_ineq} into \eqref{eq7:V1_dot_raw} yields
+\begin{equation}
+	\dot{V}_{1i} \le -k\|s_i\|^2 - \rho_i\|s_i\|_1 + 2 s_i^T Y_i\tilde{\Theta}_i. \label{eq7:V1_dot_proj}
+\end{equation}
+Unlike Controller 5-1, the cross term $s_i^T Y_i\tilde{\Theta}_i$ does not cancel exactly
+under projection; the projection property only provides an inequality.  The robust gain
+$\rho_i(t)$ is designed to dominate this term.
+
+Now consider the sliding part $V_{si} = \frac12 s_i^T M_i s_i$ alone.
+Differentiating and using the skew-symmetry,
+\begin{align}
+	\dot{V}_{si}
+	&= s_i^T M_i \dot{s}_i + \tfrac12 s_i^T \dot{M}_i s_i \notag\\
+	&= s_i^T\bigl(-k s_i - C_i s_i - \rho_i\,\mathrm{sgn}(s_i) + Y_i\tilde{\Theta}_i\bigr)
+		+ \tfrac12 s_i^T \dot{M}_i s_i \notag\\
+	&= -k\|s_i\|^2 - \rho_i\|s_i\|_1 + s_i^T Y_i\tilde{\Theta}_i. \label{eq7:Vs_dot}
+\end{align}
+The projection property is not needed here because $\dot{V}_{si}$ does not contain the
+adaptation term $\tilde{\Theta}_i^T \Lambda \dot{\hat{\Theta}}_i$.
+
+By construction of $\rho_i(t)$ in \eqref{eq7:rho_state_dep}, the inequality
+$\rho_i(t) \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$ holds pointwise.  Hence
+\begin{equation}
+	\dot{V}_{si} \le -k\|s_i\|^2 - \eta_i\|s_i\|_1
+	\le -\eta_i\|s_i\|,
+	\label{eq7:Vs_dot_bound}
+\end{equation}
+where we used $\|s_i\|_1 \ge \|s_i\|$.  With $V_{si} \le \tfrac{k_{\overline m}}{2}\|s_i\|^2$,
+we obtain $\|s_i\| \ge \sqrt{2V_{si}/k_{\overline m}}$, and therefore
+\begin{equation}
+	\dot{V}_{si} \le -\eta_i \sqrt{\frac{2}{k_{\overline m}}} \sqrt{V_{si}}
+	= -c_i \sqrt{V_{si}}, \qquad
+	c_i = \eta_i \sqrt{\frac{2}{k_{\overline m}}}.
+	\label{eq7:finite_time_ode}
+\end{equation}
+The differential inequality $\dot{V}_{si} \le -c_i \sqrt{V_{si}}$ implies that $V_{si}$ reaches
+zero in finite time (comparison lemma, \cite[Lemma~3.6]{khalilNonlinearSystems2002}):
+\begin{equation}
+	T_i \le \frac{2\sqrt{V_{si}(0)}}{c_i},
+	\qquad
+	s_i(t) \equiv 0,\; \dot{s}_i(t) \equiv 0,\; \forall\, t \ge T_i.
+	\label{eq7:finite_time}
+\end{equation}
+Define $T^* = \max_{i\in\mathcal{N}} T_i$; then for all $t \ge T^*$, $s_i(t) \equiv 0$ and
+$\dot{s}_i(t) \equiv 0$ for every $i \in \mathcal{N}$.  No PE condition is invoked anywhere
+in this step.
+
+\subsubsection{Theoretical Guarantee}
+
+\begin{theorem}
+	Let Assumptions A1--A4 and $\|\Theta_i\| \le \Theta_{i,\max}$ hold.  The HELS
+	\eqref{eq hetero agent} governed by \eqref{eq7:control_input} with the
+	state-dependent robust gain \eqref{eq7:rho_state_dep} and the projected adaptation
+	\eqref{eq7:adaptation} achieves the fencing objectives P1--P3 asymptotically,
+	without the PE condition and without differentiating $\phi_i$.
+\end{theorem}
+
+\noindent\textbf{Proof}
+
+The proof is organized into eight steps.  Steps 1--2 establish the finite-time convergence
+of $s_i$ using the state-dependent robust gain and the projection operator.  Steps 3--4
+analyze the boundedness and collision avoidance during the transient $[0,T^*]$.  Steps 5--8
+exploit the post-sliding clean dynamics to prove P3, P1 and P2 asymptotically.
+
+\medskip\noindent\textbf{Step 1 (Finite-time convergence of $s_i$).}
+
+From \eqref{eq7:rho_state_dep}, the robust gain satisfies
+$\rho_i(t) \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$ pointwise, by construction using the
+structural bounds \eqref{eq7:Ytb_total_bound}.  Substituting this into \eqref{eq7:Vs_dot}
+gives \eqref{eq7:Vs_dot_bound}, which leads to the finite-time differential inequality
+\eqref{eq7:finite_time_ode}.  By the comparison lemma, $s_i \equiv 0$ and $\dot{s}_i \equiv 0$
+for all $t \ge T_i$, where $T_i$ is bounded as in \eqref{eq7:finite_time}.
+
+\medskip\noindent\textbf{Step 2 (Boundedness of parameter estimates).}
+
+From \eqref{eq7:V1_dot_proj} and $\rho_i \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$,
+\begin{equation}
+	\dot{V}_{1i} \le -k\|s_i\|^2 - \rho_i\|s_i\|_1 + 2\rho_i\|s_i\|
+	\le -k\|s_i\|^2 + \rho_i\|s_i\|.
+\end{equation}
+While $s_i \neq 0$, the right-hand side may be positive when $\|s_i\|$ is small.
+Nevertheless, $V_{1i}$ can grow at most linearly on any finite interval, and once $s_i \equiv 0$,
+$\dot{V}_{1i} \le 0$.  Hence $V_{1i}(t)$ is bounded on $[0,T^*]$, and the projection operator
+guarantees $\|\hat{\Theta}_i\| \le \Theta_{i,\max}$ for all $t$, so $\tilde{\Theta}_i$ is
+bounded with $\|\tilde{\Theta}_i\| \le 2\Theta_{i,\max}$.
+
+\medskip\noindent\textbf{Step 3 (No finite escape time on $[0,T^*]$).}
+
+The robust gain \eqref{eq7:rho_state_dep} is a continuous function of the system states
+($\dot{q}_{i0}$, $q_{i0}$, $\dot{q}_i$, $s_i$, $Y_i\hat{\Theta}_i$).  On any finite interval
+$[0,\tau]$ before the first collision, these states evolve continuously, so $\rho_i(t)$ is
+bounded.  The sliding dynamics \eqref{eq7:s_dynamics} then give
+\begin{equation}
+	M_i\dot{s}_i = -k s_i - C_i s_i - \rho_i\,\mathrm{sgn}(s_i) + Y_i\tilde{\Theta}_i.
+\end{equation}
+Since $s_i$ is bounded (converges to zero in finite time), $\tilde{\Theta}_i$ is bounded
+(Step~2), and $\rho_i$ and $Y_i\tilde{\Theta}_i$ are bounded on $[0,\tau]$ (by continuity),
+the right-hand side is uniformly bounded.  By A1, $M_i$ is invertible with
+$M_i^{-1} \le \frac{1}{k_{\underline m}}I_p$, so $\dot{s}_i$ is uniformly bounded on
+$[0,\tau]$.  No finite escape occurs.
+
+\medskip\noindent\textbf{Step 4 (Collision avoidance during the transient $[0,T^*]$).}
+
+From the definition of $s_i$ and $\dot{s}_i$,
+\begin{equation}
+	\ddot{q}_{i0} = -k_\alpha \dot{q}_{i0} - k_\alpha q_{i0} + \phi_i + \dot{s}_i.
+	\label{eq7:qddot_transient}
+\end{equation}
+Consider the fencing Lyapunov function
+\begin{equation}
+	V_2 = \frac12\sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\|q_{ij}\|}^{\mu}\alpha(s)\,ds
+	+ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}\|q_{i0}\|^2
+	+ \frac12\sum_{i\in\mathcal{N}}\|\dot{q}_{i0}\|^2.
+	\label{eq7:V2}
+\end{equation}
+Its time derivative, using $\sum_i\phi_i = 0$ and $\dot{A} = -\sum_i\phi_i^T\dot{q}_{i0}$, is
+\begin{align}
+	\dot{V}_2
+	&= -\sum_i\phi_i^T\dot{q}_{i0}
+		+ k_\alpha\sum_i q_{i0}^T\dot{q}_{i0}
+		+ \sum_i \dot{q}_{i0}^T\ddot{q}_{i0} \notag\\
+	&= -k_\alpha\sum_i\|\dot{q}_{i0}\|^2
+		+ \sum_i \dot{q}_{i0}^T\dot{s}_i.
+		\label{eq7:V2_dot_transient}
+\end{align}
+Let $\bar\sigma = \max_{i\in\mathcal{N}} \sup_{t\in[0,T^*]} \|\dot{s}_i(t)\|$, which is finite by
+Step 3.  Then
+\begin{equation}
+	\dot{V}_2 \le \frac{k_\alpha}{2}\sum_i\|\dot{q}_{i0}\|^2
+		+ \frac{N\bar\sigma^2}{2k_\alpha}.
+		\label{eq7:V2_dot_transient_bound}
+\end{equation}
+Integrating over $[0,t]$ for any $t \le T^*$,
+\begin{equation}
+	V_2(t) \le V_2(0) + \frac{k_\alpha}{2}\int_0^t \sum_i\|\dot{q}_{i0}\|^2\,d\tau
+		+ \frac{N\bar\sigma^2}{2k_\alpha} t.
+		\label{eq7:V2_finite}
+\end{equation}
+Since $\dot{q}_{i0}$ is bounded on $[0,T^*]$ (from $s_i$ bounded and $q_{i0}$ continuous),
+$V_2(t)$ is finite for every finite $t$.  In particular, $V_2(T^*)$ is finite.
+
+Now suppose, for contradiction, that two agents $i$ and $j$ collide at some time $t_c \le T^*$,
+i.e.~$\|q_{ij}(t_c)\| = d$.  Then the APF integral term diverges:
+\begin{equation}
+	\int_{\|q_{ij}(t_c)\|}^{\mu}\alpha(s)\,ds
+	= \int_{d}^{\mu}\alpha(s)\,ds = \infty,
+\end{equation}
+which implies $V_2(t_c) = \infty$, contradicting the finiteness of $V_2$ on $[0,T^*]$.
+Hence no collision occurs on $[0,T^*]$, and $\|q_{ij}(t)\| > d$ for all $t \in [0,T^*]$,
+$i \neq j$.
+
+\medskip\noindent\textbf{Step 5 (Post-sliding clean dynamics).}
+
+For $t \ge T^*$, $s_i \equiv 0$ and $\dot{s}_i \equiv 0$.  From \eqref{eq7:qddot_transient},
+\begin{equation}
+	\ddot{q}_{i0} = -k_\alpha \dot{q}_{i0} - k_\alpha q_{i0} + \phi_i,
+	\qquad \forall\, t \ge T^*.
+	\label{eq7:clean_dyn}
+\end{equation}
+This is the same potential-driven dynamics as in Controller 2, but obtained without ever
+computing $\dot{\phi}_i$ and without requiring a global bound on $\|Y_i\|$.
+
+\medskip\noindent\textbf{Step 6 (Velocity convergence --- P3).}
+
+For $t \ge T^*$, differentiate $V_2$ along \eqref{eq7:clean_dyn}.  Substituting
+\eqref{eq7:clean_dyn} into \eqref{eq7:V2_dot_transient} and noting $\dot{s}_i \equiv 0$,
+\begin{equation}
+	\dot{V}_2 = -k_\alpha\sum_{i\in\mathcal{N}} \|\dot{q}_{i0}\|^2 \le 0,
+	\qquad \forall\, t \ge T^*.
+	\label{eq7:V2_dot_clean}
+\end{equation}
+Hence $V_2(t)$ is nonincreasing and bounded below by zero, so it converges to a finite limit.
+To apply Barbalat's lemma, we verify that $\ddot{V}_2$ is uniformly bounded.
+Differentiating \eqref{eq7:V2_dot_clean},
+\begin{equation}
+	\ddot{V}_2 = -2k_\alpha\sum_{i\in\mathcal{N}} \dot{q}_{i0}^T \ddot{q}_{i0}.
+\end{equation}
+From \eqref{eq7:clean_dyn}, $\ddot{q}_{i0}$ is expressed in terms of $\dot{q}_{i0}$, $q_{i0}$
+and $\phi_i$.  Since $\dot{q}_{i0}$ and $q_{i0}$ are bounded (from $V_2$ bounded) and $\phi_i$
+is bounded (collision avoidance keeps $\|q_{ij}\| > d$, so $\alpha(\|q_{ij}\|)$ is bounded),
+$\ddot{q}_{i0}$ is bounded, hence $\ddot{V}_2$ is bounded.  Barbalat's lemma then gives
+$\dot{V}_2 \to 0$, i.e.~$\|\dot{q}_{i0}\| \to 0$ for every $i$.  Thus
+$\lim_{t\to\infty} \|\dot{q}_i(t) - \dot{q}_0(t)\| = 0$, establishing P3.
+
+\medskip\noindent\textbf{Step 7 (Convex-hull fencing --- P1).}
+
+Define the centroid error $\tilde{q} = \frac1N\sum_{i\in\mathcal{N}} q_{i0}$.
+Averaging \eqref{eq7:clean_dyn} over $i$ and using $\sum_i \phi_i = 0$,
+\begin{equation}
+	\ddot{\tilde{q}} = -k_\alpha \dot{\tilde{q}} - k_\alpha \tilde{q},
+	\qquad \forall\, t \ge T^*.
+	\label{eq7:centroid}
+\end{equation}
+This is a linear second-order system with characteristic polynomial
+$\lambda^2 + k_\alpha \lambda + k_\alpha$.  For $k_\alpha > 0$, both roots have negative real
+parts, so the origin $(\tilde{q},\dot{\tilde{q}}) = (0,0)$ is exponentially stable.
+Consequently, $\tilde{q}(t) \to 0$ as $t \to \infty$.
+
+Since the centroid $\frac1N\sum_{i=1}^N q_i(t) = q_0(t) + \tilde{q}(t)$ lies in the convex hull
+$\operatorname{co}(q(t))$ by definition, we have
+\begin{equation}
+	\operatorname{dist}\bigl(q_0(t), \operatorname{co}(q(t))\bigr)
+	\le \|\tilde{q}(t)\| \to 0,
+\end{equation}
+which establishes P1.
+
+\medskip\noindent\textbf{Step 8 (Collision avoidance for all $t \ge 0$ --- P2).}
+
+For $t \ge T^*$, \eqref{eq7:V2_dot_clean} gives $\dot{V}_2 \le 0$, so
+$V_2(t) \le V_2(T^*) < \infty$.  The same barrier argument as in Step 4 applies:
+if $\|q_{ij}(t)\| = d$ for some $t > T^*$, then $V_2(t) = \infty$, contradicting the
+finiteness of $V_2(t)$.  Combined with Step 4, we conclude $\|q_{ij}(t)\| > d$ for all
+$t \ge 0$ and all $i \neq j$, establishing P2.
+
+\medskip\noindent\textbf{Remark on the PE condition.}
+
+Throughout the proof, the PE condition is never required.  The finite-time convergence of
+$s_i$ (Step 1) relies on the state-dependent robust gain $\rho_i(t)$ dominating the
+parametric uncertainty $Y_i\tilde{\Theta}_i$, which is guaranteed by the structural bounds
+from Assumption~A1 and the measurable signals in the controller.  The post-sliding analysis
+(Steps 5--8) is purely deterministic and independent of parameter convergence; indeed,
+$\tilde{\Theta}_i$ need not tend to zero.  This is a key advantage over standard adaptive
+controllers that rely on PE for asymptotic tracking.
+
+\hfill$\square$
+
+\begin{remark}
+	Controller 7 replaces the problematic constant-gain condition
+	$\rho_i \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$ (which requires a global bound on $\|Y_i\|$,
+	unavailable for the integral APF) with the state-dependent gain
+	\eqref{eq7:rho_state_dep}.  This gain uses only:
+	\begin{itemize}
+		\item the structural constants $k_{\overline m}$, $k_C$, $k_{g_i}$ from
+			Assumption~A1 (inertia bound, Coriolis bound, gravity bound);
+		\item the target acceleration bound $\bar{a}_0$ from Assumption~A4;
+		\item the APF bound $\bar{\phi}$ (finite on collision-free trajectories);
+		\item the measured signals $\|Y_i\hat{\Theta}_i\|$, $\|\dot{q}_{i0}\|$,
+			$\|q_{i0}\|$, $\|\dot{q}_i\|$, $\|s_i\|$.
+	\end{itemize}
+	No global bound on $\|Y_i\|$ is required, resolving the circularity with the
+	collision-avoidance argument.  The price is a more complex gain expression and the
+	need for the structural constants $\kappa_0,\dots,\kappa_4$, which are conservative
+	but known from the physical system.
+\end{remark}

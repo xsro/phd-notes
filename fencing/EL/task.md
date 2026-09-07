@@ -55,13 +55,13 @@ We need a controller that simultaneously satisfies:
 | **Controller 2** (Differential APF) | ✅ | ❌ (needs $\dot{\phi}_i$) | ✅ |
 | **Controller 3** (Filtered APF) | ✅ | ✅ | ❌ (proof flawed) |
 | **Controller 4** (DSC) | ✅ | ✅ | ❌ (practical only) |
-| **Controller 5-1** (Robust + SM) | ✅ | ✅ | ✅, but needs $\|Y_i\tilde{\Theta}_i\|$ bound |
+| **Controller 5-1** (Robust + SM) | ✅ | ✅ | ✅, but needs a global $\|Y_i\tilde{\Theta}_i\|$ bound (unavailable for integral APF) |
 | **Controller 5-2** (Adaptive gain) | ✅ | ✅ | ❌ (practical only) |
-| **Controller 5-3** (Projection + SM) | ✅ | ✅ | ✅ (best candidate) |
+| **Controller 5-3** (Projection + SM, state-dep. gain) | ✅ | ✅ | ✅ (best candidate) |
 
 ### Controller 5-3: The Best Candidate
 
-**Idea:** Combine the integral APF (to avoid $\dot{\phi}_i$) with a sliding-mode robust term (to force $s_i \to 0$ in finite time, making the residual $\dot{s}_i$ vanish exactly), and a projection operator on the parameter estimates (to replace the hard-to-compute bound $\|Y_i\tilde{\Theta}_i\|$ with a natural bound on $\|\Theta_i\|$).
+**Idea:** Combine the integral APF (to avoid $\dot{\phi}_i$) with a sliding-mode robust term (to force $s_i \to 0$ in finite time, making the residual $\dot{s}_i$ vanish exactly), and a projection operator on the parameter estimates. The robust gain is made **state-dependent** to avoid requiring a global bound on $\|Y_i\|$ (which is problematic because the integral term in $\zeta_i$ can make $\|Y_i\|$ unbounded).
 
 **Mechanism:**
 
@@ -71,16 +71,21 @@ We need a controller that simultaneously satisfies:
    This gives $\dot{s}_i = \ddot{q}_{i0} + k_\alpha\dot{q}_{i0} + k_\alpha q_{i0} - \phi_i$ with no $\dot{\phi}_i$.
 
 2. **Sliding-mode robust term**:
-   $$ \tau_i = -k s_i - \rho_i\,\text{sgn}(s_i) + Y_i\hat{\Theta}_i $$
+   $$ \tau_i = -k s_i - \rho_i(t)\,\text{sgn}(s_i) + Y_i\hat{\Theta}_i $$
    Drives $s_i \to 0$ in finite time, so $\dot{s}_i \equiv 0$ thereafter.
 
 3. **Projection adaptation**:
    $$ \dot{\hat{\Theta}}_i = \text{Proj}_{\hat{\Theta}_i}(-\Lambda^{-1}Y_i^T s_i) $$
    Keeps $\|\hat{\Theta}_i\| \leq \Theta_{i,\max}$, so $\|\tilde{\Theta}_i\| \leq 2\Theta_{i,\max}$.
 
-4. **Robust gain**:
-   $$ \rho_i = k_Y \cdot 2\Theta_{i,\max} + \eta_i $$
-   Guarantees $\rho_i \geq \|Y_i\tilde{\Theta}_i\| + \eta_i$ using only the natural bounds $\|\Theta_i\| \leq \Theta_{i,\max}$ and $\|Y_i\| \leq k_Y$.
+4. **State-dependent robust gain** (key innovation):
+   $$ \rho_i(t) = \|Y_i\hat{\Theta}_i\| + \rho_{i0} + \rho_{i1}\|\dot{q}_{i0}\| + \rho_{i2}\|q_{i0}\| + \rho_{i3}\|\dot{q}_i\|^2 + \rho_{i4}\|\dot{q}_i\|\|s_i\| + \eta_i $$
+   
+   The coefficients $\rho_{i0},\dots,\rho_{i4}$ are chosen based on the **known structural bounds** from A1 ($k_{\overline m}$, $k_C$, $k_{g_i}$), A4 ($\bar{a}_0$), and the APF bound $\bar{\phi}$. This guarantees $\rho_i(t) \ge \|Y_i\tilde{\Theta}_i\| + \eta_i$ pointwise, without any global bound on $\|Y_i\|$.
+
+**Why $\|Y_i\| \le k_Y$ was problematic:** The integral term in $\zeta_i$ can accumulate over time, making $\zeta_i$ and hence $Y_i$ potentially unbounded, even on collision-free trajectories. Unlike the standard Slotine-Li controller (where $\dot{q}_r = \dot{q}_d - \Lambda\tilde{q}$ contains no integral term and is a priori bounded), the integral APF loses this property.
+
+**How the state-dependent gain fixes it:** From $Y_i\tilde{\Theta}_i = Y_i\hat{\Theta}_i - (M_i\dot{\zeta}_i + C_i\zeta_i + g_i)$, we use A1 to bound $\|M_i\dot{\zeta}_i + C_i\zeta_i + g_i\|$ by a function of $\|\dot{q}_i\|$, $\|s_i\|$, $\|\dot{q}_{i0}\|$, $\|q_{i0}\|$, and known constants. The term $\|Y_i\hat{\Theta}_i\|$ is measured directly in the controller. The resulting bound is a **known function of measurable signals**, so the gain can be computed online.
 
 **After sliding ($t \geq T^*$):** $s_i \equiv 0$, $\dot{s}_i \equiv 0$, so
 
@@ -93,8 +98,8 @@ which is the clean APF-driven dynamics of Controller 2, yielding asymptotic fenc
 - ✅ **Five controllers designed** and analyzed (C1–C5-3).
 - ✅ **Controller 5-3** identified as the best candidate.
 - ✅ **Complete proof written** for Controller 5-3 (8 steps, 5 pages).
-- ✅ **Circularity issue fixed** in the regressor boundedness assumption.
-- ✅ **LaTeX compiles** without errors.
+- ✅ **Circularity issue fixed**: replaced constant $\|Y_i\| \le k_Y$ assumption with state-dependent gain using known structural bounds from A1.
+- ✅ **LaTeX compiles** without errors (0 errors, 0 undefined references).
 - ❌ **Simulation** (`body/simulation.tex`) is currently empty — needs implementation.
 
 ### What Remains
