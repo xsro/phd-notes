@@ -9,8 +9,8 @@
 \usepackage{amsthm}           % theorem environments
 \usepackage{hyperref}         % clickable links
 \usepackage{bm}               % bold math
-\usepackage{fontspec}         % xelatex font selection
-\usepackage{xeCJK}            % Chinese support (optional, for comments)
+% \usepackage{fontspec}         % xelatex font selection (not needed for pdflatex)
+% \usepackage{xeCJK}            % Chinese support (no CJK text in this document)
 
 % ── Page layout ───────────────────────────────────────────
 \geometry{a4paper, margin=1.2in}
@@ -19,6 +19,8 @@
 \theoremstyle{plain}
 \newtheorem{assumption}{Assumption}
 \newtheorem{theorem}{Theorem}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
 
 % ── Custom commands ───────────────────────────────────────
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
@@ -40,10 +42,15 @@
 \input{body/result.tex}
 \input{body/result2.tex}
 \input{body/result3.tex}
+\input{body/result4.tex}
+\input{body/result5.tex}
+\input{body/result5-2.tex}
+\input{body/result5-3.tex}
 % \input{body/estimator.tex}
 
 \input{body/simulation.tex}
 
 \input{body/conclusion.tex}
+\bibliographystyle{plain}
 \bibliography{body/reference.bib}
 \end{document}
