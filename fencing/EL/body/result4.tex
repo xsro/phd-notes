@@ -1,0 +1,195 @@
+\subsection{Controller 4: Command-Filtered Backstepping}
+\label{sec: controller4}
+
+Controller 2 attains asymptotic fencing but its regression requires the time derivative
+$\dot{\phi}_i$ of the potential force, which is undesirable when agents enter or leave the
+neighbor set $\mathcal{N}_i$ or when $\alpha(\cdot)$ is only piecewise smooth.
+The command-filtered backstepping (dynamic surface control) framework
+\cite{swaroopDynamicSurfaceControl2000,farrellCommandFilteredBackstepping2009}
+removes the need to differentiate $\phi_i$ by passing the virtual control through a
+first-order command filter. The price is a filter boundary-layer error, which turns the
+asymptotic objectives of Controller 2 into practical ones.
+Throughout this subsection Assumptions A1--A3 hold, and we additionally require that
+$\alpha(\cdot)$ is continuously differentiable on $(d,\infty)$ so that $\dot{\phi}_i$ is well
+defined and bounded along collision-free trajectories; this regularity is already needed in
+Controller 2 and is used only in the analysis, not in the control law.
+
+\subsubsection{Virtual Control and Command Filter}
+
+Define the virtual control
+\begin{equation}\label{eq4:virtual}
+	\alpha_i = -k_\alpha q_{i0} + \phi_i,
+\end{equation}
+which is precisely the forcing term that appears in the sliding variable of Controller 2.
+Instead of differentiating $\alpha_i$, it is passed through a first-order command filter:
+\begin{equation}\label{eq4:filter}
+	\varepsilon\dot{\alpha}_{if} = -\alpha_{if} + \alpha_i,\qquad
+	\alpha_{if}(0) = \alpha_i(0),
+\end{equation}
+where $\varepsilon > 0$ is the filter time constant. The filtered signal $\alpha_{if}$ and
+its derivative
+\begin{equation}\label{eq4:filter_der}
+	\dot{\alpha}_{if} = \frac{\alpha_i - \alpha_{if}}{\varepsilon}
+\end{equation}
+are obtained from \eqref{eq4:filter} without differentiating $\phi_i$; only the measured
+quantity $\phi_i$ enters through $\alpha_i$. Define the filter error
+\begin{equation}\label{eq4:filter_err}
+	y_i = \alpha_{if} - \alpha_i,
+\end{equation}
+whose dynamics satisfy
+\begin{equation}\label{eq4:y_dot}
+	\dot{y}_i = -\frac{1}{\varepsilon}y_i - \dot{\alpha}_i,\qquad
+	\dot{\alpha}_i = -k_\alpha \dot{q}_{i0} + \dot{\phi}_i.
+\end{equation}
+
+\subsubsection{Sliding Variable, Control Law and Adaptation Law}
+
+The sliding variable is defined as
+\begin{equation}\label{eq4:sliding_var}
+	s_i = \dot{q}_i - \zeta_i = \dot{q}_{i0} - \alpha_{if},
+\end{equation}
+where
+\begin{equation}\label{eq4:zeta}
+	\zeta_i = \dot{q}_0 + \alpha_{if},\qquad
+	\dot{\zeta}_i = \ddot{q}_0 + \dot{\alpha}_{if}
+	= \ddot{q}_0 + \frac{\alpha_i - \alpha_{if}}{\varepsilon}.
+\end{equation}
+
+The control input is
+\begin{equation}\label{eq4:control_input}
+	\tau_i = -k s_i + Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \hat{\Theta}_i,\qquad k>0,
+\end{equation}
+with the regression equation
+\begin{equation}\label{eq4:regression}
+	M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q}_i)\zeta_i + g_i(q_i)
+	= Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\Theta_i.
+\end{equation}
+The parameter estimate is updated by
+\begin{equation}\label{eq4:adaptation}
+	\dot{\hat{\Theta}}_i = -\Lambda^{-1} Y_i^T(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) s_i,
+\end{equation}
+with $\Lambda > 0$.
+
+\subsubsection{Closed-Loop Dynamics and Lyapunov Analysis}
+
+Substituting \eqref{eq4:control_input} into \eqref{eq hetero agent} and using
+\eqref{eq4:regression} gives the standard sliding dynamics
+\begin{equation}\label{eq4:s_dynamics}
+	M_i(q_i)\dot{s}_i + C_i(q_i,\dot{q}_i)s_i
+	= -k s_i + Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\tilde{\Theta}_i,
+\end{equation}
+with $\tilde{\Theta}_i = \hat{\Theta}_i - \Theta_i$. Consider
+\begin{equation}\label{eq4:V1}
+	V_{1i} = \frac12 s_i^T M_i s_i + \frac12 \tilde{\Theta}_i^T \Lambda \tilde{\Theta}_i.
+\end{equation}
+Using \eqref{eq4:s_dynamics}, \eqref{eq4:adaptation} and the skew-symmetry property A2,
+\begin{equation}\label{eq4:V1_dot}
+	\dot{V}_{1i} = -k\|s_i\|^2 \le 0,
+\end{equation}
+so $s_i \in \mathcal{L}_2 \cap \mathcal{L}_\infty$ and $\tilde{\Theta}_i$ is bounded. Once
+all states are shown to be bounded, $\dot{s}_i$ is uniformly bounded, and Barbalat's lemma
+gives $s_i \to 0$ without requiring the PE condition.
+
+From \eqref{eq4:sliding_var}, \eqref{eq4:virtual} and \eqref{eq4:filter_err},
+\begin{equation}\label{eq4:qdot_rel}
+	s_i = \dot{q}_{i0} + k_\alpha q_{i0} - \phi_i - y_i
+	\quad\Longrightarrow\quad
+	\dot{q}_{i0} = s_i - a_i + y_i,\qquad a_i := k_\alpha q_{i0} - \phi_i.
+\end{equation}
+For the fencing analysis define
+\begin{equation}\label{eq4:V2}
+	V_2 = \frac12\sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\|q_{ij}\|}^{\mu}\alpha(s)\,ds
+	+ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}\|q_{i0}\|^2,
+\end{equation}
+so that, with $\sum_{i\in\mathcal{N}}\phi_i = 0$,
+\begin{equation}\label{eq4:V2_dot}
+	\dot{V}_2 = \sum_{i\in\mathcal{N}} a_i^T \dot{q}_{i0}
+	= \sum_{i\in\mathcal{N}}\Bigl[-\|a_i\|^2 + a_i^T s_i + a_i^T y_i\Bigr].
+\end{equation}
+
+Consider the composite candidate
+\begin{equation}\label{eq4:V}
+	V = \frac{1}{4k}\sum_{i\in\mathcal{N}} V_{1i}
+	+ V_2 + \frac12\sum_{i\in\mathcal{N}}\|y_i\|^2.
+\end{equation}
+Using \eqref{eq4:V1_dot}, \eqref{eq4:V2_dot} and \eqref{eq4:y_dot}, and completing the
+square,
+\begin{align}
+	\dot{V} &= -\frac14\sum_{i\in\mathcal{N}}\|s_i\|^2
+		+ \sum_{i\in\mathcal{N}}\Bigl[-\|a_i\|^2 + a_i^T s_i + a_i^T y_i\Bigr]
+		- \frac{1}{\varepsilon}\sum_{i\in\mathcal{N}}\|y_i\|^2
+		- \sum_{i\in\mathcal{N}} y_i^T\dot{\alpha}_i \notag \\
+	&= -\sum_{i\in\mathcal{N}}\Bigl\|a_i - \tfrac12 s_i\Bigr\|^2
+		+ \sum_{i\in\mathcal{N}} a_i^T y_i
+		- \frac{1}{\varepsilon}\sum_{i\in\mathcal{N}}\|y_i\|^2
+		- \sum_{i\in\mathcal{N}} y_i^T\dot{\alpha}_i. \label{eq4:V_dot}
+\end{align}
+Applying Young's inequality
+$a_i^T y_i \le \tfrac{\delta}{2}\|a_i\|^2 + \tfrac{1}{2\delta}\|y_i\|^2$ with
+$0<\delta<1$, together with
+$\|a_i\|^2 \le 2\|a_i - \tfrac12 s_i\|^2 + \tfrac12\|s_i\|^2$, and
+$-y_i^T\dot{\alpha}_i \le \tfrac{\beta}{2}\|y_i\|^2 + \tfrac{1}{2\beta}\|\dot{\alpha}_i\|^2$
+with $\beta>0$, yields
+\begin{equation}\label{eq4:V_dot_bound}
+	\dot{V} \le -(1-\delta)\sum_{i\in\mathcal{N}}\Bigl\|a_i - \tfrac12 s_i\Bigr\|^2
+		- \Bigl(\frac{1}{\varepsilon}-\frac{1}{2\delta}-\frac{\beta}{2}\Bigr)
+			\sum_{i\in\mathcal{N}}\|y_i\|^2
+		+ \frac{\delta}{4}\sum_{i\in\mathcal{N}}\|s_i\|^2
+		+ \frac{1}{2\beta}\sum_{i\in\mathcal{N}}\|\dot{\alpha}_i\|^2.
+\end{equation}
+Choose $\varepsilon$ small enough that
+$\frac{1}{\varepsilon} > \frac{1}{2\delta} + \frac{\beta}{2}$. Since
+$\sum_i\|s_i\|^2$ is integrable (from \eqref{eq4:V1_dot}) and
+$\|\dot{\alpha}_i\|\le B_i$ on collision-free trajectories, \eqref{eq4:V_dot_bound}
+implies that $V$ is bounded on every finite interval and that
+$\|a_i - \tfrac12 s_i\|$ and $\|y_i\|$ are ultimately bounded by quantities proportional to
+$B = \max_{i\in\mathcal{N}} B_i$.
+
+\subsubsection{Theoretical Guarantee}
+
+\begin{theorem}
+	Let Assumptions A1--A3 hold and let $\alpha(\cdot)$ be continuously differentiable on
+	$(d,\infty)$. For $\varepsilon$ sufficiently small, the HELS \eqref{eq hetero agent}
+	governed by \eqref{eq4:control_input}, \eqref{eq4:adaptation} and \eqref{eq4:filter}
+	achieves:
+	\begin{enumerate}
+		\item[\textbf{P2}] collision avoidance, $\|q_{ij}(t)\| > d$ for all $t \ge 0$, $i\neq j$;
+		\item[\textbf{P1}, \textbf{P3}] practical fencing: $s_i\to 0$ without the PE condition,
+			and $\operatorname{dist}(q_0(t), \operatorname{co}(q(t)))$ as well as
+			$\|\dot{q}_i(t)-\dot{q}_0(t)\|$ are ultimately bounded by quantities proportional
+			to $B = \max_{i\in\mathcal{N}} \sup_{t\ge0}\|\dot{\alpha}_i(t)\|$.
+	\end{enumerate}
+\end{theorem}
+
+\noindent\textbf{Proof}
+The identity \eqref{eq4:V1_dot} gives $s_i\to0$ via Barbalat's lemma, with no PE condition,
+as argued above.
+
+\noindent\textit{Collision avoidance (P2).}
+On any finite interval, \eqref{eq4:V_dot_bound} gives
+$\dot{V} \le \tfrac{\delta}{4}\sum_i\|s_i\|^2 + \tfrac{NB^2}{2\beta}$, whose right-hand side
+is integrable on $[0,t]$ for every finite $t$. Hence $V(t)$ is finite for every finite $t$,
+which implies
+$\frac12\sum_{i}\sum_{j}\int_{\|q_{ij}\|}^{\mu}\alpha(s)\,ds \le V(t) < \infty$.
+Since $\int_{d}^{\mu}\alpha(s)\,ds = \infty$, no pair can reach $\|q_{ij}\|=d$, and P2
+follows.
+
+\noindent\textit{Practical fencing (P1 and P3).}
+From \eqref{eq4:V_dot_bound} and the integrability of $\sum_i\|s_i\|^2$, the quantities
+$\|a_i-\tfrac12 s_i\|$ and $\|y_i\|$ are ultimately bounded by $O(B)$. Together with
+$s_i\to0$ this gives $a_i$ and $y_i$ ultimately bounded by $O(B)$. Then
+\eqref{eq4:qdot_rel} yields that $\|\dot{q}_{i0}\| = \|s_i - a_i + y_i\|$ is ultimately
+bounded by $O(B)$, establishing P3 in the practical sense.
+Averaging \eqref{eq4:qdot_rel} over $i$ and using $\sum_i\phi_i=0$,
+\begin{equation*}
+	\dot{\tilde{q}} = \frac{1}{N}\sum_{i\in\mathcal{N}}\dot{q}_{i0}
+	= -k_\alpha\tilde{q} + \frac{1}{N}\sum_{i\in\mathcal{N}}(s_i + y_i),
+\end{equation*}
+which is input-to-state stable with input $\frac1N\sum_i(s_i+y_i)$. Since $s_i\to0$ and
+$y_i$ is ultimately bounded by $O(B)$, $\|\tilde{q}\|$ is ultimately bounded by $O(B)/k_\alpha$.
+As $\tilde{q} = \frac1N\sum_i q_i - q_0$ and the centroid lies in $\operatorname{co}(q(t))$,
+we get
+$\operatorname{dist}(q_0(t), \operatorname{co}(q(t))) \le \|\tilde{q}(t)\|$ ultimately
+bounded by $O(B)/k_\alpha$, establishing P1 in the practical sense.
+\hfill$\square$

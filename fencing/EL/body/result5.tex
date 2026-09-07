@@ -1,0 +1,180 @@
+\subsection{Controller 5-1: Robust Adaptive Control with Constant Gain}
+\label{sec: controller5-1}
+
+Controller 1 (integral APF) avoids $\dot{\phi}_i$ but only achieves practical fencing,
+because the residual $\dot{s}_i$, which does not vanish without the PE condition, leaks into
+$\dot{V}_2$. Controller 5-1 recovers asymptotic fencing while still avoiding $\dot{\phi}_i$ and
+the PE condition, by adding a constant-gain sliding-mode robust term that drives $s_i$ to
+zero in finite time. Once $s_i \equiv 0$, the residual $\dot{s}_i$ vanishes exactly and the
+closed loop reduces to the clean potential-driven dynamics used in Controller 2. The
+underlying adaptive framework (sliding surface plus parameter adaptation) follows the
+classical Slotine--Li scheme \cite{slotineAdaptiveControlRobot1987}, while the sliding-mode
+robust term and its gain condition are standard in robust adaptive control
+\cite{slotineLiAppliedNonlinearControl1991,ioannouSunRobustAdaptiveControl1996}. See
+\S\ref{sec: controller5-2} and \S\ref{sec: controller5-3} for variants that relax the
+gain condition.
+
+\subsubsection{Integral APF and Sliding Variable}
+
+As in Controller 1, define the auxiliary variable
+\begin{equation}\label{eq5:zeta}
+	\zeta_i = \dot{q}_0 - k_\alpha q_{i0}
+	+ \int_0^t \bigl(-k_\alpha q_{i0} + \phi_i(\tau)\bigr)\,d\tau,
+\end{equation}
+so that
+\begin{equation}\label{eq5:zeta_dot}
+	\dot{\zeta}_i = \ddot{q}_0 - k_\alpha \dot{q}_{i0} - k_\alpha q_{i0} + \phi_i
+\end{equation}
+contains $\phi_i$ but not $\dot{\phi}_i$. The sliding variable is
+\begin{equation}\label{eq5:sliding_var}
+	s_i = \dot{q}_i - \zeta_i,
+\end{equation}
+whose derivative satisfies
+\begin{equation}\label{eq5:s_dot_def}
+	\dot{s}_i = \ddot{q}_{i0} + k_\alpha \dot{q}_{i0} + k_\alpha q_{i0} - \phi_i.
+\end{equation}
+
+\subsubsection{Control Law and Adaptation Law}
+
+The control input is
+\begin{equation}\label{eq5:control_input}
+	\tau_i = -k s_i - \rho_i\,\mathrm{sgn}(s_i)
+	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) \hat{\Theta}_i,\qquad k>0,
+\end{equation}
+where $\mathrm{sgn}(s_i)$ is applied elementwise and the robust gain satisfies
+\begin{equation}\label{eq5:rho}
+	\rho_i \ge \bigl\|Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\tilde{\Theta}_i\bigr\| + \eta_i,
+	\qquad \eta_i > 0.
+\end{equation}
+The regression equation is
+\begin{equation}\label{eq5:regression}
+	M_i(q_i)\dot{\zeta}_i + C_i(q_i,\dot{q}_i)\zeta_i + g_i(q_i)
+	= Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\Theta_i,
+\end{equation}
+and the adaptation law is
+\begin{equation}\label{eq5:adaptation}
+	\dot{\hat{\Theta}}_i = -\Lambda^{-1} Y_i^T(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i) s_i,
+\end{equation}
+with $\Lambda > 0$.
+
+\subsubsection{Closed-Loop Dynamics and Finite-Time Sliding}
+
+Substituting \eqref{eq5:control_input} into \eqref{eq hetero agent} and using
+\eqref{eq5:regression} gives
+\begin{equation}\label{eq5:s_dynamics}
+	M_i(q_i)\dot{s}_i + C_i(q_i,\dot{q}_i)s_i
+	= -k s_i - \rho_i\,\mathrm{sgn}(s_i)
+	+ Y_i(q_i,\dot{q}_i,\dot{\zeta}_i,\zeta_i)\tilde{\Theta}_i.
+\end{equation}
+Consider
+\begin{equation}\label{eq5:V1}
+	V_{1i} = \frac12 s_i^T M_i s_i + \frac12 \tilde{\Theta}_i^T \Lambda \tilde{\Theta}_i.
+\end{equation}
+Using \eqref{eq5:s_dynamics}, \eqref{eq5:adaptation} and A2,
+\begin{equation}\label{eq5:V1_dot}
+	\dot{V}_{1i} = -k\|s_i\|^2 - \rho_i\|s_i\|_1 \le 0,
+\end{equation}
+where the adaptive cross terms cancel exactly and
+$\|s_i\|_1 = \sum_{l=1}^{p}|s_{il}|$. To obtain finite-time convergence, consider only the
+sliding part
+\begin{equation}\label{eq5:Vs}
+	V_{si} = \frac12 s_i^T M_i s_i.
+\end{equation}
+Differentiating and using the skew-symmetry property,
+\begin{equation}\label{eq5:Vs_dot}
+	\dot{V}_{si} = -k\|s_i\|^2 - \rho_i\|s_i\|_1 + s_i^T Y_i \tilde{\Theta}_i
+	\le -k\|s_i\|^2 - \eta_i\|s_i\|_1
+	\le -\eta_i\|s_i\|.
+\end{equation}
+With $V_{si} \le \tfrac{k_{\overline m}}{2}\|s_i\|^2$, i.e.
+$\|s_i\| \ge \sqrt{2V_{si}/k_{\overline m}}$, we obtain
+$\dot{V}_{si} \le -c_i\sqrt{V_{si}}$ with $c_i = \eta_i\sqrt{2/k_{\overline m}}$.
+This comparison inequality implies that $V_{si}$ reaches zero in finite time
+$T_i \le 2\sqrt{V_{si}(0)}/c_i$. Hence
+\begin{equation}\label{eq5:finite_time}
+	s_i(t) \equiv 0,\qquad \dot{s}_i(t) \equiv 0,\qquad \forall\, t \ge T^* = \max_{i\in\mathcal{N}} T_i.
+\end{equation}
+
+\subsubsection{Theoretical Guarantee}
+
+\begin{theorem}
+	Under Assumptions A1--A3, the HELS \eqref{eq hetero agent} governed by
+	\eqref{eq5:control_input}, \eqref{eq5:adaptation} and \eqref{eq5:zeta} achieves the
+	fencing objectives P1--P3 asymptotically, without the PE condition and without
+	differentiating $\phi_i$.
+\end{theorem}
+
+\noindent\textbf{Proof}
+\noindent\textit{After the sliding phase.}
+For $t\ge T^*$, \eqref{eq5:s_dot_def} together with \eqref{eq5:finite_time} gives
+\begin{equation}\label{eq5:clean_dyn}
+	\ddot{q}_{i0} = -k_\alpha \dot{q}_{i0} - k_\alpha q_{i0} + \phi_i.
+\end{equation}
+Choose the Lyapunov function
+\begin{equation}\label{eq5:V2}
+	V_2 = \frac12\sum_{i\in\mathcal{N}}\sum_{j\in\mathcal{N}}
+	\int_{\|q_{ij}\|}^{\mu}\alpha(s)\,ds
+	+ \frac{k_\alpha}{2}\sum_{i\in\mathcal{N}}\|q_{i0}\|^2
+	+ \frac12\sum_{i\in\mathcal{N}}\|\dot{q}_{i0}\|^2.
+\end{equation}
+With $\sum_i\phi_i=0$ and $\dot{A} = -\sum_i\phi_i^T\dot{q}_{i0}$,
+\begin{equation}\label{eq5:V2_dot}
+	\dot{V}_2 = -\sum_{i\in\mathcal{N}}\phi_i^T\dot{q}_{i0}
+	+ k_\alpha\sum_{i\in\mathcal{N}}q_{i0}^T\dot{q}_{i0}
+	+ \sum_{i\in\mathcal{N}}\dot{q}_{i0}^T\ddot{q}_{i0}.
+\end{equation}
+Substituting \eqref{eq5:clean_dyn}, the potential and centroid cross terms cancel, leaving
+\begin{equation}\label{eq5:V2_dot_final}
+	\dot{V}_2 = -k_\alpha\sum_{i\in\mathcal{N}}\|\dot{q}_{i0}\|^2 \le 0.
+\end{equation}
+Since $\dot{q}_{i0}$, $q_{i0}$ and $\phi_i$ are bounded (the latter by collision avoidance
+established below), $\ddot{V}_2$ is bounded. Barbalat's lemma gives
+$\|\dot{q}_{i0}\|\to0$, establishing P3.
+
+\noindent\textit{Convex-hull fencing (P1).}
+Averaging \eqref{eq5:clean_dyn} and using $\sum_i\phi_i=0$,
+\begin{equation}\label{eq5:centroid}
+	\ddot{\tilde{q}} = -k_\alpha\dot{\tilde{q}} - k_\alpha\tilde{q},
+\end{equation}
+with $\tilde{q} = \frac1N\sum_i q_{i0}$. This linear system is exponentially stable for
+$k_\alpha>0$, hence $\tilde{q}\to0$. Since the centroid $\frac1N\sum_i q_i$ lies in
+$\operatorname{co}(q(t))$,
+$\operatorname{dist}(q_0(t), \operatorname{co}(q(t))) \le \|\tilde{q}(t)\| \to 0$,
+establishing P1.
+
+\noindent\textit{Collision avoidance (P2).}
+On the finite interval $[0,T^*]$, $s_i$ and $\dot{s}_i$ are bounded under the sliding-mode
+dynamics \eqref{eq5:s_dynamics}, so from $\ddot{q}_{i0} = -k_\alpha\dot{q}_{i0}
+- k_\alpha q_{i0} + \phi_i + \dot{s}_i$ we get
+$\dot{V}_2 = -k_\alpha\sum_i\|\dot{q}_{i0}\|^2 + \sum_i\dot{q}_{i0}^T\dot{s}_i$, which is
+bounded on $[0,T^*]$. Hence $V_2(T^*)$ is finite and no collision occurs on $[0,T^*]$.
+For $t\ge T^*$, \eqref{eq5:V2_dot_final} gives $V_2(t) \le V_2(T^*)$, so the barrier term
+stays finite and no collision occurs. P2 holds for all $t\ge0$.
+\hfill$\square$
+
+\begin{remark}
+The ideal sign function in \eqref{eq5:control_input} causes chattering. In practice it is
+replaced by a continuous approximation such as $\mathrm{sat}(s_i/\delta_i)$ with boundary
+layer $\delta_i>0$; then $s_i$ only converges to an $O(\delta_i)$-neighborhood of zero and
+the objectives become practical with an error of order $\delta_i$. The gain condition
+\eqref{eq5:rho} is implementable because $\tilde{\Theta}_i$ is bounded by
+$V_{1i}(0)$ and $Y_i$ is bounded on collision-free trajectories via A1.
+\end{remark}
+
+\begin{remark}
+\textbf{On the gain condition \eqref{eq5:rho}.}
+The classical Slotine--Li adaptive controller \cite{slotineAdaptiveControlRobot1987} does
+\emph{not} contain an $\mathrm{sgn}(s_i)$ robust term; it relies on parameter adaptation
+alone and yields $\dot{V}_{1i} = -k\|s_i\|^2 \le 0$. The sliding-mode robust term added
+here is the mechanism that makes the residual $\dot{s}_i$ vanish \emph{exactly} (in finite
+time), which is what restores the asymptotic convergence of Controller 2. The price is
+the gain condition \eqref{eq5:rho}: to dominate the uncertain term $Y_i\tilde{\Theta}_i$ by
+$\rho_i\,\mathrm{sgn}(s_i)$ one needs a bound on $\|Y_i\tilde{\Theta}_i\|$. This is a
+standard requirement in robust adaptive sliding-mode control
+\cite{slotineLiAppliedNonlinearControl1991,ioannouSunRobustAdaptiveControl1996} and is
+\emph{not} part of the original Slotine--Li (1987) algorithm. The bound is available
+because $\tilde{\Theta}_i$ is bounded a priori by $V_{1i}(0)$ and $Y_i$ is bounded on the
+collision-free operating envelope (guaranteed by the no-finite-escape argument), so a
+conservative constant $\rho_i$ can always be chosen for systems with a known operating
+range.
+\end{remark}
