@@ -770,20 +770,20 @@ $$
 
 ## 9. 参考文献
 
-1. **严宇新**. 面向在轨捕获的空间机械臂运动规划与控制方法研究 [D]. 哈尔滨工业大学, 2025.
-2. **B. Zhou, W. Michiels, J. Chen**. Fixed-time stabilization of linear delay systems by smooth periodic delayed feedback [J]. IEEE Transactions on Automatic Control, 2022, 67(2): 557–573.
-3. **Y. Ding, B. Zhou, K.-K. Zhang, W. Michiels**. Strong prescribed-time stabilization of uncertain nonlinear systems by periodic delayed feedback [J]. (自动化学报/IEEE 汇刊，见知识库 `/home/orangepi/sys/okb-knowledge/markdowns/2070.md`).
-4. **J. A. Farrell, M. M. Polycarpou, M. Sharma, W. Dong**. Command filtered adaptive backstepping [J]. IEEE Transactions on Automatic Control, 2009, 54(6): 1391–1395.
-5. **W. Dong, J. A. Farrell, M. M. Polycarpou, V. Djapic, M. Sharma**. Command filtered adaptive backstepping [J]. IEEE Transactions on Automatic Control, 2012, 58(10): 2617–2622.
-6. **J. Yu, P. Shi, W. Dong, C. Lin**. Command-filtered backstepping control for nonlinear systems with input saturation [J]. IEEE Transactions on Cybernetics, 2015, 45(10): 2018–2027.
-7. **J. Yu, P. Shi, X. Zhao**. Finite-time command filtered backstepping control for a class of nonlinear systems [J]. IEEE Transactions on Automatic Control, 2018, 63(10): 3464–3471.
-8. **J. Yu, L. Zhao, H. Yu, C. Lin**. Barrier Lyapunov functions-based command filtered output feedback control for full-state constrained nonlinear systems [J]. Automatica, 2019, 103: 244–251.
-9. **Y. Jiang, J. Lv, C. Wang, Y. Kao, F. Wang**. Prescribed-time disturbance observer-based fully distributed prescribed-time containment control of multiagent systems [J]. IEEE Transactions on Circuits and Systems II, 2024.
-10. **Y. Umetani, K. Yoshida**. Resolved motion rate control of space manipulators with generalized Jacobian matrix [J]. IEEE Transactions on Robotics and Automation, 1989, 5(3): 303–314.
-11. **Z. Vafa, S. Dubowsky**. The kinematics and dynamics of space manipulators: the virtual manipulator approach [J]. The International Journal of Robotics Research, 1990, 9(4): 3–21.
-12. **E. Papadopoulos, S. Dubowsky**. Dynamic singularities in free-floating space manipulators [J]. Journal of Dynamic Systems, Measurement, and Control, 1993, 115(1): 44–52.
-13. **S. Ling, H. Wang, P. X. Liu**. Adaptive fuzzy tracking control of flexible-joint robots based on command filtering [J]. IEEE Transactions on Fuzzy Systems, 2021, 29(7): 2152–2163.
-14. **M. Krstic, I. Kanellakopoulos, P. V. Kokotovic**. Nonlinear and Adaptive Control Design [M]. New York: Wiley, 1995.
+1. **严宇新**. 面向在轨捕获的空间机械臂运动规划与控制方法研究 [D]. 哈尔滨工业大学, 2025. (无 DOI)
+2. **B. Zhou, W. Michiels, J. Chen**. Fixed-time stabilization of linear delay systems by smooth periodic delayed feedback [J]. IEEE Transactions on Automatic Control, 2022, 67(2): 557–573. DOI: `10.1109/TAC.2021.3051262` (MCP: 20)
+3. **Y. Ding, B. Zhou, K.-K. Zhang, W. Michiels**. Strong prescribed-time stabilization of uncertain nonlinear systems by periodic delayed feedback [J]. (自动化学报/IEEE 汇刊，见知识库 `/home/orangepi/sys/okb-knowledge/markdowns/2070.md`). (MCP: 2070)
+4. **J. A. Farrell, M. M. Polycarpou, M. Sharma, W. Dong**. Command filtered adaptive backstepping [J]. IEEE Transactions on Automatic Control, 2009, 54(6): 1391–1395. DOI: `10.1109/TAC.2009.2015562` (MCP: 3275)
+5. **W. Dong, J. A. Farrell, M. M. Polycarpou, V. Djapic, M. Sharma**. Command filtered adaptive backstepping [J]. IEEE Transactions on Control Systems Technology, 2013, 21(6): 2102–2110. DOI: `10.1109/TCST.2011.2121907`
+6. **J. Yu, P. Shi, W. Dong, C. Lin**. Command-filtered backstepping control for nonlinear systems with input saturation [J]. IEEE Transactions on Cybernetics, 2015, 45(10): 2018–2027. DOI: `10.1109/TCYB.2015.2483368`
+7. **J. Yu, P. Shi, X. Zhao**. Finite-time command filtered backstepping control for a class of nonlinear systems [J]. IEEE Transactions on Automatic Control, 2018, 63(10): 3464–3471. DOI: `10.1016/j.automatica.2018.03.033` (MCP: 3274)
+8. **J. Yu, L. Zhao, H. Yu, C. Lin**. Barrier Lyapunov functions-based command filtered output feedback control for full-state constrained nonlinear systems [J]. Automatica, 2019, 103: 244–251. DOI: `10.1016/j.automatica.2019.03.022`
+9. **Y. Jiang, J. Lv, C. Wang, Y. Kao, F. Wang**. Prescribed-time disturbance observer-based fully distributed prescribed-time containment control of multiagent systems [J]. IEEE Transactions on Circuits and Systems II, 2024. DOI: `10.1109/TCSII.2023.3328652`
+10. **Y. Umetani, K. Yoshida**. Resolved motion rate control of space manipulators with generalized Jacobian matrix [J]. IEEE Transactions on Robotics and Automation, 1989, 5(3): 303–314. DOI: `10.1109/70.34766`
+11. **Z. Vafa, S. Dubowsky**. The kinematics and dynamics of space manipulators: the virtual manipulator approach [J]. The International Journal of Robotics Research, 1990, 9(4): 3–21. DOI: `10.1177/027836499000900401`
+12. **E. Papadopoulos, S. Dubowsky**. Dynamic singularities in free-floating space manipulators [J]. Journal of Dynamic Systems, Measurement, and Control, 1993, 115(1): 44–52. DOI: `10.1115/1.2897406`
+13. **S. Ling, H. Wang, P. X. Liu**. Adaptive fuzzy tracking control of flexible-joint robots based on command filtering [J]. IEEE Transactions on Fuzzy Systems, 2021, 29(7): 2152–2163. DOI: `10.1109/TFZZ.2021.3072770`
+14. **M. Krstic, I. Kanellakopoulos, P. V. Kokotovic**. Nonlinear and Adaptive Control Design [M]. New York: Wiley, 1995. ISBN: `978-0-471-12732-1`
 
 ---
 
