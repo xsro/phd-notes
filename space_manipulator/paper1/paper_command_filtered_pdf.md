@@ -269,9 +269,9 @@ $$
 
 **假设 3**：等效加速度扰动 $\Delta_a=M_e^{-1}(q_m)d(t)$ 及其导数有界（上界可未知）。
 
-**假设 4**：指令滤波器输入 $\alpha_1$ 及其一阶导数 $\dot\alpha_1$ 有界。
+**假设 4**：对于精确预设时间归零结论，忽略执行器饱和；若存在饱和，则结论退化为实际收敛。
 
-**假设 5**：对于精确预设时间归零结论，忽略执行器饱和；若存在饱和，则结论退化为实际收敛。
+**注**：与 Farrell 等、Dong 等的指令滤波反步法一致，本文不将“虚拟控制 $\alpha_1$ 及其导数 $\dot\alpha_1$ 有界”列为先验假设——该性质由定理 1（补偿误差有界）结合闭环线性结构事后证明（见 §5.3 引理 3），无需预先假定系统状态有界。
 
 ---
 
@@ -373,7 +373,7 @@ $$
 
 ### 4.3 指令滤波反步法结合周期延迟反馈
 
-取预设时间 $T_s>0$，定义 $h=T_s/4$。PDF 控制器在 $t=T_o$ 起以局部时间 $\vartheta=t-T_o$ 运行。设 $a\ge 0$，$\tau_2\in(1/2,1)$ 为设计参数。
+取预设时间 $T_s>0$，定义 $h=T_s/4$。PDF 控制器在 $t=T_o$ 起以局部时间 $\vartheta=t-T_o$ 运行。设 $a>0$，$\tau_2\in(1/2,1)$ 为设计参数（$a>0$ 保证实际跟踪误差收敛到零；$a=0$ 时补偿误差虽仍预设时间归零，但实际误差收敛到有限非零值，见 §5.3 注 4）。
 
 #### 步骤 1（位置误差子通道）
 
@@ -396,12 +396,13 @@ $$
 K_1(\vartheta)=
 \begin{cases}
 0, & \vartheta\le 2h,\\
-K_{(a,h)}(\vartheta-2h), & \vartheta>2h .
+K_{(a,h)}(\vartheta-2h), & 2h<\vartheta\le 4h,\\
+0, & \vartheta>4h .
 \end{cases}
 \tag{8}
 $$
 
-**注**：式 (7) 中线性阻尼项采用实际误差 $z_1$、周期延迟项采用补偿误差 $\upsilon_1$；这一混合选取使 5.1 节的补偿误差动态 (16) 中滤波误差 $\eta$ 精确抵消，得到干净的 PDF 镇定结构。
+**注**：式 (7) 中线性阻尼项采用实际误差 $z_1$、周期延迟项采用补偿误差 $\upsilon_1$；这一混合选取使 5.1 节的补偿误差动态 (16) 中滤波误差 $\eta$ 与补偿信号 $\xi_1$ 同时精确抵消（阻尼项 $-az_1$ 借助 $z_1=\upsilon_1+\xi_1$ 消去 $+a\xi_1$），得到干净的 PDF 镇定结构。
 
 #### 指令滤波器
 
@@ -432,9 +433,15 @@ $$
 其中
 
 $$
-K_2(\vartheta)=K_{(a,h)}(\vartheta),\qquad \vartheta\ge 0 .
+K_2(\vartheta)=
+\begin{cases}
+K_{(a,h)}(\vartheta), & 0\le \vartheta\le 2h,\\
+0, & \vartheta>2h .
+\end{cases}
 \tag{12}
 $$
+
+**注（增益按时关闭）**：式 (8)、(12) 使两级 PDF 增益仅在各自收敛窗口内激活（$K_2$ 在 $\vartheta\in[0,2h]$、$K_1$ 在 $\vartheta\in[2h,4h]$），收敛后置零，与 Zhou 等/Ding 等的“单周期 PDF”用法一致。由于 $R_h\in S^{(r)}(h)$ 满足 $R_h^{(i)}(h)=R_h^{(i)}(2h)=0$（$i=0,\dots,r$），置零切换为 $C^r$ 光滑，且 $K_1,\dot K_1,K_2,\dot K_2$ 全程有界——避免了因子 $e^{-a(h-2t)}$ 在 $t\to\infty$ 时的无界增长。
 
 #### 最终控制律
 
@@ -553,7 +560,7 @@ $$
 
 ### 5.2 主定理与证明
 
-**定理 1**：考虑满足假设 1–4 的自由漂浮空间机械臂 (1)，采用观测器 (2)、控制律 (13) 与补偿系统 (14)–(15)。设残余扰动满足 $|\Delta_d|\le\rho$。则
+**定理 1**：考虑满足假设 1–3 的自由漂浮空间机械臂 (1)，采用观测器 (2)、控制律 (13) 与补偿系统 (14)–(15)。设残余扰动满足 $|\Delta_d|\le\rho$。则
 
 1. 补偿误差在预设时间归零：
 
@@ -656,6 +663,31 @@ $$
 
 **证明**：由 $\xi_2\equiv 0$ 直接得 $z_2=\upsilon_2$；$z_1=\upsilon_1+\xi_1$ 由定义给出；式 (14) 代入 $\xi_2=0$ 即得 $\dot\xi_1=-a\xi_1+\eta$；式 (10) 对 $\vartheta$ 求导并代入式 (9) 得 $\dot\eta=\dot\alpha_1^c-\dot\alpha_1=-\omega\eta-\dot\alpha_1$。∎
 
+**引理 3（虚拟控制与滤波信号的有界性）**：在定理 1 条件下（无需额外假设），虚拟控制 $\alpha_1$、其导数 $\dot\alpha_1$、滤波误差 $\eta$ 与补偿信号 $\xi_1$ 全程有界。
+
+**证明**：对式 (7) 关于 $\vartheta$ 求导，并利用 $\dot z_1=x_2=z_2+\alpha_1+\eta$（因 $x_2=z_2+\alpha_1^c$、$\alpha_1^c=\alpha_1+\eta$），得
+
+$$
+\dot\alpha_1=-a(z_2+\alpha_1+\eta)-\dot K_1(\vartheta)\,\upsilon_1(\vartheta-h)-K_1(\vartheta)\,\dot\upsilon_1(\vartheta-h) .
+$$
+
+令 $b(t)=-a z_2-\dot K_1(\vartheta)\,\upsilon_1(\vartheta-h)-K_1(\vartheta)\,\dot\upsilon_1(\vartheta-h)$，则 $\dot\alpha_1=-a\alpha_1-a\eta+b(t)$。结合推论 1 中的 $\dot\eta=-\omega\eta-\dot\alpha_1$ 消去 $\dot\alpha_1$，得 $(\alpha_1,\eta)$ 的线性闭环
+
+$$
+\begin{bmatrix}\dot\alpha_1\\[2pt] \dot\eta\end{bmatrix}
+=
+\begin{bmatrix}-a & -a\\[2pt] a & -(\omega-a)\end{bmatrix}
+\begin{bmatrix}\alpha_1\\[2pt] \eta\end{bmatrix}
++
+\begin{bmatrix}b(t)\\[2pt] -b(t)\end{bmatrix} .
+$$
+
+先证 $b(t)$ 有界：$z_2=\upsilon_2$ 与 $\upsilon_1$ 由定理 1 有界；由式 (16)，$\dot\upsilon_1=-a\upsilon_1-K_1\upsilon_1(\vartheta-h)+\upsilon_2$ 各项有界，故 $\dot\upsilon_1$ 有界；$K_1,\dot K_1$ 由增益按时关闭知全程有界。故 $b(t)$ 有界。
+
+系数矩阵特征多项式为 $\lambda^2+\omega\lambda+a\omega$，由 $a>0$ 知两特征值均具负实部（$\omega>4a$ 时为两负实根，否则为负实部复根），矩阵 Hurwitz；有界输入 $b(t)$ 驱动的线性系统之状态 $(\alpha_1,\eta)$ 有界；再由 $\dot\xi_1=-a\xi_1+\eta$（稳定一阶系统）得 $\xi_1$ 有界。（若允许 $a=0$，式 (7) 退化为 $\alpha_1=-K_1\upsilon_1(\vartheta-h)$，$\dot\alpha_1$ 直接由有界量构成、无循环，结论亦成立。）
+
+综上 $\alpha_1,\eta,\xi_1$ 有界，且 $\dot\alpha_1$ 由显式表达亦有界。∎
+
 **推论 2（实际跟踪性能）**：在定理 1 条件下，
 
 1. 速度误差 $z_2(t)=0$，$\forall t\ge T_o+2h$；
@@ -682,7 +714,7 @@ $$
 \begin{bmatrix}\xi_1\\ \eta\end{bmatrix},
 $$
 
-其特征多项式为 $\lambda^2+\omega\lambda+a\omega$，当 $\omega>4a$ 时两特征值为负实数（约 $-a$ 与 $-(\omega-a)$）。故 $|z_1|=|\xi_1|=O\big(e^{-\min(a,\omega-a)\vartheta}\big)$，实际跟踪误差以指数速率收敛到零，速率由 $\min(a,\omega-a)$ 决定；增大 $\omega$ 可加快收敛。
+其特征多项式为 $\lambda^2+\omega\lambda+a\omega$，在 $a>0$ 且 $\omega>4a$ 时两特征值为负实数（约 $-a$ 与 $-(\omega-a)$）。故 $|z_1|=|\xi_1|=O\big(e^{-\min(a,\omega-a)\vartheta}\big)$，实际跟踪误差以指数速率收敛到零，速率由 $\min(a,\omega-a)$ 决定；增大 $\omega$ 可加快收敛。
 
 ---
 
@@ -696,9 +728,11 @@ $$
 
 若 PTDO 与 PDF 控制器同时从 $t=0$ 启动，则 $0\le t<T_o$ 内观测误差作为残余扰动进入误差通道，严格零化结论不再成立。因此采用两阶段时序：先在 $T_o$ 内完成扰动观测，随后以局部时间 $\vartheta=t-T_o$ 启动 PDF 增益。总收敛时间为 $T=T_o+T_s$。
 
+第一阶段（$0\le t<T_o$）施加**有界标称控制**（例如 PD 控制 $\tau=M_e[\ddot q_d-K_p e-K_d\dot e]+C_e\dot q_m-\hat d$，或仅动力学补偿），以保证 $[T_o-h,T_o]$ 上状态与缓存历史 $\upsilon_1,\upsilon_2$ 有界——这是 PDF 延迟项在 $\vartheta\in[0,h]$ 内所需初始历史的良定性前提。由于该阶段仅为有限时长，任何使闭环无有限逃逸的有界控制律均可胜任。
+
 ### 6.3 关于参数选择
 
-- $a\ge 0$：基准线性阻尼，可加快首半周期衰减；
+- $a>0$：基准线性阻尼，可加快首半周期衰减，并保证实际跟踪误差收敛到零（$a=0$ 时实际误差收敛到非零常数，见 §5.3 注 4）；
 - $\tau_2\in(1/2,1)$：幂分配参数，控制对加性扰动的鲁棒性；
 - $h=T_s/4$：由预设时间唯一确定；
 - $\omega>0$：指令滤波器带宽，越大则滤波误差越小，但噪声放大越明显，需折中；
