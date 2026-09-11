@@ -70,7 +70,8 @@
 \newcommand{\tbf}{\textbf}
 
 %% ── 文档信息 ──
-\title{基于指令滤波与周期延迟反馈的自由漂浮\\[4pt]空间机械臂预设时间轨迹跟踪控制}
+\title{基于指令滤波与周期延迟反馈的自由漂浮
+空间机械臂预设时间轨迹跟踪控制}
 \author{}
 \date{}
 
@@ -82,7 +83,10 @@
 \begin{abstract}
 针对捕获前自由漂浮空间机械臂的关节空间轨迹跟踪问题，本文提出一种基于指令滤波（command filtering）与光滑周期延迟反馈（smooth periodic delayed feedback, PDF）的预设时间控制方法。首先，依据动量守恒关系将自由漂浮空间机械臂约化为等效关节空间动力学，并设计预设时间扰动观测器（prescribed-time disturbance observer, PTDO）在预设时间 $T_o$ 内估计集总扰动。其次，采用计算力矩补偿将非线性耦合动力学规范化为关于跟踪误差的二阶积分链，从而把 PDF 镇定设计对象由非线性系统转化为可控线性误差通道。随后，在该误差通道上采用指令滤波反步法设计控制器：以含线性周期延迟反馈项的虚拟控制镇定位置误差子通道，以一阶指令滤波器生成虚拟控制及其导数的替代信号以消除"微分爆炸"，并以含幂分配周期延迟反馈项的实际控制镇定速度误差子通道；同时构造误差补偿系统抵消滤波误差的影响。理论分析表明，在理想补偿条件下，补偿后的跟踪误差可在预设时间 $T_o+T_s$ 内精确归零，且闭环系统关于匹配扰动具有强固定时间稳定性；实际跟踪误差在补偿误差归零后以指数速率收敛到零，速率由滤波器带宽 $\omega$ 与 $a$ 决定。最后给出七自由度空间机械臂的数值仿真验证。
 
-\noindent\textbf{关键词}：自由漂浮空间机械臂；周期延迟反馈；预设时间控制；指令滤波；反步法；扰动观测器
+\noindent\textbf{关键词}：自由漂浮空间机械臂；周期延迟反馈；预设时间控制；指令滤波反步法；扰动观测器
+
+\vspace{1em}
+\noindent\textbf{中图分类号}：TP241\qquad\textbf{文献标志码}：A
 \end{abstract}
 
 %%
@@ -106,17 +110,24 @@
   \item \textbf{诚实刻画}：明确区分"补偿误差的精确归零"与"实际跟踪误差的渐近收敛"，指出实际跟踪误差在补偿误差归零后以指数速率收敛到零，速率由滤波器带宽 $\omega$ 与 $a$ 决定。
 \end{enumerate}
 
+\vspace{0.5em}
+\noindent\textbf{论文组织}：第~2~节给出预备知识与问题描述，包括 PDF 基本引理与空间机械臂动力学建模；第~3~节详细阐述控制算法，涵盖 PTDO 设计、计算力矩补偿和指令滤波反步法结合 PDF 的三个核心环节；第~4~节给出稳定性分析与主定理证明；第~5~节讨论鲁棒性与工程实现问题；第~6~节通过七自由度机械臂仿真验证算法有效性；第~7~节总结全文。
+
 
 %%
 %% 2. 预备知识与问题描述
 %%
 \section{预备知识与问题描述}
 
+\subsection{记号}
+
 对 $x\in\R$ 与 $\alpha>0$，记 $\sig^{\alpha}(x)=|x|^{\alpha}\sign(x)$；对向量按元素作用。约定 $\sign(0)=0$，从而 $\sig^{\alpha}(0)=0$。
 
-$\R_{\ge 0}=[0,\infty)$，$\|\cdot\|$ 表示向量的 $2$-范数。$\cC^{r}$ 表示 $r$ 次连续可微函数空间。$h>0$ 为设计延迟；$\vth$ 表示 PDF 控制器的局部时间。
+$\R_{\ge 0}=[0,\infty)$，$\|\cdot\|$ 表示向量的 $2$-范数。$\cC^{r}$ 表示 $r$ 次连续可微函数空间。$h>0$ 为设计延迟；$\vth$ 表示 PDF 控制器的局部时间（相对时间）。
 
-\begin{definition}[函数类 $\cS^{(r)}(h)$]
+对 $a\ge 0$ 与 $h>0$，$K_{(a,h)}(t)$ 为 PDF 增益函数（见定义~\ref{def:pdf_gain}）；$R_h(t)\in\cS^{(r)}(h)$ 为光滑 $2h$-周期激活函数（见定义~\ref{def:Sh}）。
+
+\begin{definition}[函数类 $\cS^{(r)}(h)$]\label{def:Sh}
 给定常数 $h>0$ 与整数 $r\ge 0$，函数 $R_h:\R\to\R$ 称为属于 $\cS^{(r)}(h)$，若
 \begin{enumerate}
   \item $R_h$ 是 $2h$-周期函数，且 $R_h(t)=0,\ \forall t\in[0,h]$；
@@ -129,7 +140,7 @@ $\R_{\ge 0}=[0,\infty)$，$\|\cdot\|$ 表示向量的 $2$-范数。$\cC^{r}$ 表
 
 \subsection{周期延迟反馈与强预设时间镇定}
 
-\begin{definition}[PDF 增益]
+\begin{definition}[PDF 增益及 Gramian]\label{def:pdf_gain}
 给定 $a\ge 0$ 与 $h>0$，定义
 \begin{equation}
   K_{(a,h)}(t)=R_h(t)\,W\,e^{-a(h-2t)},\qquad
@@ -496,12 +507,12 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \item $\rho$：残余扰动上界，可由 PTDO 收敛后的观测误差界估计。
 \end{itemize}
 
-% \subsection{与严宇新原始 PDF 控制的关系}
+\subsection{与严宇新原始 PDF 控制的关系}
 
-% 严宇新原始控制律为 $\nu=K_0z(t)-K_c(t)z(t-h)$，其中 $K_c(t)$ 为 Gramian 型 PDF 增益，直接作用于误差状态 $z=[e^\T\ \dot e^\T]^\T$，一步完成全状态零化（$T_{\text{tot}}=T_o+2h$）。本文方法将 PDF 增益拆分为两级（位置级 $K_1$ 与速度级 $K_2$），并用指令滤波替代虚拟控制导数，代价是收敛时间由 $2h$ 增至 $4h$，收益是：
-% (i) 避免 $\dot K_1(t)$（含 $R_h$ 的高阶导数）的解析计算；
-% (ii) 引入幂分配项 $\sig^{2\tau_2-1}(\cdot)$ 使速度通道对匹配扰动强固定时间稳定；
-% (iii) 结构上易于扩展抗饱和与状态约束。
+严宇新原始控制律为 $\nu=K_0z(t)-K_c(t)z(t-h)$，其中 $K_c(t)$ 为 Gramian 型 PDF 增益，直接作用于误差状态 $z=[e^\T\ \dot e^\T]^\T$，一步完成全状态零化（$T_{\text{tot}}=T_o+2h$）。本文方法将 PDF 增益拆分为两级（位置级 $K_1$ 与速度级 $K_2$），并用指令滤波替代虚拟控制导数，代价是收敛时间由 $2h$ 增至 $4h$，收益是：
+(i) 避免 $\dot K_1(t)$（含 $R_h$ 的高阶导数）的解析计算；
+(ii) 引入幂分配项 $\sig^{2\tau_2-1}(\cdot)$ 使速度通道对匹配扰动强固定时间稳定；
+(iii) 结构上易于扩展抗饱和与状态约束。
 
 
 %%
@@ -528,9 +539,34 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \item \textbf{符号函数近似}：为消除 $\sign(\vi_2)$ 引起的抖振，实际实现中以 $\tanh(100\,\vi_2)$ 替代。
 \end{itemize}
 
-\subsection{仿真结果}
+\subsection{仿真结果与分析}
 
-仿真在 MATLAB R2025b 上执行，步长 $T_s^{\text{samp}}=10^{-4}\,\text{s}$，结果如下。
+仿真在 MATLAB R2025b 上执行，步长 $T_s^{\text{samp}}=10^{-4}\,\text{s}$。图~\ref{fig:arm} 给出了自由漂浮机械臂的基座平动、末端轨迹与初末构型。由于系统初始动量为零，关节运动通过动量守恒诱导基座产生反作用位移，末端轨迹在基座漂移与关节运动共同作用下完成空间位移。图中右侧的柱状对比显示稳态时刻各关节角度相对于初始值的变化情况。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{/tmp/sim_results/arm_configuration.png}
+\caption{自由漂浮基座平动、末端轨迹与机械臂构型（初末态）}
+\label{fig:arm}
+\end{figure}
+
+图~\ref{fig:summary} 展示了各关节的位置跟踪、速度跟踪、跟踪误差以及控制力矩的综合响应。七组关节均能在五次多项式参考轨迹作用下平滑变化，轨迹结束后保持有界稳定。$\tanh(100\,\vi_2)$ 替代 $\sign(\vi_2)$ 后控制力矩无明显高频抖振。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{/tmp/sim_results/joint_tracking_error_torque_summary.png}
+\caption{关节位置与速度跟踪、跟踪误差及控制力矩综合响应}
+\label{fig:summary}
+\end{figure}
+
+图~\ref{fig:norms} 以对数坐标给出了跟踪误差 2-范数的时间历程，其中竖直虚线标记了 PTDO 理论收敛时刻 $T_o$ 和预设时间 $T_o+T_s$。由表~\ref{tab:errors} 可见，在 $t=T_o+T_s=5\,\text{s}$ 时位置误差已降至 $4.71\times10^{-4}\,\text{rad}$，验证了定理~1 的预设时间收敛结论；$t=10\,\text{s}$ 终端位置误差 $9.14\times10^{-4}\,\text{rad}$（$<0.06^\circ$），速度误差 $9.31\times10^{-4}\,\text{rad/s}$。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{/tmp/sim_results/error_norm_log.png}
+\caption{跟踪误差 2-范数（对数坐标，标记 $T_o$ 与 $T_o+T_s$）}
+\label{fig:norms}
+\end{figure}
 
 \begin{table}[H]
 \centering
@@ -549,6 +585,17 @@ $t=10\,\text{s}$（终端） & $9.14\times10^{-4}$ & $9.31\times10^{-4}$ & 稳�
 \end{tabular}
 \end{table}
 
+$t=8\,\text{s}$ 时五次多项式轨迹结束，系统经历 $\ddot q_d$ 跳变，误差出现短暂峰值（$\|e\|_2\approx4.94\times10^{-3}\,\text{rad}$），其后在 $2\,\text{s}$ 内迅速收敛至稳态。稳态包络（$t\ge6\,\text{s}$）为 $\max\|e\|_2=5.89\times10^{-3}\,\text{rad}$、$\max\|\dot e\|_2=3.31\times10^{-3}\,\text{rad/s}$。
+
+图~\ref{fig:torque} 展示了控制力矩的时间历程，最大力矩为 $44.03$ N$\cdot$m，RMS 力矩为 $0.967$ N$\cdot$m（表~\ref{tab:torque}）。力矩曲线光滑无抖振，验证了 $\tanh$ 近似的有效性。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{/tmp/sim_results/control_torque.png}
+\caption{控制力矩时间历程}
+\label{fig:torque}
+\end{figure}
+
 \begin{table}[H]
 \centering
 \caption{关节力矩统计}
@@ -562,48 +609,6 @@ RMS 力矩 & $0.967$ N$\cdot$m \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-稳态包络（$t\ge6\,\text{s}$）：$\max\|e\|_2=5.89\times10^{-3}\,\text{rad}$，$\max\|\dot e\|_2=3.31\times10^{-3}\,\text{rad/s}$。
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{/tmp/sim_results/arm_configuration.png}
-\caption{自由漂浮基座平动、末端轨迹与机械臂构型（初末态）}
-\label{fig:arm}
-\end{figure}
-
-\subsection{结果分析}
-
-\begin{enumerate}
-  \item \textbf{预设时间收敛}：在 $t=T_o+T_s=5\,\text{s}$ 时，位置误差已降至 $4.71\times10^{-4}\,\text{rad}$（$<0.03^\circ$），速度误差降至 $3.33\times10^{-3}\,\text{rad/s}$，验证了定理 1 的预设时间收敛结论。
-
-  \item \textbf{终端精度}：$t=10\,\text{s}$ 时位置误差 $9.14\times10^{-4}\,\text{rad}$（$<0.06^\circ$），速度误差 $9.31\times10^{-4}\,\text{rad/s}$，达到高精度跟踪。
-
-  \item \textbf{轨迹过渡}：$t=8\,\text{s}$ 时五次多项式轨迹结束，系统经历 $\ddot q_d$ 跳变，误差出现短暂峰值（$\|e\|_2\approx4.94\times10^{-3}\,\text{rad}$），其后在 $2\,\text{s}$ 内迅速收敛至稳态。
-
-  \item \textbf{抖振抑制}：使用 $\tanh(100\,\vi_2)$ 替代 $\sign(\vi_2)$ 有效消除了控制力矩的高频抖振，终端速度误差仅为 $9.31\times10^{-4}\,\text{rad/s}$。
-\end{enumerate}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{/tmp/sim_results/joint_tracking_error_torque_summary.png}
-\caption{关节位置与速度跟踪、跟踪误差及控制力矩综合响应}
-\label{fig:summary}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{/tmp/sim_results/error_norm_log.png}
-\caption{跟踪误差 2-范数（对数坐标，标记 $T_o$ 与 $T_o+T_s$）}
-\label{fig:norms}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{/tmp/sim_results/control_torque.png}
-\caption{控制力矩时间历程}
-\label{fig:torque}
-\end{figure}
 
 \subsection{与理论预期的对比}
 
@@ -630,15 +635,17 @@ $\max|\tau_i|$ & --- & $44.03$N$\cdot$m & 合理范围内 \\
 %%
 \section{结论}
 
-本文将周期延迟反馈预设时间镇定理论与指令滤波反步法相结合，提出了自由漂浮空间机械臂的预设时间轨迹跟踪控制算法。算法遵循"预设时间扰动观测 $\to$ 计算力矩补偿 $\to$ 误差线性化 $\to$ 指令滤波 + 周期延迟反馈"的架构：
-(1) 由动量守恒得到等效关节空间动力学；
-(2) PTDO 在 $T_o$ 内精确估计集总扰动；
-(3) 计算力矩补偿将误差动态化为二阶积分链；
-(4) 位置通道采用线性 PDF 虚拟控制，速度通道采用幂分配强 PDF 实际控制，指令滤波器避免虚拟控制解析求导，误差补偿系统消除滤波误差。
+针对捕获前自由漂浮空间机械臂的轨迹跟踪问题，本文提出了一种将指令滤波反步法与光滑周期延迟反馈（PDF）相结合的预设时间控制方案。主要工作总结如下：
 
-理论证明表明，补偿误差在预设时间 $T_o+4h$ 内精确归零，闭环关于匹配扰动强固定时间稳定；实际跟踪误差随后以指数速率收敛到零。七自由度空间机械臂的仿真结果验证了算法的有效性。
+(1) 建立了"PTDO 扰动估计 $\to$ 计算力矩补偿 $\to$ 误差线性化 $\to$ 指令滤波 PDF 反步法"的完整架构，将非线性跟踪问题转化为关于补偿误差 $\vi_1,\vi_2$ 的线性延迟镇定问题。
 
-\textbf{未来工作}：将控制律扩展至末端任务空间并处理广义雅可比奇异；引入障碍 Lyapunov 函数处理全状态约束；考虑执行器饱和下的严格预设时间收敛；在实验平台上验证。
+(2) 给出了顺序收敛的严格 Lyapunov 证明：$\vi_2$ 在 $T_o+2h$ 内由强 PDF 镇定，$\vi_1$ 在 $T_o+4h$ 内由线性 PDF 镇定；实际跟踪误差在补偿误差归零后以指数速率收敛到零。
+
+(3) 通过指令滤波避免了 PDF 虚拟控制 $\alpha_1(t)$ 的解析求导，并通过误差补偿系统完全消除了滤波误差，保持了理论的精确性。
+
+(4) 七自由度空间机械臂仿真验证了该方案在预设时间 $T_o+T_s=5\,\text{s}$ 处的收敛精度（$\|e\|_2=4.71\times10^{-4}\,\text{rad}$）和对有界扰动的有效抑制。
+
+\noindent\textbf{未来工作}包括：(i) 将控制律由关节空间扩展至末端任务空间，处理广义雅可比奇异问题；(ii) 引入障碍 Lyapunov 函数处理关节位置和速度约束；(iii) 考虑执行器饱和下的严格预设时间收敛；(iv) 在气浮平台或半物理仿真实验平台上开展硬件在环验证。
 
 
 %%
