@@ -1,94 +1,199 @@
-% plot_cfpdf_sim.m
-% 绘图脚本：加载仿真数据并生成论文图片
-% 用法：先运行 run_cfpdf_sim.m，再运行本脚本
+%% plot_cfpdf_sim.m
+% Plot simulation results in the style of 严宇新 paper (7x3 tiled summary)
+% Usage: run run_cfpdf_sim.m first, then this script.
 
 clear; clc; close all;
 
-%% 加载数据
+%% LaTeX interpreter (matching 严宇新 style)
+set(groot, 'DefaultTextInterpreter', 'latex');
+set(groot, 'DefaultAxesTickLabelInterpreter', 'latex');
+set(groot, 'DefaultLegendInterpreter', 'latex');
+
+%% Load data
 datadir = '/tmp/sim_results';
-load(fullfile(datadir, 'sim_data.mat'));
+S = load(fullfile(datadir, 'sim_data.mat'));
+t = S.t; err = S.err; derr = S.derr; tau_h = S.tau_h;
+qd = S.qd; dqd = S.dqd; ddqd = S.ddqd;
+err_norm = S.err_norm; derr_norm = S.derr_norm; tau_max = S.tau_max;
+a = S.a; tau2 = S.tau2; Tsp = S.Tsp; h = S.h;
+om = S.om; rho = S.rho; To = S.To; Ts = S.Ts; Tf = S.Tf; n = S.n;
 
-%% 图片 1: 关节位置/速度跟踪误差
-figure('Position', [50, 50, 1000, 600]);
-subplot(2,1,1);
-plot(t, err', 'LineWidth', 0.8);
-ylabel('e (rad)');
-grid on; title('关节位置跟踪误差 e(t)=q(t)-q_d(t)');
+% Reconstruct joint position and velocity
+q = qd + err;
+dq = dqd + derr;
+
+%% ---- Figure 1: Joint tracking, errors and torques (7x3 tiled) ----
+% Matching the style of 严宇新 paper's fig:joint_summary
+joint_colors = lines(n);
+
+figure('Name', 'Joint tracking, errors and torques', 'Color', 'w', ...
+       'Position', [80, 80, 1700, 1050]);
+tiledlayout(7, 3, 'Padding', 'compact', 'TileSpacing', 'compact');
+
+for i = 1:n
+    % Column 1: Joint position tracking
+    nexttile((i-1)*3 + 1);
+    plot(t, q(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
+    hold on;
+    plot(t, qd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
+    grid on;
+    ylabel(sprintf('$q_%d$', i));
+    if i == 1
+        title('Joint position tracking');
+        legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
+    end
+    if i == n
+        xlabel('$t$ [s]');
+    else
+        set(gca, 'XTickLabel', []);
+    end
+    xlim([0 Tf]);
+
+    % Column 2: Joint velocity tracking
+    nexttile((i-1)*3 + 2);
+    plot(t, dq(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
+    hold on;
+    plot(t, dqd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
+    grid on;
+    ylabel(sprintf('$\\dot q_%d$', i));
+    if i == 1
+        title('Joint velocity tracking');
+        legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
+    end
+    if i == n
+        xlabel('$t$ [s]');
+    else
+        set(gca, 'XTickLabel', []);
+    end
+    xlim([0 Tf]);
+end
+
+% Column 3, rows 1-2: Position tracking errors
+nexttile(3, [2 1]);
+plot(t, err, 'LineWidth', 0.95);
+grid on;
+xlabel('$t$ [s]');
+ylabel('$e_i$ [rad]');
+title('Position tracking error');
+legend(arrayfun(@(i)sprintf('$e_%d$', i), 1:n, 'UniformOutput', false), ...
+       'Location', 'eastoutside', 'FontSize', 7);
 xlim([0 Tf]);
-subplot(2,1,2);
-plot(t, derr', 'LineWidth', 0.8);
-ylabel('de (rad/s)');
-xlabel('t (s)');
-grid on; title('关节速度跟踪误差 de(t)=dq(t)-dq_d(t)');
+
+% Column 3, rows 3-4: Velocity tracking errors
+nexttile(9, [2 1]);
+plot(t, derr, 'LineWidth', 0.95);
+grid on;
+xlabel('$t$ [s]');
+ylabel('$\\dot e_i$ [rad/s]');
+title('Velocity tracking error');
+legend(arrayfun(@(i)sprintf('$\\dot e_%d$', i), 1:n, 'UniformOutput', false), ...
+       'Location', 'eastoutside', 'FontSize', 7);
 xlim([0 Tf]);
-saveas(gcf, fullfile(datadir, 'fig_tracking_errors.png'));
-fprintf('已保存: fig_tracking_errors.png\n');
 
-%% 图片 2: 误差 2-范数
-figure('Position', [50, 50, 1000, 600]);
-subplot(2,1,1);
-plot(t, err_norm, 'b-', 'LineWidth', 1.5);
-ylabel('||e||_2 (rad)');
-grid on; title('位置误差 2-范数');
-xline(To, 'r--', 'T_o');
-xline(To+Tsp, 'g--', 'T_o+T_s');
-xlim([0 Tf]); set(gca, 'YScale', 'log');
-subplot(2,1,2);
-plot(t, derr_norm, 'r-', 'LineWidth', 1.5);
-ylabel('||de||_2 (rad/s)');
-xlabel('t (s)');
-grid on; title('速度误差 2-范数');
-xline(To, 'r--', 'T_o');
-xline(To+2*h, 'm--', 'T_o+2h');
-xline(To+Tsp, 'g--', 'T_o+T_s');
-xlim([0 Tf]); set(gca, 'YScale', 'log');
-saveas(gcf, fullfile(datadir, 'fig_error_norms.png'));
-fprintf('已保存: fig_error_norms.png\n');
-
-%% 图片 3: 关节力矩
-figure('Position', [50, 50, 1000, 400]);
-plot(t, tau_h', 'LineWidth', 0.6);
-ylabel('tau_i (N-m)');
-xlabel('t (s)');
-grid on; title('关节力矩');
+% Column 3, rows 5-7: Control torque
+nexttile(15, [3 1]);
+plot(t, tau_h, 'LineWidth', 0.95);
+grid on;
+xlabel('$t$ [s]');
+ylabel('$\\tau_i$ [N m]');
+title('Control torque');
+legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
+       'Location', 'eastoutside', 'FontSize', 7);
 xlim([0 Tf]);
-saveas(gcf, fullfile(datadir, 'fig_torque.png'));
-fprintf('已保存: fig_torque.png\n');
 
-%% 图片 4: 全部关节误差（放大初始段和终端段）
-figure('Position', [50, 50, 1200, 800]);
-subplot(2,2,1);
-plot(t, err', 'LineWidth', 0.8);
-ylabel('e (rad)'); grid on;
-title('位置误差（全程）'); xlim([0 Tf]);
-xline(To, 'r--', 'T_o'); xline(To+Tsp, 'g--', 'T_o+T_s');
+% Save
+print(gcf, fullfile(datadir, 'joint_tracking_error_torque_summary'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'joint_tracking_error_torque_summary'), '-dpdf');
+fprintf('Saved: joint_tracking_error_torque_summary.{png,pdf}\n');
 
-subplot(2,2,2);
-plot(t, derr', 'LineWidth', 0.8);
-ylabel('de (rad/s)'); grid on;
-title('速度误差（全程）'); xlim([0 Tf]);
-xline(To, 'r--', 'T_o'); xline(To+2*h, 'm--', 'T_o+2h');
-xline(To+Tsp, 'g--', 'T_o+T_s');
+%% ---- Figure 2: Error norms ----
+figure('Name', 'Error norm', 'Color', 'w', 'Position', [100, 100, 600, 400]);
+plot(t, err_norm, 'b', 'LineWidth', 1.5);
+hold on;
+plot(t, derr_norm, 'r--', 'LineWidth', 1.5);
+grid on;
+xlabel('$t$ [s]');
+ylabel('Norm');
+legend({'$\\|e\\|$', '$\\|\\dot e\\|$'}, 'Location', 'best');
+title('Tracking error norms');
+xlim([0 Tf]);
+print(gcf, fullfile(datadir, 'error_norm'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'error_norm'), '-dpdf');
+fprintf('Saved: error_norm.{png,pdf}\n');
 
-subplot(2,2,3);
-idx_zoom = find(t >= To & t <= To+Tsp+1);
-plot(t(idx_zoom), err(:,idx_zoom)', 'LineWidth', 1.2);
-ylabel('e (rad)'); grid on;
-title('位置误差（t in [T_o, T_o+T_s+1]）');
-xline(To+Tsp, 'g--', 'T_o+T_s');
+%% ---- Figure 3: Error norms (log scale, with To and To+Ts markers) ----
+figure('Name', 'Error norm (log)', 'Color', 'w', 'Position', [100, 100, 700, 500]);
+semilogy(t, err_norm + 1e-10, 'b', 'LineWidth', 1.5);
+hold on;
+semilogy(t, derr_norm + 1e-10, 'r--', 'LineWidth', 1.5);
+xline(To, 'k:', '$T_o$', 'LabelOrientation', 'horizontal', 'FontSize', 10);
+xline(To + Tsp, 'k--', '$T_o+T_s$', 'LabelOrientation', 'horizontal', 'FontSize', 10);
+grid on;
+xlabel('$t$ [s]');
+ylabel('Norm');
+legend({'$\\|e\\|$', '$\\|\\dot e\\|$'}, 'Location', 'northeast');
+title('Tracking error norms (log scale)');
+xlim([0 Tf]);
+print(gcf, fullfile(datadir, 'error_norm_log'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'error_norm_log'), '-dpdf');
+fprintf('Saved: error_norm_log.{png,pdf}\n');
 
-subplot(2,2,4);
-idx_zoom2 = find(t >= To+Tsp-1 & t <= Tf);
-semilogy(t(idx_zoom2), abs(err(:,idx_zoom2))', 'LineWidth', 1.0);
-ylabel('|e| (rad)'); grid on;
-title('位置误差绝对值（t in [T_o+T_s-1, T_f]，对数坐标）');
-xlabel('t (s)');
-saveas(gcf, fullfile(datadir, 'fig_detailed.png'));
-fprintf('已保存: fig_detailed.png\n');
+%% ---- Figure 4: Control torque (single figure, matching 严宇新 style) ----
+figure('Name', 'Control torque', 'Color', 'w', 'Position', [100, 100, 700, 400]);
+plot(t, tau_h, 'LineWidth', 1.0);
+grid on;
+xlabel('$t$ [s]');
+ylabel('$\\tau_i$ [N m]');
+title('Control torque');
+legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
+       'Location', 'eastoutside', 'FontSize', 8);
+xlim([0 Tf]);
+print(gcf, fullfile(datadir, 'control_torque'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'control_torque'), '-dpdf');
+fprintf('Saved: control_torque.{png,pdf}\n');
 
-%% 输出说明
-fprintf('\n=== 图片列表 ===\n');
-fprintf('1. fig_tracking_errors.png    — 位置/速度跟踪误差时间历程\n');
-fprintf('2. fig_error_norms.png         — 误差 2-范数（对数坐标，含 T_o, T_s 标记）\n');
-fprintf('3. fig_torque.png              — 关节力矩\n');
-fprintf('4. fig_detailed.png            — 详细分析（全程 + 放大 + 对数尺度）\n');
+%% ---- Figure 5: Individual joint tracking (two columns, 严宇新 style) ----
+figure('Name', 'Joint position tracking', 'Color', 'w', ...
+       'Position', [100, 100, 1000, 1000]);
+tiledlayout(4, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
+for i = 1:n
+    nexttile;
+    plot(t, q(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
+    hold on;
+    plot(t, qd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
+    grid on;
+    xlabel('$t$ [s]');
+    ylabel(sprintf('$q_%d$', i));
+    if i == 1
+        legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
+    end
+    xlim([0 Tf]);
+end
+print(gcf, fullfile(datadir, 'joint_position_tracking'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'joint_position_tracking'), '-dpdf');
+fprintf('Saved: joint_position_tracking.{png,pdf}\n');
+
+%% ---- Figure 6: Joint velocity tracking ----
+figure('Name', 'Joint velocity tracking', 'Color', 'w', ...
+       'Position', [100, 100, 1000, 1000]);
+tiledlayout(4, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
+for i = 1:n
+    nexttile;
+    plot(t, dq(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
+    hold on;
+    plot(t, dqd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
+    grid on;
+    xlabel('$t$ [s]');
+    ylabel(sprintf('$\\dot q_%d$', i));
+    if i == 1
+        legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
+    end
+    xlim([0 Tf]);
+end
+print(gcf, fullfile(datadir, 'joint_velocity_tracking'), '-dpng', '-r200');
+print(gcf, fullfile(datadir, 'joint_velocity_tracking'), '-dpdf');
+fprintf('Saved: joint_velocity_tracking.{png,pdf}\n');
+
+%% Done
+fprintf('\n=== All figures saved to %s ===\n', datadir);
+fprintf('Generated %d figures in 严宇新 style.\n', 6);
