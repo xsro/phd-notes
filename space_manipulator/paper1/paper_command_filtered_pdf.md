@@ -708,52 +708,8 @@ $$
 
 严宇新原始控制律为 $\nu=K_0z(t)-K_c(t)z(t-h)$，其中 $K_c(t)$ 为 Gramian 型 PDF 增益，直接作用于误差状态 $z=[e^\top\ \dot e^\top]^\top$，一步完成全状态零化（$T_{\text{tot}}=T_o+2h$）。本文方法将 PDF 增益拆分为两级（位置级 $K_1$ 与速度级 $K_2$），并用指令滤波替代虚拟控制导数，代价是收敛时间由 $2h$ 增至 $4h$，收益是：**(i)** 避免 $\dot K_1(t)$（含 $R_h$ 的高阶导数）的解析计算；**(ii)** 引入幂分配项 $\operatorname{sig}^{2\tau_2-1}(\cdot)$ 使速度通道对匹配扰动强固定时间稳定；**(iii)** 结构上易于扩展抗饱和与状态约束。
 
----
 
-## 7. 仿真验证
-
-### 7.1 仿真设置
-
-- **机械臂**：$7$ 自由度，惯性参数取严宇新论文表 2-1。
-- **采样时间**：$T_s=10^{-4}\,\text{s}$（此处采样步长与预设时间 $T_s$ 记号区分，代码中以 `Ts` 表示步长）。
-- **参考轨迹**：五次多项式由初始构型 $q_r(0)$ 到终端构型 $q_f$ 在 $8\,\text{s}$ 内生成。
-- **初始误差**：$q(0)=q_r(0)+(\pi/180)[4,-3,3,-4,3,-2,2]^\top$，$\dot q(0)=0$。
-- **控制器参数**：$a=1$，$\tau_2=5/7$，$T_s=4\,\text{s}$（故 $h=1\,\text{s}$），$\omega=50$，$\rho=0.5$。
-- **PTDO 参数**：$T_o=T_c=1\,\text{s}$，$\eta=0.3$，$\sigma=0.4$。
-- **扰动**：$d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i)$。
-- **激活函数**：$R_h(\vartheta)=\sin^4(\pi(\vartheta-h)/h)$，$\vartheta\in[h,2h]$。
-
-### 7.2 对比算法
-
-1. PD 控制；
-2. 严宇新 PDF+PTDO（Gramian 型 PDF，$h=1\,\text{s}$）；
-3. 本文指令滤波 PDF+PTDO（CF-PDF）。
-
-### 7.3 MATLAB 仿真代码
-
-完整仿真代码已独立成文件 [`main_cfpdf_tracking.m`](main_cfpdf_tracking.m)（与本文档同目录），包含以下实现：
-
-- 预设时间扰动观测器（PTDO）；
-- 计算力矩补偿 + 误差线性化；
-- 指令滤波反步法（Step 1 虚拟控制 + 一阶指令滤波器 + Step 2 强 PDF 控制）；
-- 误差补偿系统；
-- PDF 增益离线计算与历史缓存实现。
-
-运行方式：在 MATLAB 中直接执行 `main_cfpdf_tracking.m`，输出位置/速度跟踪误差曲线。
-
-### 7.4 预期结果
-
-| 控制器 | $\|e(10)\|$ (rad) | $\|\dot e(10)\|$ (rad/s) | $\max|\tau_i|$ (N·m) |
-|:---|:---|:---|:---|
-| PD | $1.2\times 10^{-2}$ | $1.2\times 10^{-2}$ | 9.13 |
-| PDF+PTDO（严宇新） | $3.1\times 10^{-5}$ | $4.2\times 10^{-4}$ | 9.13 |
-| CF-PDF+PTDO（本文） | $10^{-4}\sim 10^{-5}$ | $\approx 0$（$t\ge T_o+2h$） | 9.13 |
-
-其中 CF-PDF 的速度误差在 $t\ge T_o+2h$ 后精确归零，位置误差收敛到由 $\omega$ 决定的 $O(1/\omega)$ 邻域，与推论 2 一致。
-
----
-
-## 8. 结论
+## 7. 结论
 
 本文将周期延迟反馈预设时间镇定理论与指令滤波反步法相结合，提出了自由漂浮空间机械臂的预设时间轨迹跟踪控制算法。算法遵循"预设时间扰动观测 → 计算力矩补偿 → 误差线性化 → 指令滤波 + 周期延迟反馈"的架构：
 
@@ -768,11 +724,11 @@ $$
 
 ---
 
-## 9. 参考文献
+## 参考文献
 
 1. **严宇新**. 面向在轨捕获的空间机械臂运动规划与控制方法研究 [D]. 哈尔滨工业大学, 2025. (无 DOI)
 2. **B. Zhou, W. Michiels, J. Chen**. Fixed-time stabilization of linear delay systems by smooth periodic delayed feedback [J]. IEEE Transactions on Automatic Control, 2022, 67(2): 557–573. DOI: `10.1109/TAC.2021.3051262` (MCP: 20)
-3. **Y. Ding, B. Zhou, K.-K. Zhang, W. Michiels**. Strong prescribed-time stabilization of uncertain nonlinear systems by periodic delayed feedback [J]. (自动化学报/IEEE 汇刊，见知识库 `/home/orangepi/sys/okb-knowledge/markdowns/2070.md`). (MCP: 2070)
+3. **Y. Ding, B. Zhou, K.-K. Zhang, W. Michiels**. Strong prescribed-time stabilization of uncertain nonlinear systems by periodic delayed feedback [J]. (自动化学报/IEEE 汇刊，见知识库 `2070.md`). (MCP: 2070)
 4. **J. A. Farrell, M. M. Polycarpou, M. Sharma, W. Dong**. Command filtered adaptive backstepping [J]. IEEE Transactions on Automatic Control, 2009, 54(6): 1391–1395. DOI: `10.1109/TAC.2009.2015562` (MCP: 3275)
 5. **W. Dong, J. A. Farrell, M. M. Polycarpou, V. Djapic, M. Sharma**. Command filtered adaptive backstepping [J]. IEEE Transactions on Control Systems Technology, 2013, 21(6): 2102–2110. DOI: `10.1109/TCST.2011.2121907`
 6. **J. Yu, P. Shi, W. Dong, C. Lin**. Command-filtered backstepping control for nonlinear systems with input saturation [J]. IEEE Transactions on Cybernetics, 2015, 45(10): 2018–2027. DOI: `10.1109/TCYB.2015.2483368`
@@ -790,6 +746,6 @@ $$
 > **说明**：本文档为研究笔记性质的完整论文草稿，融合自以下知识来源：
 > - `../严宇新/README_organized.md`（自由漂浮空间机械臂建模、PTDO、PDF 控制）；
 > - `../严宇新/README_command_filtering.md`（指令滤波反步法综述与应用）；
-> - `/home/orangepi/sys/okb-knowledge/markdowns/2070.md`（Ding, Zhou, Zhang, Michiels 的强预设时间 PDF 镇定，含严格反馈反步法）；
-> - `/home/orangepi/sys/okb-knowledge/markdowns/3339.md`（Dong 等，指令滤波自适应反步法）；
-> - `/home/orangepi/sys/okb-knowledge/markdowns/3285.md`（Yu 等，障碍 Lyapunov 指令滤波输出反馈）。
+> - `2070.md`（Ding, Zhou, Zhang, Michiels 的强预设时间 PDF 镇定，含严格反馈反步法）；
+> - `3339.md`（Dong 等，指令滤波自适应反步法）；
+> - `3285.md`（Yu 等，障碍 Lyapunov 指令滤波输出反馈）。
