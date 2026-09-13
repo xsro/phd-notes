@@ -15,6 +15,7 @@ from matplotlib.path import Path
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.spatial import ConvexHull
+from pathlib import Path as PPath
 
 plt.rcParams.update({
     "font.size": 11,
@@ -23,7 +24,7 @@ plt.rcParams.update({
     "figure.dpi": 150,
 })
 
-OUT_DIR = "/Users/a1/repo/phd-notes/fencing/review/chen2019/images"
+OUT_DIR = PPath(__file__).parent / "images"
 
 # ---------------------------------------------------------------------------
 # Parameters
@@ -171,7 +172,7 @@ target_handle = Line2D([0], [0], marker="*", markerfacecolor="#C00000",
 
 # --- Panel (a): rotation disabled ---
 for i in range(N):
-    ax1.plot(sol_a.t[::60], sol_a.y[2*i, ::60], sol_a.y[2*i+1, ::60],
+    ax1.plot(sol_a.y[2*i, ::60], sol_a.y[2*i+1, ::60],
              color="#4472C4", alpha=0.2, linewidth=0.7)
 
 for pos in init_pos:
@@ -212,7 +213,7 @@ ax1.grid(True, alpha=0.3)
 
 # --- Panel (b): rotation enabled ---
 for i in range(N):
-    ax2.plot(sol_b.t[::60], sol_b.y[2*i, ::60], sol_b.y[2*i+1, ::60],
+    ax2.plot(sol_b.y[2*i, ::60], sol_b.y[2*i+1, ::60],
              color="#2E7D32", alpha=0.2, linewidth=0.7)
 
 for pos in init_pos:

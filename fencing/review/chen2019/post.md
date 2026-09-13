@@ -6,7 +6,7 @@ params:
 
 The problem of singleton formation in fencing control is similar to the local minimum point in Artificial Potential Fields (APFs).
 This problem is discussed in [Chen 2019 automatica](https://www.sciencedirect.com/science/article/pii/S1007570426005393)[^1] and [our IJRNC work](https://onlinelibrary.wiley.com/doi/full/10.1002/rnc.70357).
-The post is written to show some thinking when we invesitgate this problem.
+The post is written to show some thinking when we investigate this problem.
 
 [^1]: Zhiyong Chen. A cooperative target-fencing protocol of multiple vehicles [10.1016/j.automatica.2019.05.034](https://www.sciencedirect.com/science/article/pii/S1007570426005393)
 
@@ -30,9 +30,9 @@ Design the controller $u_i$ such that the closed-loop system satisfies the follo
 |------|------|------|
 | **(P1)** | Target fencing | $\lim_{t \to \infty} P_{x_o}(x(t)) = 0$, i.e., the target asymptotically enters the interior of the vehicles' convex hull |
 | **(P2)** | Collision avoidance | $\|x_i(t) - x_j(t)\| > d,\ \forall t \geq 0,\ i \neq j$, the inter-vehicle distance always exceeds the safety threshold $d$ |
-| **(P3)** | No singleton formation | The set $\mathcal{S} = \{x \mid \text{area}(x^a) = 0,\ \|x_i - x_j\| > d\}$ (all vehicles collinear with the target) is not an invariant set |
+| **(P3)** | No singleton formation | The set $\mathcal{S} = \{x \mid \text{area}(x) = 0,\ \|x_i - x_j\| > d\}$ (all vehicles collinear) is not an invariant set |
 
-> **Note**: (P1) has two implications: (a) there exists a desired trajectory $x^*(t)$ such that the target lies within the convex hull of $x^*(t)$ at all times; (b) the actual trajectory asymptotically converges to the desired trajectory.
+> **Note**: (P1) has two implications: (a) there exists a desired trajectory $x^*(t)$ such that the target lies within the convex hull of $x^*(t)$ at all times; (b) the actual trajectory asymptotically converges to $x^*(t)$.
 
 ### 1.3 Neighbor Definition
 
@@ -113,7 +113,7 @@ $$\beta(x_i, x_j, x_o) = \epsilon \cdot \max\{0,\ \delta - \angle(x_{io}, x_{jo}
 
 $$\dot{\bar{x}} = -k\bar{x} + k x_o + \bar{e}$$
 
-where $\bar{e} = \frac{1}{N}\sum e_i$. The derivation exploits the symmetry of the neighbor relation ($i \in \mathcal{N}_j \Leftrightarrow j \in \mathcal{N}_i$), $x_{ij} = -x_{ji}$, and $\beta(x_i, x_j, x_o) = \beta(x_j, x_i, x_o)$.
+where $\bar{e} = \frac{1}{N}\sum_{i} e_i$. The derivation exploits the symmetry of the neighbor relation ($i \in \mathcal{N}_j \Leftrightarrow j \in \mathcal{N}_i$), $x_{ij} = -x_{ji}$, and $\beta(x_i, x_j, x_o) = \beta(x_j, x_i, x_o)$.
 
 2. Since $\bar{e}(t) \to 0$ exponentially, the linear system drives $\bar{x}(t) \to x_o$.
 
@@ -145,17 +145,19 @@ Since $\int \alpha(s)\,ds$ diverges as $s \to d^+$, it follows that $\|x_{ij}(t)
 1. Assume $\mathcal{S}$ is an invariant set, i.e., the vehicles remain collinear with the target at all times.
 2. Due to collision avoidance, the ordering of vehicles along the line is invariant. Denote the two extreme vehicles as $\bar{h}$ and $\ell$.
 3. From (P1), the centroid converges to the target, so there exists a time $T$ after which the target lies between the two extreme vehicles.
-4. Analyze the velocities of the extreme vehicles: when they have no neighbors, their relative velocity exceeds $k(N-1)d/2$, inevitably leading to collision — a contradiction.
+4. Analyze the velocities of the extreme vehicles: when an extreme vehicle has no neighbors, its velocity relative to the other extreme vehicle exceeds $k(N-1)d/2$, inevitably leading to collision — a contradiction.
 5. Further analyze the case where neighbors are present, leveraging the effect of the rotation term, ultimately deriving a contradiction — the vehicles cannot remain collinear indefinitely.
 
 > **Note**: When $N=3$, the conclusion requires excluding special initial distributions (three vehicles initially collinear, one coincident with the target and the other two symmetric); the system works normally after a small perturbation.
 
 
-## Our inspect
+## 4. Why singleton-free design matters
 
-In this section we focus on singleton (collinear) formations in 2D space.
+In both papers above, the rationale for singleton-free design is discussed.
+Here we present some ideas from the perspective of extending the algorithm.
+We focus on singleton (collinear) formations in 2D space.
 
-### 1. Target collision avoidance
+### 4.1 Target collision avoidance
 
 If target repulsion is added to the controller and singleton formation is prevented, the target can be fenced.  
 Without singleton exclusion, however, vehicles trapped in a collinear formation cannot fence the target.
@@ -171,11 +173,11 @@ If the rotation term is disabled, the vehicles remain collinear and the formatio
 
 ![](images/fig1_target_fencing_singleton.png)
 
-### 2. Obstacle collision avoidance
+### 4.2 Obstacle collision avoidance
 
 
 Consider the case where vehicles are aligned in a straight line with the target and one point obstacle.
-The obstacle is positioned at one end of the line.  
+The obstacle and the target are positioned at one end of the line.  
 Using the modified controller
 $$
 u_i^o = \underbrace{\sum_{j \in \mathcal{N}_i\cup \{obstacle\}} \alpha(\|x_{ij}\|) \frac{x_{ij}}{\|x_{ij}\|}}_{\text{repulsive term}} + \underbrace{\sum_{j \in \mathcal{N}_i} \beta(x_i, x_j, x_o) R \frac{x_{ij}}{\|x_{ij}\|}}_{\text{rotation term}} + \underbrace{k(x_o - x_i)}_{\text{attractive term}}
@@ -185,7 +187,9 @@ Otherwise, the formation will be blocked by the obstacle.
 
 ![](images/fig2_obstacle_singleton.png)
 
-### Drawback of the rotation term
+### 4.3 Drawback of the rotation term
 
 The paper proves that no collision occurs for $t \in [0, \infty)$, but asymptotic collision ($t \to \infty$) is not ruled out.  
 This is mainly due to the residual term $\psi_i$ in inequality (*), which is difficult to analyse precisely.
+
+In practice, this drawback is not a serious concern, since $t \to \infty$ may not exist in the physical world.
