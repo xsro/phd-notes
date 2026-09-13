@@ -1,0 +1,52 @@
+\section{The Decisive Structural Fact: Only the Average Is Constrained}
+\label{sec:avg}
+
+Define the position error $\txi_i=x_i-x_0$, the velocity estimation error $\tvell_i=v_i-v_0$, and
+their averages
+\begin{equation}
+  \bx=\frac{1}{N}\sum_{i\in\NN}\txi_i,\qquad
+  \bv=\frac{1}{N}\sum_{i\in\NN}\tvell_i,
+  \qquad
+  \bu=\frac{1}{N}\sum_{i\in\NN}u_i,\qquad
+  \tv=\frac{1}{N}\sum_{i\in\NN}v_i .
+  \label{eq:averages}
+\end{equation}
+Since the repulsive forces are internal (by symmetry $j\in\calN_i\Leftrightarrow i\in\calN_j$ and
+$x_{ij}=-x_{ji}$), they cancel in the sum, $\sum_{i}\phi_i=0$. Substituting \eqref{eq:ctrl7} into
+\eqref{eq:veh} and averaging gives
+\begin{equation}
+  \dot{\bx}=-k_1\bx+\bv,
+  \label{eq:avgx}
+\end{equation}
+and differentiating the observer yields
+\begin{equation}
+  \dot{\bv}=\frac{1}{N}\sum_{i\in\NN}\dot{\tvell}_i
+        =\frac{k_2}{N}\sum_{i\in\NN}(x_0-x_i)=-k_2\,\bx .
+  \label{eq:avgv}
+\end{equation}
+Combining \eqref{eq:avgx}--\eqref{eq:avgv}, the average position error obeys a single damped
+harmonic oscillator
+\begin{equation}
+  \boxed{\;\ddot{\bx}+k_1\dot{\bx}+k_2\,\bx=0,\;}
+  \label{eq:osc}
+\end{equation}
+which is exponentially stable because $k_1,k_2>0$. Hence
+\begin{equation}
+  \bx(t)\to 0,\qquad \dot{\bx}(t)\to 0,\qquad \bv(t)\to 0
+  \qquad\text{(exponentially)}.
+  \label{eq:conv}
+\end{equation}
+Because the average position $\bar{x}=\frac1N\sum_i x_i=\bx+x_0$ lies in the convex hull
+$\mathrm{co}(x)$, the convergence $\bx\to 0$ proves target fencing (P1). Moreover, since
+$\bu=\dot{\bar{x}}+v_0$ and $\tv=\bv+v_0$, we also obtain the \emph{average} velocity tracking
+\begin{equation}
+  \bu(t)\to v_0,\qquad \tv(t)\to v_0 .
+  \label{eq:avgvel}
+\end{equation}
+
+The crucial observation is that \eqref{eq:osc} and \eqref{eq:avgvel} constrain \emph{only the
+two-dimensional average} quantities $\bx$ and $\bu$. Nothing in the closed loop forces an
+\emph{individual} vehicle's velocity $u_i$ or estimate $v_i$ to converge to $v_0$. In particular,
+\eqref{eq:avgvel} is compatible with infinitely many velocity patterns: any family $\{u_i\}$ whose
+mean equals $v_0$ is admissible, regardless of how the individual $u_i$ behave.
+

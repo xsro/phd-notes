@@ -1,0 +1,79 @@
+% Front-matter highlights. One line per load-bearing result, each pointing at
+% the section that proves it. Uses only packages already in preamble.tex.
+\section*{Highlights}
+\label{sec:highlights}
+\addcontentsline{toc}{section}{Highlights}
+
+\begin{itemize}[leftmargin=1.6em,itemsep=0.35em]
+  \item \textbf{The rotation is structural, not incidental.} The controller of
+        \cite{kou2022cooperative}, Eq.~(7), constrains only the \emph{average} position error and the
+        \emph{average} velocity, leaving $2(N-1)$ circulation degrees of freedom unconstrained by the
+        average dynamics (\S\ref{sec:avg}).
+
+  \item \textbf{But those degrees of freedom are not undamped.} The isotropic gain $k_1$ damps every
+        direction. What singles out rotation is a \emph{cancellation}: at radial balance the tangential
+        stiffness of the repulsion exactly offsets $k_1$, leaving one neutral direction---the rotational
+        phase---with every other mode strictly decaying (\S\ref{sec:corotating}).
+
+  \item \textbf{Rotation is the only alternative to collapse.} The observer
+        $\dot{\tvell}_i=-k_2\txi_i$ has no damping term, so a persistent nonzero position error is
+        integrated without bound. A static formation would need a linearly growing velocity estimate
+        balanced by static forces, which is impossible; the only escape is to rotate
+        (Remark~\ref{rem:trichotomy}).
+
+  \item \textbf{The angular speed is forced, exactly.} Any nondegenerate rigid rotation satisfies
+        $\abs{\omega}=\sqrt{k_2}$, independently of the radii and of the shape, because the net internal
+        torque of central pairwise forces vanishes. The hypothesis $\omega\ne0$ is \emph{not} needed---it
+        follows from nondegeneracy (Proposition~\ref{prop:omega}).
+
+  \item \textbf{The rotating formation need not be a regular polygon.} Initialized on a regular hexagon,
+        the steady state settles into an interleaved two-triangle pattern with alternating radii, yet all
+        six vehicles share the same $\sqrt{k_2}$: the zero-torque identity eliminates every radius before
+        $\omega$ is determined (\S\ref{sec:simulation}).
+
+  \item \textbf{The centroid sits exactly on the target.} The rigid-rotation ansatz forces
+        $\bx^0=0$, so this is a conclusion rather than a modeling assumption
+        (Remark~\ref{rem:centroid}).
+
+  \item \textbf{Local orbital stability holds; a global proof is obstructed.} The zero-mean shape
+        subsystem $\ddot{\txi}^s+B(\txi^s)\dot{\txi}^s+k_2\txi^s=0$, with $B=k_1I-\nabla^2P$, has energy
+        $E$ satisfying $\dot E=-\dot{\txi}^{s\mathsf T}B\dot{\txi}^s$. Rotation covariance makes the
+        rotational direction a null mode of $B$ at radial balance, and the co-rotating spectrum confirms
+        stability for the paper's equilibrium---but $B$ is sign-indefinite away from equilibrium, so the
+        energy argument does not globalize (\S\ref{sec:corotating}).
+
+  \item \textbf{The individual position errors are bounded.} Only the average is forced to decay, yet
+        the raw errors $\txi_i=x_i-x_0$ cannot diverge: the functional
+        $W=\frac12\sum_i\norm{\tvell_i}^2+\frac{k_2}{2}\sum_i\norm{\txi_i}^2$ satisfies
+        $\dot W=\frac{k_2}{2}\sum_{i\ne j}\alpha(\norm{x_{ij}})\norm{x_{ij}}-k_1k_2\sum_i\norm{\txi_i}^2$,
+        giving an explicit bound whenever gaps stay off the barrier, while near the barrier the
+        proximity components are isolated clusters whose centroids obey the same damped oscillator as
+        the average (\S\ref{sec:bounded}).
+
+  \item \textbf{Speed is determined; sign is not.} The sign of $\omega$ equals the sign of the directed
+        circulation $L=\sum_i\txi_i\times\tvell_i$, and any nonzero initial circulation selects the
+        rotation sense. The exactly symmetric case is degenerate and, in the runs performed, does not
+        reach a rigid rotation within the horizon tested (\S\ref{sec:direction}).
+
+  \item \textbf{The second controller stops the rotation for a specific algebraic reason.} Adding
+        $\phi_i$ to the observer makes $\partial V/\partial x_i$ the exact negative of the observer's
+        right-hand side, turning $\dot V$ into a sum of negative squares and dissipating \emph{every}
+        individual velocity error, not just the average (\S\ref{sec:second}).
+
+  \item \textbf{The mechanism survives to acceleration inputs.} With a uniformly accelerating target the
+        same torque balance gives $\abs{\omega}=\sqrt{k_3/k_2}$, with regular-hexagon radius solving
+        $\alpha(r)=(k_1-k_3/k_2)r$, which exists when $k_1k_2>k_3$ (\S\ref{sec:double}).
+
+  \item \textbf{Three branches, one open question.} Generic initializations rotate; symmetric ones
+        jam onto the collision barrier, with gaps closing to $d$ at rate $1/t$ while observer states
+        diverge linearly; and at sufficiently large initial radii the formation enters a breathing
+        limit cycle with periodic shape oscillations. In the collinear case $\nabla^2P\preceq0$ makes
+        $B\succeq k_1I\succ0$ and the jammed branch is provable; whether the trichotomy is exhaustive
+        and whether it can be refined into a theorem remains
+        Conjecture~\ref{conj:dist}.
+\end{itemize}
+
+\noindent
+All numerical experiments, integration settings, and reproduction scripts are collected in the
+standalone companion \emph{Numerical Experiments for ``Why Does the First Fencing Controller Induce
+Rotation About the Target?''}; references of the form \S\ref{S-sec:sim_omega} point into it.

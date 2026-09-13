@@ -1,0 +1,433 @@
+% !TEX program = xelatex
+\documentclass[11pt,a4paper]{article}
+
+% ── Packages ─────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage{ctex}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{xcolor}
+
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+% ── Theorem environments ─────────────────────────────────────────────────────
+\newtheorem{conjecture}{猜想}[section]
+\newtheorem{definition}{定义}[section]
+\newtheorem{remark}{注记}[section]
+
+% ── Title ────────────────────────────────────────────────────────────────────
+\title{关于围捕闭环系统中三分法猜想的数值仿真}
+\author{仿真报告}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+本文针对“围捕闭环中距离收敛”猜想提出的修正方案一——三分法猜想（Trichotomy Conjecture），
+通过数值仿真分别展示其三种长期行为：旋转平衡轨道（A）、卡死边界（B）和呼吸极限环（C）。
+每个案例均采用高精度刚性求解器（BDF）进行积分，并给出轨迹、距离和角速度的演化图。
+所有仿真与绘图代码分离，仿真生成数据文件，绘图脚本独立加载并可视化。
+第三种情况（呼吸极限环）的初始条件与参数取自文献中的反例 \texttt{case3.py}。
+\end{abstract}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{引言}
+
+\subsection{系统方程}
+
+考虑 $N$ 个智能体在平面上的围捕闭环系统。设 $\tilde{x}_i \in \mathbb{R}^2$ 为第 $i$ 个智能体的形状变量，
+$\tilde{v}_i \in \mathbb{R}^2$ 为观测器误差变量。系统动力学由以下微分方程描述：
+
+\begin{align}
+\dot{\tilde{x}}_i &= \sum_{j \neq i} \alpha(\|\tilde{x}_i - \tilde{x}_j\|)
+\frac{\tilde{x}_i - \tilde{x}_j}{\|\tilde{x}_i - \tilde{x}_j\|}
+- k_1 \tilde{x}_i + \tilde{v}_i, \label{eq:xi} \\
+\dot{\tilde{v}}_i &= -k_2 \tilde{x}_i, \label{eq:vt}
+\end{align}
+
+其中 $k_1, k_2 > 0$ 为增益参数，$\alpha(s)$ 为斥性交互核函数：
+
+\begin{equation}
+\alpha(s) =
+\begin{cases}
+\displaystyle\frac{1}{s-d} - \frac{1}{\mu-d}, & s \le \mu, \\
+0, & s > \mu,
+\end{cases}
+\label{eq:alpha}
+\end{equation}
+
+参数 $d > 0$ 为碰撞距离，$\mu > d$ 为交互作用范围。
+
+\subsection{三分法猜想}
+
+\textbf{三分法猜想}（Trichotomy Conjecture）断言：系统的形状轨迹 $\tilde{x}^s(t)$ 有界，
+且其 $\omega$-极限集必定属于以下三类互不相交的紧致不变集之一：
+
+\begin{description}[font=\normalfont\itshape]
+\item[(A) 旋转平衡轨道（Rotating Equilibrium Orbit）]
+系统渐近趋近于一个非退化的刚体旋转：
+存在常数 $R>0$ 和相位 $\theta_0$，使得
+\[
+\tilde{x}_i^s(t) \to R(\sqrt{k_2}t+\theta_0)\,\tilde{x}_i^*(0),\quad
+\|\tilde{x}_i^*(0)\|>0,
+\]
+且所有间距 $d^*_{ij} > d$。此时距离收敛到有限常数。
+
+\item[(B) 卡死边界（Jammed Boundary）]
+至少有一对智能体的间距趋于碰撞距离：
+$\lim_{t\to\infty} \|x_i(t)-x_j(t)\| = d$。
+此时位置变量收敛，观测器误差 $\tilde{v}_i$ 线性发散。
+这对应于系统撞击到定义域的奇异边界。
+
+\item[(C) 呼吸极限环（Breathing Limit Cycle）]
+形状轨迹收敛到一个非平凡的周期轨道：
+存在最小周期 $T>0$，使得
+\[
+\tilde{x}^s(t+T)=\tilde{x}^s(t),\quad \forall t\ge T_0,
+\]
+并且所有间距严格大于 $d$（永不碰撞）。
+此时距离不收敛，而是呈现持久的周期性振荡，
+角速度与半径均随时间周期变化。
+\end{description}
+
+\subsection{数值方法}
+
+所有仿真均采用以下数值设置：
+\begin{itemize}
+\item 求解器：\texttt{scipy.integrate.solve\_ivp}，BDF 方法（刚性求解器）；
+\item 相对容差：\texttt{rtol}=$10^{-10}$，绝对容差：\texttt{atol}=$10^{-12}$；
+\item 积分区间：$t \in [0, t_f]$，其中 $t_f$ 因案例而异；
+\item 密集输出：使用 \texttt{dense\_output=True} 进行均匀时间采样。
+\end{itemize}
+
+如原始文献所强调，由于切向阻尼项 $F(s)=k_1-\alpha(s)/s$ 在 $s\to d^+$ 时为负（反阻尼），
+该系统是刚性的，必须使用隐式刚性求解器（如 BDF、ode15s），
+否则显式方法会在负阻尼区域产生数值爆破。
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{案例 A：旋转平衡轨道}
+
+\subsection{仿真参数与初始条件}
+
+\begin{table}[H]
+\centering
+\caption{案例 A 仿真参数}
+\label{tab:case_a_params}
+\begin{tabular}{lcc}
+\toprule
+参数 & 符号 & 数值 \\
+\midrule
+智能体数 & $N$ & 5 \\
+碰撞距离 & $d$ & 5.0 \\
+交互范围 & $\mu$ & 9.0 \\
+位置增益 & $k_1$ & 0.8 \\
+角速度增益 & $k_2$ & 0.5 \\
+初始半径 & $R_0$ & 6.0 \\
+积分时长 & $t_f$ & 800 \\
+采样帧数 & & 300 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+初始条件为半径为 $R_0=6.0$ 的正五边形配置：
+\[
+\tilde{x}_i(0) = R_0 \begin{pmatrix} \cos(2\pi i/5) \\ \sin(2\pi i/5) \end{pmatrix},
+\quad i = 0,\dots,4.
+\]
+
+观测器速度初始化为切向分量：
+\[
+\tilde{v}_i(0) = \sqrt{k_2} \begin{pmatrix} -\tilde{x}_{i,y}(0) \\ \tilde{x}_{i,x}(0) \end{pmatrix}.
+\]
+
+\subsection{仿真结果}
+
+图 \ref{fig:case_a_traj} 展示了智能体在平面上的运动轨迹。
+可以看到，智能体从正五边形出发，逐渐趋近于一个稳定的旋转构型。
+在稳态阶段（$t \gtrsim 500$），所有智能体以接近 $\sqrt{k_2} \approx 0.707$ 的角速度绕原点旋转，
+且各智能体之间的相对距离保持恒定。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{../figures/case_a_trajectory.pdf}
+\caption{案例 A：智能体运动轨迹。虚线圆为碰撞边界 $d=5$，点线圆为交互范围 $\mu=9$。}
+\label{fig:case_a_traj}
+\end{figure}
+
+图 \ref{fig:case_a_dist} 显示所有智能体对之间的距离随时间演化。
+距离在初期略有调整后收敛到常数，且全部严格大于 $d=5$。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_a_distances.pdf}
+\caption{案例 A：智能体间距离随时间演化。}
+\label{fig:case_a_dist}
+\end{figure}
+
+图 \ref{fig:case_a_omega} 给出了各智能体的角速度 $\omega_i$。
+在稳态下，所有 $\omega_i$ 收敛到 $\sqrt{k_2}$，验证了刚体旋转的特征。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_a_angular_velocities.pdf}
+\caption{案例 A：各智能体角速度随时间演化。}
+\label{fig:case_a_omega}
+\end{figure}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{案例 B：卡死边界}
+
+\subsection{仿真参数与初始条件}
+
+\begin{table}[H]
+\centering
+\caption{案例 B 仿真参数}
+\label{tab:case_b_params}
+\begin{tabular}{lcc}
+\toprule
+参数 & 符号 & 数值 \\
+\midrule
+智能体数 & $N$ & 5 \\
+碰撞距离 & $d$ & 5.0 \\
+交互范围 & $\mu$ & 9.0 \\
+位置增益 & $k_1$ & 0.5 \\
+角速度增益 & $k_2$ & 0.5 \\
+积分时长 & $t_f$ & 300 \\
+采样帧数 & & 250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+初始条件设置了两个智能体（0 号和 1 号）非常接近，距离为 $d + \varepsilon$，$\varepsilon=0.25$。
+这导致强烈的斥性交互作用，但系统在阻尼作用下无法维持有效旋转，最终趋于卡死边界。
+
+\subsection{仿真结果}
+
+图 \ref{fig:case_b_traj} 展示了智能体的运动轨迹。
+智能体 0 和 1 迅速靠近，其间距趋近于碰撞距离 $d=5$。
+其他智能体也随之向原点靠拢，最终整个系统几乎静止。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{../figures/case_b_trajectory.pdf}
+\caption{案例 B：智能体运动轨迹。智能体 0 和 1 趋近于碰撞边界。}
+\label{fig:case_b_traj}
+\end{figure}
+
+图 \ref{fig:case_b_dist} 清晰地展示了最小距离（$d_{01}$）趋近于 $d=5$ 的过程。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_b_distances.pdf}
+\caption{案例 B：智能体间距离随时间演化。$d_{01}$ 趋近于 $d=5$。}
+\label{fig:case_b_dist}
+\end{figure}
+
+图 \ref{fig:case_b_omega} 显示角速度迅速衰减到零，表明系统失去旋转能力，位置变量收敛。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_b_angular_velocities.pdf}
+\caption{案例 B：各智能体角速度随时间演化，最终趋于零。}
+\label{fig:case_b_omega}
+\end{figure}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{案例 C：呼吸极限环}
+
+\subsection{仿真参数与初始条件}
+
+本案例使用与文献反例 \texttt{case3.py} 完全相同的参数和初始条件。
+
+\begin{table}[H]
+\centering
+\caption{案例 C 仿真参数}
+\label{tab:case_c_params}
+\begin{tabular}{lcc}
+\toprule
+参数 & 符号 & 数值 \\
+\midrule
+智能体数 & $N$ & 5 \\
+碰撞距离 & $d$ & 5.0 \\
+交互范围 & $\mu$ & 9.0 \\
+位置增益 & $k_1$ & 0.5 \\
+角速度增益 & $k_2$ & 0.5 \\
+积分时长 & $t_f$ & 3000 \\
+采样帧数 & & 300 （$t \ge 0.5$） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+初始条件取自 \texttt{simulation/case3.py}，具体数值为：
+\begin{align*}
+\tilde{x}(0) &=
+\begin{pmatrix}
+-10.58 & -12.53 \\
+-5.38 & 5.90 \\
+-0.18 & 9.18 \\
+-7.35 & -4.81 \\
+-6.29 & 12.44
+\end{pmatrix},\qquad
+\tilde{v}(0) =
+\begin{pmatrix}
+3.53 & -1.27 \\
+-0.51 & -1.49 \\
+1.97 & -3.68 \\
+-3.46 & -0.77 \\
+-2.04 & 2.76
+\end{pmatrix}.
+\end{align*}
+
+\subsection{仿真结果}
+
+图 \ref{fig:case_c_traj} 展示了智能体的运动轨迹。
+所有智能体在平面上呈现出周期性的振荡运动，既不收敛到旋转平衡轨道，
+也不撞击碰撞边界。这正是\textbf{呼吸极限环}的典型特征。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{../figures/case_c_trajectory.pdf}
+\caption{案例 C：智能体运动轨迹。呈现周期性振荡，永不碰撞。}
+\label{fig:case_c_traj}
+\end{figure}
+
+图 \ref{fig:case_c_dist} 显示所有智能体对之间的距离均持续振荡，且严格大于 $d=5$。
+这是极限环存在的直接证据——距离既不收敛也不发散，而是周期性变化。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_c_distances.pdf}
+\caption{案例 C：智能体间距离呈现周期性振荡，永不碰撞。}
+\label{fig:case_c_dist}
+\end{figure}
+
+图 \ref{fig:case_c_omega} 展示了角速度的周期性变化。
+各智能体的角速度围绕 $\sqrt{k_2}=0.707$ 振荡，说明系统在旋转与收缩之间交替。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_c_angular_velocities.pdf}
+\caption{案例 C：各智能体角速度的周期性振荡。}
+\label{fig:case_c_omega}
+\end{figure}
+
+图 \ref{fig:case_c_phase} 展示了智能体 0 的径向相图（半径 $r_0$ 对径向速度 $\dot{r}_0$）。
+闭合轨线明确证实了周期轨道的存在。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{../figures/case_c_phase_portrait.pdf}
+\caption{案例 C：智能体 0 的径向相图 $(r_0, \dot{r}_0)$。闭合轨线表明极限环的存在。}
+\label{fig:case_c_phase}
+\end{figure}
+
+图 \ref{fig:case_c_radius} 展示了所有智能体平均半径随时间的变化，
+进一步证实了“呼吸”行为——系统周期性地膨胀和收缩。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/case_c_radius.pdf}
+\caption{案例 C：所有智能体的平均半径随时间变化，呈现周期性呼吸。}
+\label{fig:case_c_radius}
+\end{figure}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{三种案例的对比与讨论}
+
+\subsection{关键特征对比}
+
+\begin{table}[H]
+\centering
+\caption{三种长期行为的特征对比}
+\label{tab:comparison}
+\begin{tabular}{lccc}
+\toprule
+特征 & 旋转平衡 (A) & 卡死边界 (B) & 呼吸极限环 (C) \\
+\midrule
+距离收敛 & 是（有限常数） & 是（至少一对 $\to d$） & 否（周期振荡） \\
+角速度 & 收敛到 $\sqrt{k_2}$ & 趋于 0（位置收敛） & 周期振荡 \\
+位置收敛 & 否（旋转运动） & 是 & 否（周期运动） \\
+碰撞 & 否 & 是（渐近碰撞） & 否 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{物理意义与数学支撑}
+
+\begin{description}
+\item[案例 A（旋转平衡）] 对应于系统在正阻尼占主导时的稳定行为。
+$k_1$ 足够大时，切向阻尼项 $F(s)=k_1-\alpha(s)/s$ 在整个定义域上为正，
+系统能量耗散，最终收敛到旋转平衡。
+
+\item[案例 B（卡死边界）] 当系统无法维持有效旋转时，智能体在斥性交互
+和阻尼的共同作用下，间距趋近于碰撞距离 $d$，形成奇异边界。
+此时观测器误差 $\tilde{v}_i$ 线性发散，系统失去可控性。
+
+\item[案例 C（呼吸极限环）] 由变号阻尼结构所必然产生。
+当 $k_1$ 较小时，$F(s)$ 在 $s\to d^+$ 时为负（反阻尼），
+在 $s>\mu$ 时为正（正阻尼）。这种“局部泵入能量、全局耗散能量”的机制
+是极限环产生的经典场景。霍普夫分岔定理保证了在参数空间的开集中
+存在稳定的周期轨道。
+\end{description}
+
+\subsection{关于数值方法的进一步讨论}
+
+如原始文献所强调，本系统的数值仿真必须注意以下两点：
+
+\begin{enumerate}
+\item \textbf{必须使用刚性求解器}。显式方法（如 RK45）在负阻尼区域
+（$s \to d^+$）会产生数值不稳定，将极限环误判为发散，或将收敛误判为振荡。
+本文所有仿真均采用 BDF 方法，rtol=$10^{-10}$。
+
+\item \textbf{测量旋转行为时需谨慎}。在呼吸极限环中，当半径缩小时，
+角速度 $\omega_i = (\tilde{x}_i \times \dot{\tilde{x}}_i)/\|\tilde{x}_i\|^2$
+会虚假增大，可能误导观察者认为系统正在趋近旋转分支。
+正确的指标是各智能体角速度的一致性
+（$\max_i \omega_i - \min_i \omega_i$ 是否趋于 0），而非平均值的大小。
+\end{enumerate}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\section{结论}
+
+本文通过数值仿真验证了三分法猜想的三种长期行为：
+
+\begin{itemize}
+\item \textbf{旋转平衡轨道（A）}：在 $k_1=0.8,\;k_2=0.5$ 的参数下，
+从正五边形初始条件出发，系统收敛到角速度为 $\sqrt{k_2}$ 的刚体旋转。
+
+\item \textbf{卡死边界（B）}：在 $k_1=0.5,\;k_2=0.5$ 的参数下，
+当两个智能体初始间距仅 $d+0.25$ 时，系统迅速趋近于碰撞边界。
+
+\item \textbf{呼吸极限环（C）}：在与文献反例相同的参数和初始条件下，
+系统呈现持久的周期性振荡，永不碰撞，也永不收敛到旋转平衡。
+\end{itemize}
+
+所有仿真与绘图代码分离，仿真生成 \texttt{.npz} 数据文件，
+绘图脚本独立加载并可视化。代码位于 \texttt{simulation/} 目录下，
+数据位于 \texttt{data/} 目录下，图片位于 \texttt{figures/} 目录下。
+
+\begin{thebibliography}{9}
+\bibitem{conjecture}
+关于围捕闭环中距离收敛猜想的修正与自包含表述，
+\texttt{fencing-rotation-conjecture/README.md}。
+
+\bibitem{case3}
+呼吸极限环反例仿真与动画，
+\texttt{fencing-rotation-conjecture/simulation/case3.py}。
+
+\bibitem{scipy}
+Virtanen, P. et al. (2020). SciPy 1.0: Fundamental Algorithms for
+Scientific Computing in Python. \textit{Nature Methods}, 17, 261--272.
+\end{thebibliography}
+
+\end{document}

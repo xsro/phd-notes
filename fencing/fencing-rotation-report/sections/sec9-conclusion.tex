@@ -1,0 +1,51 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This report has analyzed the rotational behavior of the first fencing controller of
+\cite{kou2022cooperative} from multiple perspectives, and extended the analysis to the
+double-integrator setting. The key findings are:
+
+\begin{enumerate}[leftmargin=2.5em]
+  \item \textbf{Mechanism.} The rotation arises because the controller constrains only the average
+        position error and average velocity, leaving $2(N-1)$ scalar circulation degrees of freedom
+        \emph{unconstrained by the average dynamics}. Those modes are not undamped---the isotropic term
+        $k_1I$ damps every direction---but at radial balance the tangential stiffness of the repulsion
+        exactly cancels $k_1$ along the rotational direction, leaving a \emph{single} neutral mode (the
+        rotational phase) with every other mode strictly decaying. The integral observer converts the
+        rotating position error into a tangential velocity (or acceleration) that sustains the circular
+        motion.
+  \item \textbf{Frequency selection.} The zero-torque identity for central repulsive forces forces
+        $\omega=\sqrt{k_2}$ (single integrator) or $\omega=\sqrt{k_3/k_2}$ (double integrator),
+        verified numerically to within $0.05\%$.
+  \item \textbf{Local orbital stability.} The shape subsystem is a second-order system
+        $\ddot{\txi}^s+B(\txi^s)\dot{\txi}^s+k_2\txi^s=0$; rotation covariance makes the rotational
+        direction a null mode of $B$ at radial balance. The energy identity explains why the
+        rotational phase is the only non-dissipative direction, while the co-rotating-frame spectrum
+        verifies local orbital stability for the paper's equilibrium. A global proof is obstructed
+        because $B$ is sign-indefinite away from equilibrium.
+  \item \textbf{Direction selection.} On a rotating steady state, the sign of the directed
+        circulation $L=\sum_i\txi_i\times\tvell_i$ equals the sign of $\omega$. In the tested
+        perturbation family, any nonzero initial circulation selects the final rotation sense, down to
+        $\varepsilon=10^{-12}$. The perfectly symmetric zero-circulation setup is a degenerate case:
+        finite-precision noise does break the reflection symmetry and the chosen sense persists, but
+        over $6000$\,s that run does not settle onto a rigid rotation---it remains in a bounded,
+        irregularly circulating, non-rigid state, so the symmetric manifold appears only weakly
+        repelling. Whether it eventually reaches one of the two mirror limit cycles is open.
+  \item \textbf{Double-integrator generalization.} For vehicles with acceleration inputs and a
+        uniformly accelerating target, the same torque-balance mechanism produces rotation at
+        $\omega=\sqrt{k_3/k_2}$. For the regular-hexagon nearest-neighbor branch, the equilibrium
+        radius satisfies $\alpha(r)=(k_1-k_3/k_2)r$ and exists when $k_1k_2>k_3$.
+  \item \textbf{Elimination.} In the single-integrator model, adding the repulsive term $\phi_i$ to
+        the observer (as in the second controller) dissipates the circulation mode and yields a rigid
+        non-rotating formation. The analogous double-integrator elimination problem requires a
+        separate higher-order observer design.
+  \item \textbf{Trichotomy conjecture (open).} The long-term behavior of the shape dynamics is
+        conjectured to belong to exactly one of three classes (Conjecture~\ref{conj:dist}):
+        a rotating equilibrium orbit (generic initializations), a jammed boundary (collinear or cross
+        initializations, whose gaps converge to $d$ at rate $1/t$ with observer states diverging
+        linearly), or a breathing limit cycle (periodic shape oscillations at sufficiently large
+        initial radii). The rotating branch is locally orbitally stable and the jammed branch is
+        provable in the collinear subspace, but a global proof of the trichotomy is open: in two
+        dimensions $B$ is sign-indefinite and no separating Lyapunov function is known.
+\end{enumerate}
+

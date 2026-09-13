@@ -1,0 +1,124 @@
+\section{Direction Selection: Why the Rotation Goes Clockwise or Counterclockwise}
+\label{sec:direction}
+
+A natural question that the previous sections left open is: what determines whether the formation
+rotates clockwise ($\omega=-\sqrt{k_2}$) or counterclockwise ($\omega=+\sqrt{k_2}$)? The controller
+\eqref{eq:ctrl7} is symmetric under reflection---there is no built-in preference for either
+sense---yet every numerical run eventually settles into one of the two directions. This section
+resolves the question using the concept of \emph{directed circulation (angular momentum)} as an
+order parameter.
+
+\subsection{Reflection symmetry: two mirror limit cycles}
+
+The closed-loop dynamics in the target frame,
+\begin{equation}
+  \dot{\txi}_i=\phi_i-k_1\txi_i+\tvell_i,\qquad
+  \dot{\tvell}_i=-k_2\txi_i,
+  \label{eq:dirn_dyn}
+\end{equation}
+is invariant under the reflection $J\mapsto-J$, i.e., under the transformation
+$(\txi_i,\tvell_i)\mapsto(R\txi_i,R\tvell_i)$ for any reflection matrix $R$. This follows from the
+rotation covariance of the repulsive forces, $\phi_i(R\txi)=R\phi_i(\txi)$. Consequently every
+rotating steady state has a mirror image with the opposite rotation sense:
+\begin{equation}
+  \omega=+\sqrt{k_2}\quad\text{(counterclockwise)}\qquad\Longleftrightarrow\qquad
+  \omega=-\sqrt{k_2}\quad\text{(clockwise)}.
+  \label{eq:mirror}
+\end{equation}
+These two limit cycles are distinct attractors in the phase space, and the question of direction
+reduces to which basin of attraction the initial condition falls into.
+
+\subsection{Order parameter: directed circulation}
+\label{sec:orderparam}
+
+The natural order parameter that distinguishes the two basins is the \emph{directed angular
+momentum} (circulation) about the target:
+\begin{equation}
+  L=\sum_{i\in\NN} (x_i-x_0)\times(v_i-v_0)
+    =\sum_{i\in\NN} \txi_i\times\tvell_i .
+  \label{eq:angmom}
+\end{equation}
+On a rotating steady state $\tvell_i=\omega J\txi_i$, so
+\begin{equation}
+  L=\sum_{i\in\NN} \txi_i\times(\omega J\txi_i)
+    =\omega\sum_{i\in\NN}\norm{\txi_i}^2,
+  \qquad\text{hence}\qquad
+  \operatorname{sign}(L)=\operatorname{sign}(\omega).
+  \label{eq:Lsign}
+\end{equation}
+Thus $L$ correctly labels the two rotating steady states. It should not, however, be interpreted as
+a conserved quantity: away from a steady rotation, $L(t)$ need not be constant, and the full level set
+$L=0$ is not generally an invariant manifold. What is invariant is the smaller reflection-symmetric
+subspace containing perfectly symmetric initial conditions, such as the regular-hexagon setup used
+in the paper's typical experiments.
+
+\subsection{Numerical evidence: direction = sign of initial circulation}
+\label{sec:dirn_num}
+
+The prediction was tested by initializing each vehicle with a small tangential perturbation
+$v_i(0)=\varepsilon J\,x_i(0)$, so that $\sgn L(0)=\sgn\varepsilon$, and sweeping $\varepsilon$ over
+twelve orders of magnitude in both signs; the runs are tabulated in
+Section~\ref{S-sec:sim_direction} of the companion. The result is unambiguous and matches
+\eqref{eq:Lsign}: every $\varepsilon\ne0$ run settles onto a rigid rotation with
+$\sgn\omega=\sgn\varepsilon$ and $\abs{\omega}=\sqrt{k_2}$, down to $\varepsilon=\pm10^{-12}$.
+
+Two conclusions follow. The \emph{sign} of the initial circulation selects the rotation sense, and its
+\emph{magnitude} does not: perturbations differing by eleven orders of magnitude converge to the same
+steady $\omega$ to eight digits. Any nonzero circulation is therefore amplified by the transient into
+a full rigid rotation, which is what makes $L$ an order parameter rather than merely a correlate of
+the final state.
+
+\subsection{Spontaneous symmetry breaking at zero circulation}
+\label{sec:ssb}
+
+The paper's typical initial condition (regular hexagon, zero initial velocity estimates) has
+$L(0)=0$ and lies in a reflection-symmetric subspace. This symmetric subspace is the degenerate case
+in which neither clockwise nor counterclockwise rotation is preferred by the equations. It is not
+correct to say that every state with $L=0$ remains there, nor can a nontrivial rigid rotation have
+zero circulation, because \eqref{eq:Lsign} gives $L=\omega\sum_i\norm{\txi_i}^2$. In exact arithmetic
+a perfectly symmetric trajectory would preserve its imposed reflection symmetry. In finite-precision
+arithmetic, however, floating-point noise at the $10^{-16}$ level provides a symmetry-breaking
+perturbation that is amplified over a long time scale.
+
+The behaviour of the exactly symmetric initial condition is reported in
+Section~\ref{S-sec:sim_ssb}. The outcome is more subtle than a slow drift toward one of the two mirror
+attractors: within the horizon tested ($6000$\,s) the symmetric run does \emph{not} lock onto a rigid
+rotation at all. The per-vehicle rates $\omega_i$ retain a large spread, so the aggregate
+$\bar\omega$ is not a meaningful rotation rate for this trajectory, and no approach to
+$|\omega|=\sqrt{k_2}$ is observed. What the run does exhibit is a persistent negative circulation
+$L\approx-66$, i.e.\ a definite \emph{sense} of net circulation, without convergence to a rigid
+orbit.
+
+The correct reading is therefore weaker than a completed pitchfork. Floating-point noise does break
+the reflection symmetry---the sign of $L$ is selected and then maintained---but the symmetric
+manifold is only slowly repelling, and the trajectory lingers near it in a non-rigid, irregularly
+circulating state for far longer than the transient of any $\varepsilon\ne0$ run
+(which locks by $t\approx400$\,s, cf.\ Section~\ref{S-sec:sim_direction}). Whether the symmetric initial
+condition eventually reaches one of the two mirror limit cycles is not settled by this experiment.
+
+\begin{remark}[Practical consequence for the paper's figures]
+The direction observed in Figs.~2--4 of \cite{kou2022cooperative} should not be read as intrinsic:
+the regular-hexagon, zero-velocity initial condition is precisely the critical case, and the
+selected sense of circulation is a product of floating-point noise, so a different machine,
+compiler, or integrator may produce the opposite sense. Two caveats apply. First, as just noted, an
+exactly symmetric run need not settle onto a rigid rotation on the time scales usually plotted, so
+figures generated from it may show a slowly circulating non-rigid state rather than a limit cycle.
+Second, this concerns only the \emph{direction} and the \emph{approach}: the robust
+conclusions---$|\omega|=\sqrt{k_2}$ on any rigid rotation, and the local orbital stability of the
+rotating branch---are unaffected, and they are confirmed for every $\varepsilon\ne0$ initial
+condition tested.
+\end{remark}
+
+\subsection{Summary of the direction-selection mechanism}
+\begin{enumerate}[leftmargin=2.5em]
+  \item The system has reflection symmetry, so the two rotation senses are mirror-image attractors.
+  \item The \emph{directed circulation} $L=\sum_i\txi_i\times\tvell_i$ is the order parameter:
+        $\operatorname{sign}(L)=\operatorname{sign}(\omega)$ on any rotating steady state.
+  \item In the perturbation family tested here, any nonzero initial circulation (even at
+        $10^{-12}$) determines the direction uniquely.
+  \item When the initial circulation is exactly zero, floating-point noise breaks the reflection
+        symmetry and selects a persistent \emph{sense} of circulation, but the symmetric manifold is
+        only weakly repelling: no rigid rotation is reached within the horizon tested, so the
+        analogy with a completed pitchfork bifurcation is suggestive rather than established.
+\end{enumerate}
+

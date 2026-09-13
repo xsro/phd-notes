@@ -1,0 +1,37 @@
+\begin{abstract}
+\noindent
+This report analyzes the first cooperative controller proposed by Kou, Chen, and Xiang
+\cite{kou2022cooperative} for the moving-target-fencing (MTF) problem, i.e., the controller
+of Eq.~(7) in that paper, which achieves \emph{average} velocity tracking. The central question
+is: \emph{why does this controller make the group of vehicles rotate about the target, instead of
+settling into a rigid formation?} We show that the answer lies in a structural property of the
+closed loop: the controller only constrains the \emph{average} (center-of-mass) position error and
+the \emph{average} velocity, leaving the remaining ``circulation'' degrees of freedom
+unconstrained by the average dynamics. Those degrees of freedom are not undamped: the isotropic gain
+$k_1$ damps every direction, and what singles out the rotational mode is that at radial balance the
+tangential stiffness of the repulsion exactly cancels $k_1$, leaving one neutral direction. After the attractive and repulsive terms establish a bounded ring around the target, the
+integral action of the velocity observer converts the rotating relative-position vector into a
+tangential velocity component, which is precisely the thrust needed to sustain circular motion.
+We also contrast this with the second controller (Eq.~(17)), whose observer adds a repulsive term
+that dissipates every individual velocity error and thereby stops the rotation. Finally, we prove a
+rotation-rate selection theorem: any rigid-rotation steady state must rotate at exactly
+$|\omega|=\sqrt{k_2}$, by the zero net torque of the central repulsive forces. We then use the zero-mean shape subsystem
+$\ddot{\txi}^s+B(\txi^s)\dot{\txi}^s+k_2\txi^s=0$, with $B=k_1I-\nabla^2P$, to explain the local
+stability mechanism: the energy $E=\tfrac12\norm{\dot{\txi}^s}^2+\tfrac{k_2}2\norm{\txi^s}^2$
+satisfies $\dot E=-\dot{\txi}^{s\mathsf T}B\dot{\txi}^s$, and rotation covariance makes the
+rotational direction a null mode of $B$ at radial balance. Because this energy identity alone does
+not give a full nonlinear Lyapunov proof, local orbital stability is checked through the
+co-rotating-frame linearization, whose spectrum has exactly one neutral phase mode and all other
+modes stable. We also prove that the individual position errors $\txi_i=x_i-x_0$ are bounded
+(\S\ref{sec:bounded}), so the bounded ring around the target is a genuine bound rather than an
+assumption. We conclude by delineating what is proved (boundedness of the individual errors, the
+rigid-rotation frequency selection, and local spectral stability for the paper's equilibrium) from
+what remains open (unconditional global convergence): $B$ is sign-indefinite away from equilibrium,
+so $E$ is not a global Lyapunov
+function. We formalize the open question as a trichotomy conjecture (Conjecture~\ref{conj:dist})
+that the long-term shape dynamics belong to one of three mutually exclusive classes: a rotating
+equilibrium orbit (generic initializations), a jammed boundary (collinear or cross initializations
+that converge to the collision barrier $s=d$ at rate $1/t$ while the observer states diverge
+linearly), or a breathing limit cycle (periodic shape oscillations observed at sufficiently large
+initial radii).
+\end{abstract}

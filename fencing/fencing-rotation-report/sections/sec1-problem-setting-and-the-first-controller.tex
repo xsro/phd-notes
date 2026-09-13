@@ -1,0 +1,60 @@
+\section{Problem Setting and the First Controller}
+
+We study a group of $N\ge 3$ identical vehicles modeled as single integrators
+\begin{equation}
+  \dot{x}_i(t)=u_i(t),\qquad i\in\NN=\{1,\dots,N\},
+  \label{eq:veh}
+\end{equation}
+where $x_i(t)\in\R^2$ is the position and $u_i(t)\in\R^2$ the velocity input. A target moves with
+an \emph{unknown} constant velocity
+\begin{equation}
+  \dot{x}_0=v_0,\qquad v_0\in\R^2,
+  \label{eq:tgt}
+\end{equation}
+and the control objective is to ``fence'' the target, i.e., to make $x_0(t)$ converge to the convex
+hull $\mathrm{co}(x(t))$ of the vehicles (property P1), while avoiding inter-vehicle collisions
+(property P2).
+
+The two properties are stated precisely as follows.
+\begin{itemize}[leftmargin=2em]
+  \item (P1) The target $x_0(t)$ is \emph{exponentially fenced} by the vehicles, in the sense that
+        the distance from $x_0(t)$ to the convex hull of the vehicle positions vanishes
+        exponentially,
+        \begin{equation}
+          \lim_{t\to\infty}P_{x_0(t)}\bigl(x(t)\bigr)=0
+          \qquad\text{exponentially},
+          \label{eq:P1}
+        \end{equation}
+        where $P_{x_0}(x)=\operatorname{dist}\bigl(x_0,\mathrm{co}(x)\bigr)$.
+  \item (P2) Collision among vehicles is avoided, in the sense that
+        \begin{equation}
+          \norm{x_{ij}(t)}>d
+          \qquad\forall\,t\ge0,\ \ \forall\,i\ne j\in\NN,
+          \label{eq:P2}
+        \end{equation}
+        for a specified safety distance $d>0$, where $x_{ij}=x_i-x_j$.
+\end{itemize}
+Throughout we assume the initial positions are collision-free,
+$\norm{x_{ij}(0)}>d$ for all $i\ne j\in\NN$.
+
+Because $v_0$ is unknown, each vehicle $i$ runs a local velocity observer $v_i$ intended to estimate
+$v_0$. The \emph{first} controller reads
+\begin{equation}
+  \boxed{\; u_i^a=\phi_i+k_1(x_0-x_i)+v_i, \qquad
+  \dot{v}_i=k_2(x_0-x_i), \qquad
+  \phi_i=\sum_{j\in\calN_i}\alpha(\norm{x_{ij}})\,\frac{x_{ij}}{\norm{x_{ij}}}, \;}
+  \label{eq:ctrl7}
+\end{equation}
+with gains $k_1,k_2>0$, where $\calN_i=\{j\ne i:\norm{x_{ij}}\le\mu\}$ is the neighbor set, and
+\begin{equation}
+  \alpha(\norm{x_{ij}})=\frac{1}{\norm{x_{ij}}-d}-\frac{1}{\mu-d},
+  \qquad \norm{x_{ij}}\in(d,\mu],
+  \label{eq:alpha}
+\end{equation}
+is a collision-avoidance threshold function. The three terms in \eqref{eq:ctrl7} have clear roles:
+\begin{itemize}[leftmargin=2em]
+  \item $\phi_i$ is a \emph{repulsive} term between neighboring vehicles, preventing collisions;
+  \item $k_1(x_0-x_i)$ is an \emph{attractive} term pulling vehicle $i$ toward the target;
+  \item $v_i$, governed by $\dot{v}_i=k_2(x_0-x_i)$, is the \emph{adaptive} term estimating $v_0$.
+\end{itemize}
+

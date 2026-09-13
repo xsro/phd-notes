@@ -1,0 +1,318 @@
+\section{The Angular Velocity Is Selected by the Dynamics}
+\label{sec:simulation}
+
+The rotation mechanism of Section~\ref{sec:rotation} yields a precise, falsifiable value for the
+steady-state angular velocity. This section derives it as a selection theorem: \emph{if} the closed
+loop settles onto a nondegenerate rigid rotation, its angular speed must be $\sqrt{k_2}$, whatever the
+radii and whatever the shape. The theorem is confirmed numerically to $0.03\%$ over a factor of $20$ in
+$k_2$; see Section~\ref{S-sec:sim_omega} of the simulation companion.
+
+\subsection{A rigorous selection theorem}
+In the target's frame let $\txi_i=x_i-x_0$, $\tvell_i=v_i-v_0$, and let
+$J=\begin{bmatrix}0&-1\\1&0\end{bmatrix}$ denote the $90^\circ$ rotation matrix. The prediction
+$|\omega|=\sqrt{k_2}$ follows from an exact necessary-condition argument. It does not assume a
+regular polygon or local stability; it assumes only that a nondegenerate rigid rotation of the
+closed-loop system exists.
+
+\begin{proposition}[Single-integrator rotation-rate selection]\label{prop:omega}
+Assume that, on a time interval of positive length, the closed loop
+\eqref{eq:veh},\eqref{eq:tgt},\eqref{eq:ctrl7} admits a nondegenerate rigid rotation about the target,
+\begin{equation}
+  \txi_i(t)=R(\omega t)\,\txi_i^0,
+  \qquad R(\theta)=\cos\theta\,I+\sin\theta\,J,
+  \qquad \sum_{i\in\NN}\norm{\txi_i^0}^2>0 ,
+  \label{eq:rigidrot}
+\end{equation}
+where the rate $\omega\in\R$ is \emph{not} assumed nonzero; that $\omega\ne0$ is a consequence of
+nondegeneracy, established as Step~0 of the proof.
+Assume also that the repulsive interaction is pairwise \emph{central} along this orbit. (Symmetry of
+the interaction need not be assumed: the neighbor set $\calN_i=\{j\ne i:\norm{x_{ij}}\le\mu\}$ is
+symmetric by construction, since $j\in\calN_i\iff i\in\calN_j$. Nor is the vanishing of the net
+internal torque an assumption; it is derived from centrality in the proof.) Then
+\begin{equation}
+  \omega^2=k_2,
+  \qquad |\omega|=\sqrt{k_2}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Since all pairwise distances are constant under \eqref{eq:rigidrot}, the neighbor graph and the
+central force magnitudes are constant along the orbit; hence the repulsive force co-rotates,
+$\phi_i(t)=R(\omega t)\phi_i^0$, where $\phi_i^0=\phi_i(\txi^0)$.
+
+\emph{Step 0: $\omega\ne0$.} Suppose $\omega=0$. Then \eqref{eq:rigidrot} reads
+$\txi_i(t)\equiv\txi_i^0$, so $\dot{\txi}_i\equiv0$ and $\phi_i(t)\equiv\phi_i^0$, while the observer
+equation $\dot{\tvell}_i=-k_2\txi_i^0$ has the constant right-hand side and therefore integrates to
+the \emph{affine} function
+\begin{equation}
+  \tvell_i(t)=\tvell_i(0)-k_2t\,\txi_i^0 .
+  \label{eq:omega0_vel}
+\end{equation}
+Substituting into $\dot{\txi}_i=\phi_i-k_1\txi_i+\tvell_i$ gives, for every $t$ in the interval,
+\begin{equation}
+  0=\phi_i^0-k_1\txi_i^0+\tvell_i(0)-k_2t\,\txi_i^0 .
+\end{equation}
+The left-hand side is independent of $t$ and the right-hand side is affine in $t$, so on an interval of
+positive length the linear coefficient must vanish: $k_2\txi_i^0=0$ for every $i$. As $k_2>0$ this
+forces $\txi_i^0=0$ for all $i$, contradicting $\sum_i\norm{\txi_i^0}^2>0$. Hence $\omega\ne0$, and the
+remaining steps may divide by $\omega$.
+
+The observer equation gives
+\begin{equation}
+  \dot{\tvell}_i=-k_2\txi_i=-k_2R(\omega t)\txi_i^0 .
+\end{equation}
+Integrating and using $J^{-1}=-J$ gives
+\begin{equation}
+  \tvell_i(t)=\frac{k_2}{\omega}J\txi_i(t)+c_i,
+  \label{eq:vreli_const}
+\end{equation}
+for some constant vector $c_i$. Substitute \eqref{eq:rigidrot} and \eqref{eq:vreli_const} into
+$\dot{\txi}_i=\phi_i-k_1\txi_i+\tvell_i$:
+\begin{equation}
+  \omega J R(\omega t)\txi_i^0
+  =R(\omega t)(\phi_i^0-k_1\txi_i^0+\frac{k_2}{\omega}J\txi_i^0)+c_i .
+\end{equation}
+The left-hand side and the first term on the right co-rotate with $R(\omega t)$, whereas $c_i$ is
+constant. Since $\omega\ne0$ and the identity holds for a continuum of times, the constant term must
+vanish: $c_i=0$. Therefore
+\begin{equation}
+  \tvell_i=\frac{k_2}{\omega}J\txi_i .
+  \label{eq:vreli}
+\end{equation}
+Evaluating the same closed-loop identity at $t=0$ gives
+\begin{equation}
+  \Bigl(\omega-\frac{k_2}{\omega}\Bigr)J\txi_i^0=\phi_i(\txi^0)-k_1\txi_i^0 .
+  \label{eq:torque_eq}
+\end{equation}
+Take the two-dimensional cross product of $\txi_i^0$ with both sides and sum over $i\in\NN$. Using
+$\txi_i^0\times J\txi_i^0=\norm{\txi_i^0}^2$ and $\txi_i^0\times\txi_i^0=0$,
+\begin{equation}
+  \Bigl(\omega-\frac{k_2}{\omega}\Bigr)\sum_{i\in\NN}\norm{\txi_i^0}^2
+  =\sum_{i\in\NN}\txi_i^0\times\phi_i(\txi^0) .
+  \label{eq:torque_sum}
+\end{equation}
+The right-hand side is the net torque of the internal repulsive forces about the target. For each
+undirected interacting pair $(i,j)$, the two equal-and-opposite central contributions are parallel to
+$\txi_i^0-\txi_j^0$, and their torque contribution is
+\begin{equation}
+  \txi_i^0\times(\txi_i^0-\txi_j^0)+\txi_j^0\times(\txi_j^0-\txi_i^0)
+  =-\txi_i^0\times\txi_j^0+\txi_i^0\times\txi_j^0=0 .
+\end{equation}
+Thus $\sum_i\txi_i^0\times\phi_i(\txi^0)=0$, and the nondegeneracy assumption gives
+\begin{equation}
+  \Bigl(\omega-\frac{k_2}{\omega}\Bigr)\sum_{i\in\NN}\norm{\txi_i^0}^2=0
+  \quad\Longrightarrow\quad
+  \boxed{\;\omega^2=k_2,\qquad |\omega|=\sqrt{k_2}.\;}
+  \label{eq:omega_pred}
+\end{equation}
+\end{proof}
+
+\begin{remark}[Why the trichotomy collapses to two values]\label{rem:trichotomy}
+Read as a polynomial identity, \eqref{eq:torque_sum} is $\omega^2=k_2$ only after multiplying through
+by $\omega$; the unmultiplied statement $(\omega-k_2/\omega)\sum_i\norm{\txi_i^0}^2=0$ is undefined at
+$\omega=0$. It is therefore natural to ask whether admitting $\omega=0$ enlarges the conclusion to the
+trichotomy $\omega\in\{0,+\sqrt{k_2},-\sqrt{k_2}\}$. It does not, for the reason isolated in Step~0: a
+stationary configuration is incompatible with the observer dynamics unless every vehicle sits exactly
+on the target. The mechanism is worth stating separately, because it is the same integral action that
+drives the rotation. The observer $\dot{\tvell}_i=-k_2\txi_i$ has no damping term, so a constant
+position error $\txi_i^0\ne0$ is integrated without bound and $\tvell_i$ grows linearly in $t$; a
+genuinely static formation would need that growing velocity estimate to be balanced by the static
+terms $\phi_i^0-k_1\txi_i^0$, which is impossible. Rotation is thus not merely one option among
+three---it is the \emph{only} way a persistent nonzero position error can coexist with a
+non-damped integral observer.
+
+Two further points make the collapse robust rather than a technicality. First, the excluded case
+$\txi_i^0=0$ for all $i$ is not merely excluded by fiat: the collision barrier
+$\alpha(s)\to\infty$ as $s\to d^+$ prevents distinct vehicles from coinciding, so vehicles cannot all
+occupy the target position. The degenerate root is therefore unreachable for the actual closed loop, not
+just ruled out by the nondegeneracy hypothesis. Second, the two surviving roots $\pm\sqrt{k_2}$ are
+both genuinely realized, and which one is selected is an initial-condition-dependent
+symmetry-breaking question rather than a further consequence of the dynamics; this is the subject of
+Section~\ref{sec:direction}. The proposition thus fixes the angular \emph{speed} completely while
+leaving the \emph{sign} open, and both signs appear in the sweep of
+Section~\ref{S-sec:sim_omega}.
+\end{remark}
+
+\begin{remark}[The centroid must sit exactly on the target]\label{rem:centroid}
+The ansatz \eqref{eq:rigidrot} in fact forces the average error to vanish, so the assumption
+$\bx=0$ made elsewhere is not an extra restriction. Averaging \eqref{eq:torque_eq} over $i\in\NN$ and
+using $\sum_i\phi_i=0$ (equal and opposite pairwise forces) gives
+$(\omega-k_2/\omega)J\bx^0=-k_1\bx^0$. Equivalently, substituting $\bx(t)=R(\omega t)\bx^0$ into the
+average dynamics \eqref{eq:osc} yields
+\begin{equation}
+  (k_2-\omega^2)\,\bx^0+k_1\omega\,J\bx^0=0 .
+\end{equation}
+Since $J$ has no real eigenvalue, $\bx^0$ and $J\bx^0$ are linearly independent unless $\bx^0=0$;
+as $k_1,\omega\ne0$ the coefficient of $J\bx^0$ cannot be cancelled, so $\bx^0=0$. Hence the
+formation centroid of any nondegenerate rigid rotation coincides with the target exactly.
+\end{remark}
+
+This is a rigorous \emph{necessary} condition for any nondegenerate rigid rotation. It does not prove
+that such a rotation exists, is unique, or attracts nearby trajectories. Those harder questions
+require either a nonlinear invariant-manifold/orbital-stability proof or a certified spectral
+argument in a co-rotating frame. The important point for the present report is that whenever a rigid
+rotation is observed, its angular speed is forced by torque balance and observer integration; no
+choice of radius or non-regular shape can change it.
+
+\subsection{Degenerate symmetric subspaces: no rotation}
+\label{sec:degenerate}
+The theorem is conditional: it fixes the angular speed \emph{if} a nondegenerate rigid rotation
+exists. It does not say that every initial condition must leave every symmetry class and start
+rotating. Two invariant subspaces show that the caveat has content.
+
+The first is the fully collinear initialization
+\begin{equation}
+  x_i(0)\in\R\times\{0\},
+  \qquad x_0(0)\in\R\times\{0\},
+  \qquad v_0\in\R\times\{0\},
+  \qquad \bv_i(0)=0 .
+  \label{eq:collinear_init}
+\end{equation}
+Here the $y$-axis reflection symmetry is exact. The attractive term, the observer term, the target
+motion, and every central pairwise repulsion have zero $y$ component whenever all agents lie on the $x$
+axis, so the subspace \eqref{eq:collinear_init} is invariant, $\txi_{i,2}(t)\equiv0$, and no rotation
+can arise. The second is four agents on the coordinate axes with the target fixed at the origin, which
+is reflection symmetric across both axes: the forces on the vertical pair stay vertical and those on
+the horizontal pair stay horizontal, so again there is no tangential component from which a rotation
+could start. Both subspaces instead jam onto the collision barrier, in the manner analyzed in
+Section~\ref{sec:jam}.
+
+These are not counterexamples to Proposition~\ref{prop:omega}; they are degenerate invariant subspaces
+in which no nonzero rigid rotation is reached. Both are confirmed to machine precision in
+Section~\ref{S-sec:sim_degenerate} of the companion.
+
+\subsection{The rotating formation need not be a regular hexagon}
+\label{sec:shapebranch}
+The radial balance $\phi_i=k_1\txi_i$ that accompanies a rigid rotation does not single out a unique
+shape. For the paper's parameters the regular-hexagon branch of that balance solves
+$\alpha(r)=k_1r$, i.e.\ $1/(r-5)-1/4=r/2$, giving $r^*\approx5.35$; but the configuration actually
+reached from the hexagonal initialization is an interleaved two-triangle with radii alternating
+$[3.39,6.31,3.39,6.31,3.39,6.31]$. Several shape branches thus coexist and the initial condition
+selects among them.
+
+What is \emph{not} shape-dependent is the rotation rate. All six vehicles share the same angular
+velocity $\sqrt{k_2}$ regardless of their differing radii, which is exactly the content of
+Proposition~\ref{prop:omega}: the zero-torque identity eliminates every $r_i$ before $\omega$ is
+determined. This is the sharpest available illustration that the selection theorem constrains the rate
+without constraining the geometry (Section~\ref{S-sec:sim_observations} of the companion).
+
+\subsection{Conjecture: a trichotomy of long-term behaviors}
+\label{sec:dist_conjecture}
+
+Proposition~\ref{prop:omega} and Section~\ref{sec:corotating} characterize the angular speed and the
+local orbital stability of the rotating branch, and the degenerate cases above show that some
+initializations never rotate. Neither settles the harder dynamical question of what long-term
+behaviors the system can exhibit. The numerical evidence assembled in the companion document
+(Section~\ref{S-sec:sim_observations}) points to three distinct attractor types, which we record
+as a conjecture. The jammed alternative is established rigorously for the collinear subspace in
+Proposition~\ref{prop:jam} below, and the breathing limit cycle is observed numerically in a
+companion parameter sweep (Section~\ref{S-sec:sim_observations}) under different initial conditions
+and gain values---most clearly at $k_1=0.5$, $k_2=0.5$, $\mu=9.0$, $d=5.0$ with $N=5$ agents.
+
+\begin{conjecture}[Trichotomy]\label{conj:dist}
+Consider the single-integrator closed loop \eqref{eq:veh},\eqref{eq:tgt},\eqref{eq:ctrl7} with the
+repulsive magnitude \eqref{eq:alpha} and gains $k_1,k_2>0$. For every initial condition with
+$\min_{i\ne j}\norm{x_i(0)-x_j(0)}>d$, the $\omega$-limit set of the shape trajectory
+$\txi^s(t)$ is bounded and belongs to exactly one of the following three mutually disjoint
+classes of compact invariant sets:
+\begin{enumerate}[leftmargin=2.5em]
+  \item \emph{Rotating equilibrium orbit:} a nondegenerate rigid rotation about the target at
+        angular speed $|\omega|=\sqrt{k_2}$, with all pairwise distances converging to finite
+        constants $d_{ij}^*>d$ (the generic case);
+  \item \emph{Jammed boundary:} a configuration in which at least one pair attains the collision
+        distance $d_{ij}^*=d$, the positions converge, and the observer states $\tvell_i$ diverge
+        linearly;
+  \item \emph{Breathing limit cycle:} a non-trivial periodic orbit of the shape variables,
+        \[\txi^s(t+T)=\txi^s(t)\qquad\forall t\ge T_0,\]
+        with all pairwise distances remaining strictly above $d$ and oscillating periodically;
+        the angular speed and individual radii vary along the cycle.
+\end{enumerate}
+In all three cases the average position error converges to zero exponentially
+(Section~\ref{sec:avg}), so the formation center locks onto the target.
+\end{conjecture}
+
+\paragraph{What is known rigorously.} The average position error converges to zero exponentially
+(Section~\ref{sec:avg}); the formation center therefore locks onto the target. The repulsive
+magnitude $\alpha(s)\to+\infty$ as $s\to d^+$ forms a logarithmic barrier, so
+$\min_{i\ne j}\norm{x_i(t)-x_j(t)}>d$ for all $t$: collision cannot occur for any finite time.
+Proposition~\ref{prop:omega} is a necessary condition for the rotating class.
+
+\paragraph{The rotating branch.} For the paper's regular-hexagon initialization the distances converge
+to the interleaved two-triangle pattern of Section~\ref{sec:shapebranch}, and the co-rotating
+linearization of Section~\ref{sec:corotating} has a single zero mode, so the branch is locally orbitally
+stable. Global attraction to this branch is not proved.
+
+\paragraph{The jammed branch.}
+\label{sec:jam}
+In the collinear subspace this alternative is not conjectural: it can be proved outright, so for that
+class the trichotomy collapses to a theorem. The argument below is self-contained and uses only the shape
+energy of Section~\ref{sec:corotating}.
+
+\begin{proposition}[Jamming in the collinear subspace]\label{prop:jam}
+Consider the single-integrator closed loop restricted to the invariant collinear subspace
+\eqref{eq:collinear_init}, with $k_1,k_2>0$ and all initial gaps exceeding $d$. Then the shape
+trajectory converges, $\txi^s(t)\to\xi^*$, the limit satisfies $\xi^*\ne0$, and at least one gap
+tends to the collision distance $d$. Along the way $\norm{\tvell^s(t)}\to\infty$ linearly.
+\end{proposition}
+
+\begin{proof}
+In one dimension the repulsive Hessian has only radial directions, with
+$\Phi''(s)=\alpha'(s)=-1/(s-d)^2<0$, so $\nabla^2P\preceq0$ and
+$B=k_1I-\nabla^2P\succeq k_1I\succ0$. By \eqref{eq:Edot} the shape energy \eqref{eq:energy} satisfies
+\begin{equation}
+  \dot E\le-k_1\norm{\dot{\txi}^s}^2\le0 ,
+  \label{eq:jam_Edot}
+\end{equation}
+so $E$ is nonincreasing and the shape state is bounded (the barrier bounds it below, coercivity of
+the $k_1$ term above). Integrating \eqref{eq:jam_Edot} gives
+$k_1\int_0^\infty\norm{\dot{\txi}^s}^2\dd t\le E(0)-\inf E<\infty$, hence
+$\dot{\txi}^s\in L^2$; with $\ddot{\txi}^s$ bounded on the bounded shape set this forces
+$\dot{\txi}^s\to0$ and therefore $\txi^s\to\xi^*$ for some limit $\xi^*$.
+
+No interior equilibrium exists: stationarity of the observer requires $\dot{\tvell}_i=-k_2\txi_i=0$,
+i.e.\ $\txi_i=0$ for every $i$---total collapse onto the target, which the logarithmic barrier
+forbids. Hence $\xi^*\ne0$, and consequently $\tvell^s$ cannot be stationary. Explicitly,
+$\dot{\tvell}^s=-k_2\txi^s\to-k_2\xi^*\ne0$, so
+\begin{equation}
+  \tvell^s(t)=-k_2\xi^*\,t+o(t),
+  \qquad \norm{\tvell^s(t)}\to\infty
+  \label{eq:jam_vdiv}
+\end{equation}
+at a linear rate. Since $\dot{\txi}^s\to0$ while $\tvell^s$ diverges, the remaining terms of
+$\dot{\txi}^s=\phi(\txi^s)-k_1\txi^s+\tvell^s$ must balance it; as $-k_1\txi^s\to-k_1\xi^*$ is
+bounded, the repulsion must satisfy $\norm{\phi(\txi^s(t))}\to\infty$. The magnitude $\alpha(s)$ is
+finite for every $s>d$ and blows up only as $s\to d^+$, so at least one gap tends to $d$.
+\end{proof}
+
+\begin{remark}[Rate of approach to the barrier]
+The proof also gives the rate. Let $s(t)$ be a gap tending to $d$ and project the balance above onto
+its axis: writing $c^*=k_2\abs{\langle\xi^*,e\rangle}>0$ for the component of the diverging observer
+term along that axis $e$, the leading-order cancellation is $\alpha(s(t))\sim c^*t$. With
+$\alpha(s)=1/(s-d)-1/(\mu-d)$ this gives
+\begin{equation}
+  s(t)-d\ \sim\ \frac{1}{c^*\,t}\ \longrightarrow\ 0 ,
+  \label{eq:jam_asymp}
+\end{equation}
+so the gaps close on the barrier at rate $1/t$ while the observer states diverge linearly.
+\end{remark}
+
+A stiff (BDF) integration confirms the $1/t$ scaling of \eqref{eq:jam_asymp} to order of magnitude; the
+runs are reported in Section~\ref{S-sec:sim_jam} of the companion. Only the scaling is verified, not the
+coefficient $c^*$, since \eqref{eq:jam_asymp} is a leading-order balance that discards the $O(1)$
+attractive and neighbour contributions.
+
+\paragraph{Why a complete proof is hard.} Proposition~\ref{prop:jam} settles the collinear class
+because there the damping matrix is definite. In two dimensions $B=k_1I-\nabla^2P$ is sign-indefinite
+away from the rotating equilibrium: the radial directions carry $\alpha'(s)<0$ (damping), while the
+tangential stiffness $\alpha(s)/s>0$ contributes anti-damping---the very term that sustains the
+rotation. The shape energy is therefore not a global Lyapunov function, and no monotone quantity
+separating the rotating and jammed attractors is known. The jammed branch, moreover, lies on the
+singular boundary $s=d$ where the vector field is undefined, so standard convergence theorems do not
+apply.
+
+\paragraph{Numerical caveat.} The barrier makes the problem stiff: near $s=d$ the local timescale is
+$s-d\to0$ while the stiffness $|\alpha'(s)|=1/(s-d)^2\to\infty$. Fixed-step explicit schemes therefore
+blow up near the barrier and can misleadingly suggest divergence or large-amplitude oscillation; a
+stiff solver is required to observe the bounded, converging dynamics. This is why the jammed-branch
+runs in the companion use BDF rather than the RK4 scheme used elsewhere.
+

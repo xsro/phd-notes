@@ -1,0 +1,277 @@
+\section{Generalization to Double-Integrator Dynamics}
+\label{sec:double}
+
+We now generalize the analysis to the case where each vehicle is modeled as a double integrator
+with acceleration input, and the target moves with uniform acceleration. This extension reveals
+how the rotation mechanism depends on the system's relative degree and leads to a modified
+frequency selection formula.
+
+\subsection{Problem formulation}
+\label{sec:double_setup}
+
+The vehicles obey
+\begin{equation}
+  \ddot{p}_i(t)=u_i(t),\qquad i\in\NN,
+  \label{eq:double_veh}
+\end{equation}
+with $p_i(t)\in\R^2$ the position and $u_i(t)\in\R^2$ the acceleration input. The target motion is
+uniformly accelerated:
+\begin{equation}
+  \ddot{p}_0=a_0\in\R^2,\qquad\dot{p}_0(t)=v_0+a_0t,\qquad p_0(t)=p_{00}+v_0t+\tfrac12 a_0t^2,
+  \label{eq:double_tgt}
+\end{equation}
+with $a_0$ constant but unknown. The double-integrator analog of the first controller \eqref{eq:ctrl7}
+uses an observer that integrates the position error:
+\begin{equation}
+  \boxed{\; u_i=-k_1(p_i-p_0)-k_2(\dot{p}_i-\dot{p}_0)+\phi_i+w_i,\qquad
+  \dot{w}_i=-k_3(p_i-p_0),\;}
+  \label{eq:double_ctrl}
+\end{equation}
+with gains $k_1,k_2,k_3>0$. The repulsive force $\phi_i$ is the same as \eqref{eq:alpha}.
+
+\subsection{Average dynamics}
+\label{sec:double_avg}
+
+Define the position error $e_i=p_i-p_0$, its average $\bar{e}=\frac1N\sum_i e_i$, and the observer
+average $\bar{w}=\frac1N\sum_i w_i$. Because the repulsive forces are internal, $\sum_i\phi_i=0$,
+and the target acceleration $a_0$ appears as a constant disturbance. The average dynamics are
+\begin{align}
+  \dot{\bar{e}} &= \bar{v}, \\
+  \dot{\bar{v}} &= -k_1\bar{e} - k_2\bar{v} + \bar{w} - a_0, \\
+  \dot{\bar{w}} &= -k_3\bar{e}.
+  \label{eq:double_avg}
+\end{align}
+Eliminating $\bar{v}$ and $\bar{w}$ gives the third-order system
+\begin{equation}
+  \dddot{\bar{e}} + k_2\ddot{\bar{e}} + k_1\dot{\bar{e}} + k_3\bar{e} = 0 .
+  \label{eq:double_avg3}
+\end{equation}
+The characteristic polynomial is $\lambda^3+k_2\lambda^2+k_1\lambda+k_3=0$. By the
+Routh--Hurwitz criterion, the equilibrium $\bar{e}^*=0$ is exponentially stable iff
+\begin{equation}
+  k_1,k_2,k_3>0\quad\text{and}\quad k_1k_2>k_3.
+  \label{eq:double_stab}
+\end{equation}
+At steady state, $\bar{e}\to0$, $\bar{v}\to0$, and $\bar{w}\to a_0$, so the observer average
+converges to the target acceleration---a natural generalization of the average-velocity tracking
+property of the single-integrator case.
+
+\subsection{Rigid rotation ansatz and torque balance}
+\label{sec:double_torque}
+
+The double-integrator angular speed can be pinned down by the same kind of necessary-condition
+argument as Proposition~\ref{prop:omega}. We assume only that a nondegenerate rigid rotation exists
+in the target frame:
+\begin{equation}
+  e_i(t)=R(\omega t)\,\xi_i,
+  \qquad R(\theta)=\cos\theta\,I+\sin\theta\,J,
+  \qquad \omega\ne0,
+  \qquad \sum_i\norm{\xi_i}^2>0 .
+  \label{eq:double_rot}
+\end{equation}
+Differentiating gives
+\begin{equation}
+  \dot{e}_i=\omega J e_i,
+  \qquad \ddot{e}_i=-\omega^2 e_i.
+  \label{eq:double_deriv}
+\end{equation}
+
+\begin{proposition}[Double-integrator rotation-rate selection]\label{prop:double_omega}
+Assume that the double-integrator closed loop \eqref{eq:double_veh}--\eqref{eq:double_ctrl} admits a
+nondegenerate rigid rotation of the form \eqref{eq:double_rot}. Assume also that the repulsive
+interaction is pairwise central and undirected along this orbit. If $k_2>0$, then
+\begin{equation}
+  \omega^2=\frac{k_3}{k_2},
+  \qquad |\omega|=\sqrt{\frac{k_3}{k_2}}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+As before, rigid rotation keeps every pairwise distance fixed, so $\phi_i(t)=R(\omega t)\phi_i^0$.
+The observer integrates the rotating position error:
+\begin{equation}
+  \dot{w}_i=-k_3e_i=-k_3R(\omega t)\xi_i .
+\end{equation}
+Hence
+\begin{equation}
+  w_i(t)=\frac{k_3}{\omega}J e_i(t)+c_i,
+  \label{eq:double_observer}
+\end{equation}
+where $c_i$ is constant. Substitute \eqref{eq:double_deriv} and \eqref{eq:double_observer} into the
+error dynamics
+\begin{equation}
+  \ddot{e}_i=-k_1e_i-k_2\dot{e}_i+\phi_i+w_i-a_0 .
+\end{equation}
+This gives
+\begin{equation}
+  R(\omega t)\bigl[-\omega^2\xi_i+k_1\xi_i+k_2\omega J\xi_i-
+  \phi_i^0-\frac{k_3}{\omega}J\xi_i\bigr]=c_i-a_0 .
+\end{equation}
+The left-hand side co-rotates with angular speed $\omega\ne0$, while the right-hand side is constant.
+Therefore both sides must be constant in time; equivalently the rotating coefficient must vanish and
+$c_i=a_0$. Thus the constant observer offset is not an extra assumption: it is forced by the rigid
+rotation ansatz. We obtain
+\begin{equation}
+  -\omega^2 e_i = -k_1 e_i - k_2\omega J e_i + \phi_i + \frac{k_3}{\omega} J e_i .
+  \label{eq:double_balance}
+\end{equation}
+Rearranging,
+\begin{equation}
+  \phi_i = (k_1-\omega^2) e_i + \Bigl(k_2\omega-\frac{k_3}{\omega}\Bigr) J e_i .
+  \label{eq:double_phi}
+\end{equation}
+Take the cross product of $e_i$ with both sides and sum over all vehicles. The radial term
+$(k_1-\omega^2)e_i$ contributes zero torque, and the net torque of the pairwise central repulsive
+forces also vanishes by the edge-pair cancellation used in Proposition~\ref{prop:omega}. Therefore
+\begin{equation}
+  0=\sum_i e_i\times\phi_i
+  =\Bigl(k_2\omega-\frac{k_3}{\omega}\Bigr)\sum_i \norm{e_i}^2 .
+  \label{eq:double_torque_sum}
+\end{equation}
+Since the rotation is nondegenerate, $\sum_i\norm{e_i}^2>0$, and therefore
+\begin{equation}
+  \boxed{\; k_2\omega-\frac{k_3}{\omega}=0\quad\Longrightarrow\quad
+  \omega^2=\frac{k_3}{k_2},\qquad |\omega|=\sqrt{\frac{k_3}{k_2}}.\;}
+  \label{eq:double_omega}
+\end{equation}
+\end{proof}
+
+Thus the double-integrator formula is also a rigorous necessary condition for nondegenerate rigid
+rotation. It does not by itself prove existence or attraction. It says that, if such a rotating
+orbit exists, its angular speed is determined by the ratio of the observer gain $k_3$ to the
+velocity damping gain $k_2$.
+
+\begin{remark}[The $k_2=0$ limiting case]
+When $k_2=0$ (no velocity damping), the rigid-rotation torque balance gives $k_3/\omega=0$, which
+has no finite nonzero solution for $k_3>0$. Thus the selected finite-frequency rigid rotation derived
+above requires positive velocity damping. The behavior of the undamped double-integrator closed loop
+is a separate singular case and is not characterized by \eqref{eq:double_omega}.
+\end{remark}
+
+\subsection{Radial force balance and equilibrium radius}
+\label{sec:double_radial}
+
+With $|\omega|=\sqrt{k_3/k_2}$, the tangential term vanishes and the repulsive force must satisfy
+\begin{equation}
+  \phi_i = (k_1-\omega^2) e_i = \Bigl(k_1-\frac{k_3}{k_2}\Bigr) e_i .
+  \label{eq:double_radial}
+\end{equation}
+For a regular $N$-gon with circumradius $\rho$ and nearest-neighbor side length
+$s=2\rho\sin(\pi/N)$, the inward radial component of the two nearest-neighbor repulsive forces gives
+\begin{equation}
+  2\alpha(s)\sin\frac{\pi}{N}
+  =\Bigl(k_1-\frac{k_3}{k_2}\Bigr)\rho,
+  \qquad
+  \alpha(s)=\frac{1}{s-d}-\frac{1}{\mu-d} .
+  \label{eq:double_alpha}
+\end{equation}
+Equivalently,
+\begin{equation}
+  \alpha(s)=\frac{k_1-k_3/k_2}{4\sin^2(\pi/N)}\,s .
+  \label{eq:double_alpha_side}
+\end{equation}
+For the regular hexagon used in the numerical examples, $N=6$ and $s=\rho$, so
+\eqref{eq:double_alpha_side} reduces to the simpler formula
+$\alpha(r)=(k_1-k_3/k_2)r$. This determines the regular-hexagon nearest-neighbor equilibrium radius
+uniquely for each admissible $k_2$ (given $k_1,k_3,d,\mu$).
+
+\begin{proposition}[Regular-hexagon branch]
+For the regular-hexagon nearest-neighbor branch considered here, an equilibrium rigid rotation with
+radius in the repulsion range exists precisely when $k_1k_2>k_3$, the same inequality that makes the
+average dynamics \eqref{eq:double_avg3} exponentially stable. At the marginal case
+$k_1k_2=k_3$, the required radial force vanishes and this branch approaches the edge of the
+repulsion range $\mu$.
+\end{proposition}
+
+\subsection{Outcome of the numerical check}
+\label{sec:double_num}
+
+The prediction $\abs{\omega}=\sqrt{k_3/k_2}$ and the radial balance \eqref{eq:double_radial} were both
+checked against closed-loop integration of
+\eqref{eq:double_veh}--\eqref{eq:double_ctrl}; the runs are reported in
+Section~\ref{S-sec:sim_double} of the companion. Sweeping $k_2$ across a factor of about three
+reproduces $\sqrt{k_3/k_2}$ to within $0.05\%$ at every gain, and the measured steady radii track the
+solution of \eqref{eq:double_radial} monotonically downward in $k_2$, as that equation requires.
+
+Two limitations of the check belong with the result. The runs use $a_0=0$, so the claim that a constant
+target acceleration is absorbed by the observer offset $\bar w\to a_0$ is consistent with the average
+dynamics of Section~\ref{sec:double_avg} but is not exercised numerically. And the runs are
+initialized \emph{on} the predicted equilibrium, which tests self-consistency and the rate law rather
+than attraction to the rotating branch---a weaker test than the single-integrator sweep, which starts
+from a wide hexagon and converges inward.
+
+\subsection{Comparison with the single-integrator case}
+\label{sec:double_compare}
+
+Table~\ref{tab:double_compare} summarizes the key differences between the single- and
+double-integrator formulations.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of the single-integrator (\S\ref{sec:rotation}) and double-integrator
+(\S\ref{sec:double}) rotation mechanisms.}
+\label{tab:double_compare}
+\begin{tabular}{lcc}
+\toprule
+Property & Single integrator & Double integrator \\
+\midrule
+Vehicle model & $\dot{p}_i=u_i$ & $\ddot{p}_i=u_i$ \\
+Target model & $\dot{p}_0=v_0$ (const.) & $\ddot{p}_0=a_0$ (const.) \\
+Observer & $\dot{v}_i=-k_2(p_i-p_0)$ & $\dot{w}_i=-k_3(p_i-p_0)$ \\
+\textbf{Rotation rate $\omega$} & $\sqrt{k_2}$ & $\sqrt{k_3/k_2}$ \\
+Observer output direction & Tangential (velocity) & Tangential (force) \\
+Equilibrium radius & From radial balance; for $N=6$, $\alpha(r)=k_1r$ & From radial balance; for $N=6$, $\alpha(r)=(k_1-k_3/k_2)r$ \\
+Existence condition & Shape-dependent branch & For the regular-hexagon branch, $k_1k_2>k_3$ \\
+Direction selection & Sign of $L(0)$ (\S\ref{sec:direction}) & Sign of $L(0)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two entries deserve comment. The single-integrator radius is \emph{not} free: it is fixed by the
+radial balance $\phi_i=k_1\txi_i$ of \eqref{eq:equilibrium}, which is exactly the $k_3/k_2\to0$ limit
+of the double-integrator condition in the same row. What is true is that the balance admits several
+shape branches (regular polygon, interleaved two-triangle, \dots), and which branch is reached
+depends on the initial condition; for the paper's hexagon initialization the observed attractor is the
+interleaved two-triangle rather than the regular hexagon. It is the \emph{branch}, not the radius,
+that the initial condition selects.
+
+The key observation is that the rotation rate is now \emph{inversely} proportional to the velocity
+damping gain $k_2$: increasing $k_2$ slows the rotation rate (since $|\omega|=\sqrt{k_3/k_2}$
+decreases), whereas in the single-integrator case increasing $k_2$ speeds it up (since
+$|\omega|=\sqrt{k_2}$ increases). This inverse relationship arises because $k_2$ now appears in the velocity damping term
+$-k_2\dot{e}_i$, which produces a tangential force opposing the observer's tangential drive
+$w_i=(k_3/\omega)Je_i$; the torque balance $k_2\omega=k_3/\omega$ gives
+$|\omega|=\sqrt{k_3/k_2}$.
+
+\subsection{Physical interpretation}
+\label{sec:double_phys}
+
+The double-integrator rotation mechanism can be understood as follows:
+\begin{enumerate}[leftmargin=2.5em]
+  \item The observer $w_i$ integrates the rotating position error $e_i$ and produces a
+        \emph{tangential acceleration} $(k_3/\omega)Je_i$ that drives the rotation.
+  \item The velocity damping term $-k_2\dot{e}_i$ produces an opposing tangential acceleration
+        $-k_2\omega Je_i$.
+  \item At the balance condition $k_2\omega=k_3/\omega$, the two tangential accelerations cancel
+        exactly, leaving the repulsive force $\phi_i$ to provide only the radial component needed
+        to maintain the circular formation.
+  \item The radial balance $\phi_i=(k_1-\omega^2)e_i$ determines the formation radius, which must
+        lie within the repulsion range $(d,\mu)$.
+  \item The target acceleration $a_0$ is absorbed by the constant offset of the observer
+        ($\bar{w}\to a_0$) and does not affect the rotational dynamics.
+\end{enumerate}
+
+This mechanism is a natural generalization of the single-integrator case: the observer integrates
+position error to produce tangential drive, and the free parameter $k_2$ now provides a tunable
+\emph{velocity damping} that controls the rotation rate through the inverse relationship
+$\omega=\sqrt{k_3/k_2}$.
+
+\begin{remark}[On the possibility of elimination]
+Just as the second controller \eqref{eq:ctrl17} eliminates rotation in the single-integrator case
+by adding $\phi_i$ to the observer (\S\ref{sec:second}), it is natural to ask whether an analogous
+higher-order observer can dissipate the double-integrator circulation. Such a design would need to
+respect the units and relative degree of the double-integrator model; it is therefore a separate
+control-design question rather than a direct consequence of the Lyapunov argument
+\eqref{eq:lyap}--\eqref{eq:Vdot}.
+\end{remark}
+

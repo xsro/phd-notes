@@ -1,0 +1,258 @@
+\section{Local Orbital Stability via the Shape Energy}
+\label{sec:corotating}
+
+Section~\ref{sec:second} showed that the second controller is handled by a Lyapunov function whose
+derivative is a sum of negative squares. For the \emph{first} controller no such \emph{global}
+monotone Lyapunov function exists: the repulsive potential is non-convex, and the rotational phase
+is a neutral mode. What is available instead is a sharp \emph{local} result, built from the
+second-order structure of the shape subsystem and a simple energy. Combined with the selection
+theorem (Proposition~\ref{prop:omega}), this pins the steady state to $|\omega_s|=\sqrt{k_2}$.
+
+\subsection{Second-order shape dynamics and the shape energy}
+\label{sec:second_order}
+
+Let $\txi_i^s=\txi_i-\bx$ and $\tvell_i^s=\tvell_i-\bv$ denote the zero-mean shape variables (the
+average part obeys the exponentially stable oscillator \eqref{eq:osc} and decouples exactly).
+Differentiating $\dot{\txi}_i^s=\phi_i-k_1\txi_i^s+\tvell_i^s$ and eliminating the observer through
+$\dot{\tvell}_i^s=-k_2\txi_i^s$ yields the \emph{second-order} form
+\begin{equation}
+  \ddot{\txi}_i^s+k_1\dot{\txi}_i^s+k_2\txi_i^s=\dot{\phi}_i .
+  \label{eq:second}
+\end{equation}
+Because $\phi$ is the gradient of the repulsive potential
+$P=\sum_{\text{edges}}\Phi(\norm{x_{ij}})$ with $\Phi'=\alpha$ (so $\phi=\nabla_{\txi^s}P$), its time
+derivative is $\dot{\phi}=\nabla^2 P\,\dot{\txi}^s$. Hence the shape subsystem is the closed
+second-order system
+\begin{equation}
+  \boxed{\;\ddot{\txi}^s+B(\txi^s)\,\dot{\txi}^s+k_2\txi^s=0,\qquad
+  B(\txi^s)=k_1I-\nabla^2 P(\txi^s),\;}
+  \label{eq:secondB}
+\end{equation}
+in which all damping information is carried by the symmetric matrix $B$. Now consider the energy
+\begin{equation}
+  E=\frac12\norm{\dot{\txi}^s}^2+\frac{k_2}{2}\norm{\txi^s}^2 .
+  \label{eq:energy}
+\end{equation}
+Along \eqref{eq:secondB},
+\begin{equation}
+  \dot E=\dot{\txi}^{s\mathsf T}\bigl(\ddot{\txi}^s+k_2\txi^s\bigr)
+       =-\dot{\txi}^{s\mathsf T}B(\txi^s)\,\dot{\txi}^s .
+  \label{eq:Edot}
+\end{equation}
+Thus $E$ is non-increasing precisely on the set where $B\succeq0$.
+
+\subsection{Rotation covariance and the neutral rotational mode}
+\label{sec:rotcov}
+
+The repulsive force is rotation-covariant: rotating every relative position rotates every force,
+$\phi(R\txi)=R\phi(\txi)$ for every rotation matrix $R$. Differentiating this identity along the
+generator $J$ at the current configuration gives the exact relation
+\begin{equation}
+  \nabla^2 P(\txi^s)\,(J\txi^s)=J\phi(\txi^s),
+  \label{eq:rotcov}
+\end{equation}
+and hence, by \eqref{eq:secondB},
+\begin{equation}
+  B\,(J\txi^s)=k_1J\txi^s-J\phi(\txi^s) .
+  \label{eq:Brot}
+\end{equation}
+At a radial-balance configuration $\phi_i=k_1\txi_i^s$ the right-hand side vanishes identically:
+\begin{equation}
+  B\,(J\txi^s)=k_1J\txi^s-J(k_1\txi^s)=0 .
+  \label{eq:Brot0}
+\end{equation}
+The rotational direction $J\txi^s$ is therefore \emph{always} a null mode of the damping matrix $B$
+at equilibrium---an exact, symmetry-free statement, and the second-order counterpart of the neutral
+rotational phase: a rigid rotation $\dot{\txi}^s=\omega J\txi^s$ gives $\dot E=0$ exactly.
+
+\subsection{What the shape energy proves locally}
+\label{sec:lasalle}
+
+Suppose that at the equilibrium $B\succeq0$ on the shape space, with the rotational direction its
+\emph{only} null mode. This holds for the paper's example: at the radial-balance equilibrium of
+Section~\ref{sec:verifyrot} the shape-space eigenvalues of $\nabla^2 P$ are
+$\{-15.17,-15.17,-11.14,-6.36,-3.05,-3.03,-3.03,-0.14,-0.14,\ 0.5\}$, so those of
+$B=k_1I-\nabla^2P$ are $\{0,\ 0.64,\ 0.64,\ 3.53,\ 3.53,\ 3.55,\ 6.86,\ 11.64,\ 15.67,\ 15.67\}\succeq0$,
+with the single zero mode aligned to machine precision with the rotational direction $J\txi^s$
+(purely tangential). (Analytically, $B\succeq0$ is the condition that the radial-balance
+configuration is a local maximum of $W=P-\tfrac{k_1}{2}\sum_i\norm{\txi_i^s}^2$, i.e.\ that every
+``breathing'' mode is stable.)
+
+This energy identity should be read with one caveat. Since $B$ has a zero eigenvalue at the
+equilibrium, continuity alone does \emph{not} imply $B\succeq0$ throughout a whole neighborhood;
+small perturbations may make the neutral eigenvalue slightly negative. Thus \eqref{eq:Edot} is not,
+by itself, a complete nonlinear Lyapunov proof of local orbital stability. What it does prove is the
+exact structure of the neutral direction: at radial balance the only direction in which the energy
+does not dissipate is the rotational phase.
+
+Indeed, if a trajectory stays in a region where $B(\txi^s)\succeq0$ and
+$\ker B(\txi^s)=\operatorname{span}\{J\txi^s\}$, then LaSalle's invariance principle confines the
+$\omega$-limit set to
+\begin{equation}
+  \dot E=0\quad\Longleftrightarrow\quad
+  \dot{\txi}^s\in\ker B=\operatorname{span}\{J\txi^s\},
+  \label{eq:Edot0}
+\end{equation}
+i.e.\ the motion is a rigid rotation $\dot{\txi}^s=\omega J\txi^s$ at constant radii. On such an
+invariant set \eqref{eq:secondB} collapses to the undamped oscillator
+\begin{equation}
+  \ddot{\txi}^s+k_2\txi^s=0 .
+  \label{eq:osc2}
+\end{equation}
+For $\dot{\txi}^s=\omega J\txi^s$ we have $\ddot{\txi}^s=\omega J\dot{\txi}^s=-\omega^2\txi^s$, so
+\eqref{eq:osc2} forces $\omega^2=k_2$. This recovers Proposition~\ref{prop:omega} on the limit set
+and explains why the only non-dissipative motion allowed by the shape energy is the rigid rotation
+at $|\omega|=\sqrt{k_2}$. The actual local orbital stability claim is therefore established below
+by the co-rotating-frame linearization, not by the energy identity alone.
+
+\subsection{Co-rotating frame and shape dynamics}
+\label{sec:shape}
+
+Let $\omega=\sqrt{k_2}$, and let $\omega_s=\pm\omega$ denote the \emph{signed} angular velocity,
+fixed by the initial condition (the closed loop is mirror-symmetric under $J\mapsto-J$, so we
+analyze $\omega_s=+\omega$ without loss of generality). The zero-mean shape variables
+\begin{equation}
+  \txi_i^s=\txi_i-\bx,\qquad \tvell_i^s=\tvell_i-\bv
+  \label{eq:shape}
+\end{equation}
+obey the closed, autonomous subsystem
+\begin{equation}
+  \dot{\txi}_i^s=\phi_i-k_1\txi_i^s+\tvell_i^s,\qquad
+  \dot{\tvell}_i^s=-k_2\txi_i^s,
+  \label{eq:shape_dyn}
+\end{equation}
+obtained by subtracting the average dynamics \eqref{eq:avgx}--\eqref{eq:avgv}. Because $\phi_i$
+depends only on the differences $x_i-x_j$, it is translation-invariant, so the average
+\eqref{eq:osc} and the shape \eqref{eq:shape_dyn} decouple exactly. Now pass to the frame co-rotating
+at $\omega$,
+\begin{equation}
+  \xi_i=e^{-J\omega t}\txi_i^s,\qquad w_i=e^{-J\omega t}\tvell_i^s .
+  \label{eq:corotating}
+\end{equation}
+Using the rotation-equivariance $\phi_i(e^{J\omega t}\xi)=e^{J\omega t}\phi_i(\xi)$, the shape
+dynamics become the \emph{autonomous} system
+\begin{equation}
+  \dot{\xi}_i=\phi_i(\xi)-k_1\xi_i-\omega J\xi_i+w_i,\qquad
+  \dot{w}_i=-k_2\xi_i-\omega Jw_i .
+  \label{eq:shape_rot}
+\end{equation}
+A fixed point of \eqref{eq:shape_rot} is a constant pair $(\xi^*,w^*)$. The second equation of
+\eqref{eq:shape_rot} gives, using $J^{-1}=-J$,
+\begin{equation}
+  w_i^*=\frac{k_2}{\omega}\,J\xi_i^* ,
+  \label{eq:wstar}
+\end{equation}
+which holds for \emph{every} $k_2>0$ and so imposes no condition on $\omega$: the observer is simply
+locked to the tangential velocity. Substituting \eqref{eq:wstar} into the first equation and
+separating the radial and tangential components yields
+\begin{equation}
+  \phi_i(\xi^*)=k_1\xi_i^*,
+  \qquad
+  \Bigl(\frac{k_2}{\omega}-\omega\Bigr)J\xi_i^*=0 ,
+  \label{eq:equilibrium}
+\end{equation}
+that is, radial force balance together with $\omega^2=k_2$ whenever $\xi^*\ne0$. It is therefore the
+\emph{first} equation, not the observer equation, that pins the rate; this recovers
+Proposition~\ref{prop:omega} within the co-rotating picture. In the lab frame \eqref{eq:equilibrium} is the rigid
+rotation $\txi_i(t)=e^{J\omega t}\xi_i^*$ of Section~\ref{sec:rotation}; conversely,
+Proposition~\ref{prop:omega} states that \emph{any} rigid rotation must have
+$|\omega|=\sqrt{k_2}$.
+
+\subsection{Linearization}
+\label{sec:lyaprot}
+
+Let $W(\xi)=\sum_{\text{edges}}\Phi(\norm{x_{ij}})-\tfrac{k_1}{2}\sum_i\norm{\xi_i}^2$ with
+$\Phi'(s)=\alpha(s)$, so that $\nabla_i W=\phi_i-k_1\xi_i$ and the equilibrium is $\nabla W=0$. Write
+$H=\nabla^2 W(\xi^*)$ (symmetric); note that $H=\nabla^2P-k_1I=-B$, so the condition $B\succeq0$ of Section~\ref{sec:lasalle} is exactly $H\preceq0$. Linearizing \eqref{eq:shape_rot} about $(\xi^*,w^*)$ in the state
+$[\xi;w]$ gives
+\begin{equation}
+  DF=\begin{bmatrix} H-\omega J & I\\ -\omega^2 I & -\omega J\end{bmatrix},
+  \qquad \omega^2=k_2 .
+  \label{eq:DF}
+\end{equation}
+The neutral rotational phase is exact: the direction $(\delta,\epsilon)=(J\xi^*,-\omega\xi^*)$,
+tangent to the family $\{(e^{J\theta}\xi^*,\ \omega Je^{J\theta}\xi^*)\}_{\theta}$ of rotations of
+the equilibrium, satisfies $DF\,(J\xi^*,-\omega\xi^*)=0$. This uses the rotation invariance of $W$,
+which gives $\nabla^2 W_{\mathrm{rep}}(\xi^*)\,J\xi^*=J\nabla W_{\mathrm{rep}}(\xi^*)
+=J\phi(\xi^*)=k_1J\xi^*$, so that $HJ\xi^*=\nabla^2 W_{\mathrm{rep}}J\xi^*-k_1J\xi^*=0$.
+
+\subsection{Orbital stability criterion}
+\label{sec:local}
+
+Writing the observer residual $\tilde\eta_i=w_i-\omega J\xi_i$ and eliminating $w$ turns
+\eqref{eq:DF} into the equivalent pair
+\begin{equation}
+  \dot\delta=H\delta+\tilde\eta,\qquad
+  \dot{\tilde\eta}=-\omega JH\,\delta-2\omega J\,\tilde\eta,
+  \label{eq:lin2}
+\end{equation}
+whose characteristic polynomial is the matrix quadratic
+\begin{equation}
+  \det\bigl[\lambda^2 I+\lambda(2\omega J-H)-\omega JH\bigr]=0 .
+  \label{eq:quad}
+\end{equation}
+We say the rotating formation is \emph{locally asymptotically (orbitally) stable} if every root of
+\eqref{eq:quad}---equivalently every eigenvalue of \eqref{eq:DF}---lies in the open left half-plane,
+except the single neutral phase $\lambda=0$.
+
+It is worth recording why the obvious simplification is unavailable here. If $H$ and $J$ commuted,
+\eqref{eq:quad} would decouple, on each joint eigenspace, into
+\begin{equation}
+  \lambda=\tfrac12\Bigl(h-2\mathrm{i}\omega\pm\sqrt{h^2-4\omega^2}\Bigr),
+  \label{eq:commuting}
+\end{equation}
+for each eigenvalue $h$ of $H$, so that $h<0$ yields $\operatorname{Re}\lambda<0$ and $h>0$ is
+unstable. But this commuting reduction cannot describe the situation of interest, for two independent
+reasons. First, at $h=0$ formula \eqref{eq:commuting} returns \emph{two} roots, $\lambda=0$ and
+$\lambda=-2\mathrm{i}\omega$, and the latter sits on the imaginary axis; a null direction of $H$ would
+thus contribute a second marginal mode rather than a single neutral phase. Second, if $[H,J]=0$ then
+$\ker H$ is $J$-invariant and therefore of even real dimension, so ``a single null direction'' is
+impossible in the commuting case. The commuting case is consequently never asymptotically stable
+modulo one phase, and it must not be used as a proxy for the stability criterion.
+
+For a finite polygon $H$ and $J$ do \emph{not} commute---only the discrete rotational symmetry
+survives---and both obstructions disappear: $\ker H$ is one-dimensional, spanned by $J\xi^*$, and no
+spurious $-2\mathrm{i}\omega$ mode appears. Equation~\eqref{eq:quad} must therefore be checked
+directly, which the next subsection does for the paper's parameters.
+
+\subsection{Outcome of the spectral test}
+\label{sec:verifyrot}
+
+Criterion \eqref{eq:quad} was evaluated numerically at the paper's parameters; the computation, the
+equilibrium data, and the $k_2$-sweep are reported in Section~\ref{S-sec:sim_spectrum} of the
+companion. The outcome is the one the theory predicts: the linearization $DF$ has exactly one zero
+eigenvalue, its eigenvector aligns with $(J\xi^*,-\omega\xi^*)$ to six digits, and the spectral
+abscissa excluding that mode is strictly negative. The rigid rotation is therefore locally
+asymptotically orbitally stable at those parameters, with the rotational phase as the only neutral
+direction---exactly the structure Sections~\ref{sec:rotcov}--\ref{sec:lasalle} predict, now with the
+sign of the remaining spectrum settled.
+
+Two features of the numbers matter for the analysis. First, the identity $HJ\xi^*=0$ of
+Section~\ref{sec:rotcov} holds to $1.3\times10^{-14}$, confirming the neutral mode is the exact
+consequence of rotation covariance rather than a numerical coincidence. Second, the decay rate scales
+with $\omega$: it is negative across a factor of $20$ in $k_2$, but shrinks as $k_2\to0$, so the
+orbit's basin is entered ever more slowly for small gains. That scaling is what makes the slow
+spin-up transients at small $k_2$ a property of the linearization rather than an artefact of
+integration.
+
+\subsection{The local--global boundary}
+\label{sec:localglobal}
+
+The energy $E$ of \eqref{eq:energy} is \emph{not} a global Lyapunov function, because $B$ is
+sign-indefinite away from equilibrium. The tangential curvature of the repulsion,
+$\Phi'(s)/s=\alpha(s)/s$, diverges as $s\to d$; whenever two vehicles come close enough, the matrix
+$B=k_1I-\nabla^2P$ acquires a negative eigenvalue. Since $\dot E=-2\,\dot\txi^{s\mathsf T}B\dot\txi^s$
+by \eqref{eq:Edot}, $E$ can then \emph{increase}, and along a transient that pulls the formation
+inward from a wide initial ring it does: $\lambda_{\min}(B)$ starts at $k_1$ while the vehicles are
+out of sensing range, goes negative during the inward collapse, and returns to zero---the rotational
+null mode---only once radial balance is reached. The companion records this crossing quantitatively
+for the baseline run (Section~\ref{S-sec:sim_observations}).
+
+This is the concrete mechanism by which the rotation is a limit cycle rather than a damped
+equilibrium: the tangential curvature of the repulsion acts as a transient \emph{anti-damping} that
+pumps energy into the rotational mode, and the neutral rotational direction of $B$ is exactly where
+that energy input stops. It also delimits what Section~\ref{sec:lasalle} can claim. The energy
+argument certifies a neighbourhood of the rotating branch on which $B\succeq0$; it says nothing about
+initial conditions outside that neighbourhood, and the sign change of $\lambda_{\min}(B)$ shows the
+excluded region is not empty. Global convergence remains open, and Conjecture~\ref{conj:dist}
+records the three observed long-term behaviors.

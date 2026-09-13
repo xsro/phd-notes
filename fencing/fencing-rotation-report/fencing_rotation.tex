@@ -1,0 +1,49 @@
+% Main file: fencing_rotation.tex
+% Includes sections/ subfiles
+\documentclass[11pt]{article}
+
+\input{preamble}
+
+% Numerical results live in the companion document
+% fencing_rotation_simulations.tex; its labels are reachable as S-<label>.
+% Build that document first (or twice) for these references to resolve.
+\externaldocument[S-]{fencing_rotation_simulations}
+
+\title{\bfseries Why Does the First Fencing Controller Induce Rotation About the Target?\\[0.4em]
+\large An Analysis of the ``Average Velocity Tracking'' Algorithm of Kou--Chen--Xiang}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3em}
+
+\input{sections/00-abstract}
+
+\input{sections/00-highlights}
+
+\input{sections/sec1-problem-setting-and-the-first-controller}
+
+\input{sections/sec2-the-decisive-structural-fact-only-the-average-is-c}
+
+\input{sections/sec2b-boundedness-of-individual-position-errors}
+
+\input{sections/sec3-why-rotation-emerges}
+
+\input{sections/sec4-contrast-how-the-second-controller-removes-the-rot}
+
+\input{sections/sec5-numerical-verification-of-the-angular-velocity}
+
+\input{sections/sec6-local-orbital-stability-via-the-shape-energy}
+
+\input{sections/sec7-direction-selection-why-the-rotation-goes-clockwis}
+
+\input{sections/sec8-generalization-to-double-integrator-dynamics}
+
+\input{sections/sec9-conclusion}
+
+\input{sections/97-acknowledgment}
+
+\input{sections/99-bibliography}
+
+\end{document}

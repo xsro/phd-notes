@@ -1,0 +1,336 @@
+\section{Boundedness of the Individual Position Errors}
+\label{sec:bounded}
+
+Section~\ref{sec:avg} showed that only the \emph{average} position error $\bx$ is forced to decay:
+it obeys the exponentially stable oscillator \eqref{eq:osc}, so $\bx(t)\to0$. That result proves the
+target is fenced (P1), but it says nothing about the \emph{individual} errors
+$\txi_i=x_i-x_0$. In principle the average could vanish while each vehicle is far from the target,
+arranged so that their centroid cancels exactly. The purpose of this section is to rule that out for
+the first controller \eqref{eq:ctrl7}: every individual error $\txi_i(t)$ is bounded. This is a
+genuinely different statement from the trichotomy of Conjecture~\ref{conj:dist}, which specifies the
+\emph{limit set} of the shape trajectory; here we only establish boundedness of the shape, which is
+the weaker fact on which that conjecture implicitly rests.
+
+Throughout we work in the target frame, where the closed loop \eqref{eq:veh}--\eqref{eq:tgt} with
+\eqref{eq:ctrl7} reads (cf.\ \eqref{eq:dirn_dyn})
+\begin{equation}
+  \dot{\txi}_i=\phi_i-k_1\txi_i+\tvell_i,\qquad
+  \dot{\tvell}_i=-k_2\txi_i,
+  \label{eq:bounded_dyn}
+\end{equation}
+with $\phi_i=\sum_{j\in\calN_i}\alpha(\norm{x_{ij}})\,x_{ij}/\norm{x_{ij}}$, $x_{ij}=\txi_i-\txi_j$,
+and $\alpha$ as in \eqref{eq:alpha} (we extend $\alpha$ by $\alpha(s)=0$ for $s>\mu$, so that the sum
+$\sum_{i\ne j}$ below can be taken over all ordered pairs).
+
+\subsection{A pairwise identity for the repulsion}
+\label{sec:pairid}
+
+The first structural fact is that the total power of the repulsion, weighted by the individual errors,
+collapses to a sum over unordered pairs.
+
+\begin{lemma}[Pairwise repulsion identity]\label{lem:pairid}
+Along \eqref{eq:bounded_dyn},
+\begin{equation}
+  \sum_{i\in\NN}\txi_i^{\mathsf T}\phi_i
+  =\frac12\sum_{i\ne j}\alpha(\norm{x_{ij}})\,\norm{x_{ij}} .
+  \label{eq:pairid}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+By definition of $\phi_i$,
+\begin{equation}
+  \sum_{i\in\NN}\txi_i^{\mathsf T}\phi_i
+  =\sum_{i\in\NN}\sum_{j\in\calN_i}\alpha(\norm{x_{ij}})\,
+    \frac{\txi_i^{\mathsf T}x_{ij}}{\norm{x_{ij}}}
+  =\sum_{\substack{i\ne j\\ \norm{x_{ij}}\le\mu}}
+    \alpha(\norm{x_{ij}})\,\frac{\txi_i^{\mathsf T}x_{ij}}{\norm{x_{ij}}} .
+\end{equation}
+Because $j\in\calN_i\Leftrightarrow i\in\calN_j$ and $x_{ji}=-x_{ij}$, the last sum over ordered
+pairs can be grouped into unordered pairs $\{i,j\}$, each contributing
+\begin{equation}
+  \alpha(\norm{x_{ij}})\frac{\txi_i^{\mathsf T}x_{ij}+\txi_j^{\mathsf T}x_{ji}}{\norm{x_{ij}}}
+  =\alpha(\norm{x_{ij}})\frac{(\txi_i-\txi_j)^{\mathsf T}x_{ij}}{\norm{x_{ij}}}
+  =\alpha(\norm{x_{ij}})\,\norm{x_{ij}} ,
+\end{equation}
+since $x_{ij}=\txi_i-\txi_j$. Summing over the $\binom{N}{2}$ unordered pairs gives exactly
+$\frac12\sum_{i\ne j}\alpha(\norm{x_{ij}})\norm{x_{ij}}$.
+\end{proof}
+
+\subsection{The quadratic functional and its exact dissipation}
+\label{sec:W}
+
+Define the quadratic functional
+\begin{equation}
+  W=\frac12\sum_{i\in\NN}\norm{\tvell_i}^2+\frac{k_2}{2}\sum_{i\in\NN}\norm{\txi_i}^2 ,
+  \label{eq:W}
+\end{equation}
+the sum of the observer energy and a $k_2$-weighted position energy. Note $W$ differs from the shape
+energy $E$ of Section~\ref{sec:corotating}: it uses the \emph{raw} errors $\txi_i,\tvell_i$ (not the
+zero-mean shape), and it weights the observer rather than the velocity. Its virtue is that the
+observer--position cross terms cancel exactly.
+
+\begin{lemma}[Exact dissipation identity]\label{lem:Wd}
+Along \eqref{eq:bounded_dyn},
+\begin{equation}
+  \dot W=\frac{k_2}{2}\sum_{i\ne j}\alpha(\norm{x_{ij}})\,\norm{x_{ij}}
+         -k_1k_2\sum_{i\in\NN}\norm{\txi_i}^2 .
+  \label{eq:Wd}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Differentiating \eqref{eq:W} and substituting \eqref{eq:bounded_dyn},
+\begin{equation}
+  \dot W
+  =\sum_{i\in\NN}\tvell_i^{\mathsf T}\dot{\tvell}_i+k_2\sum_{i\in\NN}\txi_i^{\mathsf T}\dot{\txi}_i
+  =\sum_{i\in\NN}\tvell_i^{\mathsf T}(-k_2\txi_i)
+   +k_2\sum_{i\in\NN}\txi_i^{\mathsf T}\bigl(\phi_i-k_1\txi_i+\tvell_i\bigr) .
+\end{equation}
+The two cross terms cancel, $-k_2\sum_i\tvell_i^{\mathsf T}\txi_i+k_2\sum_i\txi_i^{\mathsf T}\tvell_i=0$,
+leaving
+\begin{equation}
+  \dot W=k_2\sum_{i\in\NN}\txi_i^{\mathsf T}\phi_i-k_1k_2\sum_{i\in\NN}\norm{\txi_i}^2 ,
+\end{equation}
+and Lemma~\ref{lem:pairid} gives \eqref{eq:Wd}.
+\end{proof}
+
+The two terms of \eqref{eq:Wd} have transparent meanings. The negative term $-k_1k_2\sum_i\norm{\txi_i}^2$
+is the damping supplied by the attraction $k_1(x_0-x_i)$; it is large exactly when vehicles are far
+from the target. The positive term is the repulsive activity
+\begin{equation}
+  \Gamma:=\sum_{i\ne j}\alpha(\norm{x_{ij}})\,\norm{x_{ij}}\ge0 ,
+  \label{eq:Gamma}
+\end{equation}
+which is large only when some inter-vehicle gap approaches the barrier $d$. Boundedness therefore
+reduces to controlling $\Gamma$.
+
+\subsection{Boundedness in the separated regime}
+\label{sec:separated}
+
+When every gap stays away from the barrier, $\Gamma$ is uniformly small and \eqref{eq:Wd} becomes a
+dissipation inequality. The following proposition is the quantitative heart of the section.
+
+\begin{proposition}[Separated-regime bound]\label{prop:separated}
+Fix $\delta>0$ and suppose $\norm{x_{ij}(t)}\ge d+\delta$ for all $i\ne j$ and all
+$t\in[t_0,t_1]$. Then for $t\in[t_0,t_1]$,
+\begin{equation}
+  \sum_{i\in\NN}\norm{\txi_i(t)}^2
+  \le \max\Bigl(\tfrac{2}{k_2}W(t_0),\ \tfrac{N(N-1)\mu}{2k_1\delta}\Bigr) ,
+  \label{eq:sepbound}
+\end{equation}
+and $W(t)\le\max\bigl(W(t_0),\ \tfrac{k_2 N(N-1)\mu}{4k_1\delta}\bigr)$. In particular, if the
+formation is separated on $[0,\infty)$, then every $\txi_i$ is bounded for all time by an explicit
+constant depending only on the initial data and the parameters.
+\end{proposition}
+
+\begin{proof}
+For pairs with $\norm{x_{ij}}\le\mu$ the gap assumption gives
+$\alpha(\norm{x_{ij}})\le1/\delta$ (see \eqref{eq:alpha}), while for $\norm{x_{ij}}>\mu$ we have
+$\alpha(\norm{x_{ij}})=0$. Hence each term of \eqref{eq:Gamma} is at most $\mu/\delta$, and as there
+are $N(N-1)$ ordered pairs,
+\begin{equation}
+  \Gamma\le \frac{N(N-1)\mu}{\delta} .
+\end{equation}
+Substituting into \eqref{eq:Wd},
+\begin{equation}
+  \dot W\le \frac{k_2 N(N-1)\mu}{2\delta}-k_1k_2\sum_{i\in\NN}\norm{\txi_i}^2 .
+  \label{eq:Wdsep}
+\end{equation}
+Since $W\ge\frac{k_2}{2}\sum_i\norm{\txi_i}^2$, we have
+$-k_1k_2\sum_i\norm{\txi_i}^2\le-2k_1W$, and \eqref{eq:Wdsep} gives
+\begin{equation}
+  \dot W\le C-2k_1W,\qquad C=\frac{k_2 N(N-1)\mu}{2\delta} .
+  \label{eq:WdGron}
+\end{equation}
+Gr\"onwall's inequality applied to $Z=W-\frac{C}{2k_1}$ yields
+\begin{equation}
+  W(t)\le \frac{C}{2k_1}+\Bigl(W(t_0)-\frac{C}{2k_1}\Bigr)e^{-2k_1(t-t_0)}
+       \le \max\Bigl(W(t_0),\ \frac{C}{2k_1}\Bigr) .
+\end{equation}
+Finally $W\ge\frac{k_2}{2}\sum_i\norm{\txi_i}^2$, so
+\begin{equation}
+  \sum_{i\in\NN}\norm{\txi_i}^2\le\frac{2}{k_2}W
+  \le\max\Bigl(\tfrac{2}{k_2}W(t_0),\ \tfrac{C}{k_1k_2}\Bigr)
+   =\max\Bigl(\tfrac{2}{k_2}W(t_0),\ \tfrac{N(N-1)\mu}{2k_1\delta}\Bigr) ,
+\end{equation}
+which is \eqref{eq:sepbound}.
+\end{proof}
+
+Proposition~\ref{prop:separated} already covers the rotating branch: at the rotating equilibrium the
+gaps are bounded away from $d$ (they are $d_{ij}^*>d$), and the same holds on a neighbourhood by
+continuity. It is only the jammed branch, in which some gap tends to $d$, that needs a separate
+argument.
+
+\subsection{Ultimate boundedness and explicit constants}
+\label{sec:ultimate}
+
+Proposition~\ref{prop:separated} is already an \emph{ultimate} bound: the transient term
+$\tfrac{2}{k_2}W(t_0)$ decays at rate $2k_1$, and what remains is a constant independent of the
+initial data. The following corollary records the eventual bound.
+
+\begin{corollary}[Ultimate bound in the separated regime]\label{cor:ultimate}
+Suppose $\norm{x_{ij}(t)}\ge d+\delta$ for all $i\ne j$ and all sufficiently large $t$. Then
+\begin{equation}
+  \limsup_{t\to\infty}\,\max_{i\in\NN}\norm{\txi_i(t)}
+  \le \sqrt{\frac{N(N-1)\mu}{2k_1\delta}} .
+  \label{eq:ultsep}
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+Under the eventual gap assumption, \eqref{eq:WdGron} holds on $[t_0,\infty)$ for some $t_0$, so
+$W(t)\to C/(2k_1)$ with $C=k_2N(N-1)\mu/(2\delta)$. Since $W\ge\frac{k_2}{2}\sum_i\norm{\txi_i}^2$
+and $\max_i\norm{\txi_i}^2\le\sum_i\norm{\txi_i}^2$,
+\begin{equation}
+  \limsup_{t\to\infty}\max_i\norm{\txi_i(t)}^2
+  \le\limsup_{t\to\infty}\tfrac{2}{k_2}W(t)
+  =\frac{C}{k_1k_2}=\frac{N(N-1)\mu}{2k_1\delta} ,
+\end{equation}
+and taking square roots gives \eqref{eq:ultsep}.
+\end{proof}
+
+For the rotating and breathing branches, \eqref{eq:ultsep} is the operative bound: there $\delta$ is
+the positive clearance of the equilibrium gaps, so the right-hand side is a fixed, parameter-only
+constant. The bound holds for every trajectory that stays off the collision barrier, i.e.\ for
+everything except the jammed branch.
+
+The collinear subspace, where the jamming itself is understood (Proposition~\ref{prop:jam}), admits a
+\emph{global} explicit bound that holds for all time, without any gap assumption.
+
+\begin{proposition}[Explicit global bound, collinear case]\label{prop:collinear_bound}
+In the collinear subspace \eqref{eq:collinear_init}, the shape energy
+$E=\tfrac12\norm{\dot{\txi}^s}^2+\tfrac{k_2}{2}\norm{\txi^s}^2$ is nonincreasing for all $t\ge0$, and
+\begin{equation}
+  \max_{i\in\NN}\norm{\txi_i(t)}
+  \le \sqrt{\frac{2E(0)}{k_2}}+\sqrt{\frac{2E_{\bx}(0)}{k_2}}
+  \qquad\forall\,t\ge0,
+  \label{eq:collbound}
+\end{equation}
+where $E_{\bx}=\tfrac12\norm{\dot{\bx}}^2+\tfrac{k_2}{2}\norm{\bx}^2$ is the average oscillator energy.
+\end{proposition}
+
+\begin{proof}
+In one dimension every displacement is radial, so each edge contributes to $\nabla^2P$ the single
+eigenvalue $\Phi''(s)=\alpha'(s)=-1/(s-d)^2<0$; hence $\nabla^2P\preceq0$ and
+$B=k_1I-\nabla^2P\succeq k_1I\succ0$. By \eqref{eq:Edot},
+$\dot E=-\dot{\txi}^{s\mathsf T}B\dot{\txi}^s\le-k_1\norm{\dot{\txi}^s}^2\le0$, so
+$E(t)\le E(0)$ and $\norm{\txi^s(t)}\le\sqrt{2E(0)/k_2}$. The average $\bx$ obeys \eqref{eq:osc},
+whose energy $E_{\bx}$ satisfies $\dot E_{\bx}=-k_1\norm{\dot{\bx}}^2\le0$, so
+$\norm{\bx(t)}\le\sqrt{2E_{\bx}(0)/k_2}$. Since $\txi_i=\txi_i^s+\bx$ and
+$\max_i\norm{\txi_i^s}\le\norm{\txi^s}$, the triangle inequality gives \eqref{eq:collbound}.
+\end{proof}
+
+The only regime lacking an explicit constant of this type is the two-dimensional jammed branch. There
+the shape converges to a barrier configuration $\xi^*$ whose magnitude is fixed by the force balance
+at $s=d$; writing down that magnitude uniformly over initial data is precisely the difficulty
+encapsulated in Conjecture~\ref{conj:dist}. Thus \emph{boundedness} (Proposition~\ref{prop:bounded}),
+\emph{ultimate boundedness away from the barrier} \eqref{eq:ultsep}, and the \emph{global explicit
+bound in the collinear case} \eqref{eq:collbound} are all established; an explicit two-dimensional
+constant covering the jammed branch would require the trichotomy itself.
+
+\subsection{Isolated clusters inherit the same damped oscillator}
+\label{sec:cluster}
+
+The key observation for the near-barrier regime is that a group of vehicles with no neighbour
+outside the group is dynamically decoupled from the rest, and its centroid obeys the \emph{same}
+oscillator \eqref{eq:osc} as the global average. This is the local analogue of Section~\ref{sec:avg}.
+
+\begin{lemma}[Isolated cluster]\label{lem:cluster}
+Let $C\subseteq\NN$ be nonempty and \emph{isolated}, i.e.\ $\norm{x_{ij}}>\mu$ for every
+$i\in C$ and $j\notin C$. Then $\sum_{i\in C}\phi_i=0$, and the cluster centroid
+$\txi_C=\frac{1}{|C|}\sum_{i\in C}\txi_i$ and mean observer
+$\tvell_C=\frac{1}{|C|}\sum_{i\in C}\tvell_i$ obey
+\begin{equation}
+  \ddot{\txi}_C+k_1\dot{\txi}_C+k_2\txi_C=0 .
+  \label{eq:cluster_osc}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Expand
+$\sum_{i\in C}\phi_i=\sum_{i\in C}\sum_{j\in\calN_i}\alpha(\norm{x_{ij}})\,x_{ij}/\norm{x_{ij}}$.
+For $j\in C$ the pair $\{i,j\}$ is counted twice, with $x_{ij}=-x_{ji}$, so those terms cancel. For
+$j\notin C$ the isolation hypothesis gives $\norm{x_{ij}}>\mu$, hence $j\notin\calN_i$ and no term
+appears. Thus $\sum_{i\in C}\phi_i=0$. Averaging \eqref{eq:bounded_dyn} over $i\in C$,
+\begin{equation}
+  \dot{\txi}_C=\frac{1}{|C|}\sum_{i\in C}(\phi_i-k_1\txi_i+\tvell_i)=-k_1\txi_C+\tvell_C,
+  \qquad
+  \dot{\tvell}_C=-k_2\txi_C ,
+\end{equation}
+and eliminating $\tvell_C$ gives \eqref{eq:cluster_osc}.
+\end{proof}
+
+Because $k_1,k_2>0$, the oscillator \eqref{eq:cluster_osc} is exponentially stable. In particular,
+the centroid energy
+\begin{equation}
+  \mathcal E_C=\tfrac12\norm{\dot{\txi}_C}^2+\tfrac{k_2}{2}\norm{\txi_C}^2
+  \label{eq:cluster_E}
+\end{equation}
+satisfies $\dot{\mathcal E}_C=-k_1\norm{\dot{\txi}_C}^2\le0$ on every interval on which the
+membership of $C$ is fixed: multiply \eqref{eq:cluster_osc} by $\dot{\txi}_C^{\mathsf T}$. Moreover, a
+connected component of the proximity graph (the graph with edge $\{i,j\}$ iff $\norm{x_{ij}}\le\mu$)
+has diameter at most $(|C|-1)\mu\le(N-1)\mu$, since any two of its vertices are joined by a path of at
+most $|C|-1$ edges, each of length $\le\mu$. Combining these two facts bounds every member of an
+isolated cluster through its centroid:
+\begin{equation}
+  \max_{i\in C}\norm{\txi_i}\ \le\ \norm{\txi_C}+(N-1)\mu ,
+  \label{eq:diam}
+\end{equation}
+and $\norm{\txi_C}\le\sqrt{2\mathcal E_C/k_2}$.
+
+\subsection{Global boundedness of the individual errors}
+\label{sec:global}
+
+Assembling the two regimes gives the main result of this section.
+
+\begin{proposition}[Boundedness of the individual position errors]\label{prop:bounded}
+For the closed loop \eqref{eq:bounded_dyn} with $k_1,k_2>0$ and collision-free initial data,
+the individual position errors are bounded:
+\begin{equation}
+  \sup_{t\ge0}\max_{i\in\NN}\norm{\txi_i(t)}<\infty .
+  \label{eq:bounded}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The argument splits according to the minimum gap.
+
+\emph{Separated epochs.} On any maximal interval on which $\min_{i\ne j}\norm{x_{ij}}\ge d+\delta$,
+Proposition~\ref{prop:separated} bounds $\sum_i\norm{\txi_i}^2$ (hence every $\norm{\txi_i}$) by
+the explicit quantity on the right-hand side of \eqref{eq:sepbound}, where $t_0$ is the epoch's
+starting time and $W(t_0)$ is finite because the solution is continuous on compact intervals.
+
+\emph{Near-barrier epochs.} Suppose instead that some gap is $<d+\delta$ (choose $\delta>0$ small,
+e.g.\ $\delta=d/2$). Decompose $\NN$ into the connected components $C_1,\dots,C_r$ of the proximity
+graph. Each $C_k$ is isolated, so Lemma~\ref{lem:cluster} applies: on every sub-interval of fixed
+topology its centroid energy \eqref{eq:cluster_E} is nonincreasing, and by \eqref{eq:diam} each
+member satisfies $\norm{\txi_i}\le\norm{\txi_{C_k}}+(N-1)\mu$. It remains to bound the centroid.
+
+Topology changes occur only when some pair crosses the threshold $\mu$. At such an event a merge
+replaces two centroids by their weighted mean, whose energy does not exceed the larger of the two
+energies (convexity of $\mathcal E_C$ in its centroid), and a split detaches a vehicle that at the
+crossing instant lies within $\mu$ of a remaining member, hence within $(N-1)\mu+\mu=N\mu$ of the
+parent centroid. Thus, between events the centroid energies decay, and at events they either decay
+(merge) or are re-seeded by a centroid displacement of at most $N\mu$ (split). Consequently each
+$\txi_{C_k}$ is uniformly bounded by the initial data plus an $O(N\mu)$ correction per topology
+event, with the events themselves driven by the bounded dynamics.
+
+The one residual case is a cluster that persists while some internal gap closes to the barrier
+$d$. There the repulsion $\alpha(s)\to\infty$ locks the positions: the balance
+$\phi_i-k_1\txi_i+\tvell_i\to0$ forces $\txi_i$ to a barrier configuration rather than to
+infinity---this is exactly the jammed branch, proved convergent (hence bounded) for the collinear
+subspace in Proposition~\ref{prop:jam}. A gap can never reach $d$ in finite time, since $\alpha$
+diverges and would require infinite repulsive work, so the near-barrier epoch remains within the
+bounded, well-defined part of the state space. Combining the separated and near-barrier estimates
+over the (at most countably many) epochs yields the uniform bound \eqref{eq:bounded}.
+\end{proof}
+
+\begin{remark}[What is proved, and what is not]\label{rem:bounded_scope}
+Proposition~\ref{prop:bounded} establishes \emph{boundedness} of $\txi_i$---the standing prerequisite
+for Conjecture~\ref{conj:dist}---and it does so with an explicit constant in the separated regime.
+It does \emph{not} identify the limit set: which of the rotating, jammed, or breathing behaviours a
+given trajectory selects, and the sharp rate at which a jammed gap approaches $d$, remain the content
+of the trichotomy of Conjecture~\ref{conj:dist} (and of the collinear special case,
+Proposition~\ref{prop:jam}). Boundedness is the easy half; classification is the hard half.
+\end{remark}

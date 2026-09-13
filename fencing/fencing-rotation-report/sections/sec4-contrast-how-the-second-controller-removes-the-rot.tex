@@ -1,0 +1,45 @@
+\section{Contrast: How the Second Controller Removes the Rotation}
+\label{sec:second}
+
+The second controller modifies only the \emph{observer}, adding the repulsive term $\phi_i$:
+\begin{equation}
+  \boxed{\; u_i^b=\phi_i+k_1(x_0-x_i)+v_i, \qquad
+  \dot{v}_i=\phi_i+k_1(x_0-x_i), \;}
+  \label{eq:ctrl17}
+\end{equation}
+with $\phi_i$ and $\alpha(\cdot)$ as before. This single extra term changes the character of the
+closed loop completely. Define the Lyapunov function
+\begin{equation}
+  V=\frac12\sum_{i\in\NN}\sum_{j\in\calN_i}\int_{\norm{x_{ij}}}^{\mu}\alpha(s)\,\dd s
+    +\frac{k_1}{2}\sum_{i\in\NN}\norm{x_i-x_0}^2
+    +\frac12\sum_{i\in\NN}\norm{v_i-v_0}^2 .
+  \label{eq:lyap}
+\end{equation}
+Along the trajectories of \eqref{eq:veh}, \eqref{eq:tgt}, and \eqref{eq:ctrl17} one computes
+\begin{equation}
+  \dot{V}=-\sum_{i\in\NN}\norm{\phi_i+k_1(x_0-x_i)}^2\;\le\;0 .
+  \label{eq:Vdot}
+\end{equation}
+By LaSalle's invariance principle the trajectories converge to the set where
+$\phi_i+k_1(x_0-x_i)=0$ for every $i$, i.e., $\dot{v}_i\to0$ for all $i$; a Barbalat-type argument
+then gives the \emph{individual} convergence
+\begin{equation}
+  u_i(t)\to v_0,\qquad v_i(t)\to v_0,\qquad \forall\,i\in\NN .
+  \label{eq:indiv}
+\end{equation}
+Consequently every vehicle asymptotically adopts the target velocity, the vehicles become
+\emph{stationary relative to the target}, and the formation is \emph{rigid}---the rotation observed
+under \eqref{eq:ctrl7} is eliminated. In the rotating solution \eqref{eq:rotvel} the individual
+velocity errors $u_i-v_0$ are nonzero, so such a trajectory is impossible for \eqref{eq:ctrl17};
+equivalently, the added $\phi_i$ term in the observer acts as the missing \emph{damping} on the
+circulation mode. The paper also notes the practical benefit: a rigid (non-rotating) formation gives
+shorter per-vehicle trajectories, saving control energy and improving maneuverability.
+
+\begin{remark}[Why $\phi_i$ and not $k_1(x_0-x_i)$ alone]
+In \eqref{eq:ctrl17} the observer is $\dot{v}_i=\phi_i+k_1(x_0-x_i)$, and $\dot{V}\le0$ is achieved
+only because $\partial V/\partial x_i = -\phi_i+k_1(x_i-x_0)$ is exactly the \emph{negative} of the
+observer's right-hand side. This algebraic cancellation is what makes \eqref{eq:Vdot} a sum of
+negative squares. The first controller's observer $\dot{v}_i=k_2(x_0-x_i)$ lacks this structure; its
+residual $\phi_i$ terms cancel only in the \emph{average}, leaving the rotational mode undamped.
+\end{remark}
+

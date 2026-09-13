@@ -1,0 +1,112 @@
+\section{Why Rotation Emerges}
+\label{sec:rotation}
+
+\subsection{Degree-of-freedom viewpoint}
+The average-velocity condition $\bu=v_0$ is a single vector equation, i.e., \emph{two} scalar
+constraints in the plane, imposed on the $2N$ scalar velocity variables. For $N\ge3$ this leaves
+$2(N-1)\ge4$ scalar degrees of freedom \emph{unconstrained by the average dynamics}. The natural
+``zero-sum'' mode that fills these degrees of freedom while each vehicle stays at a bounded distance
+from the target is a \emph{circulation}: the individual velocity deviations $u_i-v_0$ point along the
+tangent of a circle centered at the target and are arranged so that they cancel in the average. This
+is exactly a rigid rotation of the whole formation about the target.
+
+It is important to state precisely what this counting does and does not establish. It shows that the
+average dynamics \eqref{eq:osc} \emph{permit} a persistent circulation: nothing in
+\eqref{eq:osc}--\eqref{eq:avgvel} penalizes it. It does \emph{not} show that these $2(N-1)$ modes
+are undamped. They are not. Section~\ref{sec:corotating} derives the exact damping operator of the
+shape dynamics, $B=k_1I-\nabla^2P$, and shows that the isotropic term $k_1I$ damps velocity in
+\emph{every} direction. What singles out the rotational direction is not an absence of damping but
+an exact \emph{cancellation}: at radial force balance the tangential stiffness of the repulsion
+cancels $k_1$ along $J\txi^s$ and only along $J\txi^s$, so that $B\,(J\txi^s)=0$
+(Eq.~\eqref{eq:Brot0}). Accordingly the rotating orbit carries exactly \emph{one} neutral
+direction---the rotational phase---and every other mode decays.
+
+\subsection{The rotating orbit is rigidly constrained, not freely parameterized}
+\label{sec:notfree}
+It is tempting to exhibit the circulation mode by writing down a velocity profile whose mean is
+$v_0$. Pick $\rho,\omega>0$ and phases $\gamma_i$ satisfying the balance condition
+\begin{equation}
+  \sum_{i\in\NN} e^{\,\mathrm{i}\gamma_i}=0
+  \label{eq:balance}
+\end{equation}
+(e.g.\ $\gamma_i=2\pi(i-1)/N$, which requires $N\ge3$), and set
+\begin{equation}
+  u_i(t)=v_0+\rho
+  \begin{bmatrix}
+    \cos(\omega t+\gamma_i)\\
+    \sin(\omega t+\gamma_i)
+  \end{bmatrix}.
+  \label{eq:rotvel}
+\end{equation}
+Then, identifying $\R^2\cong\mathbb C$,
+\begin{equation}
+  \bu(t)=\frac{1}{N}\sum_{i\in\NN}u_i(t)
+        =v_0+\frac{\rho}{N}e^{\,\mathrm{i}\omega t}\sum_{i\in\NN}e^{\,\mathrm{i}\gamma_i}
+        =v_0,
+\end{equation}
+so the average-velocity objective \eqref{eq:avgvel} is met \emph{exactly}, while each individual
+$u_i(t)$ oscillates and \emph{never} converges to $v_0$. Integrating \eqref{eq:rotvel} makes each
+vehicle trace a circle of radius $r=\rho/\omega$ about the (moving) target.
+
+This construction is instructive but must not be mistaken for an admissible closed-loop trajectory:
+\eqref{eq:rotvel} has been checked only against the average objective \eqref{eq:avgvel}, never
+against the dynamics \eqref{eq:veh},\eqref{eq:ctrl7}. Imposing the dynamics removes both free
+parameters. Proposition~\ref{prop:omega} shows that the frequency is forced,
+$\omega^2=k_2$, so $\omega$ cannot be picked; and the accompanying radial balance
+$\phi_i(\txi^0)=k_1\txi_i^0$ then confines the radii to a discrete set of solution branches, so
+$\rho$ cannot be picked either. For the paper's parameters ($k_1=0.5$, $d=5$, $\mu=9$) the
+regular-hexagon branch solves $\alpha(r)=k_1r$ and gives the single root $r^*\approx5.342$; the
+branch actually observed is not that one but an interleaved two-triangle with alternating radii
+$\approx3.395$ and $\approx6.312$. The correct reading of \eqref{eq:rotvel} is therefore
+qualitative: it identifies the \emph{shape} of the unconstrained mode (a phase-balanced
+circulation), while the closed loop selects its frequency and its radii.
+
+\subsection{Geometric mechanism: radial balance plus integral action}
+The rotating solution is not merely admissible---it is \emph{self-sustaining}, because the observer
+acts as an integrator that manufactures the required tangential thrust. Suppose vehicle $i$ moves on
+a circle of radius $r$ with angular velocity $\omega$:
+\begin{equation}
+  \txi_i(t)=r
+  \begin{bmatrix}
+    \cos(\omega t+\gamma_i)\\
+    \sin(\omega t+\gamma_i)
+  \end{bmatrix},
+  \qquad\Longrightarrow\qquad
+  \dot{\txi}_i=u_i-v_0=r\omega
+  \begin{bmatrix}
+    -\sin(\omega t+\gamma_i)\\
+    \phantom{-}\cos(\omega t+\gamma_i)
+  \end{bmatrix}.
+  \label{eq:circ}
+\end{equation}
+The observer $\dot{v}_i=k_2(x_0-x_i)=-k_2\txi_i$ then integrates the (rotating) relative-position
+vector to produce
+\begin{equation}
+  v_i(t)\;\supset\;
+  \frac{k_2 r}{\omega}
+  \begin{bmatrix}
+    -\sin(\omega t+\gamma_i)\\
+    \phantom{-}\cos(\omega t+\gamma_i)
+  \end{bmatrix},
+  \label{eq:observer_out}
+\end{equation}
+which is \emph{tangential}---parallel to $\dot{\txi}_i$ in \eqref{eq:circ}. Thus the adaptive term
+$v_i$ supplies precisely the tangential velocity needed to keep the vehicle orbiting. The loop closes
+as follows:
+\begin{enumerate}[leftmargin=2.5em]
+  \item the attractive term $k_1(x_0-x_i)$ and the repulsive term $\phi_i$ balance each other in the
+        \emph{radial} direction, establishing a bounded ``ring'' around the target;
+  \item because the relative position vector $\txi_i$ rotates, its integral $v_i$ rotates with a
+        $90^\circ$ phase shift, becoming a \emph{tangential} velocity;
+  \item this tangential component sustains the circular motion, which in turn keeps $\txi_i$ rotating
+        and feeds the observer, closing a self-consistent rotation.
+\end{enumerate}
+The steady state is sustained because the dissipation vanishes \emph{along the orbit}: at radial
+balance the rotational direction is the null mode $B(J\txi^s)=0$ of the shape damping operator
+(Section~\ref{sec:rotcov}), so a rigid rotation neither gains nor loses shape energy. This is a
+directional cancellation at the equilibrium, not a global absence of damping; away from radial
+balance $B$ acts nontrivially, and the transient by which the formation reaches the orbit is
+genuinely dissipative in most directions (Section~\ref{sec:localglobal}). Note that the individual
+estimates $v_i$ likewise do not converge---only their average $\tv$ converges to $v_0$---exactly as
+required by \eqref{eq:avgvel}.
+
