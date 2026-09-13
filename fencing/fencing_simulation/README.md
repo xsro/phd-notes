@@ -30,9 +30,14 @@ fencing_simulation/
 ├── simulate_2d.py              # 2D rigid rotation simulation → saves data/*.npz
 ├── simulate_2d_breathing.py    # 2D breathing limit cycle simulation → saves data/*.npz
 ├── simulate_3d.py              # 3D rigid rotation → saves data/*.npz
-├── simulate_3d_breathing.py    # 3D breathing limit cycle → saves data/*.npz
-├── test_3d_planar.py           # 3D planar test → saves data/*.npz
-├── diagnose_3d.py              # 3D diagnostic → saves data/*.npz
+├── 3d_breathing/               # 3D breathing limit cycle (consolidated)
+│   ├── simulate_3d_breathing.py # Standalone simulation (N=6, seed=0)
+│   ├── scan_3d_final.py         # Parameter scan (k1,k2,d,mu,N,seeds)
+│   ├── SCAN_RESULTS.md          # Complete scan results
+│   └── data/                    # Simulation data (.npz)
+├── experiment/                  # Search scripts for new cases
+│   ├── search_2d_breathing.py   # 2D breathing search
+│   └── search_3d_breathing.py   # 3D breathing search
 ├── data/                       # Simulation data (.npz files)
 ├── plots/                      # Plotting scripts
 │   ├── plot_1d.py
@@ -55,7 +60,17 @@ uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_1d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d_breathing.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d.py
+
+**3D breathing scan** (in `3d_breathing/`):
+```bash
+uv run --no-project --with numpy,scipy,matplotlib,Pillow python 3d_breathing/scan_3d_final.py
+```
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d_breathing.py
+
+**3D breathing scan** (in `3d_breathing/`):
+```bash
+uv run --no-project --with numpy,scipy,matplotlib,Pillow python 3d_breathing/scan_3d_final.py
+```
 ```
 
 **Run plotting only:**
@@ -173,7 +188,7 @@ perpendicular to the rotation axis.
 
 ### 3D Breathing Limit Cycle
 
-**File**: `simulate_3d_breathing.py`
+**File**: `3d_breathing/simulate_3d_breathing.py`
 
 **Behavior**: With specific random 3D initial conditions (seed=0 from the breathing
 search), vehicles converge to a **non-planar 3D breathing limit cycle** — pairwise
@@ -201,6 +216,7 @@ VT0 = [[0.0, 0.0, 0.0]]  (zero initial velocity)
 **Discovery**: Found by `experiment/search_3d_breathing.py` which scans random
 3D initial conditions and classifies steady-state behavior via FFT of pairwise
 distances. The seed=0 case is the first genuine 3D breathing attractor discovered.
+Full parameter scan and analysis in `3d_breathing/SCAN_RESULTS.md`.
 
 **Key difference from 3D rigid rotation**: In rigid rotation, pairwise distances
 converge to constants. In 3D breathing, they oscillate periodically. Both are
@@ -226,7 +242,7 @@ The breathing frequency scales as $\sqrt{k_2}$ (same as rigid rotation) but is $
 
 **Robustness**: Breathing period is robust across random seeds (most seeds give $T=5.0$ s for $k_1=k_2=0.5$, $N=4$).
 
-**Full scan data**: `experiment/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges.
+**Full scan data**: `3d_breathing/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges. Complete results in `3d_breathing/SCAN_RESULTS.md`.
 
 **Comparison with 2D**: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.5$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus a less stiff breathing mode.
 
