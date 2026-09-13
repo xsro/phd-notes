@@ -15,6 +15,7 @@ $$
 
 where:
 - $\phi_i$ is pairwise central repulsion: $\alpha(s) = \frac{1}{s-d} - \frac{1}{\mu-d}$ for $s \in (d, \mu]$
+- When $s \leq d$ (collision), $\alpha$ returns $10^6$ with a warning to prevent vehicle overlap
 - $k_1$ is the attractive gain (pulls vehicles toward target)
 - $k_2$ is the observer gain (integrates position error to estimate target velocity)
 - $d$ is the collision distance, $\mu$ is the sensing radius
@@ -24,6 +25,7 @@ where:
 ```
 fencing_simulation/
 ├── README.md
+├── check_periodicity.py         # 3D steady-state periodicity analysis
 ├── simulate_1d.py              # 1D simulation → saves data/*.npz
 ├── simulate_2d.py              # 2D rigid rotation simulation → saves data/*.npz
 ├── simulate_2d_breathing.py    # 2D breathing limit cycle simulation → saves data/*.npz
@@ -115,6 +117,7 @@ without converging to a fixed radius. This is Case C from the trichotomy conject
 **Key observations**:
 - Breathing period: $T \approx 2.488\,\text{s}$ (FFT-verified; matches `fencing-rotation-conjecture/doc/breathing.md`)
 - Effective frequency ratio: $\omega_{\text{eff}}/\sqrt{k_2} \approx 3.57$ (matches the theoretical prediction of ~3.58)
+- **Why not $2\pi/\sqrt{k_2}$?** The breathing mode is a radial oscillation driven by the stiff repulsive gradient $\alpha'(s) = -1/(s-d)^2$, not the neutral tangential mode of rigid rotation. Effective frequency: $\omega_{\text{eff}}^2 = k_2 + C(k_1)$ where $C(k_1)$ comes from repulsive stiffness.
 - Mean pairwise distance: ~7.2 (average formation radius ~4.6, close to expected 4.55)
 - Breathing amplitude: ~0.57% of mean distance (weak but persistent oscillation)
 - Pairwise distances oscillate periodically, never converging
