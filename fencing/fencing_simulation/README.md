@@ -153,6 +153,7 @@ for the same parameters, and the initial conditions determine which one is reach
 - Time-averaged positions $\langle\xi_i\rangle \approx 0$ (vehicles track the target well)
 - Pairwise distances stay above collision threshold
 - The formation is NOT planar ($\sigma_3/\sigma_1 \approx 0.91$)
+- **Motion is periodic**: FFT and autocorrelation analysis of steady-state trajectories show a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), consistent with $2\pi/\sqrt{k_2} \approx 8.89\,\text{s}$
 
 **Planar test** (`test_3d_planar.py` / `plots/plot_3d_planar.py`): If initialized in a plane (e.g., regular hexagon
 in the xy-plane), the formation stays perfectly planar and rotates at $|\omega| = \sqrt{k_2}$.
@@ -194,6 +195,7 @@ Install with: `uv pip install numpy scipy matplotlib Pillow`
 4. **3D**: Non-planar 3D rotating formation with random initial conditions; fundamentally richer than 2D.
    - If initialized in a plane, stays planar (confirms code correctness).
    - With random 3D initial conditions, converges to a 3D non-planar rotating state.
+   - **Steady-state motion is periodic**: FFT/autocorrelation analysis confirms a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), matching $2\pi/\sqrt{k_2}$.
    - This suggests the 3D system has attractors that are not simple embeddings of 2D rotations.
 
 ## References
