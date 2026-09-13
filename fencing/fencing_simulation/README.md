@@ -34,6 +34,7 @@ fencing_simulation/
 │   ├── simulate_3d_breathing.py # Standalone simulation (N=6, seed=0)
 │   ├── scan_3d_final.py         # Parameter scan (k1,k2,d,mu,N,seeds)
 │   ├── SCAN_RESULTS.md          # Complete scan results
+│   ├── FINAL_FORMULAS.md        # Final period-parameter formulas
 │   └── data/                    # Simulation data (.npz)
 ├── experiment/                  # Search scripts for new cases
 │   ├── search_2d_breathing.py   # 2D breathing search
@@ -242,7 +243,9 @@ The breathing frequency scales as $\sqrt{k_2}$ (same as rigid rotation) but is $
 
 **Robustness**: Breathing period is robust across random seeds (most seeds give $T=5.0$ s for $k_1=k_2=0.5$, $N=4$).
 
-**Full scan data**: `3d_breathing/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges. Complete results in `3d_breathing/SCAN_RESULTS.md`.
+**Full scan data**: `3d_breathing/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges.
+**Final formulas**: `3d_breathing/FINAL_FORMULAS.md` — concise summary of period-parameter relationships.
+**Complete results**: `3d_breathing/SCAN_RESULTS.md` — all scan tables.
 
 **Comparison with 2D**: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.5$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus a less stiff breathing mode.
 
