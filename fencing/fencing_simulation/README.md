@@ -29,7 +29,8 @@ fencing_simulation/
 ├── simulate_1d.py              # 1D simulation → saves data/*.npz
 ├── simulate_2d.py              # 2D rigid rotation simulation → saves data/*.npz
 ├── simulate_2d_breathing.py    # 2D breathing limit cycle simulation → saves data/*.npz
-├── simulate_3d.py              # 3D simulation → saves data/*.npz
+├── simulate_3d.py              # 3D rigid rotation → saves data/*.npz
+├── simulate_3d_breathing.py    # 3D breathing limit cycle → saves data/*.npz
 ├── test_3d_planar.py           # 3D planar test → saves data/*.npz
 ├── diagnose_3d.py              # 3D diagnostic → saves data/*.npz
 ├── data/                       # Simulation data (.npz files)
@@ -54,6 +55,7 @@ uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_1d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d_breathing.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d.py
+uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d_breathing.py
 ```
 
 **Run plotting only:**
@@ -169,17 +171,52 @@ origin (so $\langle\xi_i\rangle = 0$ and the observer does not wind up). This is
 different from the 2D case where rigid rotation forces all vehicles into a plane
 perpendicular to the rotation axis.
 
+### 3D Breathing Limit Cycle
+
+**File**: `simulate_3d_breathing.py`
+
+**Behavior**: With specific random 3D initial conditions (seed=0 from the breathing
+search), vehicles converge to a **non-planar 3D breathing limit cycle** — pairwise
+distances oscillate periodically without converging, while the formation as a whole
+rotates in 3D. This is the first discovered 3D breathing attractor.
+
+**Key observations**:
+- Breathing frequency: $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$)
+- Pairwise distances oscillate with peak FFT power ratio ~0.76 (strong oscillation)
+- Formation is NON-PLANAR ($\sigma_3/\sigma_1 \approx 0.83$)
+- Time-averaged positions $\langle\xi_i\rangle \approx 0$ (vehicles track target well)
+- Velocity errors remain non-zero
+
+**Initial conditions** (seed=0):
+```
+XI0 = [[14.112419,  3.201258,  7.829904],
+       [17.927146, 14.940464, -7.818223],
+       [ 7.600707, -1.210858, -0.825751],
+       [ 3.284788,  1.152349, 11.634188],
+       [ 6.088302,  0.973400,  3.550906],
+       [ 2.669395, 11.952633, -1.641266]]
+VT0 = [[0.0, 0.0, 0.0]]  (zero initial velocity)
+```
+
+**Discovery**: Found by `experiment/search_3d_breathing.py` which scans random
+3D initial conditions and classifies steady-state behavior via FFT of pairwise
+distances. The seed=0 case is the first genuine 3D breathing attractor discovered.
+
+**Key difference from 3D rigid rotation**: In rigid rotation, pairwise distances
+converge to constants. In 3D breathing, they oscillate periodically. Both are
+non-planar, but only breathing exhibits persistent pairwise distance oscillations.
+
 ## Parameters
 
-| Parameter | 1D | 2D (rotation) | 2D (breathing) | 3D |
-|-----------|----|---------------|----------------|-----|
-| N (vehicles) | 5 | 6 | 5 | 6 |
-| d (collision) | 0.5 | 5.0 | 5.0 | 5.0 |
-| μ (sensing) | 2.0 | 9.0 | 9.0 | 9.0 |
-| k₁ (attractive) | 1.0 | 0.5 | 0.5 | 0.5 |
-| k₂ (observer) | — (none) | 0.5 | 0.5 | 0.5 |
-| v₀ (target vel) | 1.0 | (1, 0) | (1, 0) | (1, 0, 0) |
-| T_max | 60s | 80s | 3000s | 200s |
+| Parameter | 1D | 2D (rotation) | 2D (breathing) | 3D (rotation) | 3D (breathing) |
+|-----------|----|---------------|----------------|---------------|----------------|
+| N (vehicles) | 5 | 6 | 5 | 6 | 6 |
+| d (collision) | 0.5 | 5.0 | 5.0 | 5.0 | 5.0 |
+| μ (sensing) | 2.0 | 9.0 | 9.0 | 9.0 | 9.0 |
+| k₁ (attractive) | 1.0 | 0.5 | 0.5 | 0.5 | 0.5 |
+| k₂ (observer) | — (none) | 0.5 | 0.5 | 0.5 | 0.5 |
+| v₀ (target vel) | 1.0 | (1, 0) | (1, 0) | (1, 0, 0) | (1, 0, 0) |
+| T_max | 60s | 80s | 3000s | 200s | 500s |
 
 ## Dependencies
 
@@ -195,11 +232,11 @@ Install with: `uv pip install numpy scipy matplotlib Pillow`
 1. **1D**: Linear formation fences the target; vehicles converge to static equilibrium in target frame (no observer, velocity error → 0). Positions shown as x-t line plot.
 2. **2D (rotation)**: Planar rigid rotation at $|\omega| = \sqrt{k_2}$; matches the theoretical analysis in `fencing_rotation.tex`.
 3. **2D (breathing)**: Breathing limit cycle with $T \approx 2.488\,\text{s}$ and $\omega_{\text{eff}}/\sqrt{k_2} \approx 3.57$; matches the breathing analysis in `fencing-rotation-conjecture/doc/breathing.md`. Demonstrates bistability with rigid rotation.
-4. **3D**: Non-planar 3D rotating formation with random initial conditions; fundamentally richer than 2D.
+4. **3D (rotation)**: Non-planar 3D rotating formation with random initial conditions; fundamentally richer than 2D.
    - If initialized in a plane, stays planar (confirms code correctness).
    - With random 3D initial conditions, converges to a 3D non-planar rotating state.
    - **Steady-state motion is periodic**: FFT/autocorrelation analysis confirms a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), matching $2\pi/\sqrt{k_2}$.
-   - This suggests the 3D system has attractors that are not simple embeddings of 2D rotations.
+5. **3D (breathing)**: Non-planar 3D breathing limit cycle with specific random initial conditions (seed=0). Pairwise distances oscillate at $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$), $\sigma_3/\sigma_1 \approx 0.83$. Discovered by `experiment/search_3d_breathing.py`. Demonstrates that the 3D system supports attractors beyond rigid rotation.
 
 ## References
 
