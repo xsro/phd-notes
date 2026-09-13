@@ -207,11 +207,28 @@ converge to constants. In 3D breathing, they oscillate periodically. Both are
 non-planar, but only breathing exhibits persistent pairwise distance oscillations.
 
 **Parameter dependence (experimental scan, N=4)**:
-- $k_2$ dependence: $T_{\text{breath}} \approx 0.54 \times 2\pi/\sqrt{k_2}$ for $k_2 \geq 0.3$
-  - i.e. $f_{\text{breath}} \approx 1.85 \times \frac{\sqrt{k_2}}{2\pi}$ — same $\sqrt{k_2}$ scaling as rigid rotation, but $\sim 1.85\times$ higher frequency
-- $k_1$ dependence: weak to none in range $0.2 \leq k_1 \leq 0.6$ (frequency varies within measurement resolution)
-- $N$ dependence: slight increase in frequency with $N$ ($N=4$: $T=4.80\,\text{s}$; $N=6$: $T=4.55\,\text{s}$ at $k_1=k_2=0.5$)
-- Comparison with 2D: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.54$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus less stiff breathing mode
+
+**Primary scaling with $k_2$**: For $k_2 \geq 0.35$:
+$$T_{\text{breath}} \approx 0.5 \times \frac{2\pi}{\sqrt{k_2}}, \quad f_{\text{breath}} \approx 2 \times \frac{\sqrt{k_2}}{2\pi}$$
+The breathing frequency scales as $\sqrt{k_2}$ (same as rigid rotation) but is $\sim 2\times$ higher.
+
+**$k_1$ modulation**: $k_1$ has a weaker but noticeable effect, especially at low $k_2$:
+- $k_1 \leq 0.15$: breathing is faster ($T \approx 4.29$ s at $k_2=0.5$)
+- $k_1 \geq 0.7$: breathing is slower ($T \approx 7.5$ s at $k_2=0.5$)
+- For $k_2 \geq 0.35$, the $k_1$ effect diminishes; $T/T_{\text{rot}} \approx 0.5$ holds broadly
+
+**$d_{\text{col}}$ and $\mu$**: Non-monotonic but weak for $\mu \geq 8$:
+- $\mu \geq 8$: period stable at $T=5.0$ s (for $k_1=k_2=0.5$)
+- $\mu < 8$: period increases as sensing range shrinks
+- $d_{\text{col}}$ affects the breathing amplitude and period in a complex way (likely via how close vehicles approach the collision boundary)
+
+**$N$ dependence**: Non-monotonic — $N=4$ has the shortest period ($T=5.0$ s), $N=3$ is planar ($T=6.0$ s), $N=5$ is slower ($T=7.5$ s) at $k_1=k_2=0.5$.
+
+**Robustness**: Breathing period is robust across random seeds (most seeds give $T=5.0$ s for $k_1=k_2=0.5$, $N=4$).
+
+**Full scan data**: `experiment/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges.
+
+**Comparison with 2D**: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.5$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus a less stiff breathing mode.
 
 ## Parameters
 
