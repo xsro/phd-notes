@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Test 3D with planar initial conditions. Saves data for plotting."""
 import numpy as np
+import warnings
 from scipy.integrate import solve_ivp
 from pathlib import Path
 
@@ -23,8 +24,11 @@ for i in range(N):
     print(f"  Agent {i+1}: ({x0_init[i,0]:.3f}, {x0_init[i,1]:.3f}, {x0_init[i,2]:.3f})")
 
 def alpha(s):
-    if s <= d_col or s > mu:
+    if s > mu:
         return 0.0
+    if s <= d_col:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d_col}")
+        return 1e6
     return 1.0 / (s - d_col) - 1.0 / (mu - d_col)
 
 def compute_phi(x):

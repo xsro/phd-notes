@@ -8,6 +8,7 @@ Scenario: 4 vehicles aligned in a horizontal line, target at the right end.
 
 import matplotlib
 matplotlib.use("Agg")
+import warnings
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
@@ -52,10 +53,11 @@ R = np.array([[0, -1],
 # Controller
 # ---------------------------------------------------------------------------
 def alpha(s, d, mu):
-    if s <= d:
-        return 1e6
     if s >= mu:
         return 0.0
+    if s <= d:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d}")
+        return 1e6
     return 1.0 / (s - d) - 1.0 / (mu - d)
 
 

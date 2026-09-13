@@ -7,15 +7,19 @@ can focus on initial conditions while sharing the same numerical backend.
 """
 
 import numpy as np
+import warnings
 from scipy.integrate import solve_ivp
 
 
 # ── Interaction kernel ───────────────────────────────────────────────────────
 def alpha(s: float, d: float, mu: float) -> float:
     """Repulsive interaction kernel (document Eq.~1)."""
-    if s <= mu:
-        return 1.0 / (s - d) - 1.0 / (mu - d)
-    return 0.0
+    if s > mu:
+        return 0.0
+    if s <= d:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d}")
+        return 1e6
+    return 1.0 / (s - d) - 1.0 / (mu - d)
 
 
 # ── ODE right-hand side ──────────────────────────────────────────────────────

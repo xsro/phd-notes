@@ -10,6 +10,7 @@ Run from the repository root:
 
 import os
 
+import warnings
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -35,7 +36,12 @@ N = len(XI0)
 
 # ── ODE machinery ───────────────────────────────────────────────────────────
 def alpha(s):
-    return 1.0 / (s - d) - 1.0 / (mu - d) if s <= mu else 0.0
+    if s > mu:
+        return 0.0
+    if s <= d:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d}")
+        return 1e6
+    return 1.0 / (s - d) - 1.0 / (mu - d)
 
 
 def make_rhs(n):

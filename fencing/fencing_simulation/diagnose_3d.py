@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Quick diagnostic: check 3D system behavior with correct indexing. Saves data."""
 import numpy as np
+import warnings
 from scipy.integrate import solve_ivp
 from pathlib import Path
 
@@ -21,8 +22,11 @@ v_init = np.zeros((N, 3))
 x_target0 = np.array([0.0, 0.0, 0.0])
 
 def alpha(s):
-    if s <= d_col or s > mu:
+    if s > mu:
         return 0.0
+    if s <= d_col:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d_col}")
+        return 1e6
     return 1.0 / (s - d_col) - 1.0 / (mu - d_col)
 
 def compute_phi(x):

@@ -57,8 +57,11 @@ OUT_DIR.mkdir(exist_ok=True)
 # Repulsion function
 # ============================================================
 def alpha(s):
-    if s <= d_col or s > mu:
+    if s > mu:
         return 0.0
+    if s <= d_col:
+        warnings.warn(f"Collision risk: s={s:.4f} <= d={d_col}")
+        return 1e6
     return 1.0 / (s - d_col) - 1.0 / (mu - d_col)
 
 def compute_phi(x):
