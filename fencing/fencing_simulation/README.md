@@ -206,6 +206,13 @@ distances. The seed=0 case is the first genuine 3D breathing attractor discovere
 converge to constants. In 3D breathing, they oscillate periodically. Both are
 non-planar, but only breathing exhibits persistent pairwise distance oscillations.
 
+**Parameter dependence (experimental scan, N=4)**:
+- $k_2$ dependence: $T_{\text{breath}} \approx 0.54 \times 2\pi/\sqrt{k_2}$ for $k_2 \geq 0.3$
+  - i.e. $f_{\text{breath}} \approx 1.85 \times \frac{\sqrt{k_2}}{2\pi}$ — same $\sqrt{k_2}$ scaling as rigid rotation, but $\sim 1.85\times$ higher frequency
+- $k_1$ dependence: weak to none in range $0.2 \leq k_1 \leq 0.6$ (frequency varies within measurement resolution)
+- $N$ dependence: slight increase in frequency with $N$ ($N=4$: $T=4.80\,\text{s}$; $N=6$: $T=4.55\,\text{s}$ at $k_1=k_2=0.5$)
+- Comparison with 2D: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.54$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus less stiff breathing mode
+
 ## Parameters
 
 | Parameter | 1D | 2D (rotation) | 2D (breathing) | 3D (rotation) | 3D (breathing) |
