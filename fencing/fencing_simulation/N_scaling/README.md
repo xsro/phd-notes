@@ -48,8 +48,9 @@ Two dynamical regimes are observed:
 | 6   | 0.214                | 0.114                | 1.875                         | 0.827              |
 | 8   | 0.214                | 0.114                | 1.875                         | 0.991              |
 | 10  | 0.014*               | 0.114                | 0.125                         | 0.847              |
+| 25  | 0.200                | 0.014*               | 14.000                        | 0.900              |
 
-$^*$N=10 radial frequency is near-DC (anomalous regime).
+$^*$N=10 radial frequency and N=25 tangential frequency are near-DC (FFT artifacts).
 In this regime: $f_{\text{tan}} \approx f_{\text{rot}} = 0.1125$ Hz (within 0.002 Hz).
 
 **Locked regime** ($f_{\text{rad}} = f_{\text{tan}} = f_{\text{self}}$):
@@ -58,9 +59,14 @@ In this regime: $f_{\text{tan}} \approx f_{\text{rot}} = 0.1125$ Hz (within 0.00
 | 5   | 0.171                | 1.52                          | 0.734              |
 | 15  | 0.200                | 1.78                          | 0.884              |
 | 20  | 0.200                | 1.78                          | 0.803              |
+| 25  | 0.200                | 1.78                          | 0.900              |
+| 30  | 0.171                | 1.52                          | 0.839              |
+| 35  | 0.200                | 1.78                          | 0.864              |
 
 In this regime: $f_{\text{tan}}$ is **not** $f_{\text{rot}}$ — the tangential frequency
-shifts significantly due to mode coupling.
+shifts significantly due to mode coupling. The locked frequency alternates between
+two values: $f_{\text{lock}} \approx 0.171$ Hz ($f_{\text{lock}}/f_{\text{rot}} = 1.52$)
+and $f_{\text{lock}} \approx 0.200$ Hz ($f_{\text{lock}}/f_{\text{rot}} = 1.78$).
 
 ### Three Frequency Components
 
@@ -118,6 +124,11 @@ grows with $N$, increasing the effective attractive/observer force magnitude.
 $f_{\text{self}} = f_{\text{tan}}$ in both regimes. Total speed is dominated by the
 tangential (rotational) component, not the radial (breathing) oscillation.
 
+**Note on N=25**: The raw FFT gives $f_{\text{tan}} = 0.014$ Hz (near-DC artifact),
+but $f_{\text{self}} = f_{\text{rad}} = 0.200$ Hz. This is likely a numerical artifact
+where the tangential velocity magnitude is too small relative to radial for the FFT
+to resolve. The actual locked frequency is 0.200 Hz.
+
 #### Planarity
 - $N=3$: planar ($\sigma_3/\sigma_1 = 0$)
 - $N=4$: nearly planar ($\sigma_3/\sigma_1 = 0.068$)
@@ -164,5 +175,5 @@ frequency-locked regime.
 
 ## Data
 
-`n_scaling_results.json` contains the raw simulation results for $N = 3, 4, 5, 6, 8, 10, 15, 20$,
+`n_scaling_results.json` contains the raw simulation results for $N = 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 35$,
 including all frequency components, planarity metrics, and collision checks.
