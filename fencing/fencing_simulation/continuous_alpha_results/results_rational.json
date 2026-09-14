@@ -1,0 +1,387 @@
+{
+  "k2": [
+    {
+      "freq": 0.1,
+      "period": 10.0,
+      "peak_ratio": 0.5220218941802769,
+      "is_breathing": "True",
+      "sigma_ratio": 0.865898132014753,
+      "k1": 0.5,
+      "k2": 0.1
+    },
+    {
+      "freq": 0.1,
+      "period": 10.0,
+      "peak_ratio": 0.5310024726806806,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8407351561880796,
+      "k1": 0.5,
+      "k2": 0.2
+    },
+    {
+      "freq": 0.15000000000000002,
+      "period": 6.666666666666666,
+      "peak_ratio": 0.615340606862758,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8482392797985367,
+      "k1": 0.5,
+      "k2": 0.3
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.876793061918701,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8593055402281073,
+      "k1": 0.5,
+      "k2": 0.4
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5555769359838397,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8472595585875895,
+      "k1": 0.5,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.25,
+      "period": 4.0,
+      "peak_ratio": 0.8966140056193362,
+      "is_breathing": "True",
+      "sigma_ratio": 0.909414744520493,
+      "k1": 0.5,
+      "k2": 0.6
+    },
+    {
+      "freq": 0.25,
+      "period": 4.0,
+      "peak_ratio": 0.8249155863956693,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8625671919706326,
+      "k1": 0.5,
+      "k2": 0.7
+    },
+    {
+      "freq": 0.30000000000000004,
+      "period": 3.333333333333333,
+      "peak_ratio": 0.4793713777618627,
+      "is_breathing": "True",
+      "sigma_ratio": 0.9062424770668684,
+      "k1": 0.5,
+      "k2": 0.8
+    }
+  ],
+  "k1": [
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.45819623809077575,
+      "is_breathing": "True",
+      "sigma_ratio": 0.5950052895457982,
+      "k1": 0.1,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5439256289798311,
+      "is_breathing": "True",
+      "sigma_ratio": 0.5325981290475535,
+      "k1": 0.2,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5900256936879674,
+      "is_breathing": "True",
+      "sigma_ratio": 0.550731493045592,
+      "k1": 0.3,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5185538890820979,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8496641884106819,
+      "k1": 0.4,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5555769359838397,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8472595585875895,
+      "k1": 0.5,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.602715073399111,
+      "is_breathing": "True",
+      "sigma_ratio": 0.9191930432347047,
+      "k1": 0.6,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.6651979159222012,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8314321319621825,
+      "k1": 0.7,
+      "k2": 0.5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.7099403090315134,
+      "is_breathing": "True",
+      "sigma_ratio": 0.9238711814361857,
+      "k1": 0.8,
+      "k2": 0.5
+    }
+  ],
+  "d": [
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.48161244199104214,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8638067891539752,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 4.0,
+      "mu": 9.0
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5555769359838397,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8472595585875895,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0
+    },
+    {
+      "freq": 0.15000000000000002,
+      "period": 6.666666666666666,
+      "peak_ratio": 0.5503345832345474,
+      "is_breathing": "True",
+      "sigma_ratio": 0.6746998928698161,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 6.0,
+      "mu": 9.0
+    },
+    {
+      "freq": 0.15000000000000002,
+      "period": 6.666666666666666,
+      "peak_ratio": 0.47404768820076504,
+      "is_breathing": "True",
+      "sigma_ratio": 0.5646313394039849,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 7.0,
+      "mu": 9.0
+    }
+  ],
+  "mu": [
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.7128464737133419,
+      "is_breathing": "True",
+      "sigma_ratio": 0.804241811982724,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 7.0
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5555769359838397,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8472595585875895,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.4824827157589327,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8924898112361254,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 11.0
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.45647136097980345,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8761763306071279,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 13.0
+    }
+  ],
+  "N": [
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.4343889784636475,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8153997992023031,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0,
+      "N": 4
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.538585620183652,
+      "is_breathing": "True",
+      "sigma_ratio": 0.7744405560044592,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0,
+      "N": 5
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.5555769359838397,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8472595585875895,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0,
+      "N": 6
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.6554949086755821,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8508946562805116,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0,
+      "N": 7
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.6326412906698505,
+      "is_breathing": "True",
+      "sigma_ratio": 0.7517607176499981,
+      "k1": 0.5,
+      "k2": 0.5,
+      "d_col": 5.0,
+      "mu": 9.0,
+      "N": 8
+    }
+  ],
+  "grid": [
+    {
+      "freq": 0.15000000000000002,
+      "period": 6.666666666666666,
+      "peak_ratio": 0.6607285268389361,
+      "is_breathing": "True",
+      "sigma_ratio": 0.7759079222927782,
+      "k1": 0.2,
+      "k2": 0.2
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.9319983094444799,
+      "is_breathing": "True",
+      "sigma_ratio": 0.5590465965093429,
+      "k1": 0.2,
+      "k2": 0.4
+    },
+    {
+      "freq": 0.25,
+      "period": 4.0,
+      "peak_ratio": 0.8906421494004871,
+      "is_breathing": "True",
+      "sigma_ratio": 0.5638653769802083,
+      "k1": 0.2,
+      "k2": 0.6
+    },
+    {
+      "freq": 0.1,
+      "period": 10.0,
+      "peak_ratio": 0.37132849409041985,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8886613091294736,
+      "k1": 0.4,
+      "k2": 0.2
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.9348428299815311,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8713964551900866,
+      "k1": 0.4,
+      "k2": 0.4
+    },
+    {
+      "freq": 0.25,
+      "period": 4.0,
+      "peak_ratio": 0.6979733718461409,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8336416400328567,
+      "k1": 0.4,
+      "k2": 0.6
+    },
+    {
+      "freq": 0.1,
+      "period": 10.0,
+      "peak_ratio": 0.5801377393078021,
+      "is_breathing": "True",
+      "sigma_ratio": 0.7400439599602107,
+      "k1": 0.6,
+      "k2": 0.2
+    },
+    {
+      "freq": 0.2,
+      "period": 5.0,
+      "peak_ratio": 0.7480260814044225,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8452286650855617,
+      "k1": 0.6,
+      "k2": 0.4
+    },
+    {
+      "freq": 0.25,
+      "period": 4.0,
+      "peak_ratio": 0.8626370234225745,
+      "is_breathing": "True",
+      "sigma_ratio": 0.8646738008072644,
+      "k1": 0.6,
+      "k2": 0.6
+    }
+  ]
+}

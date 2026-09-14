@@ -2,7 +2,7 @@
 
 This project simulates the **first cooperative controller** of Kou, Chen, and Xiang
 (2022) for the moving-target-fencing (MTF) problem in one, two, and three dimensions,
-plus a 2D breathing limit cycle case.
+plus 2D and 3D breathing limit cycles, and a comparison of continuous alpha repulsion forms.
 
 ## Controller
 
@@ -25,21 +25,50 @@ where:
 ```
 fencing_simulation/
 ├── README.md
-├── check_periodicity.py         # 3D steady-state periodicity analysis
+├── .gitignore
+│
 ├── simulate_1d.py              # 1D simulation → saves data/*.npz
-├── simulate_2d.py              # 2D rigid rotation simulation → saves data/*.npz
-├── simulate_2d_breathing.py    # 2D breathing limit cycle simulation → saves data/*.npz
+├── simulate_2d.py              # 2D rigid rotation → saves data/*.npz
+├── simulate_2d_breathing.py    # 2D breathing limit cycle → saves data/*.npz
 ├── simulate_3d.py              # 3D rigid rotation → saves data/*.npz
-├── 3d_breathing/               # 3D breathing limit cycle (consolidated)
+│
+├── experiment/                 # Search & diagnostic scripts
+│   ├── search_2d_breathing.py  # 2D breathing search
+│   ├── search_3d_breathing.py  # 3D breathing search
+│   ├── check_periodicity.py    # 3D steady-state periodicity analysis
+│   ├── diagnose_3d.py          # 3D diagnostic tool
+│   └── test_3d_planar.py       # Planar initial condition test
+│
+├── continuous_alpha_results/   # Continuous alpha function comparison
+│   ├── alpha_function_comparison.md   # Alpha function definitions & properties
+│   ├── summary.md                     # Scan results summary
+│   ├── compare_alpha_forms.py         # Run all 6 alpha forms
+│   ├── run_all_alpha_forms.py         # Superseded by compare_alpha_forms.py
+│   ├── simulate_3d_continuous_alpha.py # Standalone continuous alpha sim
+│   ├── test_tiny.py                   # Timing benchmark
+│   ├── run.log                        # Full simulation log
+│   └── results_<form>.csv / .json     # Per-form scan data
+│
+├── 3d_breathing/               # 3D breathing limit cycle research
 │   ├── simulate_3d_breathing.py # Standalone simulation (N=6, seed=0)
 │   ├── scan_3d_final.py         # Parameter scan (k1,k2,d,mu,N,seeds)
+│   ├── scan_fine.py             # Fine-grained scan
+│   ├── scan_radial_tangential.py # Radial/tangential decomposition
+│   ├── plot_crep.py             # CREP (coupled repulsion) scan plot
+│   ├── plot_crep_fine.py        # Fine CREP scan plot
+│   ├── plot_radial_tangential.py # Radial/tangential plot
+│   ├── check_2d_tangential.py   # 2D tangential analysis
+│   ├── RESULTS.md               # 3D breathing results
 │   ├── SCAN_RESULTS.md          # Complete scan results
 │   ├── FINAL_FORMULAS.md        # Final period-parameter formulas
+│   ├── RADIAL_TANGENTIAL.md     # Radial/tangential analysis
+│   ├── TANGENTIAL_PERIOD.md     # Tangential period analysis
+│   ├── TANGENTIAL_PERIOD_2D.md  # 2D tangential period analysis
+│   ├── crep_scan.png            # CREP scan figure
+│   ├── crep_scan_fine.png       # Fine CREP scan figure
+│   ├── radial_tangential.png    # Radial/tangential figure
 │   └── data/                    # Simulation data (.npz)
-├── experiment/                  # Search scripts for new cases
-│   ├── search_2d_breathing.py   # 2D breathing search
-│   └── search_3d_breathing.py   # 3D breathing search
-├── data/                       # Simulation data (.npz files)
+│
 ├── plots/                      # Plotting scripts
 │   ├── plot_1d.py
 │   ├── plot_2d.py
@@ -47,7 +76,8 @@ fencing_simulation/
 │   ├── plot_3d.py
 │   ├── plot_3d_planar.py
 │   └── run_all_plots.py
-└── figures/                    # Generated figures (PNG + PDF)
+│
+└── data/                       # Simulation data (.npz files)
 ```
 
 ## Simulation → Plotting Separation
@@ -61,17 +91,21 @@ uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_1d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_2d_breathing.py
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d.py
+```
 
 **3D breathing scan** (in `3d_breathing/`):
 ```bash
 uv run --no-project --with numpy,scipy,matplotlib,Pillow python 3d_breathing/scan_3d_final.py
 ```
-uv run --no-project --with numpy,scipy,matplotlib,Pillow python simulate_3d_breathing.py
 
-**3D breathing scan** (in `3d_breathing/`):
+**3D breathing standalone simulation** (in `3d_breathing/`):
 ```bash
-uv run --no-project --with numpy,scipy,matplotlib,Pillow python 3d_breathing/scan_3d_final.py
+uv run --no-project --with numpy,scipy,matplotlib,Pillow python 3d_breathing/simulate_3d_breathing.py
 ```
+
+**Continuous alpha comparison** (in `continuous_alpha_results/`):
+```bash
+uv run --no-project --with numpy,scipy,matplotlib,Pillow python continuous_alpha_results/compare_alpha_forms.py
 ```
 
 **Run plotting only:**
@@ -176,7 +210,7 @@ for the same parameters, and the initial conditions determine which one is reach
 - The formation is NOT planar ($\sigma_3/\sigma_1 \approx 0.91$)
 - **Motion is periodic**: FFT and autocorrelation analysis of steady-state trajectories show a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), consistent with $2\pi/\sqrt{k_2} \approx 8.89\,\text{s}$
 
-**Planar test** (`test_3d_planar.py` / `plots/plot_3d_planar.py`): If initialized in a plane (e.g., regular hexagon
+**Planar test** (`experiment/test_3d_planar.py` / `plots/plot_3d_planar.py`): If initialized in a plane (e.g., regular hexagon
 in the xy-plane), the formation stays perfectly planar and rotates at $|\omega| = \sqrt{k_2}$.
 This confirms the simulation code is correct and the non-planar behavior with random
 initial conditions is a genuine 3D phenomenon.
@@ -249,6 +283,34 @@ The breathing frequency scales as $\sqrt{k_2}$ (same as rigid rotation) but is $
 
 **Comparison with 2D**: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.5$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus a less stiff breathing mode.
 
+### Continuous Alpha Function Comparison
+
+**Folder**: `continuous_alpha_results/`
+
+**Purpose**: The original alpha function has a discontinuity at $s=d$ (it jumps to $1e6$).
+This project replaces it with 6 continuous alternatives and compares their effect
+on the 3D breathing limit cycle.
+
+**6 alpha forms compared**:
+
+| Form | $\alpha(s)$ | Singularity | Stiffness |
+|------|------------|-------------|-----------|
+| standard | $1/(s-d) - 1/(\mu-d)$ | $1/(s-d)$ | moderate |
+| power (p=1.5) | $1/(s-d)^{1.5} - 1/(\mu-d)^{1.5}$ | $1/(s-d)^{1.5}$ | moderate+ |
+| rational | $(\mu-s)/(s-d)$ | $(\mu-d)/(s-d)$ | moderate |
+| log | $\ln((\mu-d)/(s-d))$ | $-\ln(s-d)$ | weak |
+| stiff | $1/(s-d)^2 - 1/(\mu-d)^2$ | $1/(s-d)^2$ | strong |
+| exponential | $e^{1/(s-d)} \cdot (\mu-s)/(\mu-d)$ | $\exp(1/(s-d))$ | extreme |
+
+All forms satisfy: continuous on $[d,\infty)$, $\alpha(s)\to\infty$ as $s\to d^+$, $\alpha(s)=0$ for $s>\mu$.
+
+**Key finding**: The breathing period $T$ is **nearly identical** across all 6 forms
+for $k_2 \geq 0.3$. The alpha function form affects breathing **strength** (peak_ratio)
+and **non-planarity** (sigma_ratio) more than the period itself.
+
+**Results**: `continuous_alpha_results/summary.md` — full comparison tables.
+`continuous_alpha_results/alpha_function_comparison.md` — alpha function definitions.
+
 ## Parameters
 
 | Parameter | 1D | 2D (rotation) | 2D (breathing) | 3D (rotation) | 3D (breathing) |
@@ -280,6 +342,7 @@ Install with: `uv pip install numpy scipy matplotlib Pillow`
    - With random 3D initial conditions, converges to a 3D non-planar rotating state.
    - **Steady-state motion is periodic**: FFT/autocorrelation analysis confirms a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), matching $2\pi/\sqrt{k_2}$.
 5. **3D (breathing)**: Non-planar 3D breathing limit cycle with specific random initial conditions (seed=0). Pairwise distances oscillate at $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$), $\sigma_3/\sigma_1 \approx 0.83$. Discovered by `experiment/search_3d_breathing.py`. Demonstrates that the 3D system supports attractors beyond rigid rotation.
+6. **Continuous alpha comparison**: 6 continuous alpha forms all produce robust 3D breathing. Period scaling with $k_2$ is form-independent; breathing strength and non-planarity vary by form. Log and exponential forms give the strongest, cleanest breathing signal.
 
 ## References
 
