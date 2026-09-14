@@ -38,18 +38,29 @@ uv run --no-project --with numpy,scipy python scan_locked_frequency.py
 
 ### Key Results
 
-| $N$ | $f_{\text{rad}}$ (Hz) | $f_{\text{tan}}$ (Hz) | $f_{\text{self}}$ (Hz) | $f_{\text{rad}}/f_{\text{tan}}$ | $\sigma_3/\sigma_1$ | Regime |
-|-----|----------------------|----------------------|----------------------|-------------------------------|--------------------|--------|
-| 3   | 0.157                | 0.114                | 0.114                | 1.375                         | 0.000              | Planar |
-| 4   | 0.214                | 0.114                | 0.114                | 1.875                         | 0.068              | Breathing |
-| 5   | 0.171                | 0.171                | 0.171                | **1.000**                     | 0.734              | **Locked** |
-| 6   | 0.214                | 0.114                | 0.114                | 1.875                         | 0.827              | Breathing |
-| 8   | 0.214                | 0.114                | 0.114                | 1.875                         | 0.991              | Breathing |
-| 10  | 0.014*               | 0.114                | 0.114                | 0.125                         | 0.847              | Anomalous |
-| 15  | 0.200                | 0.200                | 0.200                | **1.000**                     | 0.884              | **Locked** |
-| 20  | 0.200                | 0.200                | 0.200                | **1.000**                     | 0.803              | **Locked** |
+Two dynamical regimes are observed:
 
-*\*N=10 radial frequency is near-DC (anomalous regime)*
+**Breathing regime** ($f_{\text{rad}} \neq f_{\text{tan}}$):
+| $N$ | $f_{\text{rad}}$ (Hz) | $f_{\text{tan}}$ (Hz) | $f_{\text{rad}}/f_{\text{tan}}$ | $\sigma_3/\sigma_1$ |
+|-----|----------------------|----------------------|-------------------------------|--------------------|
+| 3   | 0.157                | 0.114                | 1.375                         | 0.000              |
+| 4   | 0.214                | 0.114                | 1.875                         | 0.068              |
+| 6   | 0.214                | 0.114                | 1.875                         | 0.827              |
+| 8   | 0.214                | 0.114                | 1.875                         | 0.991              |
+| 10  | 0.014*               | 0.114                | 0.125                         | 0.847              |
+
+$^*$N=10 radial frequency is near-DC (anomalous regime).
+In this regime: $f_{\text{tan}} \approx f_{\text{rot}} = 0.1125$ Hz (within 0.002 Hz).
+
+**Locked regime** ($f_{\text{rad}} = f_{\text{tan}} = f_{\text{self}}$):
+| $N$ | $f_{\text{lock}}$ (Hz) | $f_{\text{lock}}/f_{\text{rot}}$ | $\sigma_3/\sigma_1$ |
+|-----|----------------------|-------------------------------|--------------------|
+| 5   | 0.171                | 1.52                          | 0.734              |
+| 15  | 0.200                | 1.78                          | 0.884              |
+| 20  | 0.200                | 1.78                          | 0.803              |
+
+In this regime: $f_{\text{tan}}$ is **not** $f_{\text{rot}}$ — the tangential frequency
+shifts significantly due to mode coupling.
 
 ### Three Frequency Components
 
@@ -61,10 +72,22 @@ For each vehicle, motion relative to the formation center of mass is decomposed 
 
 ### Core Findings
 
-#### Tangential Frequency → Independent of $N$
-$$f_{\text{tan}} \approx f_{\text{rot}} = \frac{\sqrt{k_2}}{2\pi}$$
-The tangential direction is a neutral mode (no restoring force), so the frequency
-is set solely by the observer gain $k_2$. Confirmed across all $N$ values tested.
+#### Two Dynamical Regimes
+
+The system exhibits two distinct regimes separated by sharp transitions:
+
+| Regime | $f_{\text{rad}}/f_{\text{tan}}$ | $f_{\text{tan}}$ vs $f_{\text{rot}}$ | Occurs when |
+|--------|-------------------------------|--------------------------------------|------------|
+| **Breathing** | $> 1.3$ | $f_{\text{tan}} \approx f_{\text{rot}}$ (within freq. resolution) | Low $k_1$, low $d$, high $\mu$, small $N$ |
+| **Locked** | $= 1.0$ | $f_{\text{tan}} = f_{\text{lock}} \neq f_{\text{rot}}$ (significant shift) | High $k_1$, high $d$, low $\mu$, large $N$ |
+
+**In the breathing regime**, the tangential direction is a neutral mode (no restoring force),
+so $f_{\text{tan}} \approx f_{\text{rot}} = \sqrt{k_2}/(2\pi)$. The deviation is $< 0.002$ Hz,
+well within the frequency resolution of $0.0143$ Hz.
+
+**In the locked regime**, radial and tangential modes couple into a single oscillation.
+The common frequency $f_{\text{lock}}$ is shifted away from $f_{\text{rot}}$ by the
+repulsive stiffness. The shift is real and significant (up to 78% for $N=15,20$).
 
 #### Radial Frequency → Weakly dependent on $N$, non-monotonic
 $$\omega_{\text{rad}}^2 = k_2 + C_{\text{rep}}(N)$$
@@ -75,8 +98,8 @@ due to formation geometry effects. Power-law fit: $f_{\text{rad}} \propto N^{-0.
 #### Frequency Locking for Large $N$
 For $N \geq 15$: $f_{\text{rad}} = f_{\text{tan}} = f_{\text{self}} = 0.200$ Hz.
 The radial and tangential modes couple into a single oscillation. The locked
-frequency is **higher** than $f_{\text{rot}}$ (1.78×), indicating that both $k_2$ and
-the residual repulsive stiffness contribute.
+frequency is **1.78× higher** than $f_{\text{rot}}$, indicating that both $k_2$ and
+the residual repulsive stiffness contribute to the effective frequency.
 
 #### Locked Frequency vs. Parameter Path
 The locked frequency depends on *which* parameter triggers locking:
@@ -92,8 +115,8 @@ High-$N$ locking produces the highest locked frequency because the formation rad
 grows with $N$, increasing the effective attractive/observer force magnitude.
 
 #### Self Frequency → Always tracks tangential
-$f_{\text{self}} = f_{\text{tan}}$ always. Total speed is dominated by the tangential
-(rotational) component, not the radial (breathing) oscillation.
+$f_{\text{self}} = f_{\text{tan}}$ in both regimes. Total speed is dominated by the
+tangential (rotational) component, not the radial (breathing) oscillation.
 
 #### Planarity
 - $N=3$: planar ($\sigma_3/\sigma_1 = 0$)
@@ -103,15 +126,30 @@ $f_{\text{self}} = f_{\text{tan}}$ always. Total speed is dominated by the tange
 ### Physical Mechanism
 
 The controller constrains only the average position error and average velocity,
-leaving $2(N-1)$ circulation degrees of freedom unconstrained. The tangential mode
-is neutral ($\omega = \sqrt{k_2}$), while the radial mode is stiffened by the
-repulsive force gradient $\alpha'(s) = -1/(s-d)^2$:
+leaving $2(N-1)$ circulation degrees of freedom unconstrained.
+
+**Breathing regime**: The tangential mode is neutral ($\omega_{\text{tan}} = \sqrt{k_2}$),
+while the radial mode is stiffened by the repulsive force gradient
+$\alpha'(s) = -1/(s-d)^2$:
 
 $$\omega_{\text{rad}}^2 = k_2 + C_{\text{rep}}, \quad \omega_{\text{tan}}^2 = k_2$$
 
-As $N$ increases, $C_{\text{rep}}$ decreases (repulsive forces distributed over more
-neighbors), causing $f_{\text{rad}}$ to soften toward $f_{\text{tan}}$. Eventually
-the two modes lock into a single frequency.
+Since $C_{\text{rep}} > 0$, we have $f_{\text{rad}} > f_{\text{tan}} \approx f_{\text{rot}}$.
+
+**Locked regime**: As $N$ increases, $C_{\text{rep}}$ decreases (repulsive forces
+distributed over more neighbors), causing $f_{\text{rad}}$ to soften toward $f_{\text{tan}}$.
+When $C_{\text{rep}}$ drops below a threshold, the two modes couple and lock at a
+common frequency $f_{\text{lock}}$ that lies **between** $f_{\text{rot}}$ and the original
+$f_{\text{rad}}$. The exact value depends on which parameter triggered the locking:
+
+$$\omega_{\text{lock}}^2 = k_2 + \beta \cdot C_{\text{rep}}, \quad \beta \in [0, 1]$$
+
+- $k_1$-triggered locking: $\beta \approx 0$ → $f_{\text{lock}} \approx f_{\text{rot}}$
+- $d$/$\mu$-triggered locking: $\beta \approx 0.2$–$0.3$ → $f_{\text{lock}} \approx 1.18 \times f_{\text{rot}}$
+- $N$-triggered locking: $\beta \approx 0.5$–$0.6$ → $f_{\text{lock}} \approx 1.5$–$1.8 \times f_{\text{rot}}$
+
+The higher locked frequency for large $N$ occurs because the formation radius grows
+with $N$, increasing the effective attractive/observer force magnitude.
 
 ### Comparison with Previous Results
 
