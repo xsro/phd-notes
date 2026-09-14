@@ -195,6 +195,44 @@ initial conditions (e.g., regular pentagon) converge to rigid rotation instead.
 This demonstrates the **bistability** of the system: both attractors coexist
 for the same parameters, and the initial conditions determine which one is reached.
 
+### 3D Simulation (Breathing Limit Cycle, N=30)
+
+**File**: `simulate_3d_n30.py` / `plots/plot_3d_n30.py`
+
+**Behavior**: With random 3D initial conditions and N=30 vehicles, the system converges to a **non-planar 3D breathing limit cycle** — a 3D wrapping formation that fences the target.
+
+**Key observations** (N=30, μ=15.0, seed=42):
+- Vehicles form a 3D enclosure around the target (target is inside convex hull ✓)
+- 19 of 30 vehicles are on the convex hull boundary (good wrapping)
+- Formation is NON-PLANAR (σ₃/σ₁ ≈ 0.836)
+- Pairwise distances oscillate: dominant frequency f ≈ 0.17 Hz (T ≈ 5.83 s)
+- No collisions: min pairwise distance stays above d=5.0 ✓
+- Target tracking: vehicles maintain mean distance ~7.85 from target
+- Velocity errors remain non-zero (breathing/rotating formation)
+
+**Tangential vs. Rigid Rotation Frequency** (steady-state analysis):
+
+| Frequency | Value | Ratio to f_rot |
+|-----------|-------|----------------|
+| Rigid rotation f_rot = √k₂/(2π) | 0.1125 Hz (T=8.89s) | 1.00 |
+| Formation centroid tangential | 0.1052 Hz | **0.935** ≈ 1.00 |
+| Breathing (radial) f_breath | 0.1714 Hz (T=5.83s) | **1.52** |
+
+- The formation centroid rotates at ≈ the rigid rotation frequency √k₂, but individual vehicles have varying tangential frequencies (not pure rotation)
+- Breathing frequency is ~1.5× higher than the rotation frequency
+- This differs from pure rigid rotation where all vehicles rotate at exactly √k₂
+
+**Parameter note**: With the original μ=9.0, N=30 leads to overcrowding and collisions.
+Increasing μ to 15.0 provides adequate sensing range for 30 vehicles to form a stable
+collision-free wrapping formation.
+
+**Files**:
+- Simulation: `simulate_3d_n30.py` → `data/simulate_3d_n30.npz`
+- Plotting: `plots/plot_3d_n30.py` → `figures_n30/`
+  - `distances_3d_n30.png` — pairwise distances over time
+  - `vel_error_3d_n30.png` — mean velocity error
+  - `positions_3d_n30.gif` — 3D animation of agent positions
+
 ### 3D Simulation (Breathing Limit Cycle)
 
 **File**: `simulate_3d.py` / `plots/plot_3d.py`
