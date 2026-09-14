@@ -30,7 +30,7 @@ fencing_simulation/
 ├── simulate_1d.py              # 1D simulation → saves data/*.npz
 ├── simulate_2d.py              # 2D rigid rotation → saves data/*.npz
 ├── simulate_2d_breathing.py    # 2D breathing limit cycle → saves data/*.npz
-├── simulate_3d.py              # 3D rigid rotation → saves data/*.npz
+├── simulate_3d.py              # 3D breathing (seed=42) → saves data/*.npz
 │
 ├── experiment/                 # Search & diagnostic scripts
 │   ├── search_2d_breathing.py  # 2D breathing search
@@ -195,49 +195,59 @@ initial conditions (e.g., regular pentagon) converge to rigid rotation instead.
 This demonstrates the **bistability** of the system: both attractors coexist
 for the same parameters, and the initial conditions determine which one is reached.
 
-### 3D Simulation
+### 3D Simulation (Breathing Limit Cycle)
 
 **File**: `simulate_3d.py` / `plots/plot_3d.py`
 
-**Behavior**: With random 3D initial conditions, vehicles converge to a **non-planar
-3D rotating formation**. This is a surprising result that differs from the 2D case.
+**Behavior**: With random 3D initial conditions (seed=42), vehicles converge to a
+**non-planar 3D breathing limit cycle** — pairwise distances oscillate periodically
+without converging. This is the same attractor as `3d_breathing/simulate_3d_breathing.py`
+(seed=0), confirming that 3D breathing is the generic attractor for random initial conditions.
 
 **Key observations**:
 - Vehicles are distributed in 3D (not confined to a plane)
-- Angular momentum $L = \sum \xi_i \times \dot{v}_i$ is well-defined and aligned with one principal axis
 - Time-averaged positions $\langle\xi_i\rangle \approx 0$ (vehicles track the target well)
 - Pairwise distances stay above collision threshold
-- The formation is NOT planar ($\sigma_3/\sigma_1 \approx 0.91$)
-- **Motion is periodic**: FFT and autocorrelation analysis of steady-state trajectories show a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), consistent with $2\pi/\sqrt{k_2} \approx 8.89\,\text{s}$
+- The formation is NON-PLANAR ($\sigma_3/\sigma_1 \approx 0.91$)
+- **Pairwise distances oscillate**: dominant frequency $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$)
+- Breathing amplitude: pairwise distances vary by up to ~1.4 units (mean ~6.6-7.3)
 
 **Planar test** (`experiment/test_3d_planar.py` / `plots/plot_3d_planar.py`): If initialized in a plane (e.g., regular hexagon
 in the xy-plane), the formation stays perfectly planar and rotates at $|\omega| = \sqrt{k_2}$.
-This confirms the simulation code is correct and the non-planar behavior with random
-initial conditions is a genuine 3D phenomenon.
+This is the **3D rigid rotation** case — but it requires planar initial conditions.
+With random 3D initial conditions, the system generically converges to the 3D breathing
+attractor instead. This confirms the simulation code is correct and demonstrates that
+the 3D system has at least two attractors: planar rigid rotation (for planar ICs) and
+non-planar 3D breathing (for generic random ICs).
 
-**Theoretical interpretation**: In 3D, the system supports non-planar rotating
-formations where each vehicle moves on a closed 3D orbit that is symmetric about the
-origin (so $\langle\xi_i\rangle = 0$ and the observer does not wind up). This is fundamentally
-different from the 2D case where rigid rotation forces all vehicles into a plane
-perpendicular to the rotation axis.
+**Theoretical interpretation**: In 3D, the breathing attractor is a non-planar
+oscillating formation where each vehicle moves on a closed 3D orbit. The pairwise
+distances oscillate because the repulsive force gradient creates a radial restoring
+mechanism (analogous to the 2D breathing case), but in 3D the additional degrees of
+freedom allow the oscillation to be non-planar.
 
 ### 3D Breathing Limit Cycle
 
-**File**: `3d_breathing/simulate_3d_breathing.py`
+**Folder**: `3d_breathing/`
 
-**Behavior**: With specific random 3D initial conditions (seed=0 from the breathing
-search), vehicles converge to a **non-planar 3D breathing limit cycle** — pairwise
-distances oscillate periodically without converging, while the formation as a whole
-rotates in 3D. This is the first discovered 3D breathing attractor.
+**Behavior**: With random 3D initial conditions, vehicles converge to a **non-planar
+3D breathing limit cycle** — pairwise distances oscillate periodically without
+converging, while the formation as a whole rotates in 3D. This is the first discovered
+3D breathing attractor, and it is the **generic attractor** for random 3D initial conditions.
 
-**Key observations**:
+**Key observations** (N=6, seed=0):
 - Breathing frequency: $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$)
 - Pairwise distances oscillate with peak FFT power ratio ~0.76 (strong oscillation)
 - Formation is NON-PLANAR ($\sigma_3/\sigma_1 \approx 0.83$)
 - Time-averaged positions $\langle\xi_i\rangle \approx 0$ (vehicles track target well)
 - Velocity errors remain non-zero
 
-**Initial conditions** (seed=0):
+**Key observations** (N=6, seed=42, `simulate_3d.py`):
+- Same breathing frequency: $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$)
+- $\sigma_3/\sigma_1 \approx 0.91$ (even more non-planar than seed=0)
+- Confirms 3D breathing is the generic attractor for random ICs
+
+**Initial conditions** (seed=0, N=6):
 ```
 XI0 = [[14.112419,  3.201258,  7.829904],
        [17.927146, 14.940464, -7.818223],
@@ -250,38 +260,172 @@ VT0 = [[0.0, 0.0, 0.0]]  (zero initial velocity)
 
 **Discovery**: Found by `experiment/search_3d_breathing.py` which scans random
 3D initial conditions and classifies steady-state behavior via FFT of pairwise
-distances. The seed=0 case is the first genuine 3D breathing attractor discovered.
-Full parameter scan and analysis in `3d_breathing/SCAN_RESULTS.md`.
+distances. The seed=0 case (N=6) was the first genuine 3D breathing attractor.
 
 **Key difference from 3D rigid rotation**: In rigid rotation, pairwise distances
 converge to constants. In 3D breathing, they oscillate periodically. Both are
 non-planar, but only breathing exhibits persistent pairwise distance oscillations.
 
-**Parameter dependence (experimental scan, N=4)**:
+---
 
-**Primary scaling with $k_2$**: For $k_2 \geq 0.35$:
+## 3D Breathing Parameter Scan Results
+
+Full scan data from `3d_breathing/scan_3d_final.py` (N=4, seed=0, T_MAX=60s).
+Complete tables in `3d_breathing/SCAN_RESULTS.md`.
+
+### Primary Scaling with $k_2$ ($k_1 = 0.5$ fixed)
+
+For $k_2 \geq 0.35$:
 $$T_{\text{breath}} \approx 0.5 \times \frac{2\pi}{\sqrt{k_2}}, \quad f_{\text{breath}} \approx 2 \times \frac{\sqrt{k_2}}{2\pi}$$
 The breathing frequency scales as $\sqrt{k_2}$ (same as rigid rotation) but is $\sim 2\times$ higher.
 
-**$k_1$ modulation**: $k_1$ has a weaker but noticeable effect, especially at low $k_2$:
-- $k_1 \leq 0.15$: breathing is faster ($T \approx 4.29$ s at $k_2=0.5$)
-- $k_1 \geq 0.7$: breathing is slower ($T \approx 7.5$ s at $k_2=0.5$)
-- For $k_2 \geq 0.35$, the $k_1$ effect diminishes; $T/T_{\text{rot}} \approx 0.5$ holds broadly
+| $k_2$ | $f$ (Hz) | $T$ (s) | $T_{\text{rot}}$ (s) | $T/T_{\text{rot}}$ | peak_ratio | Type |
+|--------|----------|---------|---------------------|--------------------|------------|------|
+| 0.05 | 0.033 | 30.00 | 28.10 | 1.07 | 0.708 | BR |
+| 0.10 | 0.033 | 30.00 | 19.87 | 1.51 | 0.404 | BR |
+| 0.15 | 0.067 | 15.00 | 16.22 | 0.93 | 0.566 | BR |
+| 0.20 | 0.067 | 15.00 | 14.05 | 1.07 | 0.435 | BR |
+| 0.25 | 0.100 | 10.00 | 12.57 | 0.80 | 0.344 | BR |
+| 0.35 | 0.167 | 6.00 | 10.68 | 0.56 | 0.484 | BR |
+| 0.45 | 0.200 | 5.00 | 9.40 | 0.53 | 0.599 | BR |
+| 0.55 | 0.233 | 4.29 | 8.57 | 0.51 | 0.249 | BR |
+| 0.65 | 0.233 | 4.29 | 7.85 | 0.55 | 0.221 | BR |
+| 0.75 | 0.267 | 3.75 | 7.26 | 0.52 | 0.904 | BR |
+| 0.85 | 0.300 | 3.33 | 6.78 | 0.49 | 0.566 | BR |
+| 0.90 | 0.300 | 3.33 | 6.62 | 0.50 | 0.894 | BR |
 
-**$d_{\text{col}}$ and $\mu$**: Non-monotonic but weak for $\mu \geq 8$:
-- $\mu \geq 8$: period stable at $T=5.0$ s (for $k_1=k_2=0.5$)
-- $\mu < 8$: period increases as sensing range shrinks
-- $d_{\text{col}}$ affects the breathing amplitude and period in a complex way (likely via how close vehicles approach the collision boundary)
+For $k_2 \geq 0.35$, $T/T_{\text{rot}} \approx 0.5$ (stable). For $k_2 < 0.35$, the ratio varies
+and can exceed 1.0, indicating the breathing mode becomes softer.
 
-**$N$ dependence**: Non-monotonic — $N=4$ has the shortest period ($T=5.0$ s), $N=3$ is planar ($T=6.0$ s), $N=5$ is slower ($T=7.5$ s) at $k_1=k_2=0.5$.
+### $k_1$ Modulation ($k_2 = 0.5$ fixed)
 
-**Robustness**: Breathing period is robust across random seeds (most seeds give $T=5.0$ s for $k_1=k_2=0.5$, $N=4$).
+$k_1$ has a weaker but noticeable effect, especially at low $k_2$:
 
-**Full scan data**: `3d_breathing/scan_3d_final.py` — 6×6 $k_1$-$k_2$ grid, $d_{\text{col}}$ scan, $\mu$ scan, seed scan, $N$ scan, wider $k_1$/$k_2$ ranges.
-**Final formulas**: `3d_breathing/FINAL_FORMULAS.md` — concise summary of period-parameter relationships.
-**Complete results**: `3d_breathing/SCAN_RESULTS.md` — all scan tables.
+| $k_1$ | $f$ (Hz) | $T$ (s) | $T/T_{\text{rot}}$ | peak_ratio | Type |
+|--------|----------|---------|--------------------|------------|------|
+| 0.05 | 0.233 | 4.29 | 0.48 | 0.655 | BR |
+| 0.10 | 0.233 | 4.29 | 0.48 | 0.690 | BR |
+| 0.15 | 0.233 | 4.29 | 0.48 | 0.587 | BR |
+| 0.70 | 0.133 | 7.50 | 0.84 | 0.520 | BR |
+| 0.75 | 0.133 | 7.50 | 0.84 | 0.477 | BR |
+| 0.80 | 0.133 | 7.50 | 0.84 | 0.447 | BR |
+| 0.85 | 0.133 | 7.50 | 0.84 | 0.340 | BR |
+| 0.90 | 0.133 | 7.50 | 0.84 | 0.313 | BR |
 
-**Comparison with 2D**: 3D breathing is closer to rigid rotation ($T/T_{\text{rot}} \approx 0.5$) than 2D breathing ($T/T_{\text{rot}} \approx 0.28$), consistent with 3D having more degrees of freedom and thus a less stiff breathing mode.
+For $k_1 \leq 0.15$, $T \approx 4.29$ s. For $k_1 \geq 0.70$, $T \approx 7.50$ s.
+The transition occurs in $k_1 = 0.2$–$0.6$ (see grid scan).
+
+### Full $k_1$-$k_2$ Grid (N=4, seed=0)
+
+All 36 combinations ($k_1 = 0.1$–$0.6$, $k_2 = 0.1$–$0.6$) converge to breathing.
+Period $T$ (s):
+
+```
+k₁\k₂  0.1   0.2   0.3   0.4   0.5   0.6
+0.1   10.0  7.5   6.0   5.0   4.29  4.29
+0.2   15.0  7.5   6.0   5.0   4.29  4.29
+0.3   15.0  10.0  6.0   5.0   4.29  4.29
+0.4   30.0  10.0  6.0   7.5   4.29  4.29
+0.5   30.0  15.0  7.5   5.0   5.0   4.29
+0.6   30.0  15.0  10.0  6.0   5.0   4.29
+```
+
+Key observations:
+- For $k_2 \geq 0.3$, $T$ is mostly determined by $k_2$ (rows are similar)
+- For $k_2 = 0.1$–$0.2$, increasing $k_1$ strongly increases $T$
+- The $k_1$ effect diminishes as $k_2$ increases
+
+### $d_{\text{col}}$ Scan ($k_1 = k_2 = 0.5$, $\mu = 9.0$)
+
+| $d_{\text{col}}$ | $f$ (Hz) | $T$ (s) | $T/T_{\text{rot}}$ | peak_ratio | $\sigma_3/\sigma_1$ | Type |
+|-------------------|----------|---------|--------------------|------------|---------------------|------|
+| 3.0 | 0.233 | 4.29 | 0.48 | 0.585 | 0.624 | BR |
+| 4.0 | 0.133 | 7.50 | 0.84 | 0.300 | 0.113 | BR |
+| 5.0 | 0.200 | 5.00 | 0.56 | 0.412 | 0.444 | BR |
+| 6.0 | 0.167 | 6.00 | 0.68 | 0.247 | 0.392 | BR |
+| 7.0 | 0.133 | 7.50 | 0.84 | 0.458 | 0.028 | BR |
+
+Non-monotonic effect. $d = 5$ gives the shortest period. At $d = 7$, the
+formation becomes nearly planar ($\sigma_3/\sigma_1 = 0.028$).
+
+### $\mu$ Scan ($k_1 = k_2 = 0.5$, $d = 5.0$)
+
+| $\mu$ | $f$ (Hz) | $T$ (s) | $T/T_{\text{rot}}$ | peak_ratio | $\sigma_3/\sigma_1$ | Type |
+|--------|----------|---------|--------------------|------------|---------------------|------|
+| 6.0 | 0.133 | 7.50 | 0.84 | 0.399 | 0.714 | BR |
+| 7.0 | 0.167 | 6.00 | 0.68 | 0.288 | 0.611 | BR |
+| 8.0 | 0.200 | 5.00 | 0.56 | 0.438 | 0.476 | BR |
+| 9.0 | 0.200 | 5.00 | 0.56 | 0.412 | 0.444 | BR |
+| 10.0 | 0.200 | 5.00 | 0.56 | 0.380 | 0.783 | BR |
+| 11.0 | 0.200 | 5.00 | 0.56 | 0.363 | 0.520 | BR |
+| 12.0 | 0.200 | 5.00 | 0.56 | 0.298 | 0.256 | BR |
+
+For $\mu \geq 8$, the period stabilizes at $T = 5.0$ s. For smaller $\mu$, the period
+increases (breathing slows down) as the sensing range shrinks.
+
+### Seed Scan (N=4, $k_1 = k_2 = 0.5$, $d = 5.0$, $\mu = 9.0$)
+
+| seed | $f$ (Hz) | $T$ (s) | $T/T_{\text{rot}}$ | peak_ratio | $\sigma_3/\sigma_1$ | Type |
+|------|----------|---------|--------------------|------------|---------------------|------|
+| 0 | 0.200 | 5.00 | 0.56 | 0.412 | 0.444 | BR |
+| 1 | 0.200 | 5.00 | 0.56 | 0.386 | 0.540 | BR |
+| 2 | 0.200 | 5.00 | 0.56 | 0.428 | 0.832 | BR |
+| 3 | 0.233 | 4.29 | 0.48 | 0.421 | 0.978 | BR |
+| 4 | 0.200 | 5.00 | 0.56 | 0.389 | 0.705 | BR |
+| 5 | 0.200 | 5.00 | 0.56 | 0.764 | 0.502 | BR |
+
+The breathing period is robust: 5 of 6 seeds give $T = 5.0$ s.
+Seed 3 gives $T = 4.29$ s, which is within the frequency resolution (0.033 Hz).
+
+### $N$ Scan ($k_1 = k_2 = 0.5$, $d = 5.0$, $\mu = 9.0$)
+
+| $N$ | $f$ (Hz) | $T$ (s) | $T_{\text{rot}}$ (s) | $T/T_{\text{rot}}$ | peak_ratio | $\sigma_3/\sigma_1$ | Type |
+|-----|----------|---------|---------------------|--------------------|------------|---------------------|------|
+| 3 | 0.167 | 6.00 | 8.89 | 0.68 | 0.575 | 0.000 | BR (planar) |
+| 4 | 0.200 | 5.00 | 8.89 | 0.56 | 0.412 | 0.444 | BR |
+| 5 | 0.133 | 7.50 | 8.89 | 0.84 | 0.536 | 0.637 | BR |
+
+Non-monotonic $N$ dependence. $N = 4$ has the shortest period.
+$N = 3$ is planar ($\sigma_3/\sigma_1 = 0$), meaning the formation collapses to a plane.
+
+### Summary of Parameter Dependence
+
+1. **$k_2$ is the primary determinant** of breathing period. For $k_2 \geq 0.35$:
+   $$T_{\text{breath}} \approx 0.5 \times 2\pi/\sqrt{k_2}$$
+2. **$k_1$ modulates** the period, especially at low $k_2$:
+   - $k_1 \leq 0.15$: faster breathing ($T \approx 4.29$ s at $k_2=0.5$)
+   - $k_1 \geq 0.70$: slower breathing ($T \approx 7.50$ s at $k_2=0.5$)
+   - Effect diminishes as $k_2$ increases
+3. **$d_{\text{col}}$** has a non-monotonic effect, with $d = 5$ giving the shortest period.
+4. **$\mu$** stabilizes for $\mu \geq 8$ ($T = 5.0$ s at $k_1=k_2=0.5$). Smaller $\mu$ slows breathing.
+5. **$N$** has a non-monotonic effect: $N=4$ has the shortest period, $N=3$ is planar.
+6. **Random seeds**: The breathing period is robust; most seeds give the same $T$ within frequency resolution.
+
+### Comparison with 2D Breathing
+
+| Property | 2D Breathing | 3D Breathing |
+|----------|-------------|-------------|
+| $T/T_{\text{rot}}$ | ~0.28 | ~0.5 |
+| $f_{\text{breath}}/f_{\text{rot}}$ | ~3.57 | ~2.0 |
+| Planarity | Planar ($\sigma_3/\sigma_1 = 0$) | Non-planar ($\sigma_3/\sigma_1 \approx 0.4$–$0.8$) |
+| $N$ dependence | $N=5$: $T \approx 2.49$ s | $N=4$: $T \approx 5.0$ s, $N=6$: $T \approx 4.55$ s |
+
+3D breathing is closer to rigid rotation than 2D breathing, consistent with
+3D having more degrees of freedom and thus a less stiff breathing mode.
+
+### Known 3D Breathing Cases
+
+**N=6, seed=0** (`3d_breathing/simulate_3d_breathing.py`):
+- Frequency: f ≈ 0.22 Hz (T ≈ 4.55 s), T/T_rot ≈ 0.51, σ₃/σ₁ ≈ 0.83
+- First discovered 3D breathing attractor
+
+**N=6, seed=42** (`simulate_3d.py`):
+- Frequency: f ≈ 0.22 Hz (T ≈ 4.55 s), T/T_rot ≈ 0.51, σ₃/σ₁ ≈ 0.91
+- Confirms 3D breathing is the generic attractor for random ICs
+
+**N=4, seed=0** (scan reference case):
+- Frequency: f = 0.20 Hz (T = 5.00 s), T/T_rot = 0.56, σ₃/σ₁ = 0.444
+- Used for all parameter scans in this section
 
 ### Continuous Alpha Function Comparison
 
@@ -315,13 +459,17 @@ and **non-planarity** (sigma_ratio) more than the period itself.
 
 | Parameter | 1D | 2D (rotation) | 2D (breathing) | 3D (rotation) | 3D (breathing) |
 |-----------|----|---------------|----------------|---------------|----------------|
-| N (vehicles) | 5 | 6 | 5 | 6 | 6 |
+| N (vehicles) | 5 | 6 | 5 | 6 (seed=42) | 6 (seed=0) |
 | d (collision) | 0.5 | 5.0 | 5.0 | 5.0 | 5.0 |
 | μ (sensing) | 2.0 | 9.0 | 9.0 | 9.0 | 9.0 |
 | k₁ (attractive) | 1.0 | 0.5 | 0.5 | 0.5 | 0.5 |
 | k₂ (observer) | — (none) | 0.5 | 0.5 | 0.5 | 0.5 |
 | v₀ (target vel) | 1.0 | (1, 0) | (1, 0) | (1, 0, 0) | (1, 0, 0) |
 | T_max | 60s | 80s | 3000s | 200s | 500s |
+
+**Note**: The 3D rigid rotation case (planar ICs, `experiment/test_3d_planar.py`) uses
+the same parameters (N=6, d=5, μ=9, k₁=k₂=0.5, v₀=(1,0,0)) but with planar initial
+conditions (regular hexagon in xy-plane).
 
 ## Dependencies
 
@@ -341,7 +489,9 @@ Install with: `uv pip install numpy scipy matplotlib Pillow`
    - If initialized in a plane, stays planar (confirms code correctness).
    - With random 3D initial conditions, converges to a 3D non-planar rotating state.
    - **Steady-state motion is periodic**: FFT/autocorrelation analysis confirms a dominant frequency $f \approx 0.11\,\text{Hz}$ ($T \approx 9.0\,\text{s}$), matching $2\pi/\sqrt{k_2}$.
-5. **3D (breathing)**: Non-planar 3D breathing limit cycle with specific random initial conditions (seed=0). Pairwise distances oscillate at $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$), $\sigma_3/\sigma_1 \approx 0.83$. Discovered by `experiment/search_3d_breathing.py`. Demonstrates that the 3D system supports attractors beyond rigid rotation.
+5. **3D (breathing, seed=42)**: `simulate_3d.py` — non-planar 3D breathing with generic random ICs. Pairwise distances oscillate at $f \approx 0.22\,\text{Hz}$ ($T \approx 4.55\,\text{s}$), $\sigma_3/\sigma_1 \approx 0.91$. Shows that 3D breathing is the generic attractor for random initial conditions.
+5b. **3D (breathing, seed=0)**: `3d_breathing/simulate_3d_breathing.py` — the first discovered 3D breathing attractor. Same frequency and non-planarity as seed=42. Discovered by `experiment/search_3d_breathing.py`.
+5c. **3D (rigid rotation)**: `experiment/test_3d_planar.py` — planar rigid rotation at $|\omega| = \sqrt{k_2}$, but requires planar initial conditions (regular hexagon in xy-plane). Demonstrates bistability: planar ICs → rotation, random 3D ICs → breathing.
 6. **Continuous alpha comparison**: 6 continuous alpha forms all produce robust 3D breathing. Period scaling with $k_2$ is form-independent; breathing strength and non-planarity vary by form. Log and exponential forms give the strongest, cleanest breathing signal.
 
 ## References
