@@ -1,0 +1,398 @@
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\newcommand{\sat}{\operatorname{sat}}
+\newcommand{\sgn}{\operatorname{sgn}}
+
+\title{分数阶滑模控制双积分系统案例}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{问题描述}
+
+考虑带有匹配扰动的双积分系统
+\begin{equation}
+  \dot{x}_1(t)=x_2(t),\qquad
+  \dot{x}_2(t)=u(t)+d(t),
+  \label{eq:plant}
+\end{equation}
+其中 $x_1$ 为位置状态，$x_2$ 为速度状态，$u$ 为控制输入，$d(t)$ 为有界匹配扰动。假设扰动满足
+\begin{equation}
+  |d(t)|\le \bar d,\qquad \bar d>0.
+\end{equation}
+控制目标是在扰动有界的情况下，使状态 $x_1(t),x_2(t)$ 收敛到原点附近；若采用理想符号函数，则实现渐近收敛并具有有限时间到达滑模面的性质。
+
+\section{分数阶算子}
+
+令 $0<\alpha<1$。本文采用 Riemann--Liouville 分数阶积分
+\begin{equation}
+  {}_0 I_t^\mu f(t)
+  =
+  \frac{1}{\Gamma(\mu)}
+  \int_0^t (t-\tau)^{\mu-1} f(\tau)\,d\tau,
+  \qquad \mu>0,
+\end{equation}
+以及 Riemann--Liouville 分数阶导数
+\begin{equation}
+  {}_0^{\mathrm{RL}}D_t^\alpha f(t)
+  =
+  \frac{d}{dt}\,{}_0 I_t^{1-\alpha}f(t).
+\end{equation}
+当初值项处理为零，或将初值补偿显式并入控制律时，可用 Caputo 导数替换上述导数。本文的滑模面使用分数阶积分项，因此控制律中自然出现 ${}_0^{\mathrm{RL}}D_t^\alpha x_1$。
+
+\section{分数阶滑模面设计}
+
+定义分数阶滑模变量
+\begin{equation}
+  s(t)=x_2(t)+\lambda\,{}_0 I_t^{1-\alpha}x_1(t),
+  \qquad \lambda>0.
+  \label{eq:surface}
+\end{equation}
+该滑模面不是单纯的整数阶线性组合，而是把位置状态的历史记忆项引入到滑模变量中。对 \eqref{eq:surface} 求导可得
+\begin{equation}
+  \dot{s}(t)
+  =
+  \dot{x}_2(t)+\lambda\,{}_0^{\mathrm{RL}}D_t^\alpha x_1(t)
+  =
+  u(t)+d(t)+\lambda\,{}_0^{\mathrm{RL}}D_t^\alpha x_1(t).
+  \label{eq:sdot-open}
+\end{equation}
+
+\section{控制律}
+
+设计分数阶滑模控制律为
+\begin{equation}
+  u(t)
+  =
+  -\lambda\,{}_0^{\mathrm{RL}}D_t^\alpha x_1(t)
+  -k s(t)
+  -\rho\,\sgn(s(t)),
+  \label{eq:control-sign}
+\end{equation}
+其中 $k>0$，$\rho>\bar d$。将 \eqref{eq:control-sign} 代入 \eqref{eq:sdot-open}，得到闭环滑模变量动力学
+\begin{equation}
+  \dot{s}(t)
+  =
+  -k s(t)-\rho\,\sgn(s(t))+d(t).
+  \label{eq:sdot-closed}
+\end{equation}
+
+为降低抖振，实际实现中可使用边界层饱和函数
+\begin{equation}
+  \sat\!\left(\frac{s}{\phi}\right)
+  =
+  \begin{cases}
+    \sgn(s), & |s|>\phi,\\[2mm]
+    s/\phi, & |s|\le \phi,
+  \end{cases}
+  \qquad \phi>0,
+\end{equation}
+并令
+\begin{equation}
+  u(t)
+  =
+  -\lambda\,{}_0^{\mathrm{RL}}D_t^\alpha x_1(t)
+  -k s(t)
+  -\rho\,\sat\!\left(\frac{s(t)}{\phi}\right).
+  \label{eq:control-sat}
+\end{equation}
+理想稳定性证明通常先基于符号函数 \eqref{eq:control-sign} 给出；饱和函数 \eqref{eq:control-sat} 则对应实际系统中的最终有界稳定。
+
+\section{到达阶段稳定性分析}
+
+取 Lyapunov 函数
+\begin{equation}
+  V_s(t)=\frac{1}{2}s^2(t).
+\end{equation}
+由 \eqref{eq:sdot-closed} 可得
+\begin{align}
+  \dot V_s
+  &=
+  s\dot{s} \notag\\
+  &=
+  -k s^2-\rho |s|+s d(t) \notag\\
+  &\le
+  -k s^2-\rho |s|+|s|\,|d(t)| \notag\\
+  &\le
+  -k s^2-(\rho-\bar d)|s|.
+  \label{eq:reaching}
+\end{align}
+由于 $k>0$ 且 $\rho>\bar d$，有
+\begin{equation}
+  \dot V_s\le 0.
+\end{equation}
+更进一步，令 $\eta=\rho-\bar d>0$，则
+\begin{equation}
+  \dot V_s\le -\eta |s|
+  =
+  -\eta\sqrt{2V_s}.
+\end{equation}
+因此 $s(t)$ 可在有限时间内到达滑模面 $s=0$，到达时间满足估计
+\begin{equation}
+  T_r
+  \le
+  \frac{|s(0)|}{\rho-\bar d}.
+\end{equation}
+该结论说明，只要切换增益 $\rho$ 大于扰动上界，滑模面具有鲁棒可达性。
+
+\section{滑动阶段稳定性分析}
+
+当系统进入理想滑模面 $s(t)=0$ 后，由 \eqref{eq:surface} 得到
+\begin{equation}
+  x_2(t)+\lambda\,{}_0 I_t^{1-\alpha}x_1(t)=0.
+\end{equation}
+结合 $\dot{x}_1=x_2$，滑动阶段的等效动力学为
+\begin{equation}
+  \dot{x}_1(t)
+  =
+  -\lambda\,{}_0 I_t^{1-\alpha}x_1(t).
+  \label{eq:sliding-dynamics}
+\end{equation}
+对 \eqref{eq:sliding-dynamics} 作 Laplace 变换。忽略初值项时，有
+\begin{equation}
+  pX_1(p)+\lambda p^{-(1-\alpha)}X_1(p)=0.
+\end{equation}
+对应的特征方程为
+\begin{equation}
+  p+\lambda p^{\alpha-1}=0,
+\end{equation}
+即
+\begin{equation}
+  p^{2-\alpha}+\lambda=0.
+  \label{eq:char}
+\end{equation}
+记
+\begin{equation}
+  \beta=2-\alpha.
+\end{equation}
+由于 $0<\alpha<1$，所以 $1<\beta<2$。特征方程 \eqref{eq:char} 等价于标量分数阶系统
+\begin{equation}
+  {}_0^{\mathrm{C}}D_t^\beta x_1(t)
+  =
+  -\lambda x_1(t)
+\end{equation}
+的特征方程。由 Matignon 稳定性判据，阶次为 $\beta$ 的线性分数阶系统
+$ {}_0^{\mathrm{C}}D_t^\beta x=Ax $ 稳定的充分必要条件为矩阵 $A$ 的所有特征值
+$\mu_i$ 满足
+\begin{equation}
+  |\arg(\mu_i)|>\frac{\beta\pi}{2}.
+\end{equation}
+本例中等效系统矩阵为标量 $A=-\lambda$，其唯一特征值为
+\begin{equation}
+  \mu=-\lambda.
+\end{equation}
+因为 $\lambda>0$，所以
+\begin{equation}
+  |\arg(\mu)|=|\arg(-\lambda)|=\pi.
+\end{equation}
+又因为 $1<\beta<2$，有
+\begin{equation}
+  \pi>\frac{\beta\pi}{2}.
+\end{equation}
+因此 Matignon 稳定性条件成立。于是
+\begin{equation}
+  x_1(t)\to 0,\qquad
+  x_2(t)=\dot{x}_1(t)\to 0.
+\end{equation}
+这说明到达滑模面后，分数阶滑动动力学本身是稳定的。
+
+\subsection{Lyapunov 泛函证明}
+
+上述 Matignon 判据给出了线性分数阶系统的代数稳定性结论。若希望用
+Lyapunov 方法说明同一结论，需要注意：由于本例中
+$1<\beta<2$，不能直接套用常见的 $0<q<1$ 情形下的引理
+\[
+  \frac{1}{2}{}_0^{\mathrm{C}}D_t^q x^2(t)
+  \le
+  x(t)\,{}_0^{\mathrm{C}}D_t^q x(t).
+\]
+更合适的做法是回到滑动模态的积分形式。令
+\begin{equation}
+  \mu=\beta-1=1-\alpha,\qquad 0<\mu<1.
+\end{equation}
+由 \eqref{eq:sliding-dynamics} 可写为
+\begin{equation}
+  \dot{x}_1(t)
+  =
+  -\lambda\,{}_0 I_t^\mu x_1(t).
+  \label{eq:volterra-sliding}
+\end{equation}
+这与
+${}_0^{\mathrm{C}}D_t^\beta x_1=-\lambda x_1$
+具有相同的特征方程；若从 Caputo 方程直接出发，则需要把
+$\dot{x}_1(0)$ 对应的初值项显式保留或通过滑动面起始时刻重置。
+
+利用分数阶积分的扩散表示
+\begin{equation}
+  {}_0 I_t^\mu x_1(t)
+  =
+  \int_0^\infty \omega_\mu(\theta) z(\theta,t)\,d\theta,
+  \label{eq:diffusive-integral}
+\end{equation}
+其中
+\begin{equation}
+  \omega_\mu(\theta)
+  =
+  \frac{\sin(\pi\mu)}{\pi}\theta^{-\mu}>0,
+  \qquad
+  \frac{\partial z(\theta,t)}{\partial t}
+  =
+  -\theta z(\theta,t)+x_1(t),
+  \qquad z(\theta,0)=0.
+\end{equation}
+于是 \eqref{eq:volterra-sliding} 等价于扩展系统
+\begin{equation}
+  \dot{x}_1(t)
+  =
+  -\lambda
+  \int_0^\infty \omega_\mu(\theta) z(\theta,t)\,d\theta.
+  \label{eq:diffusive-system}
+\end{equation}
+
+选取 Lyapunov 泛函
+\begin{equation}
+  V(t)
+  =
+  \frac{1}{2}x_1^2(t)
+  +
+  \frac{\lambda}{2}
+  \int_0^\infty
+  \omega_\mu(\theta)z^2(\theta,t)\,d\theta.
+  \label{eq:diffusive-lyapunov}
+\end{equation}
+由于 $\lambda>0$ 且 $\omega_\mu(\theta)>0$，有 $V(t)\ge 0$，并且
+$V=0$ 当且仅当 $x_1=0$ 且 $z(\theta,t)=0$。对
+\eqref{eq:diffusive-lyapunov} 沿 \eqref{eq:diffusive-system} 求导，得到
+\begin{align}
+  \dot V
+  &=
+  x_1\dot{x}_1
+  +
+  \lambda
+  \int_0^\infty
+  \omega_\mu(\theta)z(\theta,t)
+  \frac{\partial z(\theta,t)}{\partial t}\,d\theta
+  \notag\\
+  &=
+  -\lambda x_1
+  \int_0^\infty \omega_\mu(\theta)z(\theta,t)\,d\theta
+  +
+  \lambda
+  \int_0^\infty
+  \omega_\mu(\theta)z(\theta,t)
+  \bigl[-\theta z(\theta,t)+x_1\bigr]\,d\theta
+  \notag\\
+  &=
+  -\lambda
+  \int_0^\infty
+  \theta\,\omega_\mu(\theta)z^2(\theta,t)\,d\theta
+  \le 0.
+  \label{eq:diffusive-vdot}
+\end{align}
+因此扩展状态是 Lyapunov 稳定的。进一步，由
+\eqref{eq:diffusive-vdot} 可知 $\dot V=0$ 时有
+$z(\theta,t)=0$ 几乎处处成立。在该不变集合内，
+\[
+  \frac{\partial z}{\partial t}
+  =
+  -\theta z+x_1=0
+\]
+推出 $x_1=0$。根据 LaSalle 不变性原理，得到
+\begin{equation}
+  x_1(t)\to 0.
+\end{equation}
+又由 \eqref{eq:volterra-sliding} 和 \eqref{eq:diffusive-integral}，
+\begin{equation}
+  x_2(t)=\dot{x}_1(t)
+  =
+  -\lambda\,{}_0 I_t^\mu x_1(t)
+  \to 0.
+\end{equation}
+因此滑动阶段不仅满足 Matignon 判据，也可以通过上述
+Lyapunov 泛函证明其渐近稳定性。
+
+\section{采用饱和函数时的最终有界性}
+
+若采用 \eqref{eq:control-sat}，当 $|s|>\phi$ 时，稳定性推导与符号函数情形一致：
+\begin{equation}
+  \dot V_s\le -k s^2-(\rho-\bar d)|s|.
+\end{equation}
+当 $|s|\le \phi$ 时，有
+\begin{equation}
+  \dot{s}
+  =
+  -\left(k+\frac{\rho}{\phi}\right)s+d(t).
+\end{equation}
+因此边界层内的滑模变量满足最终有界估计
+\begin{equation}
+  |s(t)|
+  \le
+  \frac{\bar d}{k+\rho/\phi}
+  \quad \text{当 } t \text{ 足够大时}.
+\end{equation}
+可见，较小的 $\phi$、较大的 $k$ 或 $\rho$ 可以减小稳态边界，但过大的 $\rho$ 会增强控制输入的高频变化，因此工程实现中需要在鲁棒性和抖振之间折中。
+
+\section{数值参数案例}
+
+取一组参数
+\begin{equation}
+  \alpha=0.6,\qquad
+  \lambda=2,\qquad
+  k=3,\qquad
+  \bar d=0.2,\qquad
+  \rho=0.5.
+\end{equation}
+由于 $\rho=0.5>\bar d=0.2$，到达条件成立。分数阶滑模面为
+\begin{equation}
+  s=x_2+2\,{}_0 I_t^{0.4}x_1.
+\end{equation}
+理想符号控制律为
+\begin{equation}
+  u
+  =
+  -2\,{}_0^{\mathrm{RL}}D_t^{0.6}x_1
+  -3s
+  -0.5\,\sgn(s).
+\end{equation}
+若初始条件使得 $s(0)=1$，则有限时间到达上界为
+\begin{equation}
+  T_r
+  \le
+  \frac{1}{0.5-0.2}
+  =
+  3.33\ \mathrm{s}.
+\end{equation}
+滑动阶段的特征方程为
+\begin{equation}
+  p^{1.4}+2=0.
+\end{equation}
+等效标量分数阶系统为 ${}_0^{\mathrm{C}}D_t^{1.4}x_1=-2x_1$，其系统特征值为 $\mu=-2$。
+由于
+\begin{equation}
+  |\arg(-2)|=\pi>0.7\pi=\frac{1.4\pi}{2},
+\end{equation}
+满足 Matignon 稳定性条件，因此滑动阶段稳定。
+
+\section{结论}
+
+本案例为双积分系统构造了分数阶滑模面
+\[
+  s=x_2+\lambda\,{}_0 I_t^{1-\alpha}x_1,
+\]
+并通过控制律抵消分数阶项，使滑模变量满足一阶鲁棒到达动态。Lyapunov 分析证明了当 $\rho>\bar d$ 时滑模面有限时间可达；进入滑模面后，系统满足阶次 $\beta=2-\alpha$ 的稳定分数阶动力学，因此状态收敛到原点。若用饱和函数替代符号函数，则系统不再严格到达 $s=0$，但可保证滑模变量最终有界。
+
+\end{document}
