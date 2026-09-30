@@ -10,7 +10,8 @@ set(groot, 'DefaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'DefaultLegendInterpreter', 'latex');
 
 %% Load data
-datadir = '/tmp/sim_results';
+scriptdir = fileparts(mfilename('fullpath'));
+datadir = fullfile(scriptdir, 'out');
 S = load(fullfile(datadir, 'sim_data.mat'));
 t = S.t; err = S.err; derr = S.derr; tau_h = S.tau_h;
 qd = S.qd; dqd = S.dqd; ddqd = S.ddqd;

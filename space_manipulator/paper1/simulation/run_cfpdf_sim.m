@@ -195,7 +195,9 @@ fprintf('  max||e||_2  = %.2e rad\n', max(err_norm(idx6:end)));
 fprintf('  max||de||_2 = %.2e rad/s\n', max(derr_norm(idx6:end)));
 
 %% 8. 保存数据
-outdir = '/tmp/sim_results';
+%% 8. 保存数据到 out/ 目录
+scriptdir = fileparts(mfilename('fullpath'));
+outdir = fullfile(scriptdir, 'out');
 mkdir(outdir);
 save(fullfile(outdir, 'sim_data.mat'), ...
     't', 'err', 'derr', 'tau_h', 'qd', 'dqd', 'ddqd', ...
