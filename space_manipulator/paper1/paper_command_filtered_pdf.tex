@@ -449,24 +449,49 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \begin{proof}
 以下使用局部时间 $\vth=t-T_o$．
 
-\textbf{第一步（$\vi_2$ 归零）}取 Lyapunov 函数 $V_2=\frac12\vi_2^2$．沿式~\eqref{eq:ups2_dot} 求导，由 $|\Delta_d|\le\rho$ 得
-\begin{equation}
-  \dot V_2\le-\frac{a}{1-\tau_2}V_2(\vth)-\frac{K_2(\vth)}{1-\tau_2}
-  V_2^{\tau_2}(\vth)V_2^{1-\tau_2}(\vth-h) .
-\end{equation}
-由 $K_2(\vth)=K_{(a,h)}(\vth)$ 与引理~2，得 $V_2(\vth)=0,\ \forall\vth\ge 2h$，即 $\vi_2(t)=0,\ \forall t\ge T_o+2h$．
+\textbf{第一步（$\vi_2$ 归零）}取 Lyapunov 函数 $V_2=\frac12\vi_2^2$。沿式~\eqref{eq:ups2_dot} 求导：
+\begin{align}
+  \dot V_2 &= \vi_2\dot\vi_2 \notag\\
+  &= \vi_2\Big[-\frac{a}{2(1-\tau_2)}\vi_2-\rho\,\sign(\vi_2)\\
+  &\qquad -\frac{K_2(\vth)}{2(1-\tau_2)}\,\sig^{2\tau_2-1}(\vi_2)\,
+      \big|\vi_2(\vth-h)\big|^{2(1-\tau_2)}+\Delta_d\Big] \notag\\
+  &= -\frac{a}{2(1-\tau_2)}\vi_2^2-\rho|\vi_2| -\frac{K_2(\vth)}{2(1-\tau_2)}|\vi_2|^{2\tau_2}
+    \big|\vi_2(\vth-h)\big|^{2(1-\tau_2)}+\vi_2\Delta_d 。\label{eq:proof_V2_expand}
+\end{align}
 
-\textbf{第二步（$\vi_1$ 归零）}当 $\vth\ge 2h$ 时 $\vi_2=0$，式~\eqref{eq:ups1_dot} 化为
-\begin{equation}
-  \dot\vi_1(\vth)=-a\vi_1(\vth)-K_1(\vth)\,\vi_1(\vth-h),\qquad \vth\ge 2h .
-\end{equation}
-作变量代换 $\kappa=\vth-2h\ge0$ 与 $\sigma(\kappa)=\vi_1(\kappa+2h)$，由式~\eqref{eq:K1} 得 $K_1(\kappa+2h)=K_{(a,h)}(\kappa)$，故
-\begin{equation}
-  \dot\sigma(\kappa)=-a\sigma(\kappa)-K_{(a,h)}(\kappa)\sigma(\kappa-h),\qquad \kappa\ge 0 .
-\end{equation}
-由引理~1 得 $\sigma(\kappa)=0,\ \forall\kappa\ge 2h$，即 $\vi_1(\vth)=0,\ \forall\vth\ge 4h$．故 $\vi_1(t)=0,\ \forall t\ge T_o+4h$．
+利用扰动上界 $|\Delta_d|\le\rho$ 处理最后一项：$\vi_2\Delta_d\le|\vi_2||\Delta_d|\le\rho|\vi_2|$，代入式~\eqref{eq:proof_V2_expand} 后 $\rho|\vi_2|$ 正负相消：
+\begin{align}
+  \dot V_2 &\le -\frac{a}{2(1-\tau_2)}\vi_2^2 -\frac{K_2(\vth)}{2(1-\tau_2)}|\vi_2|^{2\tau_2}
+    \big|\vi_2(\vth-h)\big|^{2(1-\tau_2)} 。\label{eq:proof_V2_cancel}
+\end{align}
 
-\textbf{第三步（预设时间性质）}对任意满足 $|\Delta_d|\le\rho$ 的扰动，$\vi_2$ 在 $2h$ 内、$\vi_1$ 在 $4h$ 内归零，因而收敛时间上界 $T_s=4h$ 与初始条件无关，并由 $h=T_s/4$ 直接给定．需要指出的是，该结论针对补偿误差系统；实际误差还受到滤波器状态、边界层近似和模型残差的影响．∎
+将 $|\vi_2|$ 用 $V_2$ 表示：$\vi_2^2=2V_2$，$|\vi_2|^{2\tau_2}=(2V_2)^{\tau_2}$，$|\vi_2(\vth-h)|^{2(1-\tau_2)}=(2V_2(\vth-h))^{1-\tau_2}$，代入式~\eqref{eq:proof_V2_cancel}：
+\begin{align}
+  \dot V_2 &\le -\frac{a}{2(1-\tau_2)}\cdot 2V_2(\vth)\\
+  &\qquad -\frac{K_2(\vth)}{2(1-\tau_2)}\cdot 2^{\tau_2}\cdot 2^{1-\tau_2}
+    V_2^{\tau_2}(\vth)V_2^{1-\tau_2}(\vth-h) \notag\\
+  &= -\frac{a}{1-\tau_2}V_2(\vth)-\frac{K_2(\vth)}{1-\tau_2}
+    V_2^{\tau_2}(\vth)V_2^{1-\tau_2}(\vth-h) 。\label{eq:proof_V2_final}
+\end{align}
+
+式~\eqref{eq:proof_V2_final} 恰好满足引理~2 的 Lyapunov 不等式条件（$\tau=\tau_2$、$K_{(a,h)}(\vth)=K_2(\vth)$）。由引理~2 得 $V_2(\vth)=0$、$\forall\vth\ge 2h$，即 $\vi_2(t)=0$、$\forall t\ge T_o+2h$。
+
+\textbf{第二步（$\vi_1$ 归零）}当 $\vth\ge 2h$ 时 $\vi_2=0$，式~\eqref{eq:ups1_dot} 退化为不含 $\vi_2$ 耦合的纯 PDF 形式：
+\begin{equation}
+  \dot\vi_1(\vth)=-a\vi_1(\vth)-K_1(\vth)\,\vi_1(\vth-h),
+  \qquad \vth\ge 2h 。\label{eq:proof_v1_reduced}
+\end{equation}
+
+由于 $K_1(\vth)$ 在 $[0,2h]$ 内为零（式~\eqref{eq:K1}），此时 PDF 延迟项恰好开始生效。作变量代换将时间平移至 PDF 的启动时刻：令 $\kappa=\vth-2h\ge0$，$\sigma(\kappa)=\vi_1(\kappa+2h)$。由式~\eqref{eq:K1} 得 $K_1(\kappa+2h)=K_{(a,h)}(\kappa)$，代入式~\eqref{eq:proof_v1_reduced}：
+\begin{align}
+  \dot\sigma(\kappa) &= \dot\vi_1(\kappa+2h) \notag\\
+  &= -a\vi_1(\kappa+2h)-K_1(\kappa+2h)\,\vi_1(\kappa+2h-h) \notag\\
+  &= -a\sigma(\kappa)-K_{(a,h)}(\kappa)\,\sigma(\kappa-h), \qquad \kappa\ge 0 。\label{eq:proof_sigma}
+\end{align}
+
+式~\eqref{eq:proof_sigma} 正是引理~1 所考虑的标量 PDF 系统。由引理~1 得 $\sigma(\kappa)=0$、$\forall\kappa\ge 2h$，即 $\vi_1(\vth)=0$、$\forall\vth\ge 4h$。故 $\vi_1(t)=0$、$\forall t\ge T_o+4h$。
+
+\textbf{第三步（预设时间性质）}综合前两步，$\vi_2$ 在 $T_o+2h$ 内、$\vi_1$ 在 $T_o+4h$ 内归零。收敛时间上界 $T_s=4h$ 由设计参数 $h=T_s/4$ 直接给定，与初始条件无关，且对任意满足 $|\Delta_d|\le\rho$ 的有界匹配扰动均成立。需要指出的是，该结论针对补偿误差系统；实际跟踪误差还受到滤波器动态、边界层近似和模型残差的影响，其收敛性由推论~1 和推论~2 进一步刻画。∎
 \end{proof}
 
 % \subsection{讨论}
