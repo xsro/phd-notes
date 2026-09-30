@@ -347,11 +347,11 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \begin{equation}\label{eq:filter}
   \dot\alpha_1^c=-\omega(\alpha_1^c-\alpha_1),\qquad \alpha_1^c(T_o)=\alpha_1(T_o),
 \end{equation}
-其中 $\omega>0$ 为滤波器带宽．滤波器输出 $\alpha_1^c$ 及其导数 $\dot\alpha_1^c$ 直接用于后续设计，无需解析求导 $\alpha_1$．记滤波误差 $\eta=\alpha_1^c-\alpha_1$．该一阶指令滤波器与Farrell等\cite{farrell2009}提出的指令滤波反步结构一致．
+其中 $\omega>0$ 为滤波器带宽．滤波器输出 $\alpha_1^c$ 及其导数 $\dot\alpha_1^c$ 直接用于后续设计，无需解析求导 $\alpha_1$．记滤波误差 $\eta=\alpha_1^c-\alpha_1$．该一阶指令滤波器与Farrell等\cite{farrell2009}提出的指令滤波反步结构一致。
 
 % \subsubsection{步骤 2（速度误差子通道）}
 
-定义 $z_2=\dot e-\alpha_1^c$ 及补偿误差 $\vi_2=z_2$．设计辅助控制
+定义 $\vi_2=z_2=\dot e-\alpha_1^c$。设计辅助控制
 \begin{equation}\label{eq:nu}
   \nu=\dot\alpha_1^c-\frac{a}{2(1-\tau_2)}\vi_2-\rho\,\sign(\vi_2)
       -\frac{K_2(\vth)}{2(1-\tau_2)}\,\sig^{2\tau_2-1}(\vi_2)\,

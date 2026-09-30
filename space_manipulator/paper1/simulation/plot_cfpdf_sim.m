@@ -100,7 +100,7 @@ ylabel("$\tau_i$ [N m]");
 title('Control torque');
 legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
        'Location', 'eastoutside', 'FontSize', 7);
-xlim([0 Tf]);
+xlim([0 2]);
 
 % Save
 print(gcf, fullfile(datadir, 'joint_tracking_error_torque_summary'), '-dpng', '-r200');
