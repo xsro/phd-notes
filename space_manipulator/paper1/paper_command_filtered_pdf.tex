@@ -111,13 +111,13 @@
 
 自由漂浮空间机械臂在执行在轨捕获任务时，基座不直接施加控制力和力矩，机械臂关节运动会通过系统动量守恒关系诱导基座位姿变化，进而影响末端执行器的运动．其动力学具有强非线性、强耦合和动态奇异等特征，此外还受到模型参数不确定、未知时变扰动和执行器误差的影响\cite{yanyuxin2025}．因此，在基座不受控条件下实现高精度、收敛时间可预先指定的轨迹跟踪，具有重要的理论与工程意义．
 
-\subsection{自由漂浮空间机械臂建模与控制}
+% \subsection{自由漂浮空间机械臂建模与控制}
 
 自由漂浮模式与自由飞行模式（基座可主动控制）有本质区别——前者的基座完全不受控，末端运动由关节运动通过动量守恒间接驱动，因而面临更为复杂的非完整约束．Umetani 与 Yoshida\cite{umetani1989} 提出广义雅可比矩阵（generalized Jacobian matrix, GJM）刻画自由漂浮机械臂末端速度与关节速度之间的关系，为速度级运动控制奠定了基础．Vafa 与 Dubowsky\cite{vafa1990} 的虚拟机械臂方法从动量守恒角度系统刻画了运动学与动力学耦合．Papadopoulos 与 Dubowsky\cite{papadopoulos1993} 揭示了由动力学耦合引起的动态奇异问题，指出在自由漂浮模式下即使关节构型远离运动学奇异，系统仍可能失去可控性．针对上述挑战，后续研究从轨迹规划、约束处理与鲁棒跟踪等多个方向展开．
 
 在轨迹规划方面，Wang 等\cite{wang2015} 利用粒子群优化在关节限位和动力学奇异规避条件下生成最优轨迹．在鲁棒跟踪控制方面，宁昕和武耀发\cite{ning2019} 将扩展状态空间模型预测控制（MPC）应用于自由漂浮空间机器人，实现了对期望轨迹的约束跟踪．Yu 等\cite{yu2022} 将时延估计与反作用零空间规划相结合，以自适应滑模控制削弱对精确动力学模型的依赖．Li 等\cite{li2025} 提出了具有预设性能约束和执行器故障容忍能力的固定时间控制方案．Xu 等\cite{xu2024} 将问题推广至 SE(3) 位姿跟踪，利用几何力学框架实现自由飞行空间机器人的预设时间位姿控制．在非线性耦合补偿方面，计算力矩法是机器人学中经典的线性化手段\cite{krstic1995,spong2006}，但依赖模型精度，因而常与扰动观测器配合使用．严宇新\cite{yanyuxin2025} 在其博士论文中给出了完整的等效关节空间动力学推导，并构造了“扰动观测 $\to$ 动力学补偿 $\to$ 误差线性化 $\to$ 周期延迟反馈”的控制架构．
 
-\subsection{有限时间、固定时间与预设时间控制}
+% \subsection{有限时间、固定时间与预设时间控制}
 
 非线性系统的有限时间收敛问题在控制理论中有着长久的研究历史．经典方法包括基于齐次性的有限时间控制\cite{bhat2000} 以及高阶滑模方法\cite{levant2003}，但此类方法的收敛时间上界依赖系统初始状态．Polyakov\cite{polyakov2012} 提出了固定时间稳定的概念，通过双幂次（或类幂次）反馈使收敛时间上界与初值无关，仅由设计参数决定．Polyakov、Efimov 与 Perruquetti\cite{polyakov2015} 进一步采用隐式 Lyapunov 函数方法统一了有限时间与固定时间稳定性的分析框架．连续有限/固定时间调节器\cite{basin2017}、固定时间一致性协议等后续工作将这一思想推广至更广泛的系统类．
 
@@ -125,15 +125,15 @@
 
 Zhou、Michiels 与 Chen\cite{zhou2022} 提出了一类全新的预设时间镇定范式——光滑周期延迟反馈（smooth periodic delayed feedback, PDF）．PDF 方法的核心理念是利用周期延迟系统的有限维单周期状态转移矩阵（即单值矩阵）的零化条件来实现固定时间镇定，而非依赖于时变高增益的奇异构造．PDF 的增益函数可选取为连续、连续可微甚至任意光滑的函数，全程有界，从根本上避免了时变增益奇异问题．该文证明了对可控线性时滞系统，当预设时间 $T\ge 2\tau$（$\tau$ 为输入延迟）时，基于预测器的 PDF 可解；当 $T\ge 3\tau$ 时可解为不含分布式延迟的 PDF．Ding、Zhou、Zhang 与 Michiels\cite{ding2024} 进一步提出了基于 Lyapunov 的强预设时间镇定判据，利用幂分配技巧将 PDF 通过反步法推广到严格反馈非线性系统，且控制项关于当前与延迟状态线性增长、对一类加性扰动保持固定时间稳定性．
 
-\subsection{指令滤波反步法}
+% \subsection{指令滤波反步法}
 
 Krstic 等\cite{krstic1995} 系统建立了非线性反步设计法，为一大类严格反馈系统提供了递归式 Lyapunov 镇定方法．但经典反步法需要逐级计算虚拟控制信号的解析导数，当系统相对阶升高时会出现“微分爆炸”问题．Swaroop 等\cite{swaroop2000} 率先引入动态面控制（dynamic surface control, DSC），以一阶低通滤波器替代虚拟控制的解析求导，有效解决了微分爆炸，但滤波误差无法被补偿，需假设其有界．Farrell 等\cite{farrell2009} 与 Dong 等\cite{dong2013} 在此基础上提出了指令滤波反步法（command filtered backstepping），不仅以指令滤波器生成虚拟控制及其导数的替代信号，还构造了误差补偿系统以抵消滤波误差的影响，从而在保留 Lyapunov 理论严格性的同时显著简化了控制器实现．Yu 等\cite{yu2015} 将指令滤波反步法推广至含输入饱和的非线性系统．Yu 等\cite{yu2018} 进一步结合有限时间 Lyapunov 判据提出了有限时间指令滤波反步法．针对全状态约束问题，Yu 等\cite{yu2019} 将障碍 Lyapunov 函数引入该框架．
 
-\subsection{扰动观测技术}
+% \subsection{扰动观测技术}
 
 扰动观测是实现模型不确定性和外部扰动补偿的重要途径．经典方法包括非线性扰动观测器（nonlinear disturbance observer, NDO）\cite{chen2000}、扩张状态观测器（extended state observer, ESO）\cite{han2009}、滑模扰动观测器\cite{shtessel2014} 与时延估计（time delay estimation, TDE）等．Chen 等\cite{chen2016} 与 Li 等\cite{li2014} 对基于扰动观测器的控制方法进行了系统性综述．近年来，预设时间扰动观测器（prescribed-time disturbance observer, PTDO）成为新的研究热点——通过在观测器中显式嵌入时间基函数，使扰动可在指定时刻精确重构．Jiang 等\cite{jiang2024} 提出的 PTDO 实现了多智能体系统的全分布式预设时间包含控制．Song等\cite{song2017}提出的预设时间范式与Holloway和Krstic\cite{holloway2019}将其推广至输出反馈扰动重构的思路，为PTDO的设计奠定了理论基础．
 
-\subsection{本文工作与贡献}
+% \subsection{本文工作与贡献}
 
 本文的主要贡献概括如下：其一，针对自由漂浮空间机械臂的等效关节动力学，建立扰动重构、动力学补偿与延迟反馈递阶设计之间的统一闭环框架．其二，利用指令滤波器替代虚拟控制的显式求导，避免时变延迟增益及其高阶导数带来的实现负担，并通过补偿动态保留可验证的误差结构．其三，给出位置、速度误差通道的顺序收敛分析，明确区分理想连续控制下补偿误差的预设时间归零与采用边界层近似后实际跟踪误差的实用收敛性质．其四，结合七自由度数值算例，考察预设时间、扰动抑制和控制输入平滑性之间的关系．
 
@@ -296,6 +296,10 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \hat d(t)=d(t),\qquad \forall t\ge T_o .
 \end{equation}
 
+\begin{remark}
+本文在扰动观测环节采用基于时变规约函数的PTDO结构，而在控制环节采用PDF，两种预设时间技术各有侧重．PDF虽能避免时变高增益奇异，但其收敛时刻由延迟$h$唯一确定（$2h$），若将PDF同时用于观测器，则观测器与控制器各引入一组延迟缓存，系统时序变为双延迟耦合，且预设观测时刻$T_o$受$h$的离散约束、不够灵活．PTDO通过调节函数$\bar\xi(t)$可直接指定任意$T_o$，与控制器时序解耦便利．此外，观测器面对的核心困难是有界扰动导致稳态误差，而非高增益奇异——$\bar\xi(t)$的导数有界且无需反复微分，在观测端不存在数值奇异问题．因此，本文采用PTDO+PDF的混合方案，以简洁的观测器结构实现扰动重构，以PDF在控制端实现精确的预设时间镇定．
+\end{remark}
+
 \subsection{动力学补偿与误差线性化}
 
 采用计算力矩补偿
@@ -321,7 +325,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 取预设时间 $T_s>0$，定义 $h=T_s/4$．PDF 控制器在 $t=T_o$ 起以局部时间 $\vth=t-T_o$ 运行．设 $a>0$，$\tau_2\in(1/2,1)$ 为设计参数．
 
-\subsubsection{步骤 1（位置误差子通道）}
+% \subsubsection{步骤 1（位置误差子通道）}
 
 取跟踪误差 $z_1=e$（即 $x_1$）．构造误差补偿信号 $\xi_1$（见第~\ref{sec:comp} 节）与补偿误差 $\vi_1=z_1-\xi_1$．设计虚拟控制
 \begin{equation}\label{eq:alpha1}
@@ -337,15 +341,15 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \end{cases}
 \end{equation}
 
-\subsubsection{指令滤波器}
+% \subsubsection{指令滤波器}
 
 将虚拟控制 $\alpha_1$ 送入一阶指令滤波器
 \begin{equation}\label{eq:filter}
   \dot\alpha_1^c=-\omega(\alpha_1^c-\alpha_1),\qquad \alpha_1^c(T_o)=\alpha_1(T_o),
 \end{equation}
-其中 $\omega>0$ 为滤波器带宽．滤波器输出 $\alpha_1^c$ 及其导数 $\dot\alpha_1^c$ 直接用于后续设计，无需解析求导 $\alpha_1$．记滤波误差 $\eta=\alpha_1^c-\alpha_1$．
+其中 $\omega>0$ 为滤波器带宽．滤波器输出 $\alpha_1^c$ 及其导数 $\dot\alpha_1^c$ 直接用于后续设计，无需解析求导 $\alpha_1$．记滤波误差 $\eta=\alpha_1^c-\alpha_1$．该一阶指令滤波器与Farrell等\cite{farrell2009}提出的指令滤波反步结构一致．
 
-\subsubsection{步骤 2（速度误差子通道）}
+% \subsubsection{步骤 2（速度误差子通道）}
 
 定义 $z_2=x_2-\alpha_1^c$．由 $\xi_2\equiv0$（见第~\ref{sec:comp} 节）得补偿误差 $\vi_2=z_2$．设计辅助控制
 \begin{equation}\label{eq:nu}
@@ -362,7 +366,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \end{cases}
 \end{equation}
 
-\subsubsection{最终控制律}
+% \subsubsection{最终控制律}
 
 结合式~\eqref{eq:tau_comp} 与 $v=\ddot q_d+\nu$，关节力矩控制律为
 \begin{equation}\label{eq:tau_final}
@@ -387,24 +391,47 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 由 $\xi_2(T_o)=0$ 与式~\eqref{eq:xi2} 得 $\xi_2(\vth)\equiv0$，故 $\vi_2=z_2$．
 
-\subsection{实现所需信号}
-
-控制律~\eqref{eq:tau_final}、观测器~\eqref{eq:ptdo} 与补偿系统~\eqref{eq:xi1}--\eqref{eq:xi2} 的实现仅依赖两个物理测量量：关节位置 $q$ 与关节速度 $\dot q$．其余信号均由参考轨迹、名义模型、设计参数与控制器内部状态在线生成．具体而言，传感器测量量为 $q$（编码器或旋变）和 $\dot q$（测速机或编码器差分）．已知给定量包括 $q_d(t),\dot q_d(t),\ddot q_d(t)$、名义模型 $M_e(q),C_e(q,\dot q)$ 以及设计参数．内部状态包括 $p_1,p_2$（PTDO）、$\alpha_1^c,\dot\alpha_1^c$（滤波器）和 $\xi_1$（补偿器）．历史缓存需维护 $\vi_1(\vth-h)$ 与 $\vi_2(\vth-h)$ 的长度为 $h$ 的环形缓冲．
-
+\begin{remark}
+  控制律~\eqref{eq:tau_final}、观测器~\eqref{eq:ptdo} 与补偿系统~\eqref{eq:xi1}--\eqref{eq:xi2} 的实现仅依赖两个物理测量量：关节位置 $q$ 与关节速度 $\dot q$．其余信号均由参考轨迹、名义模型、设计参数与控制器内部状态在线生成．具体而言，传感器测量量为 $q$（编码器或旋变）和 $\dot q$（测速机或编码器差分）．已知给定量包括 $q_d(t),\dot q_d(t),\ddot q_d(t)$、名义模型 $M_e(q),C_e(q,\dot q)$ 以及设计参数．内部状态包括 $p_1,p_2$（PTDO）、$\alpha_1^c,\dot\alpha_1^c$（滤波器）和 $\xi_1$（补偿器）．历史缓存需维护 $\vi_1(\vth-h)$ 与 $\vi_2(\vth-h)$ 的长度为 $h$ 的环形缓冲。
+\end{remark}
 
 %%
 %% 4. 稳定性分析
 %%
 \section{稳定性分析}
 
-\subsection{补偿误差动态}
+% \subsection{补偿误差动态}
 
 由式~\eqref{eq:double_int}、\eqref{eq:alpha1}、\eqref{eq:filter}、\eqref{eq:xi1}--\eqref{eq:xi2} 推导补偿误差 $\vi_1,\vi_2$ 的闭环动态．
+
+令 $z_1=e$, $z_2=\dot e-\alpha_1^c$, 记滤波误差 $\eta=\alpha_1^c-\alpha_1$。由 $\xi_2\equiv0$（式~\eqref{eq:xi2}）得 $\vi_2=z_2$。以下逐步展开推导过程。
+
+\noindent\textbf{第一步（$\dot\vi_1$ 展开）。}由 $\vi_1=z_1-\xi_1$ 及 $x_2=z_2+\alpha_1^c$, 得
+\begin{align}
+  \dot\vi_1 &= \dot x_1-\dot\xi_1 \notag\\
+  &= x_2-(-a\xi_1+\xi_2+\eta) \notag\\
+  &= (z_2+\alpha_1^c)+a\xi_1-\eta 。 \label{eq:deriv_v1_inter}
+\end{align}
+
+\noindent\textbf{第二步（滤波误差抵消）。}将 $\alpha_1^c=\alpha_1+\eta$ 及虚拟控制~\eqref{eq:alpha1} 代入式~\eqref{eq:deriv_v1_inter}：
+\begin{align}
+  \dot\vi_1 &= z_2+(\alpha_1+\eta)+a\xi_1-\eta \notag\\
+  &= z_2+\big[-a z_1-K_1(\vth)\vi_1(\vth-h)\big]+a\xi_1 \notag\\
+  &= z_2-a(\vi_1+\xi_1)-K_1(\vth)\vi_1(\vth-h)+a\xi_1 \notag\\
+  &= -a\vi_1-K_1(\vth)\vi_1(\vth-h)+\vi_2 。\label{eq:deriv_v1_final}
+\end{align}
+其中 $+a\xi_1$ 与 $-a\xi_1$ 正负相消，滤波误差 $\eta$ 也完全消去。整理得
 
 \textbf{位置误差通道：}
 \begin{equation}\label{eq:ups1_dot}
   \dot\vi_1=-a\vi_1-K_1(\vth)\,\vi_1(\vth-h)+\vi_2 .
 \end{equation}
+
+\noindent\textbf{第三步（$\dot\vi_2$ 展开）。}由 $\vi_2=\dot e-\alpha_1^c$ 及 $\ddot e=\nu+\Delta_d$,
+\begin{align}
+  \dot\vi_2 &= \ddot e-\dot\alpha_1^c = \nu+\Delta_d-\dot\alpha_1^c 。 \label{eq:deriv_v2_inter}
+\end{align}
+将辅助控制~\eqref{eq:nu} 代入式~\eqref{eq:deriv_v2_inter}，$\dot\alpha_1^c$ 正负相消，得到
 
 \textbf{速度误差通道：}
 \begin{equation}\label{eq:ups2_dot}
@@ -414,7 +441,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
     \big|\vi_2(\vth-h)\big|^{2(1-\tau_2)}+\Delta_d .
 \end{equation}
 
-滤波误差 $\eta$ 已被完全抵消，且式~\eqref{eq:ups2_dot} 不含 $\vi_1$（单向耦合），故可采用顺序收敛分析．
+\noindent\textbf{第四步（结构分析）。}式~\eqref{eq:ups2_dot} 不含 $\vi_1$, 且 $\vi_2$ 通过耦合项 $+\vi_2$ 单向驱动式~\eqref{eq:ups1_dot}。因此 $\vi_2$ 的收敛独立于 $\vi_1$, 可在分析中先行完成。滤波误差 $\eta$ 被补偿系统完全抵消，未出现在最终闭环中。这两个性质共同保证了顺序收敛分析的可行性。
 
 \subsection{主定理与证明}
 
@@ -445,7 +472,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \textbf{第三步（预设时间性质）}对任意满足 $|\Delta_d|\le\rho$ 的扰动，$\vi_2$ 在 $2h$ 内、$\vi_1$ 在 $4h$ 内归零，因而收敛时间上界 $T_s=4h$ 与初始条件无关，并由 $h=T_s/4$ 直接给定．需要指出的是，该结论针对补偿误差系统；实际误差还受到滤波器状态、边界层近似和模型残差的影响．∎
 \end{proof}
 
-\subsection{关于跟踪误差的推论}
+\subsection{讨论}
 
 \begin{corollary}\label{cor:1}
 在定理~1 条件下，$z_2(t)=\vi_2(t)$ 且 $z_1(t)=\vi_1(t)+\xi_1(t)$．其中 $\xi_1$ 满足 $\dot\xi_1=-a\xi_1+\eta$，滤波误差 $\eta=\alpha_1^c-\alpha_1$ 满足 $\dot\eta=-\omega\eta-\dot\alpha_1$．实际速度误差为 $\dot e=z_2+\alpha_1^c$，因此 $z_2$ 的预设时间归零不等价于 $\dot e$ 在同一时刻归零．
@@ -455,11 +482,6 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 若理想补偿误差已在 $T_o+4h$ 后归零，且 $\alpha_1$ 及其导数有界，则实际跟踪误差的剩余动态由滤波器和补偿器共同决定．特别地，若稳态阶段 $\alpha_1$ 及 $\dot\alpha_1$ 按指数衰减，则 $\eta$、$\xi_1$ 以及实际跟踪误差均按指数衰减；其速率由 $a$、$\omega$ 与虚拟控制自身的衰减率共同决定，而不能仅由 $\min(a,\omega-a)$ 唯一确定．采用 $\tanh(\vi_2/\varphi)$ 替代符号函数时，上述结论相应变为关于 $\varphi$ 和残余扰动界的实用稳定性结论．
 \end{corollary}
 
-
-%%
-%% 5. 鲁棒性与工程实现讨论
-%%
-\section{鲁棒性与工程实现讨论}
 
 \subsection{关于符号函数的抖振}
 
@@ -472,11 +494,6 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \subsection{关于参数选择}
 
 参数 $a>0$ 为基准线性阻尼，可加快首半周期衰减并保证实际跟踪误差收敛到零．$\tau_2\in(1/2,1)$ 为幂分配参数，控制对加性扰动的鲁棒性．$h=T_s/4$ 由预设时间唯一确定．$\omega>0$ 为指令滤波器带宽，越大则滤波误差越小，但噪声放大越明显．$\rho$ 为残余扰动上界，可由 PTDO 收敛后的观测误差界估计．
-
-\subsection{与严宇新原始 PDF 控制的关系}
-
-严宇新原始控制律为 $\nu=K_0z(t)-K_c(t)z(t-h)$，其中 $K_c(t)$ 为 Gramian 型 PDF 增益，直接作用于误差状态 $z=[e^\T\ \dot e^\T]^\T$，一步完成全状态零化（$T_{\text{tot}}=T_o+2h$）．本文方法将 PDF 增益拆分为两级（位置级 $K_1$ 与速度级 $K_2$），并用指令滤波替代虚拟控制导数．代价是收敛时间由 $2h$ 增至 $4h$，收益包括：避免 $\dot K_1(t)$（含 $R_h$ 的高阶导数）的解析计算；引入幂分配项 $\sig^{2\tau_2-1}(\cdot)$ 使速度通道对匹配扰动强固定时间稳定；结构上易于扩展抗饱和与状态约束．
-
 
 %%
 %% 6. 仿真验证

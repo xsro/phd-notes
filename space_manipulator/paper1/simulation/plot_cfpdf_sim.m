@@ -4,7 +4,7 @@
 
 clear; clc; close all;
 
-%% LaTeX interpreter (matching 严宇新 style)
+%% LaTeX interpreter
 set(groot, 'DefaultTextInterpreter', 'latex');
 set(groot, 'DefaultAxesTickLabelInterpreter', 'latex');
 set(groot, 'DefaultLegendInterpreter', 'latex');
@@ -115,7 +115,7 @@ plot(t, derr_norm, 'r--', 'LineWidth', 1.5);
 grid on;
 xlabel('$t$ [s]');
 ylabel('Norm');
-legend({'$\\|e\\|$', '$\\|\\dot e\\|$'}, 'Location', 'best');
+legend({'$\|e\|$', '$\|\dot e\|$'}, 'Location', 'best');
 title('Tracking error norms');
 xlim([0 Tf]);
 print(gcf, fullfile(datadir, 'error_norm'), '-dpng', '-r200');
@@ -127,12 +127,12 @@ figure('Name', 'Error norm (log)', 'Color', 'w', 'Position', [100, 100, 700, 500
 semilogy(t, err_norm + 1e-10, 'b', 'LineWidth', 1.5);
 hold on;
 semilogy(t, derr_norm + 1e-10, 'r--', 'LineWidth', 1.5);
-xline(To, 'k:', '$T_o$', 'LabelOrientation', 'horizontal', 'FontSize', 10);
-xline(To + Tsp, 'k--', '$T_o+T_s$', 'LabelOrientation', 'horizontal', 'FontSize', 10);
+xline(To, 'k:', '$T_o$', 'LabelOrientation', 'horizontal', 'FontSize', 10,"interpreter","latex");
+xline(To + Tsp, 'k--', '$T_o+T_s$', 'LabelOrientation', 'horizontal', 'FontSize', 10,"interpreter","latex");
 grid on;
 xlabel('$t$ [s]');
 ylabel('Norm');
-legend({'$\\|e\\|$', '$\\|\\dot e\\|$'}, 'Location', 'northeast');
+legend({'$\|e\|$', '$\|\dot e\|$'}, 'Location', 'northeast');
 title('Tracking error norms (log scale)');
 xlim([0 Tf]);
 print(gcf, fullfile(datadir, 'error_norm_log'), '-dpng', '-r200');
@@ -144,11 +144,12 @@ figure('Name', 'Control torque', 'Color', 'w', 'Position', [100, 100, 700, 400])
 plot(t, tau_h, 'LineWidth', 1.0);
 grid on;
 xlabel('$t$ [s]');
-ylabel('$\\tau_i$ [N m]');
+ylabel('$\tau_i$ [N m]');
 title('Control torque');
-legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
-       'Location', 'eastoutside', 'FontSize', 8);
+legend(arrayfun(@(i)sprintf("$\\tau_%d$", i), 1:n, 'UniformOutput', false), ...
+       'Location', 'northeast', 'FontSize', 8,"NumColumns",3);
 xlim([0 Tf]);
+xlim([0 1]);
 print(gcf, fullfile(datadir, 'control_torque'), '-dpng', '-r200');
 print(gcf, fullfile(datadir, 'control_torque'), '-dpdf');
 fprintf('Saved: control_torque.{png,pdf}\n');
@@ -226,12 +227,12 @@ for i = 2:size(nodes_initial,2)-1
     text(nodes_initial(1,i), nodes_initial(2,i), nodes_initial(3,i), ...
          sprintf('  J%d', i-1), 'FontSize', 8, 'Color', [0.10 0.60 0.10]);
 end
-text(nodes_initial(1,1), nodes_initial(2,1), nodes_initial(3,1), ...
-     '  Base(0)', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
-text(nodes_final(1,1), nodes_final(2,1), nodes_final(3,1), ...
-     '  Base(T)', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
-text(nodes_final(1,end), nodes_final(2,end), nodes_final(3,end), ...
-     '  EE', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
+% text(nodes_initial(1,1), nodes_initial(2,1), nodes_initial(3,1), ...
+%      '  Base(0)', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
+% text(nodes_final(1,1), nodes_final(2,1), nodes_final(3,1), ...
+%      '  Base(T)', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
+% text(nodes_final(1,end), nodes_final(2,end), nodes_final(3,end), ...
+%      '  EE', 'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
 grid on;
 axis equal;
 view(42, 24);
