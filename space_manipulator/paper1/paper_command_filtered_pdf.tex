@@ -131,7 +131,7 @@ Krstic 等\cite{krstic1995} 系统建立了非线性反步设计法，为一大�
 
 \subsection{扰动观测技术}
 
-扰动观测是实现模型不确定性和外部扰动补偿的重要途径．经典方法包括非线性扰动观测器（nonlinear disturbance observer, NDO）\cite{chen2000}、扩张状态观测器（extended state observer, ESO）\cite{han2009}、滑模扰动观测器\cite{shtessel2014} 与时延估计（time delay estimation, TDE）等．Chen 等\cite{chen2016} 与 Li 等\cite{li2014} 对基于扰动观测器的控制方法进行了系统性综述．近年来，预设时间扰动观测器（prescribed-time disturbance observer, PTDO）成为新的研究热点——通过在观测器中显式嵌入时间基函数，使扰动可在指定时刻精确重构．Jiang 等\cite{jiang2024} 提出的 PTDO 实现了多智能体系统的全分布式预设时间包含控制．严宇新\cite{yanyuxin2025} 将 PTDO 与计算力矩补偿相结合，为自由漂浮空间机械臂的精确动力学线性化提供了关键前提．
+扰动观测是实现模型不确定性和外部扰动补偿的重要途径．经典方法包括非线性扰动观测器（nonlinear disturbance observer, NDO）\cite{chen2000}、扩张状态观测器（extended state observer, ESO）\cite{han2009}、滑模扰动观测器\cite{shtessel2014} 与时延估计（time delay estimation, TDE）等．Chen 等\cite{chen2016} 与 Li 等\cite{li2014} 对基于扰动观测器的控制方法进行了系统性综述．近年来，预设时间扰动观测器（prescribed-time disturbance observer, PTDO）成为新的研究热点——通过在观测器中显式嵌入时间基函数，使扰动可在指定时刻精确重构．Jiang 等\cite{jiang2024} 提出的 PTDO 实现了多智能体系统的全分布式预设时间包含控制．Song等\cite{song2017}提出的预设时间范式与Holloway和Krstic\cite{holloway2019}将其推广至输出反馈扰动重构的思路，为PTDO的设计奠定了理论基础．
 
 \subsection{本文工作与贡献}
 
@@ -272,7 +272,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \end{cases}
 \end{equation}
 
-构造预设时间扰动观测器\cite{yanyuxin2025}
+构造预设时间扰动观测器\cite{song2017,holloway2019}
 \begin{equation}\label{eq:ptdo}
   \left\{
   \begin{aligned}
