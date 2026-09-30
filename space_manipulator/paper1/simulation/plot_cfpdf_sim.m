@@ -85,7 +85,7 @@ nexttile(9, [2 1]);
 plot(t, derr, 'LineWidth', 0.95);
 grid on;
 xlabel('$t$ [s]');
-ylabel('$\\dot e_i$ [rad/s]');
+ylabel('$\dot e_i$ [rad/s]');
 title('Velocity tracking error');
 legend(arrayfun(@(i)sprintf('$\\dot e_%d$', i), 1:n, 'UniformOutput', false), ...
        'Location', 'eastoutside', 'FontSize', 7);
@@ -96,7 +96,7 @@ nexttile(15, [3 1]);
 plot(t, tau_h, 'LineWidth', 0.95);
 grid on;
 xlabel('$t$ [s]');
-ylabel('$\\tau_i$ [N m]');
+ylabel("$\tau_i$ [N m]");
 title('Control torque');
 legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
        'Location', 'eastoutside', 'FontSize', 7);
@@ -287,7 +287,7 @@ for i = 1:n
     plot(t, dqd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
     grid on;
     xlabel('$t$ [s]');
-    ylabel(sprintf('$\\dot q_%d$', i));
+    ylabel(sprintf("$\\dot q_%d$", i));
     if i == 1
         legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
     end
