@@ -410,7 +410,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \begin{align}
   \dot\vi_1 &= \dot x_1-\dot\xi_1 \notag\\
   &= x_2-(-a\xi_1+\xi_2+\eta) \notag\\
-  &= (z_2+\alpha_1^c)+a\xi_1-\eta 。 \label{eq:deriv_v1_inter}
+  &= (z_2+\alpha_1^c)+a\xi_1-\eta . \label{eq:deriv_v1_inter}
 \end{align}
 
 \noindent\textbf{第二步（滤波误差抵消）。}将 $\alpha_1^c=\alpha_1+\eta$ 及虚拟控制~\eqref{eq:alpha1} 代入式~\eqref{eq:deriv_v1_inter}：
@@ -418,7 +418,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \dot\vi_1 &= z_2+(\alpha_1+\eta)+a\xi_1-\eta \notag\\
   &= z_2+\big[-a z_1-K_1(\vth)\vi_1(\vth-h)\big]+a\xi_1 \notag\\
   &= z_2-a(\vi_1+\xi_1)-K_1(\vth)\vi_1(\vth-h)+a\xi_1 \notag\\
-  &= -a\vi_1-K_1(\vth)\vi_1(\vth-h)+\vi_2 。\label{eq:deriv_v1_final}
+  &= -a\vi_1-K_1(\vth)\vi_1(\vth-h)+\vi_2 .\label{eq:deriv_v1_final}
 \end{align}
 其中 $+a\xi_1$ 与 $-a\xi_1$ 正负相消，滤波误差 $\eta$ 也完全消去。整理得
 
@@ -429,7 +429,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 \noindent\textbf{第三步（$\dot\vi_2$ 展开）。}由 $\vi_2=\dot e-\alpha_1^c$ 及 $\ddot e=\nu+\Delta_d$,
 \begin{align}
-  \dot\vi_2 &= \ddot e-\dot\alpha_1^c = \nu+\Delta_d-\dot\alpha_1^c 。 \label{eq:deriv_v2_inter}
+  \dot\vi_2 &= \ddot e-\dot\alpha_1^c = \nu+\Delta_d-\dot\alpha_1^c . \label{eq:deriv_v2_inter}
 \end{align}
 将辅助控制~\eqref{eq:nu} 代入式~\eqref{eq:deriv_v2_inter}，$\dot\alpha_1^c$ 正负相消，得到
 
