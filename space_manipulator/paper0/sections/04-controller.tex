@@ -57,7 +57,7 @@ u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
 \phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).
 \end{aligned}
 \]
-在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界且连续时间实现的条件下，观测误差 \(\chi-z_1\) 和 \(\Delta_a-z_2\) 可在 \(t=T_o\) 收敛到零。参数 \(T_o\) 和 \(T_c\) 决定观测收敛时间，但不宜选得过小；否则会带来较大的观测峰值和控制输入峰值。离散仿真或含执行器限幅时，观测误差通常表现为收敛到小邻域。
+在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界、连续时间实现且观测器满足相应理论条件时，观测误差可在设计时间 \(T_o\) 内收敛到零。该结论仅适用于连续时间理想观测器；在采样、量化、测量噪声和执行器限幅存在时，观测误差通常只能收敛到与采样步长、数值积分误差和未建模动态有关的小邻域。参数 \(T_o\) 和 \(T_c\) 不宜选得过小，否则可能带来较大的观测峰值和控制输入峰值。
 
 \subsection{动力学补偿与误差通道规范化}
 
@@ -132,12 +132,16 @@ A_c=A+BK_0
 \dot z(t)=A_cz(t)-BK_c(t)z(t-h).
 \label{eq:closed_delay_error}
 \end{equation}
-令 \(R_h(t)\) 为 \(2h\) 周期光滑函数，满足
+令 \(R_h(t)\) 为满足
+\[
+R_h(t+2h)=R_h(t)
+\]
+的 \(2h\) 周期光滑函数，并满足
 \[
 R_h(t)=0,\quad t\in[0,h],\qquad
 R_h(t)\ge0,\quad t\in[h,2h],
 \]
-且在 \([h,2h]\) 的某个子区间上正定。根据文献\cite{zhouFixedtimeStabilizationLinear2022}的构造，可定义
+且在 \([h,2h]\) 的某个具有非零测度的子区间上严格为正。本文采用标量函数情形。根据文献\cite{zhouFixedtimeStabilizationLinear2022}的构造，可定义
 \begin{equation}
 W_c(A_c,h)=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds,
 \label{eq:wc_matrix}
@@ -147,7 +151,7 @@ W_c(A_c,h)=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds,
 K_c(t)=R_h(t)B^\top e^{-A_c^\top t}W_c^{-1}(A_c,h)e^{A_c(h-t)}.
 \label{eq:kc_pdf}
 \end{equation}
-由于 \((A_c,B)\) 与 \((A,B)\) 同可控，且 \(R_h(t)\) 在后半周期内正定，\(W_c(A_c,h)\) 非奇异。将 \eqref{eq:kc_pdf} 代入 \eqref{eq:period_map} 可使闭环的单周期状态转移矩阵满足 \(\Delta(h)=0\)，从而得到固定时间零化性质。式 \eqref{eq:kc_pdf} 也说明 PDF 增益可通过离线积分或线性 Lyapunov 微分方程计算，在线控制只需读取当前误差和历史误差。
+由于 \((A_c,B)\) 与 \((A,B)\) 同可控，且 \(R_h(t)\) 在后半周期的一个非零测度子区间上严格为正，连续时间条件下 \(W_c(A_c,h)\) 为正定并可逆。将 \eqref{eq:kc_pdf} 代入 \eqref{eq:period_map} 可使闭环的单周期状态转移矩阵满足 \(\Delta(h)=0\)，从而得到单周期零化性质。该结论依赖精确的 Gramian 计算和连续时间延迟实现；数值积分、矩阵病态和采样误差会使实际闭环仅近似满足零化条件。式 \eqref{eq:kc_pdf} 也说明 PDF 增益可通过离线积分计算，在线控制只需读取当前误差和历史误差。
 
 结合式 \eqref{eq:computed_torque} 和式 \eqref{eq:pdf_error_input}，PDF 关节力矩控制律可写为
 \begin{equation}
@@ -168,10 +172,11 @@ C_e(q_m,\dot q_m)\dot q_m
 \label{eq:final_controller}
 \end{equation}
 
-需要注意，若观测器与 PDF 控制器同时从 \(t=0\) 启动，则 \(0\le t<T_o\) 内的观测误差会作为残余扰动进入误差系统，严格 \(2h\) 零化结论不再直接成立。为保持理论闭环清晰，可采用两阶段时序：先在 \(T_o\) 内完成扰动观测，随后以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益 \(K_c(\vartheta)\)。此时理想条件下总预设收敛时间为
+需要注意，若观测器与 PDF 控制器同时从 \(t=0\) 启动，则 \(0\le t<T_o\) 内的观测误差会作为残余扰动进入误差系统，严格 \(2h\) 零化结论不再直接成立。为保持理论闭环清晰，可采用两阶段时序：先在 \(T_o\) 内完成扰动观测，随后以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益 \(K_c(\vartheta)\)。此时理想连续时间条件下的总预设收敛时间上界为
 \[
 T_{\mathrm{tot}}=T_o+2h .
 \]
+在非理想实现中，该时间应理解为进入理论实际有界性分析的起始时间尺度，而非严格的数值归零时刻。
 
 % \subsection{实现说明与鲁棒项}
 
