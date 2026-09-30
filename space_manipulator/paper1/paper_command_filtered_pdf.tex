@@ -315,7 +315,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
   \ddot e=\nu .
 \end{equation}
 
-记 $x_1=e,\ x_2=\dot e$，则 $\dot x_1=x_2,\ \dot x_2=\nu$．式~\eqref{eq:double_int} 为二阶积分链，且关于各关节解耦．以下以标量形式给出设计，并对每个关节独立应用．
+式~\eqref{eq:double_int} 为二阶积分链，且关于各关节解耦．以下以标量形式给出设计，并对每个关节独立应用．
 
 \begin{remark}
 当存在观测误差或模型误差时，式~\eqref{eq:double_int} 应写作 $\ddot e=\nu+\Delta_d$，其中 $\Delta_d=M_e^{-1}(q)[d(t)-\hat d(t)]$ 为残余扰动，满足 $|\Delta_d|\le\rho$（$\rho$ 为已知或可估计的界）．
@@ -327,7 +327,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 % \subsubsection{步骤 1（位置误差子通道）}
 
-取跟踪误差 $z_1=e$（即 $x_1$）．构造误差补偿信号 $\xi_1$（见第~\ref{sec:comp} 节）与补偿误差 $\vi_1=z_1-\xi_1$．设计虚拟控制
+取跟踪误差 $z_1=e$．构造误差补偿信号 $\xi_1$（见第~\ref{sec:comp} 节）与补偿误差 $\vi_1=z_1-\xi_1$．设计虚拟控制
 \begin{equation}\label{eq:alpha1}
   \alpha_1=-a z_1-K_1(\vth)\,\vi_1(\vth-h),
 \end{equation}
@@ -351,7 +351,7 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 % \subsubsection{步骤 2（速度误差子通道）}
 
-定义 $z_2=x_2-\alpha_1^c$ 及补偿误差 $\vi_2=z_2$．设计辅助控制
+定义 $z_2=\dot e-\alpha_1^c$ 及补偿误差 $\vi_2=z_2$．设计辅助控制
 \begin{equation}\label{eq:nu}
   \nu=\dot\alpha_1^c-\frac{a}{2(1-\tau_2)}\vi_2-\rho\,\sign(\vi_2)
       -\frac{K_2(\vth)}{2(1-\tau_2)}\,\sig^{2\tau_2-1}(\vi_2)\,
@@ -403,10 +403,10 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 
 令 $z_1=e$, $z_2=\dot e-\alpha_1^c$ 及 $\vi_2=z_2$, 记滤波误差 $\eta=\alpha_1^c-\alpha_1$。以下逐步展开推导过程。
 
-\noindent\textbf{第一步（$\dot\vi_1$ 展开）。}由 $\vi_1=z_1-\xi_1$ 及 $x_2=z_2+\alpha_1^c$, 得
+\noindent\textbf{第一步（$\dot\vi_1$ 展开）。}由 $\vi_1=z_1-\xi_1$ 及 $\dot e=z_2+\alpha_1^c$, 得
 \begin{align}
-  \dot\vi_1 &= \dot x_1-\dot\xi_1 \notag\\
-  &= x_2-(-a\xi_1+\eta) \notag\\
+  \dot\vi_1 &= \dot e-\dot\xi_1 \notag\\
+  &= \dot e-(-a\xi_1+\eta) \notag\\
   &= (z_2+\alpha_1^c)+a\xi_1-\eta . \label{eq:deriv_v1_inter}
 \end{align}
 
