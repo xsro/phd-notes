@@ -1,0 +1,339 @@
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{amsthm}
+
+\geometry{left=2.6cm,right=2.6cm,top=2.6cm,bottom=2.6cm}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+\title{指令滤波在带扰动双积分系统中的作用：线性指令滤波与预设时间指令滤波}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文以带外部扰动的双积分系统为具体对象，分别采用线性指令滤波（Farrell 形式）和预设时间非线性指令滤波（Sui--Chen--Tong 形式）两种方案进行反步控制设计。通过系统建模、虚拟控制律构造、滤波误差补偿机制和收敛性分析的完整推导，对比阐明两类指令滤波在扰动抑制和暂态性能上的本质差异。分析表明：线性指令滤波依赖滤波器带宽参数选取，补偿误差可指数收敛且以 $O(1/\omega_n)$ 逼近标准反步解；预设时间指令滤波通过非线性耗散结构和 tanh 平滑机制，使补偿误差在设计者指定的预设时间内进入可调残差集，且可避免控制奇异和抖振问题。
+\end{abstract}
+
+\section{问题描述}
+
+考虑如下含外部扰动的双积分系统：
+\begin{equation}
+\label{eq:plant}
+\begin{aligned}
+\dot{x}_1 &= x_2, \\
+\dot{x}_2 &= u + d(t),
+\end{aligned}
+\end{equation}
+其中 $x_1, x_2 \in \mathbb{R}$ 为系统状态，$u \in \mathbb{R}$ 为控制输入，$d(t)$ 为外部有界扰动，满足 $|d(t)| \leq \bar{d}$，$\bar{d}$ 为已知正常数。控制目标：设计控制律 $u$，使输出 $x_1$ 跟踪期望参考信号 $y_r(t)$，其中 $y_r$ 和 $\dot{y}_r$ 连续有界。
+
+该系统是严格反馈系统的最简形式（$n=2$ 阶），既保留了反步法的核心递推结构，又因扰动存在而能充分展示指令滤波的误差补偿作用。高阶系统的结论可通过递归类推得到。
+
+\section{标准反步法（无指令滤波）}
+
+作为对照，先给出无指令滤波的标准反步法设计。定义跟踪误差：
+\begin{equation}
+e_1 = x_1 - y_r, \qquad e_2 = x_2 - \alpha_1,
+\end{equation}
+其中 $\alpha_1$ 为待设计的虚拟控制律。第一步：
+\begin{equation}
+\dot{e}_1 = x_2 - \dot{y}_r = e_2 + \alpha_1 - \dot{y}_r.
+\end{equation}
+取 $V_1 = \frac12 e_1^2$，设计
+\begin{equation}
+\alpha_1 = -k_1 e_1 + \dot{y}_r,
+\end{equation}
+得 $\dot{V}_1 = -k_1 e_1^2 + e_1 e_2$。第二步：
+\begin{equation}
+\dot{e}_2 = \dot{x}_2 - \dot{\alpha}_1 = u + d - \dot{\alpha}_1,
+\end{equation}
+其中
+\begin{equation}
+\dot{\alpha}_1 = -k_1(\dot{x}_1 - \dot{y}_r) + \ddot{y}_r = -k_1(x_2 - \dot{y}_r) + \ddot{y}_r.
+\end{equation}
+设计实际控制律：
+\begin{equation}
+u = -k_2 e_2 - e_1 - \hat{d}\operatorname{sgn}(e_2) + \dot{\alpha}_1,
+\end{equation}
+其中 $\hat{d}$ 为扰动上界 $\bar{d}$ 的估值。取 $V_2 = V_1 + \frac12 e_2^2 + \frac12 \tilde{d}^2$ 可实现闭环稳定。
+
+问题在于：当系统阶数升高时，$\dot{\alpha}_1$ 需解析计算且表达式快速膨胀，这就是所谓的``复杂性爆炸''（explosion of complexity）。指令滤波的核心作用正是用滤波器替代解析求导。
+
+\section{线性指令滤波方案（Farrell 形式）}
+
+\subsection{滤波器构造}
+
+采用二阶线性指令滤波器 \cite{Farrell2009CFB}：
+\begin{equation}
+\label{eq:linear_filter}
+\begin{aligned}
+\dot{z}_1 &= \omega_n z_2, \\
+\dot{z}_2 &= -2\zeta\omega_n z_2 - \omega_n(z_1 - \alpha_1),
+\end{aligned}
+\end{equation}
+其中 $\omega_n > 0$ 为自然频率，$\zeta \in (0,1]$ 为阻尼比。滤波输出定义为
+\begin{equation}
+x_{2,c} = z_1, \qquad \dot{x}_{2,c} = \omega_n z_2.
+\end{equation}
+$z_1$ 跟踪虚拟控制 $\alpha_1$，$\omega_n z_2$ 提供 $\dot{\alpha}_1$ 的估计。当 $\omega_n$ 充分大时，有 $x_{2,c} \approx \alpha_1$、$\dot{x}_{2,c} \approx \dot{\alpha}_1$。
+
+\subsection{含补偿信号的误差动力学}
+
+定义滤波后的跟踪误差：
+\begin{equation}
+\tilde{x}_1 = x_1 - y_r, \qquad \tilde{x}_2 = x_2 - x_{2,c}.
+\end{equation}
+设计虚拟控制
+\begin{equation}
+\alpha_1 = -k_1\tilde{x}_1 + \dot{y}_r.
+\end{equation}
+引入补偿信号 $\xi_1, \xi_2$ 处理滤波误差：
+\begin{align}
+\dot{\xi}_1 &= -k_1\xi_1 + (x_{2,c} - \alpha_1) + \xi_2, \quad \xi_1(0)=0, \\
+\dot{\xi}_2 &= -k_2\xi_2 - \xi_1, \quad \xi_2(0)=0.
+\end{align}
+定义补偿误差：
+\begin{equation}
+v_1 = \tilde{x}_1 - \xi_1, \qquad v_2 = \tilde{x}_2 - \xi_2.
+\end{equation}
+
+\subsection{补偿误差动力学与收敛性}
+
+计算 $v_1$ 的动力学：
+\begin{align}
+\dot{v}_1 &= \dot{\tilde{x}}_1 - \dot{\xi}_1 \\
+&= (x_2 - \dot{y}_r) - [-k_1\xi_1 + (x_{2,c} - \alpha_1) + \xi_2] \\
+&= (\tilde{x}_2 + x_{2,c} - \dot{y}_r) + k_1\xi_1 - (x_{2,c} - \alpha_1) - \xi_2 \\
+&= (\tilde{x}_2 - \xi_2) + k_1(\xi_1 - \tilde{x}_1) + (x_{2,c} - \alpha_1) - (x_{2,c} - \alpha_1) + \dot{y}_r - \dot{y}_r \\
+&= v_2 - k_1 v_1.
+\end{align}
+$v_2$ 的动力学：
+\begin{align}
+\dot{v}_2 &= \dot{\tilde{x}}_2 - \dot{\xi}_2 \\
+&= (\dot{x}_2 - \dot{x}_{2,c}) - (-k_2\xi_2 - \xi_1) \\
+&= (u + d - \dot{x}_{2,c}) + k_2\xi_2 + \xi_1.
+\end{align}
+设计实际控制律：
+\begin{equation}
+u = -k_2\tilde{x}_2 - \tilde{x}_1 - \hat{d}\operatorname{sgn}(v_2) + \dot{x}_{2,c}.
+\end{equation}
+代入得
+\begin{align}
+\dot{v}_2 &= -k_2\tilde{x}_2 - \tilde{x}_1 - \hat{d}\operatorname{sgn}(v_2) + d + k_2\xi_2 + \xi_1 \\
+&= -k_2 v_2 - v_1 - \hat{d}\operatorname{sgn}(v_2) + d.
+\end{align}
+若取 $\hat{d} \geq \bar{d}$（即扰动上界已知或通过自适应估计），则 $v_2 d - \hat{d}|v_2| \leq 0$。取 Lyapunov 函数
+\begin{equation}
+V = \frac12 v_1^2 + \frac12 v_2^2,
+\end{equation}
+其导数为
+\begin{equation}
+\dot{V} = -k_1 v_1^2 - k_2 v_2^2 + v_2(d - \hat{d}\operatorname{sgn}(v_2)) \leq -k_1 v_1^2 - k_2 v_2^2.
+\end{equation}
+因此
+\begin{equation}
+\dot{V} \leq -2\min(k_1,k_2) V,
+\end{equation}
+$v_1, v_2$ 指数收敛到零。又由 $\xi_1, \xi_2$ 的动力学可知，当 $x_{2,c} - \alpha_1$ 有界时，补偿信号有界且可通过增大 $k_i$ 压缩。从而 $\tilde{x}_1 = v_1 + \xi_1$ 最终收敛到零点附近的可调邻域。
+
+\subsection{线性指令滤波的带宽依赖性}
+
+Farrell 等的奇异摄动分析指出 \cite{Farrell2009CFB}，当 $\epsilon = 1/\omega_n \to 0$ 时，指令滤波反步解按 $O(\epsilon)$ 逼近标准反步解。这意味着：
+\begin{itemize}
+  \item 滤波器带宽越高，滤波误差 $x_{2,c} - \alpha_1$ 越小，补偿信号 $\xi_1$ 的稳态幅值也越小；
+  \item 但过高 $\omega_n$ 会放大测量噪声，并增加控制输入的高频成分；
+  \item $\omega_n$ 的选取本质上是跟踪精度与噪声敏感度之间的折中。
+\end{itemize}
+
+对于双积分系统，补偿信号动力学简化为：
+\begin{equation}
+\begin{bmatrix} \dot{\xi}_1 \\ \dot{\xi}_2 \end{bmatrix}
+= \begin{bmatrix} -k_1 & 1 \\ -1 & -k_2 \end{bmatrix}
+\begin{bmatrix} \xi_1 \\ \xi_2 \end{bmatrix}
++ \begin{bmatrix} x_{2,c} - \alpha_1 \\ 0 \end{bmatrix}.
+\end{equation}
+滤波误差作为外部激励驱动补偿系统。当 $\omega_n$ 有限时，$\xi_1$ 稳态不为零，但通过 $k_1$ 可进一步抑制其对跟踪误差的影响。
+
+\section{预设时间指令滤波方案（Sui--Chen--Tong 形式）}
+
+\subsection{预设时间稳定性判据}
+
+Sui、Chen 和 Tong 提出如下实际预设时间稳定（PPTS）判据 \cite{Sui2024Predefined}：若存在径向无界正定 Lyapunov 函数 $V$ 满足
+\begin{equation}
+\label{eq:ppts}
+\dot{V} \leq -\frac{3\pi}{2\eta T_d}\left(V^{1+\eta/2} + V^{1-\eta/2}\right) + \Delta,
+\end{equation}
+其中 $T_d > 0$ 为预设时间，$0 < \eta < 1$，$\Delta \geq 0$ 为残差项，则系统是实际预设时间稳定的。当 $t \geq T_d$ 时，解进入残差集
+\begin{equation}
+\Omega = \left\{x : V(x) \leq \frac{\eta T_d \Delta}{\pi}\right\}.
+\end{equation}
+若 $\Delta = 0$，则为严格预设时间稳定，状态在 $T_d$ 前收敛到原点。
+
+\subsection{非线性指令滤波器}
+
+Sui 等设计了含 $\tanh$ 平滑的非线性指令滤波器 \cite{Sui2024Predefined}。对于双积分系统的单步虚拟控制，其滤波器形式为：
+\begin{equation}
+\label{eq:pt_filter}
+\begin{aligned}
+\dot{z}_1 &= z_2, \\
+\dot{z}_2 &= -\frac{3\pi}{2\eta_f T_f}
+\left[ (z_1 - \alpha_1)^{1+\eta_f/2} + (z_1 - \alpha_1)^{1-\eta_f/2} \right] \\
+&\quad -\frac{3\pi}{2\eta_f T_f}
+\left[ \left(\frac{z_2}{\beta}\right)^{1+\eta_f/2} + \left(\frac{z_2}{\beta}\right)^{1-\eta_f/2} \right]\beta,
+\end{aligned}
+\end{equation}
+其中 $\beta > 0$ 为幅值调整参数，$T_f > 0$ 为滤波器的预设时间，$0 < \eta_f < 1$。实际中常采用等价形式
+\begin{equation}
+\label{eq:pt_filter_tanh}
+\begin{aligned}
+\dot{z}_1 &= z_2, \\
+\dot{z}_2 &= -a_1 \tanh\left( \frac{z_1 - \alpha_1}{\varepsilon} \right)
+           - a_2 \tanh\left( \frac{z_2}{\varepsilon} \right),
+\end{aligned}
+\end{equation}
+其中 $a_1, a_2 > 0$ 为增益，$\varepsilon > 0$ 为平滑系数，用以避免符号函数导致的抖振。该滤波器保证：滤波误差 $z_1 - \alpha_1$ 及其导数在预设时间 $T_f$ 内收敛到零的小邻域。
+
+\subsection{控制器设计与误差补偿}
+
+对双积分系统 (\ref{eq:plant})，定义跟踪误差
+\begin{equation}
+\tilde{x}_1 = x_1 - y_r, \qquad \tilde{x}_2 = x_2 - x_{2,c},
+\end{equation}
+其中 $x_{2,c} = z_1$、$\dot{x}_{2,c} = z_2$ 由非线性滤波器 (\ref{eq:pt_filter}) 产生，滤波器输入为虚拟控制 $\alpha_1$。
+
+虚拟控制设计为预设时间形式：
+\begin{equation}
+\alpha_1 = - \frac{3\pi}{2\eta_1 T_1}
+\left[ \tilde{x}_1^{1+\eta_1/2} + \tilde{x}_1^{1-\eta_1/2} \right],
+\end{equation}
+其中 $T_1$ 和 $\eta_1$ 为预设时间参数。也可以在线性形式基础上添加预设时间耗散项。
+
+补偿信号设计为预设时间收敛形式：
+\begin{align}
+\dot{\xi}_1 &= -\frac{3\pi}{2\eta_{\xi} T_{\xi}}
+\left[ \xi_1^{1+\eta_{\xi}/2} + \xi_1^{1-\eta_{\xi}/2} \right]
++ (x_{2,c} - \alpha_1) + \xi_2, \\
+\dot{\xi}_2 &= -\frac{3\pi}{2\eta_{\xi} T_{\xi}}
+\left[ \xi_2^{1+\eta_{\xi}/2} + \xi_2^{1-\eta_{\xi}/2} \right]
+- \xi_1,
+\end{align}
+其中 $T_{\xi} > 0$ 为补偿器的预设时间。
+
+实际控制律：
+\begin{equation}
+u = -\frac{3\pi}{2\eta_2 T_2}
+\left[ v_2^{1+\eta_2/2} + v_2^{1-\eta_2/2} \right]
+- v_1 - \hat{d}\tanh\left(\frac{v_2}{\delta}\right) + \dot{x}_{2,c},
+\end{equation}
+其中 $v_1 = \tilde{x}_1 - \xi_1$，$v_2 = \tilde{x}_2 - \xi_2$ 为补偿误差，$\hat{d} \geq \bar{d}$ 为扰动界，$\delta > 0$ 为平滑参数，$\tanh$ 替代符号函数以避免抖振。
+
+\subsection{预设时间收敛性分析}
+
+取 $V = \frac12 v_1^2 + \frac12 v_2^2$。按 PPTS 判据 (\ref{eq:ppts})，设计参数保证
+\begin{equation}
+\dot{V} \leq -\frac{3\pi}{2\eta T_d}\left(V^{1+\eta/2} + V^{1-\eta/2}\right) + \Delta,
+\end{equation}
+其中 $\Delta$ 由以下因素组成：
+\begin{itemize}
+  \item 滤波器稳态残差：非线性滤波器保证 $(x_{2,c} - \alpha_1)$ 在 $T_f$ 后进入 $[-\varepsilon,\varepsilon]$ 邻域；
+  \item $\tanh$ 平滑近似误差：$|z| - z\tanh(z/\delta) \leq 0.2785\delta$；
+  \item 扰动估计残差：$|d(t) - \hat{d}\tanh(v_2/\delta)|$ 的上界。
+\end{itemize}
+因此，补偿误差 $v_1, v_2$ 在预设时间 $T_d$ 内进入残差集
+\begin{equation}
+\Omega_v = \left\{ (v_1,v_2) : \frac12 v_1^2 + \frac12 v_2^2 \leq \frac{\eta T_d \Delta}{\pi} \right\}.
+\end{equation}
+残差半径由 $\eta, T_d, \Delta$ 联合控制：增大 $T_d$ 可缩小残差集，但牺牲收敛速度；减小 $\eta$ 和 $\delta$ 可减小 $\Delta$，但 $\eta$ 过小可能影响收敛的充分性条件。
+
+\subsection{预设时间指令滤波的优越性与代价}
+
+与线性指令滤波相比，预设时间方案有以下特点：
+
+\textbf{优势：}
+\begin{enumerate}
+  \item 收敛时间可显式指定：$T_d$ 由设计者直接设定，不依赖初始状态和参数组合；
+  \item 无奇异现象：$\tanh$ 平滑使控制律和虚拟控制处处光滑，避免终端滑模或有限时间反步中的 $1/0$ 奇异；
+  \item 抖振抑制：连续 $\tanh$ 函数替代 $\operatorname{sgn}$，有效降低高频切换；
+  \item 残差集可预期：$\Omega_v$ 的半径有显式上界，便于工程中的精度预算分配。
+\end{enumerate}
+
+\textbf{代价与局限：}
+\begin{enumerate}
+  \item 参数整定复杂：$T_d, T_f, T_{\xi}, T_1, T_2, \eta, \eta_f, \eta_{\xi}$ 等多时间尺度参数需要协调；
+  \item 暂态控制幅值较大：预设时间收敛需要更强的初始驱动力，可能触发执行器饱和；
+  \item $\Delta$ 的累积效应：扰动、滤波残差和平滑误差共同贡献 $\Delta$，若各环节残差过大，残差集可能不可忽略；
+  \item 非线性滤波器的数值积分需注意刚性问题：高增益预设时间项可能使微分方程呈刚性。
+\end{enumerate}
+
+\section{两种方案的对比与讨论}
+
+\begin{table}[htbp]
+\centering
+\caption{线性指令滤波与预设时间指令滤波在带扰动双积分系统中的对比}
+\begin{tabular}{p{2.8cm}p{5.2cm}p{5.2cm}}
+\toprule
+对比维度 & 线性指令滤波（Farrell 2009） & 预设时间指令滤波（Sui 2024） \\
+\midrule
+滤波器形式 & 二阶线性 $\ddot{z} + 2\zeta\omega_n\dot{z} + \omega_n^2(z-\alpha)=0$ & 非线性：含 $V^{1\pm\eta/2}$ 耗散项 \\
+收敛性质 & 指数收敛，时间常数 $1/(\omega_n\zeta)$ & 预设时间 $T_d$ 内进入 $\Omega$ \\
+参数意义 & $\omega_n$（带宽）、$\zeta$（阻尼） & $T_d$（时间）、$\eta$（耗散阶次） \\
+滤波误差 $x_{2,c}-\alpha_1$ & $O(1/\omega_n)$，带宽越高误差越小 & $T_f$ 后进入 $[-\varepsilon,\varepsilon]$ \\
+噪声敏感性 & $\omega_n$ 增大时噪声放大明显 & 可通过 $\varepsilon$ 独立调节 \\
+控制平滑性 & 连续，取决于 $\operatorname{sgn}$ 使用 & $\tanh$ 平滑，无抖振 \\
+扰动处理 & $\operatorname{sgn}$ 切换项（可能抖振） & $\tanh$ 平滑 + 预设时间补偿 \\
+参数整定难度 & 低：仅 $\omega_n, \zeta, k_1, k_2$ & 高：多组 $T, \eta$ 需协调 \\
+暂态控制峰值 & 较低 & 较高（预设时间推力较大） \\
+理论成熟度 & 成熟，奇异摄动分析完整 & 较新，仍有扩展空间 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+从本质上看，两种方案的核心区别在于：\textbf{线性指令滤波通过提高带宽来减小滤波误差，属于渐进式逼近；预设时间指令滤波通过构造非线性耗散结构强制滤波误差在指定时间内湮灭，属于强制式收敛}。前者参数物理意义清晰、整定方便，在面对噪声和饱和约束时更易工程化；后者提供显式的收敛时间保证，在处理高时效任务（如交会对接、避障机动）时具有不可替代的优势。
+
+对于带扰动双积分系统这一具体对象，还可考虑以下混合策略：
+\begin{itemize}
+  \item 线性滤波器 + 预设时间补偿器：用线性滤波器生成导数估计，补偿器采用预设时间结构，降低滤波参数整定难度同时保证补偿误差的预设时间收敛；
+  \item 自适应带宽调度：根据跟踪误差大小和扰动强度在线调节 $\omega_n$，兼顾暂态快速性和稳态低噪声需求；
+  \item 事件触发指令滤波：仅在指令信号变化显著时更新滤波器状态，减少计算和通信负担 \cite{Liu2026USV}。
+\end{itemize}
+
+\section{小结}
+
+本文以带外部扰动的双积分系统为具体算例，完整推导了线性指令滤波（Farrell 形式）和预设时间指令滤波（Sui--Chen--Tong 形式）的反步控制方案。两种方案均通过引入滤波器替代虚拟控制的解析求导，并通过补偿信号重构误差动力学来保持闭环稳定性。线性方案依赖滤波器带宽且收敛为指数型，参数物理意义直观；预设时间方案提供显式的收敛时间上界并通过 $\tanh$ 平滑实现无奇异、无抖振控制，但参数整定更复杂且暂态控制幅值更大。对于实际工程应用，应根据任务对收敛时间的要求、传感器噪声水平、执行器约束和设计者熟练度来选择或融合两种方案。
+
+\begin{thebibliography}{99}
+
+\bibitem{Farrell2009CFB}
+J. A. Farrell, M. Polycarpou, M. Sharma, and W. Dong,
+``Command filtered backstepping,''
+\emph{IEEE Transactions on Automatic Control}, vol.~54, no.~6, pp.~1391--1395, 2009.
+
+\bibitem{Sui2024Predefined}
+S. Sui, C. L. P. Chen, and S. Tong,
+``Command filter-based predefined time adaptive control for nonlinear systems,''
+\emph{IEEE Transactions on Automatic Control}, vol.~69, no.~11, pp.~7863--7870, 2024.
+
+\bibitem{Liu2026USV}
+X. Liu, Y. Wang, G. Wen, and C. Luo,
+``Event-based formation control of underactuated USVs: A fixed-time command filter approach,''
+\emph{IEEE Transactions on Automatic Control}, 2026, doi: 10.1109/TAC.2026.3712690.
+
+\bibitem{Song2017Prescribed}
+Y. Song, Y. Wang, J. Holloway, and M. Krstic,
+``Time-varying feedback for regulation of normal-form nonlinear systems in prescribed finite time,''
+\emph{Automatica}, vol.~83, pp.~243--251, 2017.
+
+\bibitem{Hua2022Adaptive}
+C. Hua, P. Ning, and K. Li,
+``Adaptive prescribed-time control for a class of uncertain nonlinear systems,''
+\emph{IEEE Transactions on Automatic Control}, vol.~67, no.~11, pp.~6159--6166, 2022.
+
+\end{thebibliography}
+
+\end{document}
