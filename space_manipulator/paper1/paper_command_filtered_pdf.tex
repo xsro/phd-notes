@@ -472,35 +472,35 @@ $M_e(q)$ 在工作空间内一致正定且可逆，$M_e$ 与 $C_e$ 可由名义�
 \textbf{第三步（预设时间性质）}对任意满足 $|\Delta_d|\le\rho$ 的扰动，$\vi_2$ 在 $2h$ 内、$\vi_1$ 在 $4h$ 内归零，因而收敛时间上界 $T_s=4h$ 与初始条件无关，并由 $h=T_s/4$ 直接给定．需要指出的是，该结论针对补偿误差系统；实际误差还受到滤波器状态、边界层近似和模型残差的影响．∎
 \end{proof}
 
-\subsection{讨论}
+% \subsection{讨论}
 
-\begin{corollary}\label{cor:1}
-在定理~1 条件下，$z_2(t)=\vi_2(t)$ 且 $z_1(t)=\vi_1(t)+\xi_1(t)$．其中 $\xi_1$ 满足 $\dot\xi_1=-a\xi_1+\eta$，滤波误差 $\eta=\alpha_1^c-\alpha_1$ 满足 $\dot\eta=-\omega\eta-\dot\alpha_1$．实际速度误差为 $\dot e=z_2+\alpha_1^c$，因此 $z_2$ 的预设时间归零不等价于 $\dot e$ 在同一时刻归零．
-\end{corollary}
+% \begin{corollary}\label{cor:1}
+% 在定理~1 条件下，$z_2(t)=\vi_2(t)$ 且 $z_1(t)=\vi_1(t)+\xi_1(t)$．其中 $\xi_1$ 满足 $\dot\xi_1=-a\xi_1+\eta$，滤波误差 $\eta=\alpha_1^c-\alpha_1$ 满足 $\dot\eta=-\omega\eta-\dot\alpha_1$．实际速度误差为 $\dot e=z_2+\alpha_1^c$，因此 $z_2$ 的预设时间归零不等价于 $\dot e$ 在同一时刻归零．
+% \end{corollary}
 
-\begin{corollary}\label{cor:2}
-若理想补偿误差已在 $T_o+4h$ 后归零，且 $\alpha_1$ 及其导数有界，则实际跟踪误差的剩余动态由滤波器和补偿器共同决定．特别地，若稳态阶段 $\alpha_1$ 及 $\dot\alpha_1$ 按指数衰减，则 $\eta$、$\xi_1$ 以及实际跟踪误差均按指数衰减；其速率由 $a$、$\omega$ 与虚拟控制自身的衰减率共同决定，而不能仅由 $\min(a,\omega-a)$ 唯一确定．采用 $\tanh(\vi_2/\varphi)$ 替代符号函数时，上述结论相应变为关于 $\varphi$ 和残余扰动界的实用稳定性结论．
-\end{corollary}
+% \begin{corollary}\label{cor:2}
+% 若理想补偿误差已在 $T_o+4h$ 后归零，且 $\alpha_1$ 及其导数有界，则实际跟踪误差的剩余动态由滤波器和补偿器共同决定．特别地，若稳态阶段 $\alpha_1$ 及 $\dot\alpha_1$ 按指数衰减，则 $\eta$、$\xi_1$ 以及实际跟踪误差均按指数衰减；其速率由 $a$、$\omega$ 与虚拟控制自身的衰减率共同决定，而不能仅由 $\min(a,\omega-a)$ 唯一确定．采用 $\tanh(\vi_2/\varphi)$ 替代符号函数时，上述结论相应变为关于 $\varphi$ 和残余扰动界的实用稳定性结论．
+% \end{corollary}
 
 
-\subsection{关于符号函数的抖振}
+% \subsection{关于符号函数的抖振}
 
-控制律~\eqref{eq:tau_final} 中的 $\sign(\vi_2)$ 用于抵消匹配扰动 $\Delta_d$，但会引入抖振．工程实现中可替换为饱和函数 $\sat(\vi_2/\varphi)$ 或 $\tanh(\vi_2/\varphi)$（$\varphi>0$）．此时式~\eqref{eq:ups2_dot} 中的 $-\rho|\vi_2|$ 项变为 $-\rho\vi_2\tanh(\vi_2/\varphi)\le-\rho|\vi_2|+\rho\varphi$，闭环误差收敛到 $O(\varphi)$ 邻域，预设时间结论退化为实际预设时间有界．
+% 控制律~\eqref{eq:tau_final} 中的 $\sign(\vi_2)$ 用于抵消匹配扰动 $\Delta_d$，但会引入抖振．工程实现中可替换为饱和函数 $\sat(\vi_2/\varphi)$ 或 $\tanh(\vi_2/\varphi)$（$\varphi>0$）．此时式~\eqref{eq:ups2_dot} 中的 $-\rho|\vi_2|$ 项变为 $-\rho\vi_2\tanh(\vi_2/\varphi)\le-\rho|\vi_2|+\rho\varphi$，闭环误差收敛到 $O(\varphi)$ 邻域，预设时间结论退化为实际预设时间有界．
 
-\subsection{关于观测器时序}
+% \subsection{关于观测器时序}
 
-若 PTDO 与 PDF 控制器同时从 $t=0$ 启动，则 $0\le t<T_o$ 内观测误差作为残余扰动进入误差通道，严格零化结论不再成立．因此采用两阶段时序：先在 $T_o$ 内完成扰动观测，随后以局部时间 $\vth=t-T_o$ 启动 PDF 增益，总收敛时间为 $T=T_o+T_s$．第一阶段（$0\le t<T_o$）施加有界标称控制（例如 PD 控制），以保证 $[T_o-h,T_o]$ 上状态与缓存历史 $\vi_1,\vi_2$ 有界——这是 PDF 延迟项在 $\vth\in[0,h]$ 内所需初始历史的良定性前提．
+% 若 PTDO 与 PDF 控制器同时从 $t=0$ 启动，则 $0\le t<T_o$ 内观测误差作为残余扰动进入误差通道，严格零化结论不再成立．因此采用两阶段时序：先在 $T_o$ 内完成扰动观测，随后以局部时间 $\vth=t-T_o$ 启动 PDF 增益，总收敛时间为 $T=T_o+T_s$．第一阶段（$0\le t<T_o$）施加有界标称控制（例如 PD 控制），以保证 $[T_o-h,T_o]$ 上状态与缓存历史 $\vi_1,\vi_2$ 有界——这是 PDF 延迟项在 $\vth\in[0,h]$ 内所需初始历史的良定性前提．
 
-\subsection{关于参数选择}
+% \subsection{关于参数选择}
 
-参数 $a>0$ 为基准线性阻尼，可加快首半周期衰减并保证实际跟踪误差收敛到零．$\tau_2\in(1/2,1)$ 为幂分配参数，控制对加性扰动的鲁棒性．$h=T_s/4$ 由预设时间唯一确定．$\omega>0$ 为指令滤波器带宽，越大则滤波误差越小，但噪声放大越明显．$\rho$ 为残余扰动上界，可由 PTDO 收敛后的观测误差界估计．
+% 参数 $a>0$ 为基准线性阻尼，可加快首半周期衰减并保证实际跟踪误差收敛到零．$\tau_2\in(1/2,1)$ 为幂分配参数，控制对加性扰动的鲁棒性．$h=T_s/4$ 由预设时间唯一确定．$\omega>0$ 为指令滤波器带宽，越大则滤波误差越小，但噪声放大越明显．$\rho$ 为残余扰动上界，可由 PTDO 收敛后的观测误差界估计．
 
 %%
 %% 6. 仿真验证
 %%
 \section{仿真验证}
 
-\subsection{仿真设置}
+% \subsection{仿真设置}
 
 仿真对象为 $7$ 自由度空间机械臂，等效惯性矩阵取名义值
 \[
