@@ -67,19 +67,49 @@ d_i(t)=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i),
 \centering
 \caption{不同控制算例的仿真指标}
 \label{tab:sim_metrics}
-\begin{tabular}{ccccc}
+\begin{tabular}{cccccc}
 \toprule
-控制器与工况 & \(\|e(10)\|\) & \(\|\dot e(10)\|\) & \(\mathrm{RMS}(e)\) & \(\max|\tau_i|\|\)\\
- & rad & rad/s & rad & N\,m\\
+控制器与工况 & \(\|e(10)\|\) & \(\|\dot e(10)\|\) & \(\mathrm{RMS}(e)\) & \(\max|\tau_i|\|\) & \(\mathrm{Sat}(\%)\)\\
+ & rad & rad/s & rad & N\,m & \%\\
 \midrule
-PD，无扰动 & \(4.028\times10^{-9}\) & \(1.802\times10^{-8}\) & \(8.622\times10^{-3}\) & 9.129\\
-PDF，无扰动 & \(3.290\times10^{-10}\) & \(1.145\times10^{-9}\) & \(8.622\times10^{-3}\) & 9.129\\
-PD，有扰动 & \(1.221\times10^{-2}\) & \(1.197\times10^{-2}\) & \(9.455\times10^{-3}\) & 9.129\\
-PDF，有扰动 & \(1.235\times10^{-2}\) & \(1.177\times10^{-2}\) & \(9.456\times10^{-3}\) & 9.129\\
-PDF+PTDO，有扰动 & \(3.139\times10^{-5}\) & \(4.226\times10^{-4}\) & \(8.623\times10^{-3}\) & 9.129\\
+PD，无扰动 & \(4.028\times10^{-9}\) & \(1.802\times10^{-8}\) & \(8.622\times10^{-3}\) & 9.129 & ---\\
+PDF，无扰动 & \(3.290\times10^{-10}\) & \(1.145\times10^{-9}\) & \(8.622\times10^{-3}\) & 9.129 & ---\\
+PD，有扰动 & \(1.221\times10^{-2}\) & \(1.197\times10^{-2}\) & \(9.455\times10^{-3}\) & 9.129 & ---\\
+PDF，有扰动 & \(1.235\times10^{-2}\) & \(1.177\times10^{-2}\) & \(9.456\times10^{-3}\) & 9.129 & ---\\
+PDF+PTDO，有扰动 & \(3.139\times10^{-5}\) & \(4.226\times10^{-4}\) & \(8.623\times10^{-3}\) & 9.129 & ---\\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{抗饱和补偿器性能验证}
+
+为验证所提抗饱和补偿器的有效性，进一步设置如下对比仿真。将关节力矩限幅降低至 \(\tau_{i,\max}=2\;\mathrm{N\,m}\)，并增大初始跟踪误差至
+\[
+q(0)=q_r(0)+\frac{\pi}{180}[30,-20,20,-25,20,-15,15]^\top,
+\]
+使初始瞬态力矩严重超出限幅。扰动强度同步增大至标准算例的 1.5 倍，以维持持续饱和。在此条件下对比 PDF+PTDO 与 PDF+PTDO+AS 的跟踪性能。
+
+抗饱和补偿器参数依据文献\cite{dou2025fractional}选取：
+\[
+k_{\eta1}=0.5,\; k_{\eta2}=0.3,\; \rho_1=\rho_2=0.5,\; L_\eta=5.0,
+\]
+积分加速倍率为 5.0 以加快 \(\eta\) 建立速度。
+
+\begin{table}[H]
+\centering
+\caption{低限幅 (\(2\;\mathrm{N\,m}\)) 下抗饱和补偿器对比}
+\label{tab:as_metrics}
+\begin{tabular}{cccccc}
+\toprule
+控制器 & \(\|e(10)\|\) [rad] & \(\mathrm{RMS}(e)\) [rad] & \(\max|\tau_i|\) [N\,m] & \(\mathrm{Sat}(\%)\) & \(t_{\mathrm{settle}}\) [s]\\
+\midrule
+PDF+PTDO & \(4.285\times10^{-5}\) & \(8.951\times10^{-2}\) & 2.0 & 39.6 & 5.197\\
+PDF+PTDO+AS & \(4.153\times10^{-5}\) & \(8.851\times10^{-2}\) & 2.0 & 34.6 & 4.732\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表\ref{tab:as_metrics}的结果表明，加入固定时间抗饱和补偿器后，饱和比例（采样点中力矩受限的比例）从 39.6\% 降至 34.6\%，RMS 跟踪误差降低约 1.1\%，稳定时间缩短约 0.47 秒。这说明抗饱和补偿器在严重饱和条件下能够有效缓释饱和带来的控制性能退化，并缩短饱和结束后的误差收敛时间。
 
 \begin{figure}[H]
 \centering

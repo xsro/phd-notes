@@ -166,6 +166,20 @@ z_{k+1}=\Delta_K(h)z_k+
 \]
 的形式；对于近似 PDF，则将右端替换为式 \eqref{eq:pdf_ultimate_bound} 给出的上界。
 
+\subsection{抗饱和补偿器的稳定性分析}
+
+当采用抗饱和补偿器 \eqref{eq:as_dynamics} 和修正控制律 \eqref{eq:final_controller_as} 时，式 \eqref{eq:residual_acceleration} 中的力矩输入误差 \(\Delta_\tau\) 由辅助变量 \(\eta\) 的动态补偿。此时残余扰动可重新写为
+\begin{equation}
+\Delta_r^{\mathrm{as}}(t)=M_e^{-1}(q_m)\bigl[d(t)-\hat d(t)+\Delta_m(t)\bigr]
++ \Delta_u(t) + \eta(t),
+\label{eq:residual_as}
+\end{equation}
+其中 \(\Delta_u\) 与 \(\eta\) 通过式 \eqref{eq:as_dynamics} 关联。将 \eqref{eq:residual_as} 代入误差动态 \eqref{eq:perturbed_delay_error}，可得
+\[
+\dot z = A_c z - BK_c(t)z(t-h) + B(\eta + \Delta_u) + B\bar\Delta_{\mathrm{other}},
+\]
+其中 \(\bar\Delta_{\mathrm{other}}=M_e^{-1}(d-\hat d+\Delta_m)\) 为除饱和外的残余项。由 \(\eta\) 的动力学 \eqref{eq:as_dynamics} 可知，当系统处于饱和 \((\Delta_u\neq0)\) 时，\(\eta\) 累积饱和误差，并通过控制律 \eqref{eq:final_controller_as} 中的 \(\eta\) 项改变计算力矩，减小饱和深度；当饱和解除 \((\Delta_u=0)\) 后，\(\eta\) 在固定时间 \(T_{\eta,\max}\) 内收敛至零。因此，在所提出的抗饱和补偿器作用下，饱和引起的跟踪性能退化被限制在 \(\Delta_u\neq0\) 的时间段内，且饱和结束后系统可快速恢复至标称的 PDF 收敛特性。
+
 因此，本文对理论结果作如下区分：
 \begin{enumerate}
   \item 连续时间、精确模型、无饱和且观测器精确收敛时，得到式 \eqref{eq:prescribed_total_time} 所示的预设时间精确跟踪；

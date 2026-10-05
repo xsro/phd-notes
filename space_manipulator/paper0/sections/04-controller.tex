@@ -172,6 +172,77 @@ C_e(q_m,\dot q_m)\dot q_m
 \label{eq:final_controller}
 \end{equation}
 
+\subsection{固定时间抗饱和补偿器}
+
+实际应用中，关节执行器存在力矩饱和限制，即
+\begin{equation}
+\tau_i = \operatorname{sat}(\tau_{ci}) =
+\begin{cases}
+\tau_{i,\max}\,\operatorname{sgn}(\tau_{ci}), & |\tau_{ci}|>\tau_{i,\max},\\
+\tau_{ci}, & |\tau_{ci}|\le\tau_{i,\max},
+\end{cases}
+\label{eq:saturation_model}
+\end{equation}
+其中 \(\tau_{ci}\) 为第 \(i\) 个关节的计算控制力矩，\(\tau_{i,\max}>0\) 为力矩幅值上限。饱和将导致实际施加力矩与计算力矩之间产生偏差 \(\Delta\tau_i=\tau_i-\tau_{ci}\)。映射到加速度通道的归一化饱和误差为
+\begin{equation}
+\Delta_u(t)=M_e^{-1}(q_m)\Delta\tau(t).
+\label{eq:norm_saturation_error}
+\end{equation}
+
+为抑制输入饱和对跟踪性能的影响，参考文献\cite{dou2025fractional}，引入如下固定时间抗饱和补偿器：
+\begin{equation}
+\dot\eta = -L_\eta\frac{k_{\eta1}}{\rho_1}
+\tanh\bigl(|\eta|^{1-\rho_1}\bigr)
+\cosh\bigl(|\eta|^{2}\bigr)
+\operatorname{sgn}(\eta)
+- L_\eta k_{\eta2}
+\operatorname{sig}^{\rho_2}(\eta)
++ \Delta_u,
+\label{eq:as_dynamics}
+\end{equation}
+其中 \(\eta\in\mathbb R^n\) 为辅助变量，\(0<\rho_1,\rho_2<1\)，\(k_{\eta1},k_{\eta2}>0\) 为增益系数，\(L_\eta>0\) 为自适应增益。\(\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^{\alpha}\) 按元素作用于向量。该补偿器的核心性质由以下定理给出：
+
+\textbf{定理1：} 当 \(\Delta_u=0\) 时，辅助变量 \(\eta\) 将在固定时间内收敛至零，其上界为
+\begin{equation}
+T_{\eta,\max} < 
+\frac{\rho_1 I}{k_{\eta1}\tanh(1)} + 
+\frac{1}{k_{\eta2}(1-\rho_2)},
+\end{equation}
+其中 \(I=\int_1^{\infty}\frac{dz}{\cosh(z^2)}<\infty\) 为收敛常数。
+
+\textbf{证明：} 令 \(z=|\eta|\)，由式 \eqref{eq:as_dynamics} 可得
+\[
+\dot z = -L_\eta\frac{k_{\eta1}}{\rho_1}
+\tanh(z^{1-\rho_1})
+\cosh(z^2)
+- L_\eta k_{\eta2} z^{\rho_2}.
+\]
+当 \(z\ge 1\) 时，\(\tanh(z^{1-\rho_1})\ge\tanh(1)\) 且 \(\cosh(z^2)\ge e^{z^2}/2\)，因此
+\[
+T_3 = \int_1^{z_0}\frac{dz}{|\dot z|}
+\le \frac{\rho_1}{L_\eta k_{\eta1}\tanh(1)}
+\int_1^{\infty}\frac{dz}{\cosh(z^2)}
+= \frac{\rho_1 I}{L_\eta k_{\eta1}\tanh(1)}.
+\]
+当 \(z\le 1\) 时，\(\dot z\le -L_\eta k_{\eta2}z^{\rho_2}\)，解得
+\(
+T_4 < 1/(L_\eta k_{\eta2}(1-\rho_2))
+\)。
+因此总收敛时间上界为 \(T_{\eta,\max}=T_3+T_4\)，与初始值 \(z_0\) 无关。\hfill\(\square\)
+
+将抗饱和补偿器与 PDF 控制器结合，得到如下修正控制律：
+\begin{equation}
+\begin{aligned}
+\tau_c &=
+M_e(q_m)\bigl[
+\ddot q_d + K_0z(t) - K_c(t)z(t-h) + \eta
+\bigr] \\
+&\qquad + C_e(q_m,\dot q_m)\dot q_m - \hat d(t).
+\label{eq:final_controller_as}
+\end{aligned}
+\end{equation}
+实际施加力矩为 \(\tau=\operatorname{sat}(\tau_c)\)。与原始控制律 \eqref{eq:final_controller} 相比，式 \eqref{eq:final_controller_as} 在辅助加速度中增加了 \(\eta\) 项。当 \(|M_e^{-1}\tau_c|>\tau_{\max}\) 时，饱和误差 \(\Delta_u\) 驱动 \(\eta\) 沿式 \eqref{eq:as_dynamics} 演化；一旦饱和解除，\(\eta\) 在固定时间 \(T_{\eta,\max}\) 内衰减至零，控制律退化为原始的 PDF 形式。
+
 需要注意，若观测器与 PDF 控制器同时从 \(t=0\) 启动，则 \(0\le t<T_o\) 内的观测误差会作为残余扰动进入误差系统，严格 \(2h\) 零化结论不再直接成立。为保持理论闭环清晰，可采用两阶段时序：先在 \(T_o\) 内完成扰动观测，随后以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益 \(K_c(\vartheta)\)。此时理想连续时间条件下的总预设收敛时间上界为
 \[
 T_{\mathrm{tot}}=T_o+2h .

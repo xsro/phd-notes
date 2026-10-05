@@ -16,16 +16,15 @@
 % 名义模型: 基于表2-1参数构造的正定名义等效关节空间模型
 %   (完整 Schur 补 M_e = H_m - H_bm'*H_b^{-1}*H_bm 需递推动力学实现)
 %
-% 仿真算例 (论文第6节, 表1 + 抗饱和扩展):
+% 仿真算例 (论文第6节, 表1):
 %   1. PD, 无扰动
 %   2. PDF, 无扰动
 %   3. PD, 有扰动
 %   4. PDF, 有扰动
 %   5. PDF+PTDO, 有扰动
-%   6. PDF+PTDO (tau<5), 有扰动 (低饱和限幅下对比基线)
-%   7. PDF+PTDO+AS (tau<5), 有扰动 (抗饱和补偿, 259文献)
-%      AS: 固定时间抗饱和补偿器 (Dou & Yue 2025, IJRNC, DOI: 10.1002/rnc.7826)
-%      核心: eta_dot = -f_comp(eta) + Delta_u, tau = tau_pdf + H0*eta
+%   6. PDF+PTDO (tau<80), 有扰动
+%   7. PDF+PTDO+AS (tau<80), 有扰动
+%      AS: 固定时间抗饱和补偿器 (Dou & Yue 2025, IJRNC)
 % -------------------------------------------------------------------------
 
 clear; clc; close all;
@@ -113,13 +112,12 @@ ctrl.observer = obs;
 % 其中 f_comp(eta) 保证饱和结束后 eta 固定时间收敛到零
 % 修改后的控制律: tau_cmd = tau_pdf + H * eta
 as.enabled = true;
-as.k_eta1 = diag([0.5 0.5 0.5 0.4 0.4 0.3 0.3]);  % 固定时间收敛增益 - 小增益允许eta建立
-as.k_eta2 = diag([0.3 0.3 0.3 0.25 0.25 0.2 0.2]); % 终端收敛增益
+as.k_eta1 = diag([5 5 5 4 4 3 3]);    % 固定时间收敛增益 (Eq. 37)
+as.k_eta2 = diag([3 3 3 2.5 2.5 2 2]); % 终端收敛增益 (Eq. 37)
 as.rho1 = 0.5;                            % 幂指数 rho1 in (0,1)
 as.rho2 = 0.5;                            % 幂指数 rho2 in (0,1)
-as.L_eta = 5.0;                           % 自适应增益 - 增大加速eta建立
+as.L_eta = 1.0;                           % 自适应增益 L_eta (Eq. 44)
 as.use_adaptive = false;                  % 是否启用自适应增益
-as.k_feed = 0.1;                          % 前馈增益: Delta_u即时补偿
 ctrl.anti_saturation = as;
 
 %% -------------------- 5. Run cases (论文表1 + 抗饱和扩展) -----------------
@@ -128,12 +126,10 @@ cases(2) = make_case("PDF, nominal", "pdf_exact", false, false, false);
 cases(3) = make_case("PD, disturbed", "pd", true, false, false);
 cases(4) = make_case("PDF, disturbed", "pdf_exact", true, false, false);
 cases(5) = make_case("PDF+PTDO, disturbed", "pdf_exact", true, true, false);
-% 抗饱和测试: 低饱和限幅 + 更大初始误差 + 强扰动, 对比有无 AS
-cfg.tau_max_as = 2.0 * ones(cfg.n, 1);
-% 为测试用例单独设置更大的初始误差 (30 deg vs 4 deg)
-cfg.q_init_as = q_ref0 + deg2rad([30; -20; 20; -25; 20; -15; 15]);
-cases(6) = make_case("PDF+PTDO (tau<2), disturbed", "pdf_exact", true, true, false);
-cases(7) = make_case("PDF+PTDO+AS (tau<2), disturbed", "pdf_exact", true, true, true);
+% 新增: 在较低饱和限幅 (80 Nm) 下对比有无 AS
+cfg.tau_max_as = 80 * ones(cfg.n, 1);     % 抗饱和测试用更低限幅 [N m]
+cases(6) = make_case("PDF+PTDO (tau<80), disturbed", "pdf_exact", true, true, false);
+cases(7) = make_case("PDF+PTDO+AS (tau<80), disturbed", "pdf_exact", true, true, true);
 
 results = repmat(empty_result(), 1, numel(cases));
 for c = 1:numel(cases)
@@ -285,8 +281,6 @@ function case_cfg = make_case(name, controller_mode, use_disturbance, use_observ
     case_cfg.use_disturbance = use_disturbance;
     case_cfg.use_observer = use_observer;
     case_cfg.use_anti_saturation = use_anti_saturation;
-    % 抗饱和测试: 名称含 "tau<" 的用例使用低饱和限幅
-    case_cfg.use_saturation_test = contains(name, "tau<");
 end
 
 function out = empty_result()
@@ -347,18 +341,13 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
     sat_count = 0;                               % 饱和计数器
     tau_desired_log = zeros(n, N);               % 记录饱和前期望力矩
 
-    % 抗饱和测试: 使用更大的初始误差以触发强饱和
-    if case_cfg.use_saturation_test && isfield(cfg, 'q_init_as')
-        q(:,1) = cfg.q_init_as;
-    end
-
     % 两阶段时序: 观测阶段结束时间 (论文第5节 命题1-2)
     T_o = ctrl.observer.T_o;
     use_two_stage = case_cfg.use_observer && ctrl.observer.use_two_stage_pdf;
     use_as = case_cfg.use_anti_saturation && ctrl.anti_saturation.enabled;
 
-    % 饱和限幅选择: 抗饱和测试用例使用更低的限幅以触发饱和
-    if case_cfg.use_saturation_test
+    % 抗饱和测试: 若启用 AS, 使用更低的饱和限幅
+    if use_as
         tau_max = cfg.tau_max_as;
     else
         tau_max = cfg.tau_max;
@@ -394,14 +383,9 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
         % --- 名义动力学 M_e, C_e (论文 Eq (13)) ---
         [H0, C0] = ffsm_dynamics_nominal(q(:,k), dq(:,k), P);
 
-        % --- 扰动: 抗饱和测试使用更强的扰动以维持持续饱和 ---
+        % --- 扰动 ---
         if case_cfg.use_disturbance
-            if case_cfg.use_saturation_test
-                amp = 1.5;  % 更强扰动 [Nm]
-            else
-                amp = 1.0;  % 标准扰动幅度
-            end
-            d = disturbance_torque(tk, n, amp);
+            d = disturbance_torque(tk, n);
         else
             d = zeros(n, 1);
         end
@@ -413,16 +397,16 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
         end
 
         % --- 关节力矩 (论文 Eq (33) + AS 补偿) ---
-        % 原始 PDF:     tau_pdf = H0*(qdd_d + nu - Dhat) + C0*qd_m
-        % AS 补偿:      tau_cmd = tau_pdf + H0*eta  (η 累加饱和误差)
+        % 原始 PDF 控制: tau_pdf = H0*(qdd_d + nu - Dhat) + C0*qd_m
+        % AS 补偿:       tau_cmd = tau_pdf + H0*eta
         % 饱和:          tau_act = sat(tau_cmd)
-        % 饱和误差:      Delta_u = H0\\(tau_act - tau_cmd)
+        % 饱和误差:      Delta_u = H0\(tau_act - tau_cmd)
         % AS更新:        eta_dot = -f_comp(eta) + Delta_u
         u_aux = ref.ddqd(:,k) + nu - delta_a_hat;
         tau_pdf = H0*u_aux + C0*dq(:,k);
         tau_desired = tau_pdf;
         if use_as
-            tau_desired = tau_pdf + H0*eta;
+            tau_desired = tau_pdf + H0*eta;  % 加入 AS 补偿
         end
         tau_desired_log(:,k) = tau_desired;
         tau_actual = max(min(tau_desired, tau_max), -tau_max);
@@ -431,8 +415,7 @@ function out = run_case(case_cfg, cfg, ref, ctrl, P)
         % --- 抗饱和更新 (Dou & Yue 2025, Eq. 37/44) ---
         if use_as
             Delta_u = H0 \ (tau_actual - tau_desired);  % 归一化饱和误差
-            % 加速因子: η 积分加速, 使 AS 在饱和初期快速建立补偿
-            eta = update_anti_saturation(eta, 5.0*Delta_u, cfg.Ts, ctrl.anti_saturation);
+            eta = update_anti_saturation(eta, Delta_u, cfg.Ts, ctrl.anti_saturation);
         end
         if any(abs(tau_actual - tau_desired) > 1e-6)
             sat_count = sat_count + 1;
@@ -557,19 +540,19 @@ function eta_new = update_anti_saturation(eta, Delta_u, Ts, as)
 %   T_max < rho1*I/(k_eta1*tanh(1)) + 1/(k_eta2*(1-rho2))
 % 这意味着饱和结束后, eta 快速消失, 控制律退化为原始 PDF 控制器。
 
+    n = numel(eta);
     rho1 = as.rho1;
-    rho2 = as.rho2;
-    k1_vec = diag(as.k_eta1);   % 转为列向量 (n x 1)
-    k2_vec = diag(as.k_eta2);   % 转为列向量 (n x 1)
+    k1 = as.k_eta1;
+    k2 = as.k_eta2;
     L_eta = as.L_eta;
 
-    % Term 1: 固定时间收敛项 (hyperbolic-based)
+    % Term 1: 固定时间收敛项 (hyperbolic-based, 保证全局快速收敛)
     abs_eta = abs(eta);
-    term1 = (L_eta * k1_vec / rho1) .* tanh(abs_eta.^(1 - rho1)) .* cosh(abs_eta.^2) .* sign(eta);
+    term1 = (L_eta * k1 / rho1) .* tanh(abs_eta.^(1 - rho1)) .* cosh(abs_eta.^2) .* sign(eta);
 
-    % Term 2: 终端收敛项
+    % Term 2: 终端收敛项 (保证局部有限时间收敛)
     abs_eta_safe = max(abs_eta, 1e-15);
-    term2 = (L_eta * k2_vec) .* (abs_eta_safe.^rho2) .* sign(eta);
+    term2 = L_eta * k2 .* (abs_eta_safe.^as.rho2) .* sign(eta);
 
     eta_dot = -term1 - term2 + Delta_u;
     eta_new = eta + Ts * eta_dot;
@@ -667,16 +650,13 @@ function [H, C] = ffsm_dynamics_nominal(q, dq, P)
     C = diag(0.05 + 0.02*abs(dq));
 end
 
-function d = disturbance_torque(t, n, amp)
+function d = disturbance_torque(t, n)
 % 有界时变扰动力矩  (论文第6节):
-%   d_i(t) = amp * [0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i)]
+%   d_i(t) = 0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i)
 % 该扰动作用于等效关节空间模型 Eq (13) 的右端力矩通道。
 
-    if nargin < 3
-        amp = 1.0;
-    end
     i = (1:n).';
-    d = amp * (0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i));
+    d = 0.15*sin(0.7*t + 0.3*i) + 0.05*cos(1.3*t + 0.2*i);
 end
 
 function metrics = compute_metrics(t, e, edot, tau, delta_a_error, saturation_ratio)
