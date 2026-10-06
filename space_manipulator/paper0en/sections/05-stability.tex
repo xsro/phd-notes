@@ -44,7 +44,7 @@ Under the preceding assumptions, there is a constant $\Gamma_h^*>0$ such that $\
 \end{corollary}
 
 If instead $\|\Delta_K(h)\|\le\varepsilon_\Delta<1$, then
-\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r,\qquad \limsup_{k\to\infty}\|z_k\|\le\frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.\label{eq:approx_recursion}\end{equation}
+\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r,\qquad \limsup_{k\to\infty}\|z_k\|\le\frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.\end{equation}
 If $\|M_e^{-1}\|\le\bar m^{-1}$ and the three residual terms are bounded by $\bar d_o,\bar\Delta_m,\bar\Delta_\tau$, then
 \begin{equation}\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau).\label{eq:explicit_delta_bar}\end{equation}
 For task-space tracking, a damped generalized-Jacobian inverse generates the joint reference:
@@ -52,10 +52,10 @@ For task-space tracking, a damped generalized-Jacobian inverse generates the joi
 Gramian ill-conditioning at high dimension can make the ideal nullification approximate; regularization or truncated SVD is recommended.
 \begin{proposition}[Approximate nullification bound]\label{prop:approx_null}
 If $\|\Delta_K(h)\|\le\varepsilon_\Delta<1$, then
-\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r.\label{eq:approx_recursion}\end{equation}
+\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r.\end{equation}
 Thus $\limsup_{k\to\infty}\|z_k\|\le\Gamma_h\bar\Delta_r/(1-\varepsilon_\Delta)$.
 \end{proposition}
 \begin{corollary}[Explicit error bound]\label{cor:explicit_bound}
 If the residual terms have bounds $\bar d_o,\bar\Delta_m,\bar\Delta_\tau$, then the bound is obtained from
-\begin{equation}\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau).\label{eq:explicit_delta_bar}\end{equation}
+\begin{equation}\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau).\end{equation}
 \end{corollary}
