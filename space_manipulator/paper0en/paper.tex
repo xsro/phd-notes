@@ -1,17 +1,12 @@
-\documentclass[]{IEEEtran}
+\documentclass[journal]{IEEEtran}
 \usepackage{amsmath,amssymb,bm}
 \usepackage{amsthm}
 \usepackage{graphicx}
-\usepackage{subcaption}
-\usepackage{geometry}
+\usepackage[caption=false,font=footnotesize]{subfig}
 \usepackage{booktabs}
-\usepackage{float}
-\usepackage{hyperref}
-\usepackage[backend=biber,style=authoryear,sorting=none]{biblatex}
-\addbibresource{refs/local.bib}
-\geometry{left=2.6cm,right=2.6cm,top=2.6cm,bottom=2.6cm}
-\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
-\setlength{\parindent}{2em}\setlength{\parskip}{0.25em}
+\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
 \theoremstyle{definition}
 \newtheorem{assumption}{Assumption}[section]
 \newtheorem{definition}{Definition}[section]
@@ -22,13 +17,22 @@
 \newtheorem{proposition}{Proposition}[section]
 \newtheorem{corollary}{Corollary}[section]
 \theoremstyle{remark}\newtheorem{remark}{Remark}[section]
+
+
 \title{Prescribed-Time Trajectory Tracking Control of a Free-Floating Space Manipulator Based on Smooth Periodic Delayed Feedback}
-\date{}
+\author{Author~Name\\
+\thanks{The authors are with the Department of XXX, XXX University, XXX (e-mail: author@xxx.edu).}}
+
+
 \begin{document}\maketitle
 \begin{abstract}
 This paper proposes a joint-space trajectory-tracking method based on smooth periodic delayed feedback (PDF) for a pre-capture free-floating space manipulator whose base is uncontrolled, whose dynamics are strongly coupled, and whose end-effector tracking accuracy is demanding. First, momentum conservation is used to reduce the dynamics with base reaction motion to an equivalent joint-space model. For bounded lumped disturbances, a prescribed-time disturbance observer generates $\hat d(t)$ and compensates matched disturbances after a specified observation time. A dynamic compensation term then establishes an auxiliary input channel with a controllable canonical form. Finally, periodic time-varying delayed feedback yields a prescribed-time tracking law using both current and delayed errors. Under continuous-time implementation, an exact model, and exact compensation, the closed-loop error becomes exactly zero after the prescribed time $T_o+2h$. With observation error, model approximation, actuator limits, and numerical discretization, this result becomes practical bounded tracking near the prescribed time, with explicit error bounds. MATLAB simulations using a nominal equivalent joint-space model parameterized for a seven-degree-of-freedom space manipulator demonstrate numerical feasibility under bounded disturbances.
 \end{abstract}
-\noindent\textbf{Keywords:} free-floating space manipulator; trajectory tracking; prescribed-time control; periodic delayed feedback; disturbance observer
+\begin{IEEEkeywords}
+Free-floating space manipulator, trajectory tracking, prescribed-time control, periodic delayed feedback, disturbance observer.
+\end{IEEEkeywords}
+
+
 \input{sections/01-introduction}
 \input{sections/02-modeling}
 \input{sections/03-problem}
@@ -36,5 +40,8 @@ This paper proposes a joint-space trajectory-tracking method based on smooth per
 \input{sections/05-stability}
 \input{sections/06-simulation}
 \input{sections/07-conclusion}
-\printbibliography[title={References}]
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs/local}
 \end{document}

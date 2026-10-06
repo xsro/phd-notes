@@ -27,9 +27,9 @@ ref = S.ref;
 P = S.P;
 results = S.results;
 
-if ~isfield(cfg, 'figure_dir') || isempty(cfg.figure_dir)
-    cfg.figure_dir = fullfile(script_dir, '..', 'figures');
-end
+% Always write figures next to the paper being compiled, rather than using
+% an absolute path stored in an old result file.
+cfg.figure_dir = fullfile(script_dir, '..', 'figures');
 if ~isfield(cfg, 'save_figures')
     cfg.save_figures = true;
 end
@@ -73,11 +73,8 @@ function plot_results(result, ref, P, figure_dir, save_figures)
         nominal_floating_trajectory(q, P);
     [~, ee_desired, ~, ~] = nominal_floating_trajectory(ref.qd, P);
 
-    figure('Name','Free-floating trajectory and states','Color','w', ...
-           'Position', [100, 100, 1350, 760]);
-    tiledlayout(3,2,'Padding','compact','TileSpacing','compact');
-
-    nexttile(1, [3 1]);
+    figure('Name','Free-floating trajectory','Color','w', ...
+           'Position', [100, 100, 900, 700]);
     plot3(ee_actual(1,:), ee_actual(2,:), ee_actual(3,:), 'b', 'LineWidth', 1.5);
     hold on;
     plot3(ee_desired(1,:), ee_desired(2,:), ee_desired(3,:), 'r--', 'LineWidth', 1.3);
@@ -118,7 +115,9 @@ function plot_results(result, ref, P, figure_dir, save_figures)
            'Initial base', 'Final base', 'Final end-effector', ...
            'Location', 'southoutside', 'NumColumns', 2, 'FontSize', 8);
 
-    nexttile(2);
+    save_figure(gcf, figure_dir, 'free_floating_trajectory', save_figures);
+
+    figure('Name','Base position','Color','w');
     plot(t, base_actual, 'LineWidth', 1.2);
     grid on;
     xlabel('$t$ [s]');
@@ -126,7 +125,9 @@ function plot_results(result, ref, P, figure_dir, save_figures)
     title('Base position');
     legend({'$x_b$', '$y_b$', '$z_b$'}, 'Location', 'eastoutside');
 
-    nexttile(4);
+    save_figure(gcf, figure_dir, 'base_position', save_figures);
+
+    figure('Name','End-effector position','Color','w');
     plot(t, ee_actual, 'LineWidth', 1.2);
     hold on;
     plot(t, ee_desired, '--', 'LineWidth', 1.0);
@@ -137,7 +138,9 @@ function plot_results(result, ref, P, figure_dir, save_figures)
     legend({'$x_e$', '$y_e$', '$z_e$', '$x_d$', '$y_d$', '$z_d$'}, ...
            'Location', 'eastoutside');
 
-    nexttile(6);
+    save_figure(gcf, figure_dir, 'end_effector_position', save_figures);
+
+    figure('Name','Joint posture','Color','w');
     plot(t, q, 'LineWidth', 1.05);
     grid on;
     xlabel('$t$ [s]');
@@ -145,93 +148,55 @@ function plot_results(result, ref, P, figure_dir, save_figures)
     title('Joint posture');
     legend(arrayfun(@(i)sprintf('$q_%d$', i), 1:n, 'UniformOutput', false), ...
            'Location', 'eastoutside');
-    save_figure(gcf, figure_dir, 'end_effector_joint_position_trajectory', save_figures);
+    save_figure(gcf, figure_dir, 'joint_posture', save_figures);
 
-    joint_colors = lines(n);
+    % Each plot is exported separately and combined as LaTeX subfigures.
+    figure('Name','Joint position tracking','Color','w');
 
-    figure('Name','Joint tracking, errors and torques','Color','w', ...
-           'Position', [80, 80, 1700, 1050]);
-    tiledlayout(7,3,'Padding','compact','TileSpacing','compact');
+    clf;
+    plot(t, q', 'LineWidth', 1.0); hold on;
+    plot(t, ref.qd', '--', 'LineWidth', 0.9);
+    grid on; xlabel('$t$ [s]'); ylabel('$q_i$ [rad]');
+    legend([arrayfun(@(i)sprintf('$q_%d$',i),1:n,'UniformOutput',false), ...
+            arrayfun(@(i)sprintf('$q_{d,%d}$',i),1:n,'UniformOutput',false)], ...
+            'Location','eastoutside','FontSize',7);
+    save_figure(gcf, figure_dir, 'joint_position_tracking', save_figures);
 
-    for i = 1:n
-        nexttile((i-1)*3 + 1);
-        plot(t, q(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
-        hold on;
-        plot(t, ref.qd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
-        grid on;
-        ylabel(sprintf('$q_%d$', i));
-        if i == 1
-            title('Joint position tracking');
-            legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
-        end
-        if i == n
-            xlabel('$t$ [s]');
-        else
-            set(gca, 'XTickLabel', []);
-        end
+    figure('Name','Joint velocity tracking','Color','w');
+    plot(t, dq', 'LineWidth', 1.0); hold on;
+    plot(t, ref.dqd', '--', 'LineWidth', 0.9);
+    grid on; xlabel('$t$ [s]'); ylabel('$\dot q_i$ [rad/s]');
+    legend([arrayfun(@(i)sprintf('$\\dot q_%d$',i),1:n,'UniformOutput',false), ...
+            arrayfun(@(i)sprintf('$\\dot q_{d,%d}$',i),1:n,'UniformOutput',false)], ...
+            'Location','eastoutside','FontSize',7);
+    save_figure(gcf, figure_dir, 'joint_velocity_tracking', save_figures);
 
-        nexttile((i-1)*3 + 2);
-        plot(t, dq(i,:), 'Color', joint_colors(i,:), 'LineWidth', 1.0);
-        hold on;
-        plot(t, ref.dqd(i,:), '--', 'Color', joint_colors(i,:), 'LineWidth', 0.9);
-        grid on;
-        ylabel(sprintf('$\\dot q_%d$', i));
-        if i == 1
-            title('Joint velocity tracking');
-            legend({'Actual', 'Desired'}, 'Location', 'best', 'FontSize', 7);
-        end
-        if i == n
-            xlabel('$t$ [s]');
-        else
-            set(gca, 'XTickLabel', []);
-        end
-    end
+    figure('Name','Tracking errors','Color','w');
+    plot(t, e', 'LineWidth', 0.95); hold on;
+    plot(t, edot', '--', 'LineWidth', 0.95);
+    grid on; xlabel('$t$ [s]'); ylabel('Tracking errors');
+    legend([arrayfun(@(i)sprintf('$e_%d$',i),1:n,'UniformOutput',false), ...
+            arrayfun(@(i)sprintf('$\\dot e_%d$',i),1:n,'UniformOutput',false)], ...
+            'Location','eastoutside','FontSize',7);
+    save_figure(gcf, figure_dir, 'tracking_errors', save_figures);
 
-    nexttile(3, [2 1]);
-    plot(t, e, 'LineWidth', 0.95);
-    grid on;
-    xlabel('$t$ [s]');
-    ylabel('$e_i$ [rad]');
-    title('Position tracking error');
-    legend(arrayfun(@(i)sprintf('$e_%d$', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside', 'FontSize', 7);
+    figure('Name','Control torque','Color','w');
+    plot(t, tau', 'LineWidth', 0.95);
+    grid on; xlabel('$t$ [s]'); ylabel('$\tau_i$ [N m]');
+    legend(arrayfun(@(i)sprintf('$\\tau_%d$',i),1:n,'UniformOutput',false), ...
+           'Location','eastoutside','FontSize',7);
+    save_figure(gcf, figure_dir, 'control_torque', save_figures);
 
-    nexttile(9, [2 1]);
-    plot(t, edot, 'LineWidth', 0.95);
-    grid on;
-    xlabel('$t$ [s]');
-    ylabel('$\dot e_i$ [rad/s]');
-    title('Velocity tracking error');
-    legend(arrayfun(@(i)sprintf('$\\dot e_%d$', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside', 'FontSize', 7);
-
-    nexttile(15, [3 1]);
-    plot(t, tau, 'LineWidth', 0.95);
-    grid on;
-    xlabel('$t$ [s]');
-    ylabel('$\tau_i$ [N m]');
-    title('Control torque');
-    legend(arrayfun(@(i)sprintf('$\\tau_%d$', i), 1:n, 'UniformOutput', false), ...
-           'Location', 'eastoutside', 'FontSize', 7);
-    save_figure(gcf, figure_dir, 'joint_tracking_error_torque_summary', save_figures);
-
-    figure('Name','PDF activation and error energy','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
+    % No MATLAB subplots are used; LaTeX assembles the exported figures.
+    figure('Name','PDF activation','Color','w');
     plot(t, Rhlog, 'k', 'LineWidth', 1.4);
-    grid on;
-    xlabel('$t$ [s]');
-    ylabel('$R_h(t)$');
-    title('Smooth periodic delayed feedback activation');
+    grid on; xlabel('$t$ [s]'); ylabel('$R_h(t)$');
+    save_figure(gcf, figure_dir, 'pdf_activation', save_figures);
 
-    nexttile;
+    figure('Name','Error energy','Color','w');
     semilogy(t, Vlog + 1e-16, 'm', 'LineWidth', 1.4);
-    grid on;
-    xlabel('$t$ [s]');
-    ylabel('$V(t)$');
-    title('Error energy-like quantity');
-    save_figure(gcf, figure_dir, 'pdf_activation_error_energy', save_figures);
+    grid on; xlabel('$t$ [s]'); ylabel('$V(t)$');
+    save_figure(gcf, figure_dir, 'error_energy', save_figures);
 
     figure('Name','Error norm','Color','w');
     plot(t, vecnorm(e, 2, 1), 'b', 'LineWidth', 1.5); hold on;
@@ -314,10 +279,7 @@ end
 function plot_case_comparison(results, figure_dir, save_figures)
 % Compare nominal and disturbed controller error norms.
 
-    figure('Name','Controller comparison','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
+    figure('Name','Position error comparison','Color','w');
     hold on; grid on;
     for c = 1:numel(results)
         semilogy(results(c).t, vecnorm(results(c).e, 2, 1) + 1e-16, 'LineWidth', 1.4);
@@ -327,7 +289,9 @@ function plot_case_comparison(results, figure_dir, save_figures)
     legend({results.name}, 'Location', 'northeast');
     title('Position error norm comparison');
 
-    nexttile;
+    save_figure(gcf, figure_dir, 'controller_position_error', save_figures);
+
+    figure('Name','Velocity error comparison','Color','w');
     hold on; grid on;
     for c = 1:numel(results)
         semilogy(results(c).t, vecnorm(results(c).edot, 2, 1) + 1e-16, 'LineWidth', 1.4);
@@ -336,7 +300,7 @@ function plot_case_comparison(results, figure_dir, save_figures)
     ylabel('$\|\dot e\|$ [rad/s]');
     legend({results.name}, 'Location', 'northeast');
     title('Velocity error norm comparison');
-    save_figure(gcf, figure_dir, 'controller_comparison', save_figures);
+    save_figure(gcf, figure_dir, 'controller_velocity_error', save_figures);
 end
 
 function plot_observer_results(result, figure_dir, save_figures)
@@ -349,10 +313,7 @@ function plot_observer_results(result, figure_dir, save_figures)
     t = result.t;
     n = size(result.delta_a_error, 1);
 
-    figure('Name','Disturbance observer response','Color','w');
-    tiledlayout(2,1,'Padding','compact','TileSpacing','compact');
-
-    nexttile;
+    figure('Name','Disturbance observer estimates','Color','w');
     plot(t, result.delta_a, 'LineWidth', 1.0);
     hold on;
     plot(t, result.delta_a_hat, '--', 'LineWidth', 1.0);
@@ -364,13 +325,15 @@ function plot_observer_results(result, figure_dir, save_figures)
             arrayfun(@(i)sprintf('$\\hat{\\Delta}_{a,%d}$', i), 1:n, 'UniformOutput', false)], ...
            'Location', 'eastoutside', 'FontSize', 8);
 
-    nexttile;
+    save_figure(gcf, figure_dir, 'observer_estimates', save_figures);
+
+    figure('Name','Disturbance observer error','Color','w');
     semilogy(t, vecnorm(result.delta_a_error, 2, 1) + 1e-16, 'k', 'LineWidth', 1.4);
     grid on;
     xlabel('$t$ [s]');
     ylabel('$\|\tilde{\Delta}_a\|$');
     title('Observer error norm');
-    save_figure(gcf, figure_dir, 'disturbance_observer', save_figures);
+    save_figure(gcf, figure_dir, 'observer_error', save_figures);
 end
 
 function save_figure(fig, figure_dir, stem, save_figures)

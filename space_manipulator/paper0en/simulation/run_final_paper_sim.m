@@ -131,33 +131,31 @@ xbd5=-Hc(1:6,1:6)\(Hc(1:6,7:end)*S{5}.dq);
 fprintf('\nMomentum violation: %.2e\n', norm(Hc*[xbd5;S{5}.dq]));
 
 %% Figures
-figure('Position',[50,50,1200,400]); cols=lines(nc);
-subplot(1,3,1); hold on;
-for cid=1:nc
-    en=vecnorm(S{cid}.zlog(1:n,:),2,1);
-    plot(t,en,'Color',cols(cid,:),'LineWidth',1);
+% Export independent figures. LaTeX combines them with subfigures.
+cols=lines(nc);
+fig_names={'position_error_norm','velocity_error_norm','control_torque'};
+for panel=1:3
+    figure('Color','w'); hold on; grid on;
+    for cid=1:nc
+        if panel==1
+            y=vecnorm(S{cid}.zlog(1:n,:),2,1);
+        elseif panel==2
+            y=vecnorm(S{cid}.zlog(n+1:2*n,:),2,1);
+        else
+            y=max(abs(S{cid}.tau),[],1);
+        end
+        plot(t,y,'Color',cols(cid,:),'LineWidth',1.1);
+    end
+    if panel<3, set(gca,'YScale','log'); end
+    xlabel('$t$ [s]');
+    if panel==1, ylabel('$\\|e\\|$ [rad]');
+    elseif panel==2, ylabel('$\\|\\dot e\\|$ [rad/s]');
+    else, ylabel('$\\max_i|\\tau_i|$ [N m]'); end
+    legend(case_names,'FontSize',6,'Location','best');
+    exportgraphics(gcf,fullfile(fig_dir,[fig_names{panel},'.pdf']));
+    exportgraphics(gcf,fullfile(fig_dir,[fig_names{panel},'.png']),'Resolution',300);
 end
-set(gca,'YScale','log'); xlabel('t [s]'); ylabel('||e|| [rad]');
-title('Position Error'); legend(case_names,'FontSize',6); grid on;
-
-subplot(1,3,2); hold on;
-for cid=1:nc
-    edn=vecnorm(S{cid}.zlog(n+1:2*n,:),2,1);
-    plot(t,edn,'Color',cols(cid,:),'LineWidth',1);
-end
-set(gca,'YScale','log'); xlabel('t [s]'); ylabel('||edot|| [rad/s]');
-title('Velocity Error'); grid on;
-
-subplot(1,3,3); hold on;
-for cid=1:nc
-    mt=max(abs(S{cid}.tau),[],1);
-    plot(t,mt,'Color',cols(cid,:),'LineWidth',1);
-end
-xlabel('t [s]'); ylabel('max|\tau_i| [Nm]');
-title('Control Torque'); grid on;
-
-saveas(gcf,fullfile(fig_dir,'sim_overview.png'));
-fprintf('Figure: sim_overview.png\n');
+fprintf('Independent comparison figures exported for LaTeX subfigures.\n');
 
 % Base reaction
 figure;

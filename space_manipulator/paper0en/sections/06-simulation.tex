@@ -6,45 +6,39 @@ The simulations show bounded base reaction motion, end-effector motion, joint tr
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/end_effector_joint_position_trajectory.pdf}
-\caption{Free-floating base translation, end-effector trajectory, and joint posture}
+\subfloat[Free-floating trajectory\label{fig:free_floating_trajectory}]{\includegraphics[width=0.48\textwidth]{figures/free_floating_trajectory.pdf}}
+\hfill
+\subfloat[Base position\label{fig:base_position}]{\includegraphics[width=0.48\textwidth]{figures/base_position.pdf}}\\[1ex]
+\subfloat[End-effector position\label{fig:end_effector_position}]{\includegraphics[width=0.48\textwidth]{figures/end_effector_position.pdf}}
+\hfill
+\subfloat[Joint posture\label{fig:joint_posture}]{\includegraphics[width=0.48\textwidth]{figures/joint_posture.pdf}}
+\caption{Free-floating base, end-effector, and joint trajectories. Each panel is exported independently by MATLAB and assembled using LaTeX.}
 \label{fig:motion}
 \end{figure*}
 
 \begin{figure*}[t]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
-\includegraphics[width=\linewidth]{figures/joint_position_tracking.pdf}
-\caption{Joint position tracking}
-\label{fig:joint_position}
-\end{subfigure}
+\subfloat[Joint position tracking\label{fig:joint_position}]{%
+\includegraphics[width=0.48\textwidth]{figures/joint_position_tracking.pdf}}
 \hfill
-\begin{subfigure}[b]{0.48\textwidth}
-\includegraphics[width=\linewidth]{figures/joint_velocity_tracking.pdf}
-\caption{Joint velocity tracking}
-\label{fig:joint_velocity}
-\end{subfigure}
-\vskip\medskipamount
-\begin{subfigure}[b]{0.48\textwidth}
-\includegraphics[width=\linewidth]{figures/tracking_errors.pdf}
-\caption{Position and velocity tracking errors}
-\label{fig:tracking_errors}
-\end{subfigure}
+\subfloat[Joint velocity tracking\label{fig:joint_velocity}]{%
+\includegraphics[width=0.48\textwidth]{figures/joint_velocity_tracking.pdf}}\\[1ex]
+\subfloat[Position and velocity tracking errors\label{fig:tracking_errors}]{%
+\includegraphics[width=0.48\textwidth]{figures/tracking_errors.pdf}}
 \hfill
-\begin{subfigure}[b]{0.48\textwidth}
-\includegraphics[width=\linewidth]{figures/control_torque.pdf}
-\caption{Control torque}
-\label{fig:control_torque}
-\end{subfigure}
-\caption{Joint tracking results: (a) desired vs.\ actual joint position; (b) desired vs.\ actual joint velocity; (c) position error $e_i$ and velocity error $\dot e_i$; (d) control torque $\tau_i$.}
+\subfloat[Control torque\label{fig:control_torque}]{%
+\includegraphics[width=0.48\textwidth]{figures/control_torque.pdf}}
+\caption{Joint tracking results: desired versus actual joint position and velocity, tracking errors, and control torque.}
 \label{fig:joint_summary}
 \end{figure*}
 
-\begin{table}[H]\centering\caption{Simulation metrics}\label{tab:sim_metrics}\begin{tabular}{cccc}\toprule Controller and condition & $\|e(T)\|$ [rad] & $\mathrm{RMS}(e)$ [rad] & $\max|\tau_i|$ [N m]\\\midrule PD, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PDF, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PD, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF+PTDO, disturbance & $3.327\times10^{-4}$ & $1.258\times10^{-4}$ & 1920.6\\\bottomrule\end{tabular}\end{table}
+\begin{table}[t]\centering\caption{Simulation metrics}\label{tab:sim_metrics}\begin{tabular}{cccc}\toprule Controller and condition & $\|e(T)\|$ [rad] & $\mathrm{RMS}(e)$ [rad] & $\max|\tau_i|$ [N m]\\\midrule PD, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PDF, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PD, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF+PTDO, disturbance & $3.327\times10^{-4}$ & $1.258\times10^{-4}$ & 1920.6\\\bottomrule\end{tabular}\end{table}
 
-\begin{figure}[H]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/disturbance_observer.pdf}
-\caption{True and estimated equivalent acceleration disturbance and observation error}
+\subfloat[True and estimated disturbance\label{fig:observer_estimate}]{\includegraphics[width=0.48\textwidth]{figures/observer_estimates.pdf}}
+\hfill
+\subfloat[Observer error\label{fig:observer_error}]{\includegraphics[width=0.48\textwidth]{figures/observer_error.pdf}}
+\caption{Disturbance-observer response.}
 \label{fig:observer}
-\end{figure}
+\end{figure*}
