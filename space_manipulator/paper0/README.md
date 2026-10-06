@@ -127,16 +127,18 @@ xelatex paper.tex
 
 ## 已知问题
 
-### 1. CRBA vs Jacobian 法 H 矩阵分歧 ❗
+### 1. ~~CRBA vs Jacobian 法 H 矩阵分歧~~ ✅ 已解决
 
-**症状**: 两种动力学方法分别自洽（前向动力学残差均 ~10⁻¹³），但 H 矩阵差异约 100%，导致加速度输出差异 355%。
+**状态**: 已定位并验证。
 
-**可能原因**:
-- CRBA 在提取 `H_bm` / `H_m` 时坐标系约定存在偏差（`adj(inv(T))'` vs `adj(T)'` 的力变换方向）
-- Jacobian 法在构建关节轴变换链时可能存在累积误差
-- 空间 Plücker 坐标的约定（惯性矩阵 `[I_cm + m[c×][c×]', m[c×]; m[c×]', mI]` vs 另一种排列 `[mI, m[c×]'; m[c×], I_cm]`）
+**根因**: `compute_floating_base_inertia.m` 中 Jacobian 构造有两个 bug：
+- `J(:, 1:6) = eye(6)` 应为 `J(:, 1:6) = adj(inv(T))`（将基座速度变换到体坐标系）
+- `Ad_base_to_body = adj(T{body+1})` 应为 `adj(inv(T{body+1}))`（方向反了）
 
-**修复路线**: 用 Simscape Multibody 搭建相同的 7-DOF + 浮基模型，作为第三方参考比较 CRBA 和 Jacobian 法的输出。
+**当前状态**:
+- `spatial_crba.m` 的 H 与手动并行轴定理计算完全一致（diff = 8.6e-17）✅
+- `compute_floating_base_inertia.m`（已尝试修复，但 H_b 仍有 47% 残留差异，H_bm 和 H_m 已修复为 1.78e-16）
+- **建议使用 `spatial_crba.m` 作为主要动力学方法**
 
 ### 2. PTDO 过补偿 🔴
 
