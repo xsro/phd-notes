@@ -96,4 +96,12 @@ PDF+PTDO，有扰动 & \(3.327\times10^{-4}\) & \(1.258\times10^{-4}\) & 1920.6 
 \label{fig:observer}
 \end{figure}
 
-综上所述，仿真结果验证了所提控制结构的数值可行性：在名义模型下，基于 Gramian 构造的光滑周期延迟反馈能够实现高精度跟踪；在有界扰动条件下，预设时间扰动观测补偿能够显著降低终端跟踪误差。仿真结果与定理~\ref{thm:main_ideal}~和定理~\ref{thm:practical_boundary}~的理论预测在定性趋势上一致：当扰动观测器激活补偿后，跟踪误差从扰动条件下的 \(10^{-2}\,\mathrm{rad}\) 量级降低至 \(10^{-5}\,\mathrm{rad}\) 量级，体现了残余扰动有界则跟踪误差有界的定量关系。
+综上所述，仿真结果从以下三个层面揭示了所提控制结构的数值特性。
+
+\textbf{基线性能：} 计算力矩补偿在精确模型下能够有效线性化误差通道，PD 和 PDF 在无扰动条件下均实现 \(10^{-9}\)~rad 量级的终端精度，验证了第~\ref{sec:compensation}~节动力学补偿结构的数值可行性。
+
+\textbf{PDF 的 Gramian 退化：} PDF 与 PD 在所有工况下结果完全一致，说明对于 \(n=7\) 的高维系统，Gramian 条件数 \(\kappa(W_c)\approx5\times10^5\) 使式~\eqref{eq:kc_pdf}~的增益构造退化为等效比例反馈，与第~\ref{sec:practical}~节 Gramian 病态性分析和命题~\ref{prop:approx_null}~的理论预测一致。该结果并非否定 PDF 方法的理论有效性，而是揭示了 Gramian 构造对 MIMO 系统维数的固有敏感性。
+
+\textbf{PTDO 的参数敏感性：} PDF+PTDO 算例终端误差为 \(3.327\times10^{-4}\)~rad（高于 PD 的 \(1.373\times10^{-4}\)~rad），力矩峰值达 1920.6~Nm。这说明当前观测器参数（\(\eta=0.3,\,T_c=1\)~s）下的增益 \(\pi/(\eta T_c)\approx 10.5\) 对七自由度系统产生过补偿。该现象与定理~\ref{thm:ptdo}~的连续时间精确收敛结论并不矛盾——在数值离散和有限步长下，PTDO 的瞬态峰值需要通过参数调节（降低 \(\eta\)、增大 \(T_c\)、引入饱和限幅）来抑制。
+
+仿真结果与理论分析的关系可总结为：理论提供保证（定理~\ref{thm:main_ideal}--\ref{thm:practical_boundary} 和命题~\ref{prop:approx_null}），仿真揭示实用边界。本节验证了控制结构整体的数值可行性，同时定量刻画了 PDF Gramian 维度退化和 PTDO 参数敏感这两项影响工程实施的边界条件。

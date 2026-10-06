@@ -48,10 +48,9 @@ u_o = M_e^{-1}(q_m)\bigl[\tau - C_e(q_m,\dot q_m)\dot q_m\bigr],\qquad
   \begin{aligned}
   \dot z_1 &= z_2 + \frac{\pi}{\eta T_c}
              \phi_1\!\left(\frac{\varepsilon_1}{\sigma}\right)
-             - \dot{\bar\xi}(t) + \bar\xi(t) + u_o, \\[4pt]
+             - \dot{\bar\xi}(t) + u_o, \\[4pt]
   \dot z_2 &= \frac{\pi}{\sigma\eta T_c}
-             \phi_2\!\left(\frac{\varepsilon_1}{\sigma}\right)
-             - \dot{\bar\xi}(t),
+             \phi_2\!\left(\frac{\varepsilon_1}{\sigma}\right),
   \end{aligned}
   \right.
   \label{eq:ptdo}
@@ -74,9 +73,9 @@ u_o = M_e^{-1}(q_m)\bigl[\tau - C_e(q_m,\dot q_m)\dot q_m\bigr],\qquad
   定义观测误差 \(\varepsilon_2 = \Delta_a - z_2\)。由式~\eqref{eq:observer_channel}~和式~\eqref{eq:ptdo}~可得误差动态
   \begin{align*}
   \dot\varepsilon_1 &= -\frac{\pi}{\eta T_c}\phi_1(\varepsilon_1/\sigma) + \varepsilon_2,\\
-  \dot\varepsilon_2 &= \dot\Delta_a - \frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma) + \dot{\bar\xi}(t).
+  \dot\varepsilon_2 &= \dot\Delta_a - \frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma).
   \end{align*}
-  与文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~的结构一致，在 \(\Delta_a\) 和 \(\dot\Delta_a\) 有界的条件下，可通过调节函数 \(\bar\xi(t)\) 的衰减性质和非线性函数 \(\phi_1,\phi_2\) 的齐次性保证 \(\varepsilon_1(t),\varepsilon_2(t)\to 0\) 在 \(t\to T_o\) 时成立。收敛时间由参数 \(T_c\) 和 \(\eta\) 共同控制，且可通过适当选取 \(T_c\le T_o\) 使收敛在设计时间 \(T_o\) 前完成。由 \(\hat d = M_e\hat\Delta_a\) 立即得到力矩级扰动的收敛性。
+  其中调节函数 \(\bar\xi(t)\) 用于补偿初始观测误差，其性质确保 \(\varepsilon_1(0)=0\)。在假设~\ref{as:disturbance}（\(\Delta_a,\dot\Delta_a\) 有界）下，\(\phi_1,\phi_2\) 的齐次性结构（分别为 \(1-\eta/2\) 和 \(2-\eta\) 阶齐次）保证了误差系统的有限时间收敛，收敛时间上界由 \(T_c\) 和 \(\eta\) 控制。选取 \(T_c\le T_o\) 可使 \(\varepsilon_1(t),\varepsilon_2(t)\to0\) 在 \(t\to T_o\) 前完成。详细证明参见文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~中定理~1 的齐次性分析。由 \(\hat d = M_e\hat\Delta_a\) 立即得到力矩级扰动的收敛性。
 \end{proof}
 
 \begin{remark}[观测器参数的实用选取]

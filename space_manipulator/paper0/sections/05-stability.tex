@@ -5,30 +5,45 @@
 
 \subsection{理想条件下的预设时间精确跟踪}
 
-首先给出扰动观测器的收敛性结论。
+由定理~\ref{thm:ptdo}，在假设~\ref{as:disturbance}~及连续时间实现下，观测器式~\eqref{eq:ptdo}~保证
+\begin{equation}
+\hat\Delta_a(t)=\Delta_a(t),\quad \hat d(t)=d(t),\qquad \forall\,t\ge T_o.
+\label{eq:obs_ideal_result}
+\end{equation}
+该结论依赖条件 (i) \(\Delta_a,\dot\Delta_a\) 有界（假设~\ref{as:disturbance}）、(ii) 连续时间实现、(iii) 无测量噪声的同时成立。在采样实现中存在观测残差，其影响由第~\ref{sec:practical}~节分析。
 
-\begin{theorem}[扰动观测器收敛]\label{thm:observer_convergence}
-  在假设~\ref{as:disturbance}~下，若预设时间扰动观测器式~\eqref{eq:ptdo}~的参数满足 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，则在连续时间实现下，存在设计时间 \(T_o>0\) 使得
+\subsection{两阶段时序的 Phase I 有界性}
+
+在两阶段时序中，第 I 阶段（\(t\in[0,T_o)\)）的误差动力学受未收敛观测误差驱动。分析该阶段的有界性是为第 II 阶段 PDF 启动提供合理的初始条件。
+
+\begin{proposition}[Phase I 输入--状态稳定性]\label{prop:phaseI_ISS}
+  考虑 \(t\in[0,T_o)\) 时段，令 \(K_c(t)=0\)。控制律仅保留基准反馈 \(\nu = K_0 z\)。在残余观测误差 \(\varepsilon_2(t)=\Delta_a(t)-\hat\Delta_a(t)\) 驱动下，误差动态为
   \begin{equation}
-  \hat\Delta_a(t)=\Delta_a(t),\quad \hat d(t)=d(t),\qquad \forall\,t\ge T_o.
-  \label{eq:obs_ideal_result}
+  \dot z(t) = (A+BK_0)z(t) + B\varepsilon_2(t).
+  \label{eq:phaseI_error}
   \end{equation}
-\end{theorem}
+  若 \(K_0\) 使 \(A_c = A+BK_0\) 为 Hurwitz，则存在常数 \(\kappa,\lambda>0\) 使得
+  \begin{equation}
+  \|z(t)\| \le \kappa e^{-\lambda t}\|z(0)\| + \frac{\kappa}{\lambda}\sup_{0\le s\le t}\|\varepsilon_2(s)\|.
+  \label{eq:phaseI_ISS}
+  \end{equation}
+  由于 \(\Delta_a(t)\) 有界（假设~\ref{as:disturbance}）且观测器在有限时间内收敛，\(\varepsilon_2(t)\) 在 Phase I 内有界，因此 \(z(t)\) 在 Phase I 内有界。
+\end{proposition}
 
 \begin{proof}
-  见定理~\ref{thm:ptdo}~的证明。该结论依赖以下条件的同时成立：(i) \(\Delta_a\) 和 \(\dot\Delta_a\) 有界（假设~\ref{as:disturbance}）；(ii) 连续时间实现无采样误差；(iii) 无测量噪声和量化误差。在上述条件满足时，观测器式~\eqref{eq:ptdo}~的齐次性分析和调节函数 \(\bar\xi(t)\) 的衰减性质共同保证了式~\eqref{eq:obs_ideal_result} 的成立。
+  在 Phase I 内，\(K_c(t)=0\) 且扰动观测器正在运行。由引理~\ref{lem:linearization}，唯一区别在于补偿误差 \(d-\hat d = M_e\varepsilon_2 \neq 0\)，故误差动态为式~\eqref{eq:phaseI_error}。因 \((A,B)\) 可控，\(K_0\) 使 \(A_c\) Hurwitz。由线性系统理论，对于 Hurwitz 矩阵存在 \(\kappa,\lambda>0\) 使 \(\|e^{A_c t}\|\le \kappa e^{-\lambda t}\)。对式~\eqref{eq:phaseI_error}~应用变分公式并取范数即得式~\eqref{eq:phaseI_ISS}。有界性由 \(\varepsilon_2(t)\) 在紧区间 \([0,T_o]\) 上有界直接推出。
 \end{proof}
 
-\begin{remark}[定理~\ref{thm:observer_convergence}~的适用范围]
-  定理~\ref{thm:observer_convergence}~为理想连续时间结论。在采样实现、测量噪声或观测器公式未完全满足理论条件时，观测误差通常只能收敛到与采样步长、数值积分误差和未建模动态有关的小邻域，不应将该结论直接解释为数值观测误差严格等于零。
-\end{remark}
+命题~\ref{prop:phaseI_ISS}~确保了第 II 阶段 PDF 开始时 \(z(T_o)\) 有界，从而 PDF 理论（定理~\ref{thm:pdf_gain}）对其任意初始条件均适用。
+
+\subsection{理想条件下的预设时间精确跟踪}
 
 在前述两阶段时序下，主定理如下：
 
 \begin{theorem}[预设时间精确跟踪]\label{thm:main_ideal}
   考虑由式~\eqref{eq:joint_model_relabelled}~描述的自由漂浮空间机械臂系统，满足假设~\ref{as:inertia}--\ref{as:disturbance}。采用两阶段时序设计：\(t\in[0,T_o)\) 阶段运行扰动观测器式~\eqref{eq:ptdo}~并仅施加基准反馈 \(K_0\)；\(t\in[T_o,\infty)\) 阶段以局部时间 \(\vartheta=t-T_o\) 激活完整 PDF 控制律式~\eqref{eq:final_controller}。若以下条件同时成立：
   \begin{enumerate}
-    \item[(A)] 定理~\ref{thm:observer_convergence}~的条件满足，从而 \(\hat d(t)=d(t),\ \forall t\ge T_o\)；
+    \item[(A)] 定理~\ref{thm:ptdo}~的条件满足，从而 \(\hat d(t)=d(t),\ \forall t\ge T_o\)；
     \item[(B)] 等效惯性矩阵 \(M_e(q_m)\) 和速度相关项 \(C_e(q_m,\dot q_m)\dot q_m\) 精确已知；
     \item[(C)] PDF 增益 \(K_c(\vartheta)\) 按式~\eqref{eq:kc_pdf}~构造，满足单周期零化条件 \(\Delta_K(h)=0\)；
     \item[(D)] 无执行器饱和，即实际施加力矩与计算力矩一致；
@@ -44,7 +59,7 @@
 \begin{proof}
   证明分为两个阶段。
 
-  \textbf{阶段 I（观测阶段，\(t\in[0,T_o]\)）：} 由条件 (A) 和定理~\ref{thm:observer_convergence}，扰动观测器在设计时间 \(T_o\) 内收敛。该阶段 PDF 延迟反馈未激活（\(K_c=0\)），仅由基准反馈 \(K_0\) 维持系统有界。
+  \textbf{阶段 I（观测阶段，\(t\in[0,T_o]\)）：} 由条件 (A) 和定理~\ref{thm:ptdo}，扰动观测器在设计时间 \(T_o\) 内收敛。该阶段 PDF 延迟反馈未激活（\(K_c=0\)），仅由基准反馈 \(K_0\) 维持系统有界。由命题~\ref{prop:phaseI_ISS}，误差状态 \(z(t)\) 在 Phase I 内一致有界。
 
   \textbf{阶段 II（PDF 阶段，\(t\in[T_o,\infty)\)）：} 在 \(t=T_o\) 时刻，扰动观测器已收敛，有 \(\hat d(t)=d(t)\)。以局部时间 \(\vartheta=t-T_o\) 重新计时，激活完整的 PDF 控制律。
   
@@ -81,6 +96,7 @@
 \end{remark}
 
 \subsection{残余扰动下的实际有界跟踪}
+\label{sec:practical}
 
 当理想条件中的一项或多项被破坏时，定理~\ref{thm:main_ideal}~的严格精确归零结论不再成立。本节将各非理想因素统一建模为等效残余扰动，并给出相应条件下的有界跟踪结论。
 
