@@ -1,0 +1,57 @@
+\section{Stability and Convergence Analysis}\label{sec:stability}
+\subsection{Exact prescribed-time tracking under ideal conditions}
+By Theorem~\ref{thm:ptdo}, $\hat d=d$ for $t\ge T_o$ under the stated ideal assumptions. During Phase I, $K_c=0$ and
+\begin{equation}\dot z=A_cz+B\varepsilon_2,\qquad \|z(t)\|\le\kappa e^{-\lambda t}\|z(0)\|+\frac{\kappa}{\lambda}\sup_{0\le s\le t}\|\varepsilon_2(s)\|.\label{eq:phaseI_ISS}\end{equation}
+Thus the state entering Phase II is bounded. In Phase II, exact compensation gives the PDF delay system of Section~\ref{sec:controller}; its one-period map is zero, so
+\begin{proposition}[Phase-I input-to-state stability]\label{prop:phaseI_ISS}
+The preceding bound holds and $z(t)$ is bounded on $[0,T_o]$.
+\end{proposition}
+\begin{proof}
+Variation of constants for the Hurwitz matrix $A_c$ gives the displayed inequality.
+\end{proof}
+\begin{equation}e(t)=0,\quad\dot e(t)=0,\qquad t\ge T_o+2h.\label{eq:main_ideal_result}\end{equation}
+Therefore $T_{\mathrm{pre}}=T_o+2h$, independently of the initial error. If the map is nilpotent of index $\nu_0$, the bound becomes $T_o+2\nu_0h$.
+\begin{theorem}[Exact prescribed-time tracking]\label{thm:main_ideal}
+Under the ideal conditions, $e(t)=\dot e(t)=0$ for all $t\ge T_o+2h$.
+\end{theorem}
+\begin{proof}
+Phase I is bounded by the proposition. After $T_o$, exact compensation yields the PDF system, and Theorem~\ref{thm:pdf_gain} gives $z=0$ after one period.
+\end{proof}
+\begin{corollary}[Prescribed-time upper bound]\label{cor:prescribed_time}
+The convergence bound is $T_o+2h$ and is independent of the initial error.
+\end{corollary}
+
+\subsection{Practical Bounded Tracking}\label{sec:practical}
+Define the residual acceleration disturbance
+\begin{equation}\Delta_r=M_e^{-1}[\Delta d_o+\Delta_m+\Delta_\tau].\label{eq:residual_acceleration}\end{equation}
+If $\|\Delta_r\|\le\bar\Delta_r$, then
+\begin{equation}\dot z=A_cz-BK_c(t)z(t-h)+B\Delta_r(t).\label{eq:perturbed_delay_error}\end{equation}
+Let $\Gamma_h$ denote the maximum one-period input-to-state integral gain.
+\begin{assumption}[Bounded residual disturbance]\label{as:residual_bounded}
+There is $\bar\Delta_r\ge0$ such that $\|\Delta_r(t)\|\le\bar\Delta_r$ for all $t\ge T_o$.
+\end{assumption}
+\begin{definition}[PDF periodic disturbance gain]\label{def:pdf_gain}
+$\Gamma_h$ is the maximum one-period input-to-state integral gain of the homogeneous delayed system.
+\end{definition} At $t_k=T_o+2kh$, exact PDF nullification gives
+\begin{theorem}[Practical bounded tracking at period boundaries]\label{thm:practical_boundary}
+\begin{equation}\|z(t_{k+1})\|\le\Gamma_h\bar\Delta_r.\label{eq:pdf_boundary_bound}\end{equation}
+\end{theorem}
+\begin{proof}
+The homogeneous one-period term vanishes. Variation of constants and the residual bound give the inequality.
+\end{proof}
+If instead $\|\Delta_K(h)\|\le\varepsilon_\Delta<1$, then
+\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r,\qquad \limsup_{k\to\infty}\|z_k\|\le\frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.\label{eq:approx_recursion}\end{equation}
+If $\|M_e^{-1}\|\le\bar m^{-1}$ and the three residual terms are bounded by $\bar d_o,\bar\Delta_m,\bar\Delta_\tau$, then
+\begin{equation}\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau).\label{eq:explicit_delta_bar}\end{equation}
+For task-space tracking, a damped generalized-Jacobian inverse generates the joint reference:
+\begin{equation}\dot q_d=J_g^\#[\dot x_e^d-K_x(x_e-x_e^d)],\quad J_g^\#=J_g^\top(J_gJ_g^\top+\lambda^2I)^{-1}.\label{eq:task_space_velocity}\end{equation}
+Gramian ill-conditioning at high dimension can make the ideal nullification approximate; regularization or truncated SVD is recommended.
+\begin{proposition}[Approximate nullification bound]\label{prop:approx_null}
+If $\|\Delta_K(h)\|\le\varepsilon_\Delta<1$, then
+\begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r.\label{eq:approx_recursion}\end{equation}
+Thus $\limsup_{k\to\infty}\|z_k\|\le\Gamma_h\bar\Delta_r/(1-\varepsilon_\Delta)$.
+\end{proposition}
+\begin{corollary}[Explicit error bound]\label{cor:explicit_bound}
+If the residual terms have bounds $\bar d_o,\bar\Delta_m,\bar\Delta_\tau$, then the bound is obtained from
+\begin{equation}\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau).\label{eq:explicit_delta_bar}\end{equation}
+\end{corollary}

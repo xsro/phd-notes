@@ -1,0 +1,34 @@
+\section{Modeling of a Free-Floating Space Manipulator}
+\label{sec:modeling}
+This section establishes the equivalent joint-space dynamics of a pre-capture free-floating space manipulator. Momentum conservation eliminates the base acceleration and yields a reduced model suitable for controller design.
+\subsection{Notation}
+Consider a free-floating manipulator with a base and $n$ revolute joints. Let $\dot x_b=[v_b^\top,\ \omega_b^\top]^\top\in\mathbb R^6$, $q=[q_1,\ldots,q_n]^\top\in\mathbb R^n$, and $\dot x_e=[v_e^\top,\ \omega_e^\top]^\top\in\mathbb R^6$.
+\subsection{Full Dynamics}
+With no external force or torque, the kinetic energy is
+\begin{equation}T=\frac12\begin{bmatrix}\dot x_b^\top & \dot q^\top\end{bmatrix}\begin{bmatrix}H_b(q)&H_{bm}(q)\\H_{bm}^\top(q)&H_m(q)\end{bmatrix}\begin{bmatrix}\dot x_b\\\dot q\end{bmatrix}.\label{eq:kinetic_energy_ffsm}\end{equation}
+The Lagrange equations are
+\begin{equation}\begin{bmatrix}H_b&H_{bm}\\H_{bm}^\top&H_m\end{bmatrix}\begin{bmatrix}\ddot x_b\\\ddot q\end{bmatrix}+\begin{bmatrix}C_b&C_{bm}\\C_{bm}^\top&C_m\end{bmatrix}\begin{bmatrix}\dot x_b\\\dot q\end{bmatrix}=\begin{bmatrix}0\\\tau\end{bmatrix}.\label{eq:full_ffsm_dynamics}\end{equation}
+\subsection{Momentum Conservation and the Generalized Jacobian}
+\noindent\textbf{Assumption 1 (zero initial momentum):} The initial total linear and angular momenta are zero.
+\begin{equation}H_b(q)\dot x_b+H_{bm}(q)\dot q=0.\label{eq:momentum_constraint}\end{equation}
+\noindent\textbf{Assumption 2 (invertible base inertia):} $H_b(q)$ is uniformly positive definite in the workspace. Hence
+\begin{equation}\dot x_b=-H_b^{-1}(q)H_{bm}(q)\dot q\triangleq J_{bm}(q)\dot q.\label{eq:base_joint_jacobian}\end{equation}
+The end-effector velocity satisfies
+\begin{equation}\dot x_e=J_b(q)\dot x_b+J_m(q)\dot q.\label{eq:end_velocity_common}\end{equation}
+Thus
+\begin{equation}\dot x_e=[J_m(q)+J_b(q)J_{bm}(q)]\dot q\triangleq J_g(q)\dot q.\label{eq:generalized_jacobian}\end{equation}
+Near rank deficiency, velocity amplification, stronger base reaction, and reduced manipulability may occur simultaneously.
+\subsection{Equivalent Joint-Space Dynamics}
+Differentiating the momentum constraint and eliminating $\ddot x_b$ gives
+\begin{equation}M_e(q)\ddot q+C_e(q,\dot q)\dot q=\tau+d(t),\label{eq:joint_model}\end{equation}
+where
+\begin{equation}M_e(q)=H_m(q)-H_{bm}^\top(q)H_b^{-1}(q)H_{bm}(q).\label{eq:generalized_inertia}\end{equation}
+Here $C_e\dot q$ collects velocity-dependent terms and $d(t)$ denotes lumped parameter errors, unmodeled dynamics, external disturbances, and actuator errors. Assume $M_e$ is uniformly positive definite. Relabeling the joint variable as $q_m$ gives the basic model
+\begin{equation}M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t).\label{eq:joint_model_relabelled}\end{equation}
+This reduction retains the equivalent effect of base reaction and provides the basis for computed-torque compensation.
+\begin{equation}H_b\ddot x_b+H_{bm}\ddot q+\dot H_b\dot x_b+\dot H_{bm}\dot q=0.\label{eq:momentum_derivative}\end{equation}
+The equivalent inertia is the Schur complement and is positive definite under the stated assumptions.
+
+\begin{remark}[Numerical spatial CRBA implementation]
+The full inertia matrix can be computed using the spatial composite rigid-body algorithm, $H_{\mathrm{full}}=\sum_{i=0}^nJ_i^\top I_iJ_i$, with $O(n^2)$ complexity. The Schur complement and the equivalent Coriolis vector can then be extracted for controller design. The simulations use a positive-definite nominal joint-space model; a complete CRBA recursive implementation is left for future validation.
+\end{remark}
