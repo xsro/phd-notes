@@ -3,7 +3,48 @@ A seven-degree-of-freedom nominal positive-definite joint-space model is used to
 
 \subsection{Results and Discussion}
 The simulations show bounded base reaction motion, end-effector motion, joint tracking, and control torques under disturbance. The Gramian condition number is $5.796\times10^5$; consequently PDF and PD have nearly identical performance for this 14-state system. Without disturbance, terminal errors are about $10^{-9}$ rad. With disturbance, PD/PDF terminal error is approximately $1.4\times10^{-4}$ rad, whereas PDF+PTDO gives $3.327\times10^{-4}$ rad and a peak torque of $1920.6$ N m, indicating observer overcompensation under the selected discrete-time parameters. The result motivates larger $T_c$, parameter tuning, and saturation limits.
-\begin{figure}[H]\centering\includegraphics[width=\textwidth]{figures/end_effector_joint_position_trajectory.png}\caption{Free-floating base translation, end-effector trajectory, and joint posture}\label{fig:motion}\end{figure}
-\begin{figure}[H]\centering\includegraphics[width=\textwidth]{figures/joint_tracking_error_torque_summary.png}\caption{Joint tracking, errors, and control torques}\label{fig:joint_summary}\end{figure}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/end_effector_joint_position_trajectory.pdf}
+\caption{Free-floating base translation, end-effector trajectory, and joint posture}
+\label{fig:motion}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\includegraphics[width=\linewidth]{figures/joint_position_tracking.pdf}
+\caption{Joint position tracking}
+\label{fig:joint_position}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\includegraphics[width=\linewidth]{figures/joint_velocity_tracking.pdf}
+\caption{Joint velocity tracking}
+\label{fig:joint_velocity}
+\end{subfigure}
+\vskip\medskipamount
+\begin{subfigure}[b]{0.48\textwidth}
+\includegraphics[width=\linewidth]{figures/tracking_errors.pdf}
+\caption{Position and velocity tracking errors}
+\label{fig:tracking_errors}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\includegraphics[width=\linewidth]{figures/control_torque.pdf}
+\caption{Control torque}
+\label{fig:control_torque}
+\end{subfigure}
+\caption{Joint tracking results: (a) desired vs.\ actual joint position; (b) desired vs.\ actual joint velocity; (c) position error $e_i$ and velocity error $\dot e_i$; (d) control torque $\tau_i$.}
+\label{fig:joint_summary}
+\end{figure*}
+
 \begin{table}[H]\centering\caption{Simulation metrics}\label{tab:sim_metrics}\begin{tabular}{cccc}\toprule Controller and condition & $\|e(T)\|$ [rad] & $\mathrm{RMS}(e)$ [rad] & $\max|\tau_i|$ [N m]\\\midrule PD, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PDF, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PD, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF+PTDO, disturbance & $3.327\times10^{-4}$ & $1.258\times10^{-4}$ & 1920.6\\\bottomrule\end{tabular}\end{table}
-\begin{figure}[H]\centering\includegraphics[width=\textwidth]{figures/disturbance_observer.png}\caption{True and estimated equivalent acceleration disturbance and observation error}\label{fig:observer}\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{figures/disturbance_observer.pdf}
+\caption{True and estimated equivalent acceleration disturbance and observation error}
+\label{fig:observer}
+\end{figure}
