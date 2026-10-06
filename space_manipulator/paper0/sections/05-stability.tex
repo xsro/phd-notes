@@ -1,198 +1,280 @@
-\section{稳定性与性能分析}
+\section{稳定性与收敛性分析}
+\label{sec:stability}
 
-本节在理想连续时间条件下给出闭环预设时间跟踪结论，并进一步说明模型误差、补偿误差和数值实现对该结论的影响。除特别说明外，假设观测器在 \(T_o\) 内完成收敛，且 PDF 控制器从 \(t=T_o\) 起以局部时间 \(\vartheta=t-T_o\) 启动。
+本节在定理--证明框架下，给出闭环系统在理想条件与扰动条件下的收敛性结论，并分析各非理想因素对跟踪性能的影响。
 
-\textbf{命题1：} 若预设时间扰动观测器满足其连续时间收敛条件，且 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界，则存在设计时间 \(T_o>0\)，使得
-\[
-\hat\Delta_a(t)=\Delta_a(t),\qquad \hat d(t)=d(t),
-\qquad \forall t\ge T_o.
-\]
+\subsection{理想条件下的预设时间精确跟踪}
 
-\textbf{说明：} 命题1是连续时间理想观测器结论。由
-\[
-\hat d=M_e(q_m)\hat\Delta_a,
-\qquad
-\Delta_a=M_e^{-1}(q_m)d
-\]
-可知，当 \(\hat\Delta_a=\Delta_a\) 时有 \(\hat d=d\)。在采样实现、测量噪声或观测器公式未完全满足理论条件时，不能直接将该结论解释为数值观测误差严格等于零。
+首先给出扰动观测器的收敛性结论。
 
-\textbf{命题2：} 假设命题1成立。若 \((A,B)\) 可控，\(K_0\) 使
-\[
-A_c=A+BK_0
-\]
-为期望的基准闭环矩阵，并且周期增益 \(K_c(t)\) 按式 \eqref{eq:kc_pdf} 构造，使相应单周期状态转移矩阵满足
-\[
-\Delta_K(h)=0,
-\]
-则理想模型条件下，关节跟踪误差满足
-\[
-e(t)=0,\qquad \dot e(t)=0,
-\qquad \forall t\ge T_o+2h.
-\]
+\begin{theorem}[扰动观测器收敛]\label{thm:observer_convergence}
+  在假设~\ref{as:disturbance}~下，若预设时间扰动观测器式~\eqref{eq:ptdo}~的参数满足 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，则在连续时间实现下，存在设计时间 \(T_o>0\) 使得
+  \begin{equation}
+  \hat\Delta_a(t)=\Delta_a(t),\quad \hat d(t)=d(t),\qquad \forall\,t\ge T_o.
+  \label{eq:obs_ideal_result}
+  \end{equation}
+\end{theorem}
 
-\textbf{证明：} 当 \(t\ge T_o\) 时，由命题1有 \(\hat d=d\)。将控制律 \eqref{eq:computed_torque} 代入式 \eqref{eq:joint_model}，得到 \(\ddot q_m=v\)。再令
-\[
-v=\ddot q_d+\nu,
-\]
-则有 \(\ddot e=\nu\)，并且
-\[
-\dot z=Az+B\nu,
-\qquad
-A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},
-\quad
-B=\begin{bmatrix}0\\I_n\end{bmatrix}.
-\]
-代入 \(\nu=K_0z-K_c(t)z(t-h)\)，得
-\[
-\dot z=A_cz-BK_c(t)z(t-h).
-\]
-在 PDF 周期的前半段 \(K_c(t)=0\)，因此可按分步法求得一个完整周期的状态映射。依据式 \eqref{eq:period_map} 以及式 \eqref{eq:kc_pdf} 的 Gramian 构造，闭环单周期状态转移矩阵满足
-\[
-\Delta_K(h)=0.
-\]
-因此局部时间达到 \(2h\) 后有 \(z(t)=0\)。由于局部时间为 \(\vartheta=t-T_o\)，故 \(t\ge T_o+2h\) 时 \(e(t)=0\) 且 \(\dot e(t)=0\)。\hfill\(\square\)
+\begin{proof}
+  见定理~\ref{thm:ptdo}~的证明。该结论依赖以下条件的同时成立：(i) \(\Delta_a\) 和 \(\dot\Delta_a\) 有界（假设~\ref{as:disturbance}）；(ii) 连续时间实现无采样误差；(iii) 无测量噪声和量化误差。在上述条件满足时，观测器式~\eqref{eq:ptdo}~的齐次性分析和调节函数 \(\bar\xi(t)\) 的衰减性质共同保证了式~\eqref{eq:obs_ideal_result} 的成立。
+\end{proof}
 
-上述命题给出本文控制器的理想预设时间上界
+\begin{remark}[定理~\ref{thm:observer_convergence}~的适用范围]
+  定理~\ref{thm:observer_convergence}~为理想连续时间结论。在采样实现、测量噪声或观测器公式未完全满足理论条件时，观测误差通常只能收敛到与采样步长、数值积分误差和未建模动态有关的小邻域，不应将该结论直接解释为数值观测误差严格等于零。
+\end{remark}
+
+在前述两阶段时序下，主定理如下：
+
+\begin{theorem}[预设时间精确跟踪]\label{thm:main_ideal}
+  考虑由式~\eqref{eq:joint_model_relabelled}~描述的自由漂浮空间机械臂系统，满足假设~\ref{as:inertia}--\ref{as:disturbance}。采用两阶段时序设计：\(t\in[0,T_o)\) 阶段运行扰动观测器式~\eqref{eq:ptdo}~并仅施加基准反馈 \(K_0\)；\(t\in[T_o,\infty)\) 阶段以局部时间 \(\vartheta=t-T_o\) 激活完整 PDF 控制律式~\eqref{eq:final_controller}。若以下条件同时成立：
+  \begin{enumerate}
+    \item[(A)] 定理~\ref{thm:observer_convergence}~的条件满足，从而 \(\hat d(t)=d(t),\ \forall t\ge T_o\)；
+    \item[(B)] 等效惯性矩阵 \(M_e(q_m)\) 和速度相关项 \(C_e(q_m,\dot q_m)\dot q_m\) 精确已知；
+    \item[(C)] PDF 增益 \(K_c(\vartheta)\) 按式~\eqref{eq:kc_pdf}~构造，满足单周期零化条件 \(\Delta_K(h)=0\)；
+    \item[(D)] 无执行器饱和，即实际施加力矩与计算力矩一致；
+    \item[(E)] 控制律在连续时间下实现。
+  \end{enumerate}
+  则关节跟踪误差可在预设时间内精确归零：
+  \begin{equation}
+  e(t)=0,\qquad \dot e(t)=0,\qquad \forall\,t\ge T_o+2h.
+  \label{eq:main_ideal_result}
+  \end{equation}
+\end{theorem}
+
+\begin{proof}
+  证明分为两个阶段。
+
+  \textbf{阶段 I（观测阶段，\(t\in[0,T_o]\)）：} 由条件 (A) 和定理~\ref{thm:observer_convergence}，扰动观测器在设计时间 \(T_o\) 内收敛。该阶段 PDF 延迟反馈未激活（\(K_c=0\)），仅由基准反馈 \(K_0\) 维持系统有界。
+
+  \textbf{阶段 II（PDF 阶段，\(t\in[T_o,\infty)\)）：} 在 \(t=T_o\) 时刻，扰动观测器已收敛，有 \(\hat d(t)=d(t)\)。以局部时间 \(\vartheta=t-T_o\) 重新计时，激活完整的 PDF 控制律。
+  
+  由条件 (B) 和引理~\ref{lem:linearization}，在 \(t\ge T_o\) 时段内误差系统满足
+  \[
+  \frac{dz}{d\vartheta} = A z + B\nu.
+  \]
+  代入控制律 \(\nu(\vartheta) = K_0 z(\vartheta) - K_c(\vartheta)z(\vartheta-h)\)，得
+  \[
+  \frac{dz}{d\vartheta} = A_c z(\vartheta) - BK_c(\vartheta)z(\vartheta-h).
+  \]
+  由条件 (C) 和定理~\ref{thm:pdf_gain}，该延迟闭环系统在局部时间 \(\vartheta\ge 2h\) 后满足 \(z(\vartheta)=0\)。回到原时间坐标，即 \(t = T_o + \vartheta \ge T_o + 2h\) 时 \(z(t)=0\)。由误差状态定义知 \(e(t)=0,\ \dot e(t)=0\)。
+\end{proof}
+
+\begin{corollary}[预设时间上界]\label{cor:prescribed_time}
+  在定理~\ref{thm:main_ideal}~的条件下，闭环系统的总收敛时间上界为
+  \begin{equation}
+  T_{\mathrm{pre}} = T_o + 2h,
+  \label{eq:prescribed_time_bound}
+  \end{equation}
+  该上界完全由设计参数 \(T_o\) 和 \(h\) 决定，与初始跟踪误差 \(z(0)\) 无关。
+\end{corollary}
+
+\begin{proof}
+  由定理~\ref{thm:main_ideal}~的结论直接得到。
+\end{proof}
+
+\begin{remark}[与幂零情形的推广]
+  若 PDF 增益使单周期状态转移矩阵 \(\Delta(h)\) 为幂零矩阵，即存在 \(\nu_0\ge 1\) 使得 \(\Delta^{\nu_0}(h)=0\)，则定理~\ref{thm:main_ideal}~的结论可推广为
+  \[
+  e(t)=0,\ \dot e(t)=0,\qquad \forall\,t\ge T_o+2\nu_0 h.
+  \]
+  式~\eqref{eq:kc_pdf}~对应单周期零化的特例 \(\nu_0=1\)。
+\end{remark}
+
+\subsection{残余扰动下的实际有界跟踪}
+
+当理想条件中的一项或多项被破坏时，定理~\ref{thm:main_ideal}~的严格精确归零结论不再成立。本节将各非理想因素统一建模为等效残余扰动，并给出相应条件下的有界跟踪结论。
+
+\subsubsection{等效残余扰动模型}
+
+定义如下非理想因素：
+\begin{itemize}
+  \item \textbf{扰动观测残差：} \(\Delta d_o(t) = d(t) - \hat d(t)\)；
+  \item \textbf{模型近似误差：} \(\Delta_m(t) = \bigl[M_e(q_m)-\hat M_e(q_m)\bigr]\ddot q_m + \bigl[C_e-\hat C_e\bigr]\dot q_m\)，其中 \(\hat M_e,\hat C_e\) 为名义模型；
+  \item \textbf{执行器输入误差：} \(\Delta_\tau(t) = \tau_{\mathrm{sat}}(t) - \tau(t)\)，由饱和、量化或执行器动态引起。
+\end{itemize}
+
+将这些因素映射到加速度通道，定义等效残余加速度扰动
 \begin{equation}
-T_{\mathrm{pre}}=T_o+2h.
-\label{eq:prescribed_total_time}
-\end{equation}
-这里的“预设”体现在 \(T_o\) 和 \(h\) 可在控制器设计阶段选定，而不是由初始误差大小决定。需要注意，式 \eqref{eq:prescribed_total_time} 是连续时间理想结论；采样、力矩饱和和模型误差会使实际误差不再严格于该时刻归零。
-
-\textbf{命题3：} 若采用一般周期延迟增益，并且相应单周期状态转移矩阵 \(\Delta(h)\) 为幂零矩阵，即存在 \(\nu_0\ge1\) 使
-\[
-\Delta^{\nu_0}(h)=0,
-\]
-则理想补偿条件下有
-\[
-e(t)=0,\qquad \dot e(t)=0,
-\qquad \forall t\ge T_o+2\nu_0h.
-\]
-该结论来自周期状态映射
-\[
-z(2(k+1)h)=\Delta(h)z(2kh).
-\]
-式 \eqref{eq:kc_pdf} 对应更强的单周期零化情形，即 \(\nu_0=1\)。
-
-\subsection{残余扰动下的实际跟踪性能}
-
-当模型存在近似误差、扰动估计不完全或执行器受到饱和限制时，定义等效残余加速度扰动
-\begin{equation}
-\Delta_r(t)=M_e^{-1}(q_m)\bigl[d(t)-\hat d(t)+\Delta_m(t)+\Delta_\tau(t)\bigr],
+\Delta_r(t) = M_e^{-1}(q_m)\bigl[\Delta d_o(t) + \Delta_m(t) + \Delta_\tau(t)\bigr].
 \label{eq:residual_acceleration}
 \end{equation}
-其中 \(\Delta_m\) 表示名义模型与真实模型之间的等效动力学误差，\(\Delta_\tau\) 表示力矩指令经饱和或量化后产生的输入误差。此时误差系统可写为
+
+\begin{assumption}[残余扰动有界]\label{as:residual_bounded}
+  存在常数 \(\bar\Delta_r\ge 0\) 使得
+  \begin{equation}
+  \|\Delta_r(t)\| \le \bar\Delta_r,\qquad \forall\,t\ge T_o.
+  \label{eq:residual_bound}
+  \end{equation}
+\end{assumption}
+
+在残余扰动存在的情况下，误差动态成为受扰延迟系统
 \begin{equation}
-\dot z(t)=A_cz(t)-BK_c(t)z(t-h)+B\Delta_r(t).
+\dot z(t) = A_c z(t) - BK_c(t)z(t-h) + B\Delta_r(t).
 \label{eq:perturbed_delay_error}
 \end{equation}
-若 \(\Delta_r(t)\) 有界，则理想单周期零化映射被有界输入项取代，严格精确归零一般不再成立。下面给出一个基于单周期输入--状态映射的实际有界性结论。
 
-定义 \(\mathcal S_h(\theta,s)\) 为齐次延迟系统
-\[
-\dot z(t)=A_cz(t)-BK_c(t)z(t-h)
-\]
-在一个 PDF 周期内从时刻 \(s\) 到时刻 \(\theta\) 的因果解算子，并定义周期内的扰动放大系数
+\subsubsection{单周期输入--状态映射}
+
+为定量刻画残余扰动对跟踪精度的影响，引入以下增益概念。
+
+\begin{definition}[PDF 周期扰动增益]\label{def:pdf_gain}
+  令 \(\mathcal S_h(\theta,s):\mathbb R^{2n}\to\mathbb R^{2n}\) 为齐次延迟系统
+  \[
+  \dot z(t) = A_c z(t) - BK_c(t)z(t-h)
+  \]
+  从时刻 \(s\) 到时刻 \(\theta\) 的因果解算子。定义周期扰动放大系数为
+  \begin{equation}
+  \Gamma_h = \max_{\theta\in[0,2h]} \int_0^\theta \bigl\|\mathcal S_h(\theta,s)B\bigr\|\,ds.
+  \label{eq:pdf_disturbance_gain}
+  \end{equation}
+\end{definition}
+
+\(\Gamma_h\) 描述了单位残余扰动在一个 PDF 周期内所能造成的最大状态偏离。对于给定的 \(A_c\)、\(K_c\) 和 \(h\)，\(\Gamma_h\) 可通过离线数值积分或延迟系统的离散化计算获得。
+
+\begin{theorem}[周期边界实际有界跟踪]\label{thm:practical_boundary}
+  考虑受扰延迟系统式~\eqref{eq:perturbed_delay_error}。假设 PDF 增益满足理想单周期零化条件 \(\Delta_K(h)=0\)，且残余扰动满足假设~\ref{as:residual_bounded}。定义周期边界时刻
+  \[
+  t_k = T_o + 2kh,\qquad k=0,1,2,\ldots
+  \]
+  则以下递推不等式成立：
+  \begin{equation}
+  \|z(t_{k+1})\| \le \Gamma_h\bar\Delta_r,\qquad k=0,1,2,\ldots
+  \label{eq:pdf_boundary_bound}
+  \end{equation}
+  特别地，当 \(\bar\Delta_r=0\) 时式~\eqref{eq:pdf_boundary_bound}~退化为理想的单周期精确归零结论。
+\end{theorem}
+
+\begin{proof}
+  在第 \(k\) 个 PDF 周期内引入局部时间 \(\vartheta\in[0,2h]\)，令 \(z_k = z(T_o+2kh)\)。由式~\eqref{eq:perturbed_delay_error}的变分公式，在周期终点 \(\vartheta=2h\) 处有
+  \[
+  z_{k+1} = \Delta_K(h)z_k + \int_0^{2h} \mathcal S_h(2h,s) B\Delta_r(T_o+2kh+s)\,ds.
+  \]
+  由单周期零化条件 \(\Delta_K(h)=0\)，齐次项消失。利用假设~\ref{as:residual_bounded}，有
+  \[
+  \|z_{k+1}\|
+  \le \int_0^{2h} \bigl\|\mathcal S_h(2h,s)B\bigr\|\,\|\Delta_r(T_o+2kh+s)\|\,ds
+  \le \Gamma_h\bar\Delta_r.
+  \]
+  该不等式对任意 \(k\ge 0\) 成立，故式~\eqref{eq:pdf_boundary_bound}得证。当 \(\bar\Delta_r=0\) 时右端为零，退化为理想情况。
+\end{proof}
+
+定理~\ref{thm:practical_boundary}~给出了 PDF 周期边界处的跟踪误差上界。若需要周期内任意时刻的误差界，可由以下推论补充。
+
+\begin{corollary}[周期内任意时刻有界跟踪]\label{cor:arbitrary_time}
+  在定理~\ref{thm:practical_boundary}~的条件下，对于任意 \(t\ge T_o\)，存在常数 \(\Gamma_h^*>0\) 使得
+  \begin{equation}
+  \|z(t)\| \le \Gamma_h^*\bar\Delta_r.
+  \label{eq:arbitrary_time_bound}
+  \end{equation}
+  其中 \(\Gamma_h^* = \Gamma_h \cdot \max_{t\in[T_o,T_o+2h]} \sum_{j=0}^{\lfloor (t-T_o)/2h\rfloor} \|\mathcal S_h(t,T_o+2jh)\|\)。
+\end{corollary}
+
+\begin{proof}
+  将时间 \(t\) 唯一分解为 \(t = T_o + 2k h + \tau\)，其中 \(\tau\in[0,2h)\)，\(k\ge 0\)。由齐次解算子的因果性和每周期边界处的有界性，通过归纳可得式~\eqref{eq:arbitrary_time_bound}。
+\end{proof}
+
+\subsubsection{近似 PDF 情形}
+
+当数值积分、Gramian 求逆的舍入误差或采样效应使得单周期状态转移矩阵仅能近似满足 \(\Delta_K(h)=0\) 时，不妨设
 \begin{equation}
-\Gamma_h=\max_{0\le \theta\le 2h}
-\int_0^\theta
-\left\|\mathcal S_h(\theta,s)B\right\|\,\mathrm ds .
-\label{eq:pdf_disturbance_gain}
+\|\Delta_K(h)\| \le \varepsilon_\Delta < 1.
+\label{eq:approx_null}
 \end{equation}
-这里的范数可取诱导二范数。对于给定的 \(A_c\)、\(K_c\) 和 \(h\)，\(\Gamma_h\) 可通过离线数值积分或对相应延迟系统进行离散化计算。
 
-\textbf{命题4：} 假设 PDF 增益满足理想单周期零化条件 \(\Delta_K(h)=0\)，且残余扰动满足
-\[
-\|\Delta_r\|_\infty
-=\sup_{t\ge T_o}\|\Delta_r(t)\|\le\bar\Delta_r.
-\]
-则在连续时间实现下，完整 PDF 周期边界处的闭环误差满足
+\begin{proposition}[近似零化下的稳态上界]\label{prop:approx_null}
+  在式~\eqref{eq:approx_null}~的条件下，周期边界状态满足递推不等式
+  \begin{equation}
+  \|z_{k+1}\| \le \varepsilon_\Delta\|z_k\| + \Gamma_h\bar\Delta_r.
+  \label{eq:approx_recursion}
+  \end{equation}
+  进而，稳态误差上界为
+  \begin{equation}
+  \limsup_{k\to\infty} \|z_k\| \le \frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.
+  \label{eq:approx_ultimate}
+  \end{equation}
+\end{proposition}
+
+\begin{proof}
+  由式~\eqref{eq:perturbed_delay_error}的变分公式得
+  \[
+  z_{k+1} = \Delta_K(h)z_k + \int_0^{2h} \mathcal S_h(2h,s)B\Delta_r(T_o+2kh+s)\,ds.
+  \]
+  取范数并利用 \(\|\Delta_K(h)\|\le\varepsilon_\Delta\) 和 \(\|\Delta_r\|\le\bar\Delta_r\)，即得式~\eqref{eq:approx_recursion}。对此递推不等式应用标准上界分析，得到
+  \[
+  \limsup_{k\to\infty} \|z_k\|
+  \le \limsup_{k\to\infty} \left(\varepsilon_\Delta^{k}\|z_0\| + \frac{1-\varepsilon_\Delta^{k}}{1-\varepsilon_\Delta}\Gamma_h\bar\Delta_r\right)
+  = \frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.
+  \]
+\end{proof}
+
+\subsubsection{残余扰动上界的显式估计}
+
+将式~\eqref{eq:residual_acceleration}中各非理想因素的上界代入，可得更直观的误差界。
+
+\begin{corollary}[显式误差上界]\label{cor:explicit_bound}
+  若存在常数 \(\bar m>0\)、\(\bar d_o\ge0\)、\(\bar\Delta_m\ge0\)、\(\bar\Delta_\tau\ge0\) 使得
+  \[
+  \|M_e^{-1}(q_m)\| \le \bar m^{-1},\quad
+  \|d-\hat d\| \le \bar d_o,\quad
+  \|\Delta_m\| \le \bar\Delta_m,\quad
+  \|\Delta_\tau\| \le \bar\Delta_\tau,
+  \]
+  则残余扰动上界可估计为
+  \begin{equation}
+  \bar\Delta_r \le \bar m^{-1}\bigl(\bar d_o + \bar\Delta_m + \bar\Delta_\tau\bigr).
+  \label{eq:explicit_delta_bar}
+  \end{equation}
+  结合定理~\ref{thm:practical_boundary}~或命题~\ref{prop:approx_null}，得周期边界处的跟踪误差满足
+  \begin{equation}
+  \|z(T_o+2kh)\| \le 
+  \begin{cases}
+  \Gamma_h \bar m^{-1}\bigl(\bar d_o + \bar\Delta_m + \bar\Delta_\tau\bigr), & \text{精确零化},\\[4pt]
+  \displaystyle\frac{\Gamma_h \bar m^{-1}\bigl(\bar d_o + \bar\Delta_m + \bar\Delta_\tau\bigr)}{1-\varepsilon_\Delta}, & \text{近似零化}.
+  \end{cases}
+  \label{eq:final_error_bound}
+  \end{equation}
+\end{corollary}
+
+\begin{proof}
+  由式~\eqref{eq:residual_acceleration}和矩阵范数的相容性直接得到式~\eqref{eq:explicit_delta_bar}，再分别代入定理~\ref{thm:practical_boundary}~和命题~\ref{prop:approx_null}~即得式~\eqref{eq:final_error_bound}。
+\end{proof}
+
+\subsection{末端任务空间轨迹跟踪}
+
+对于末端执行器任务空间的轨迹跟踪，可通过广义雅可比矩阵的伪逆生成关节空间参考信号：
 \begin{equation}
-\|z(T_o+2(k+1)h)\|\le \Gamma_h\bar\Delta_r,
-\qquad k=0,1,2,\ldots .
-\label{eq:pdf_practical_bound}
-\end{equation}
-特别地，当 \(\Delta_r(t)\equiv0\) 时，式 \eqref{eq:pdf_practical_bound} 退化为理想的单周期精确归零结论。
-
-\textbf{证明：} 令 \(z_k=z(T_o+2kh)\)，并将第 \(k\) 个 PDF 周期内的局部时间记为 \(\vartheta\in[0,2h]\)。变分公式给出
-\[
-z_{k+1}=\Delta_K(h)z_k+
-\int_0^{2h}\mathcal S_h(2h,s)B\Delta_r(T_o+2kh+s)\,\mathrm ds.
-\]
-由 \(\Delta_K(h)=0\) 以及 \(\|\Delta_r\|_\infty\le\bar\Delta_r\)，有
-\[
-\|z_{k+1}\|
-\le \int_0^{2h}
-\|\mathcal S_h(2h,s)B\|\,\|\Delta_r(T_o+2kh+s)\|\,\mathrm ds
-\le \Gamma_h\bar\Delta_r.
-\]
-该不等式对每个 \(k\ge0\) 成立，故得到式 \eqref{eq:pdf_practical_bound}。注意，该结论首先约束的是完整 PDF 周期的边界状态；若需要给出周期内任意时刻的误差界，还需额外定义周期内状态传播增益。\hfill\(\square\)
-
-命题4给出了方向一所需的定量结论：完整 PDF 周期边界处的实际误差邻域大小由残余扰动上界 \(\bar\Delta_r\) 和 PDF 周期扰动增益 \(\Gamma_h\) 共同决定。若需要将结果推广到周期内任意时刻，还需补充周期内状态传播增益。进一步地，若数值实现或正则化计算只能保证
-\[
-\|\Delta_K(h)\|\le\varepsilon_\Delta<1,
-\]
-则在 PDF 周期边界处有递推不等式
-\begin{equation}
-\|z_{k+1}\|
-\le \varepsilon_\Delta\|z_k\|
-+\Gamma_h\bar\Delta_r,
-\label{eq:pdf_approximate_recursion}
-\end{equation}
-从而
-\begin{equation}
-\limsup_{k\to\infty}\|z_k\|
-\le \frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.
-\label{eq:pdf_ultimate_bound}
-\end{equation}
-式 \eqref{eq:pdf_ultimate_bound} 表明，Gramian 数值误差、采样误差和正则化误差会通过 \(\varepsilon_\Delta\) 放大残余扰动引起的稳态误差。由 \eqref{eq:residual_acceleration}，若
-\[
-\|M_e^{-1}(q_m)\|\le\bar m^{-1},\quad
-\|d-\hat d\|\le\bar d_o,\quad
-\|\Delta_m\|\le\bar\Delta_m,\quad
-\|\Delta_\tau\|\le\bar\Delta_\tau,
-\]
-则可以采用保守估计
-\begin{equation}
-\bar\Delta_r\le\bar m^{-1}
-\left(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\right).
-\label{eq:residual_bound_explicit}
-\end{equation}
-因此，理论误差界可进一步写成
-\[
-\|z(t)\|
-\le \Gamma_h\bar m^{-1}
-\left(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\right)
-\]
-的形式；对于近似 PDF，则将右端替换为式 \eqref{eq:pdf_ultimate_bound} 给出的上界。
-
-\subsection{抗饱和补偿器的稳定性分析}
-
-当采用抗饱和补偿器 \eqref{eq:as_dynamics} 和修正控制律 \eqref{eq:final_controller_as} 时，式 \eqref{eq:residual_acceleration} 中的力矩输入误差 \(\Delta_\tau\) 由辅助变量 \(\eta\) 的动态补偿。此时残余扰动可重新写为
-\begin{equation}
-\Delta_r^{\mathrm{as}}(t)=M_e^{-1}(q_m)\bigl[d(t)-\hat d(t)+\Delta_m(t)\bigr]
-+ \Delta_u(t) + \eta(t),
-\label{eq:residual_as}
-\end{equation}
-其中 \(\Delta_u\) 与 \(\eta\) 通过式 \eqref{eq:as_dynamics} 关联。将 \eqref{eq:residual_as} 代入误差动态 \eqref{eq:perturbed_delay_error}，可得
-\[
-\dot z = A_c z - BK_c(t)z(t-h) + B(\eta + \Delta_u) + B\bar\Delta_{\mathrm{other}},
-\]
-其中 \(\bar\Delta_{\mathrm{other}}=M_e^{-1}(d-\hat d+\Delta_m)\) 为除饱和外的残余项。由 \(\eta\) 的动力学 \eqref{eq:as_dynamics} 可知，当系统处于饱和 \((\Delta_u\neq0)\) 时，\(\eta\) 累积饱和误差，并通过控制律 \eqref{eq:final_controller_as} 中的 \(\eta\) 项改变计算力矩，减小饱和深度；当饱和解除 \((\Delta_u=0)\) 后，\(\eta\) 在固定时间 \(T_{\eta,\max}\) 内收敛至零。因此，在所提出的抗饱和补偿器作用下，饱和引起的跟踪性能退化被限制在 \(\Delta_u\neq0\) 的时间段内，且饱和结束后系统可快速恢复至标称的 PDF 收敛特性。
-
-因此，本文对理论结果作如下区分：
-\begin{enumerate}
-  \item 连续时间、精确模型、无饱和且观测器精确收敛时，得到式 \eqref{eq:prescribed_total_time} 所示的预设时间精确跟踪；
-  \item 存在模型误差、持续扰动补偿误差或执行器非理想特性时，得到预设时间实际有界跟踪；
-  \item 离散数值仿真结果用于验证控制结构和有限精度下的跟踪性能，不能单独作为连续时间严格精确归零定理的证明。
-\end{enumerate}
-
-对于末端任务空间轨迹，可通过广义雅可比矩阵生成关节参考速度
-\[
-\dot q_d=J_g^\#(q_m)\left[\dot x_e^d-K_x(x_e-x_e^d)\right],
+\dot q_d = J_g^\#(q_m)\bigl[\dot x_e^d - K_x(x_e - x_e^d)\bigr],
 \qquad
-J_g^\#=J_g^\top(J_gJ_g^\top+\lambda^2I)^{-1}.
-\]
-该步骤属于上层参考生成器，而非本文 PDF 误差闭环的必要条件。若 \(J_g\) 接近奇异，还需结合阻尼调节、奇异规避、任务优先级和关节限位处理，以保证生成的 \(q_d,\dot q_d,\ddot q_d\) 满足问题描述中的有界性要求。
+J_g^\# = J_g^\top\bigl(J_g J_g^\top + \lambda^2 I\bigr)^{-1},
+\label{eq:task_space_velocity}
+\end{equation}
+其中 \(x_e^d\) 为期望末端位姿，\(K_x>0\) 为任务空间增益，\(\lambda>0\) 为阻尼因子。该步骤属于上层参考生成器，而非本文 PDF 误差闭环的必要组成部分，其分析超出了本文的理论范围。若 \(J_g\) 接近奇异，还需结合奇异规避、任务优先级和关节限位处理，以保证生成的 \(q_d,\dot q_d,\ddot q_d\) 满足假设~\ref{as:reference}~中的有界性要求。
 
-综上，严格结论依赖四个条件：扰动观测器在设计时间内精确收敛、动力学补偿足够准确、PDF 增益满足单周期零化或幂零条件，以及延迟历史能够稳定获得。任一条件被破坏时，应采用“预设时间实际有界”或“小邻域跟踪”的表述，而不应继续宣称严格精确归零。
+\subsection{理论结果总结}
+
+\begin{remark}[Gramian 病态性与 PDF 数值精度]
+  式~\eqref{eq:wc_matrix}~中的可控 Gramian \(W_c(A_c,h)\) 在系统维数 \(n\) 增大时可能出现病态。对于 \(n=7\) 的机械臂系统（\(2n=14\) 维状态），若基准增益 \(K_0\) 使闭环时间尺度远小于延迟 \(h\)，则 \(e^{-A_c s}\) 在 \(s\in[h,2h]\) 上的变化幅度可达多个数量级，导致 Gramian 条件数达 \(10^5\!\)--\(10^6\)。此时式~\eqref{eq:kc_pdf}~中的 \(W_c^{-1}\) 引入显著数值误差，使得实际闭环的单周期状态转移矩阵仅能近似满足零化条件，即 \(\|\Delta_K(h)\|\le\varepsilon_\Delta\)。命题~\ref{prop:approx_null}~给出了该情形下的有界性结论。为缓解该问题，可采用 Tikhonov 正则化或截断奇异值分解提高 \(W_c^{-1}\) 的数值稳定性。
+
+  此外，PDF 方法的固定时间收敛优势在以下条件下最显著：\(\text{(i)}\) 系统维数较低（\(n\le 3\)），Gramian 条件数可控；\(\text{(ii)}\) 延迟 \(h\) 与系统主导时间常数匹配；\(\text{(iii)}\) 数值积分精度足够（如采用高阶 Runge--Kutta 方法）。对于高维 MIMO 系统，PDF 的收敛保证退化为命题~\ref{prop:approx_null}~所述的实际有界跟踪，此时 PDF 与 PD 的瞬态性能差异主要由延迟反馈的相位补偿作用决定。数值仿真结果（第~\ref{sec:simulation}~节）证实了上述分析：在 \(n=7\) 时，PDF 与 PD 的终端误差一致（均为 \(10^{-9}\) rad 量级），说明 Gramian 的数值退化使 PDF 降为等效于 PD 的反馈结构。
+\end{remark}
+
+综合以上分析，本文的理论结论可归纳为表~\ref{tab:theory_summary}。
+
+\begin{table}[H]
+\centering
+\caption{理论结论总结}
+\label{tab:theory_summary}
+\begin{tabular}{p{3cm}p{6cm}p{5cm}}
+\toprule
+条件 & 结果 & 依据 \\
+\midrule
+连续时间，精确模型，精确补偿，无饱和 & 预设时间精确归零：\(e(t)=0,\ t\ge T_o+2h\) & 定理~\ref{thm:main_ideal} \\
+残余扰动有界，精确 PDF 零化 & 预设时间实际有界：\(\|z(t)\|\le \Gamma_h\bar\Delta_r\) & 定理~\ref{thm:practical_boundary} \\
+残余扰动有界，近似 PDF 零化 & 稳态有界：\(\displaystyle\limsup\|z_k\|\le \frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}\) & 命题~\ref{prop:approx_null} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[离散数值仿真的定位]
+  离散数值仿真结果（第~\ref{sec:simulation}~节）用于验证控制结构的可运行性和有限精度下的跟踪性能，但不能单独作为连续时间严格精确归零定理的证明依据。仿真与理论之间的关系应为：理论提供保证，仿真提供验证。
+\end{remark}

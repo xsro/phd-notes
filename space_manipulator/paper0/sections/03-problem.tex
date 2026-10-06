@@ -1,31 +1,102 @@
 \section{问题描述}
+\label{sec:problem}
 
-给定足够光滑且有界的关节期望轨迹 \(q_d(t),\dot q_d(t),\ddot q_d(t)\)。定义位置误差、速度误差和误差状态为
-\[
-e=q_m-q_d,\qquad \dot e=\dot q_m-\dot q_d,
-\qquad z=\begin{bmatrix}e^\top&\dot e^\top\end{bmatrix}^\top\in\mathbb R^{2n}.
-\]
-本文首先研究关节空间轨迹跟踪问题，控制目标是设计关节力矩 \(\tau\)，使误差在给定时间上界后满足
+本节在等效关节空间模型的基础上，形式化定义轨迹跟踪控制问题及其所需的假设条件。
+
+\subsection{控制目标}
+
+给定足够光滑且有界的关节期望轨迹 \(q_d(t),\ \dot q_d(t),\ \ddot q_d(t)\)，其定义域为 \(t\in[0,\infty)\)。定义关节位置误差和速度误差分别为
 \begin{equation}
-e(t)=0,\qquad \dot e(t)=0,\qquad t\ge T.
-\label{eq:tracking_goal}
+e(t) = q_m(t) - q_d(t),\qquad
+\dot e(t) = \dot q_m(t) - \dot q_d(t).
+\label{eq:tracking_errors}
 \end{equation}
-其中，\(T\) 由观测阶段和 PDF 阶段的设计参数共同确定。需要区分的是，在理想连续时间、精确模型和精确扰动补偿条件下，式 \eqref{eq:tracking_goal} 表示预设时间精确跟踪；当存在模型误差、持续未补偿扰动、执行器饱和或数值离散时，本文只主张预设时间附近的实际有界跟踪或小邻域收敛。
+令误差状态向量为
+\begin{equation}
+z(t) = \begin{bmatrix} e^\top(t) & \dot e^\top(t) \end{bmatrix}^\top \in \mathbb R^{2n}.
+\label{eq:error_state}
+\end{equation}
 
-本文采用如下假设。
+\begin{problem}[预设时间关节轨迹跟踪]\label{prob:tracking}
+  对于由式~\eqref{eq:joint_model_relabelled}~描述的自由漂浮空间机械臂系统，设计关节力矩控制律 \(\tau(t)\)，使得存在可预设的时间上界 \(T>0\)，满足
+  \begin{equation}
+  e(t) = 0,\quad \dot e(t) = 0,\qquad \forall\,t \ge T,
+  \label{eq:tracking_goal_ideal}
+  \end{equation}
+  在连续时间、精确模型和精确扰动补偿的理想条件下成立。当存在模型误差、持续未补偿扰动、执行器饱和或数值离散时，式~\eqref{eq:tracking_goal_ideal}~应退化为
+  \begin{equation}
+  \|z(t)\| \le \delta(\bar\Delta_r),\qquad \forall\,t\ge T,
+  \label{eq:tracking_goal_practical}
+  \end{equation}
+  其中 \(\delta(\cdot)\) 为残余扰动上界 \(\bar\Delta_r\) 的连续单调递增函数，且满足 \(\delta(0)=0\)。
+\end{problem}
 
-\textbf{假设1：} 在所考虑工作区域内，\(M_e(q_m)\) 一致正定且可逆，\(M_e(q_m)\) 与 \(C_e(q_m,\dot q_m)\dot q_m\) 可由完整模型获得，或由名义模型近似获得。
+问题~1 明确了两种不同强度下的控制目标：理想条件追求严格的预设时间精确跟踪；实际条件接受预设时间附近的邻域跟踪，且邻域半径随残余扰动幅值趋于零而趋于零。本文第~\ref{sec:stability}~节将在定理~2 和命题~4 中分别给出上述两种结论的严格表述和证明。
 
-\textbf{假设2：} 参考轨迹 \(q_d,\dot q_d,\ddot q_d\) 有界且连续，关节位置和速度可测，且参考信号在控制器启动时具有一致的历史定义。
+\subsection{基本假设}
 
-\textbf{假设3：} 人工延迟项 \(z(t-h)\) 可由历史缓存获得，其中 \(h>0\) 为设计延迟。延迟初值函数在 \([-h,0]\) 上有界且分段连续。
+为进行后续的理论分析与控制器设计，引入以下假设。
 
-\textbf{假设4：} 对于预设时间扰动观测器，等效加速度扰动
-\[
-\Delta_a(t)=M_e^{-1}(q_m)d(t)
-\]
-及其一阶导数有界；其上界可以未知。
+\begin{assumption}[等效惯性可逆]\label{as:inertia}
+  在所考虑的工作区域内，等效惯性矩阵 \(M_e(q_m)\) 一致正定，即存在常数 \(\underline m>0\) 使得
+  \[
+  M_e(q_m) \succeq \underline m I_n,\qquad \forall\,q_m\in\mathbb R^n.
+  \]
+  进一步，\(M_e(q_m)\) 及其逆关于 \(q_m\) 的依赖关系已知或可由名义模型近似获得。
+\end{assumption}
 
-\textbf{假设5：} 严格的预设时间精确跟踪结论只在连续时间实现、无执行器饱和、模型补偿精确以及观测器按理论条件实现时成立。存在观测误差、模型不确定性、采样和量化误差时，相关项统一视为残余扰动进行实际有界性分析。
+\begin{assumption}[参考轨迹有界]\label{as:reference}
+  期望轨迹 \(q_d(t),\ \dot q_d(t),\ \ddot q_d(t)\) 一致有界且连续可微。关节位置 \(q_m(t)\) 和速度 \(\dot q_m(t)\) 可实时测量。
+\end{assumption}
 
-上述假设明确了本文理论结果的适用范围。后文先在理想条件下建立 PDF 闭环的预设时间精确跟踪结论，再讨论残余扰动对实际性能的影响。末端任务空间轨迹若由广义雅可比映射生成关节参考，则属于关节空间控制器的上层参考生成问题，本文的主要理论对象仍为式 \eqref{eq:tracking_goal} 所示的关节空间误差系统。
+\begin{assumption}[延迟历史可获取]\label{as:delay_history}
+  人工延迟项 \(z(t-h)\) 可由历史缓存获得，其中 \(h>0\) 为可设计延迟常数。延迟初值函数 \(\phi(\theta):[-h,0]\to\mathbb R^{2n}\) 分段连续且有界。
+\end{assumption}
+
+\begin{assumption}[扰动有界性]\label{as:disturbance}
+  等效加速度扰动 \(\Delta_a(t) = M_e^{-1}(q_m)d(t)\) 及其一阶导数 \(\dot\Delta_a(t)\) 在定义域上一致有界，其上界未必已知。
+\end{assumption}
+
+\begin{assumption}[理想条件]\label{as:ideal}
+  预设时间精确跟踪结论（式~\eqref{eq:tracking_goal_ideal}）只在以下理想条件同时成立时保证：\textup{(i)} 连续时间实现；\textup{(ii)} 无执行器饱和；\textup{(iii)} 模型补偿精确（即 \(M_e\) 和 \(C_e\) 的模型误差为零）；\textup{(iv)} 扰动观测器按理论条件精确收敛。当上述任一条件被破坏时，结论自动退化为式~\eqref{eq:tracking_goal_practical}~所述的实际有界跟踪。
+\end{assumption}
+
+上述假设明确了本文理论结果的适用范围。假设~\ref{as:inertia}~作为基础性条件确保控制器设计中的矩阵求逆运算良定义；假设~\ref{as:reference}~和~\ref{as:delay_history}~分别保证参考信号和反馈信号的可用性；假设~\ref{as:disturbance}~为预设时间扰动观测器的收敛性提供前提；假设~\ref{as:ideal}~则划定了理论结果与工程实现之间的界限，避免将理想结论不当外推至非理想场景。
+
+\subsection{预备知识：光滑周期延迟反馈}
+
+为便于后续引用，本节简要回顾光滑周期延迟反馈方法的核心思想~\cite{zhouFixedtimeStabilizationLinear2022}。
+
+考虑如下形式的可控线性时滞系统
+\begin{equation}
+\dot x(t) = F(t)x(t) + G(t)x(t-h),
+\label{eq:periodic_delay_general}
+\end{equation}
+其中 \(F(t),G(t)\in\mathbb R^{m\times m}\) 为 \(2h\) 周期矩阵，且在每一周期的前半段满足 \(G(t)=0,\ \forall\,t\in[0,h)\)。对于此类系统，由分步法可知，系统的状态在相隔一个周期的时间点之间存在线性映射关系
+\begin{equation}
+x\bigl(2(k+1)h\bigr) = \Delta(h)\,x(2kh),\qquad k=0,1,2,\ldots,
+\label{eq:period_map_abstract}
+\end{equation}
+其中 \(\Delta(h)\in\mathbb R^{m\times m}\) 称为单周期状态转移矩阵（单值矩阵），其显式表达式为
+\begin{equation}
+\Delta(h) = \Phi(2h,0) + \int_h^{2h} \Phi(2h,s) G_0(s) \Phi(s-h,0)\,ds.
+\label{eq:period_map_explicit}
+\end{equation}
+这里 \(\Phi(\cdot,\cdot)\) 为 \(F(t)\) 对应的状态转移矩阵，\(G_0(s)\) 为 \(G(s)\) 在后半周期的取值。
+
+\begin{definition}[单周期零化]\label{def:single_period_nullification}
+  若通过设计反馈增益 \(G(t)\) 使得 \(\Delta(h)=0\)，则对任意初始条件，系统~\eqref{eq:periodic_delay_general}~的解满足
+  \[
+  x(t)=0,\qquad \forall\,t\ge 2h.
+  \]
+  此性质称为单周期零化。
+\end{definition}
+
+\begin{definition}[幂零零化]\label{def: nilpotent_nullification}
+  若 \(\Delta(h)\) 为幂零矩阵，即存在最小正整数 \(\nu_0\ge 1\) 使得 \(\Delta^{\nu_0}(h)=0\)，则
+  \[
+  x(t)=0,\qquad \forall\,t\ge 2\nu_0 h.
+  \]
+\end{definition}
+
+定义~\ref{def:single_period_nullification}~和~\ref{def: nilpotent_nullification}~提供了两种不同强度的固定时间收敛结论。本文主要采用单周期零化情形（对应 \(\nu_0=1\)），因其收敛速度最快且便于与扰动观测器配合得到总预设时间 \(T_o+2h\)。

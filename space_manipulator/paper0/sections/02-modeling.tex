@@ -1,69 +1,122 @@
 \section{自由漂浮空间机械臂建模}
+\label{sec:modeling}
 
-考虑捕获前的自由漂浮空间机械臂。设基座广义速度为
-\(\dot x_b=[v_b^\top\ \omega_b^\top]^\top\in\mathbb R^6\)，关节变量为
-\(q\in\mathbb R^n\)。在统一的空间速度坐标和动量表达下，系统动能可写为
+本节建立捕获前自由漂浮空间机械臂的等效关节空间动力学模型。在给出完整动力学方程后，利用动量守恒消去基座加速度，得到一种适用于后续控制器设计的降阶形式。
+
+\subsection{符号与记法}
+
+考虑一个由基座和 \(n\) 个旋转关节组成的自由漂浮空间机械臂。基座广义速度定义为
+\[
+\dot x_b=[v_b^\top,\ \omega_b^\top]^\top\in\mathbb R^6,
+\]
+其中 \(v_b\in\mathbb R^3\) 和 \(\omega_b\in\mathbb R^3\) 分别为基座线速度和角速度。关节变量记为 \(q=[q_1,\ldots,q_n]^\top\in\mathbb R^n\)。末端执行器广义速度为
+\[
+\dot x_e=[v_e^\top,\ \omega_e^\top]^\top\in\mathbb R^6.
+\]
+
+\subsection{完整动力学模型}
+
+在无外力、无外力矩的自由漂浮条件下，系统动能可写为二次型形式
 \begin{equation}
 T=\frac12
-\begin{bmatrix}\dot x_b^\top&\dot q^\top\end{bmatrix}
-\begin{bmatrix}H_b(q)&H_{bm}(q)\\
-H_{bm}^\top(q)&H_m(q)\end{bmatrix}
-\begin{bmatrix}\dot x_b\\\dot q\end{bmatrix},
+\begin{bmatrix}\dot x_b^\top & \dot q^\top\end{bmatrix}
+\begin{bmatrix}
+H_b(q) & H_{bm}(q)\\
+H_{bm}^\top(q) & H_m(q)
+\end{bmatrix}
+\begin{bmatrix}\dot x_b\\ \dot q\end{bmatrix},
 \label{eq:kinetic_energy_ffsm}
 \end{equation}
-其中，\(H_b\)、\(H_m\) 和 \(H_{bm}\) 分别表示基座惯性块、机械臂惯性块以及基座--机械臂耦合惯性块。以下推导假定各矩阵采用同一参考坐标系定义；若采用不同的空间坐标约定，应首先通过相应的坐标变换统一动量表达。
+其中 \(H_b(q)\in\mathbb R^{6\times6}\)、\(H_m(q)\in\mathbb R^{n\times n}\) 和 \(H_{bm}(q)\in\mathbb R^{6\times n}\) 分别为基座惯性块、机械臂惯性块及基座--机械臂耦合惯性块。式~\eqref{eq:kinetic_energy_ffsm}~中的各惯性块在统一参考系下定义；若采用不同空间坐标约定，应首先通过相应坐标变换统一动量表达。
 
-在无外力和无外力矩作用下，系统动力学可以分块表示为
+基于拉格朗日力学，完整动力学方程可写为分块形式
 \begin{equation}
-\begin{bmatrix}H_b&H_{bm}\\H_{bm}^\top&H_m\end{bmatrix}
-\begin{bmatrix}\ddot x_b\\\ddot q\end{bmatrix}
+\begin{bmatrix}
+H_b & H_{bm}\\
+H_{bm}^\top & H_m
+\end{bmatrix}
+\begin{bmatrix}\ddot x_b\\ \ddot q\end{bmatrix}
 +
-\begin{bmatrix}C_b&C_{bm}\\C_{bm}^\top&C_m\end{bmatrix}
-\begin{bmatrix}\dot x_b\\\dot q\end{bmatrix}
-=\begin{bmatrix}0\\\tau\end{bmatrix},
+\begin{bmatrix}
+C_b & C_{bm}\\
+C_{bm}^\top & C_m
+\end{bmatrix}
+\begin{bmatrix}\dot x_b\\ \dot q\end{bmatrix}
+=
+\begin{bmatrix}0\\ \tau\end{bmatrix},
 \label{eq:full_ffsm_dynamics}
 \end{equation}
-其中 \(\tau\in\mathbb R^n\) 为关节驱动力矩。式 \eqref{eq:full_ffsm_dynamics} 的第一行体现了基座不直接施加控制力和控制力矩的自由漂浮条件。
+其中 \(\tau=[\tau_1,\ldots,\tau_n]^\top\in\mathbb R^n\) 为关节驱动力矩。式~\eqref{eq:full_ffsm_dynamics}~的第一行体现了自由漂浮的物理条件：基座不直接施加控制力和控制力矩。\(C\) 矩阵的各子块由 Christoffel 符号或递推 Newton--Euler 方法确定，满足 \(\dot H-2C\) 的斜对称性质（在适当定义下）。
 
-若系统初始总线动量和总角动量均为零，则动量守恒约束可写为
+\subsection{动量守恒与广义雅可比关系}
+
+\noindent\textbf{假设1（零初始动量）：} 系统初始总线动量和总角动量均为零。\hfill\(\blacksquare\)
+
+在假设~1 下，动量守恒约束可写为
 \begin{equation}
-H_b(q)\dot x_b+H_{bm}(q)\dot q=0.
+H_b(q)\dot x_b + H_{bm}(q)\dot q = 0.
 \label{eq:momentum_constraint}
 \end{equation}
-在 \(H_b(q)\) 非奇异的工作区域内，有
+
+\noindent\textbf{假设2（基座惯性可逆）：} 在所考虑的工作区域内，\(H_b(q)\) 一致正定。\hfill\(\blacksquare\)
+
+在假设~2 下，由式~\eqref{eq:momentum_constraint}~可得基座速度与关节速度之间的线性映射关系
 \begin{equation}
-\dot x_b=-H_b^{-1}(q)H_{bm}(q)\dot q
-\triangleq J_{bm}(q)\dot q.
+\dot x_b = -H_b^{-1}(q)H_{bm}(q)\dot q \triangleq J_{bm}(q)\dot q,
 \label{eq:base_joint_jacobian}
 \end{equation}
-因此，基座速度不是独立控制量，而是由关节运动诱导产生的反作用运动。若末端速度满足
+其中 \(J_{bm}(q)\in\mathbb R^{6\times n}\) 称为基座--机械臂雅可比矩阵。式~\eqref{eq:base_joint_jacobian}~表明，在自由漂浮模式下，基座速度不是独立控制量，而是由关节运动通过动量守恒诱导产生的反作用运动。
+
+设末端速度由运动学链关系给出
 \begin{equation}
-\dot x_e=J_b(q)\dot x_b+J_m(q)\dot q,
+\dot x_e = J_b(q)\dot x_b + J_m(q)\dot q,
 \label{eq:end_velocity_common}
 \end{equation}
-则代入式 \eqref{eq:base_joint_jacobian} 可得自由漂浮空间机械臂的广义雅可比关系
+其中 \(J_b(q)\in\mathbb R^{6\times6}\) 和 \(J_m(q)\in\mathbb R^{6\times n}\) 分别为相对于基座坐标的末端雅可比分量。将式~\eqref{eq:base_joint_jacobian}~代入式~\eqref{eq:end_velocity_common}，得到自由漂浮空间机械臂的广义雅可比关系
 \begin{equation}
-\dot x_e=\left[J_m(q)+J_b(q)J_{bm}(q)\right]\dot q
-\triangleq J_g(q)\dot q.
+\dot x_e = \bigl[J_m(q) + J_b(q)J_{bm}(q)\bigr]\dot q \triangleq J_g(q)\dot q.
 \label{eq:generalized_jacobian}
 \end{equation}
-该关系表明，末端运动同时受到关节运动和基座反作用运动的影响。当 \(J_g(q)\) 接近秩亏时，关节速度放大、基座反作用增强以及末端可操作性退化可能同时出现。
+该关系表明末端运动同时受关节运动和基座反作用运动的共同影响。当 \(J_g(q)\) 接近秩亏时，关节速度放大、基座反作用增强以及末端可操作性退化可能同时出现。
 
-将式 \eqref{eq:momentum_constraint} 对时间求导，并与式 \eqref{eq:full_ffsm_dynamics} 联立消去基座加速度，可得到等效关节空间动力学
+\subsection{等效关节空间动力学}
+
+将式~\eqref{eq:momentum_constraint}~对时间求导可得
 \begin{equation}
-M_e(q)\ddot q+C_e(q,\dot q)\dot q=\tau+d(t),
+H_b\ddot x_b + H_{bm}\ddot q + \dot H_b\dot x_b + \dot H_{bm}\dot q = 0.
+\label{eq:momentum_derivative}
+\end{equation}
+消去 \(\ddot x_b\)：由式~\eqref{eq:full_ffsm_dynamics}~的第一行解出 \(\ddot x_b\) 的表达式，代入式~\eqref{eq:momentum_derivative}~并与式~\eqref{eq:full_ffsm_dynamics}~的第二行联立，经过代数运算（该运算涉及各惯性块及其时间导数和 Coriolis 项的重新组合），得到等效关节空间动力学
+\begin{equation}
+M_e(q)\ddot q + C_e(q,\dot q)\dot q = \tau + d(t).
 \label{eq:joint_model}
 \end{equation}
 其中等效惯性矩阵为 Schur 补
 \begin{equation}
-M_e(q)=H_m(q)-H_{bm}^\top(q)H_b^{-1}(q)H_{bm}(q).
+M_e(q) = H_m(q) - H_{bm}^\top(q)H_b^{-1}(q)H_{bm}(q).
 \label{eq:generalized_inertia}
 \end{equation}
-\(C_e(q,\dot q)\dot q\) 表示由完整递推动力学、动量约束求导以及坐标变换共同确定的等效速度相关项；其具体矩阵分解并不唯一，但应与式 \eqref{eq:joint_model} 保持一致。\(d(t)\) 汇总参数摄动、未建模动力学、外部扰动以及执行器误差等项。
+\(C_e(q,\dot q)\dot q \in\mathbb R^n\) 表示由完整递推动力学、动量约束求导以及坐标变换共同确定的等效速度相关项；该项的具体矩阵分解并不唯一，但应使式~\eqref{eq:joint_model}~与完整动力学方程在零初始动量条件下一致。\(d(t)\in\mathbb R^n\) 为集总扰动项，汇总参数摄动、未建模动力学、外部扰动以及执行器误差等所有非理想因素。
 
-由于完整自由漂浮模型的具体形式取决于基座坐标、连杆参数和递推动力学实现，本文后续仅要求 \(M_e\) 可逆且 \(C_e\dot q\) 可计算。为与控制器记号一致，后文将关节变量统一记为 \(q_m\)，并使用
+\noindent\textbf{假设3（等效惯性正定性）：} 在所考虑的工作区域内，\(M_e(q)\) 一致正定且可逆。\hfill\(\blacksquare\)
+
+假设~3 保证式~\eqref{eq:joint_model}~对控制器设计是良定义的。由于式~\eqref{eq:generalized_inertia}~是 Schur 补形式，当完整惯性矩阵正定时该假设自然成立。
+
+为与后续控制器记号一致，将关节变量统一记为 \(q_m\in\mathbb R^n\)，将等效动力学写为
 \begin{equation}
-M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t).
+M_e(q_m)\ddot q_m + C_e(q_m,\dot q_m)\dot q_m = \tau + d(t).
 \label{eq:joint_model_relabelled}
 \end{equation}
-该约化模型保留了基座反作用对关节动力学的等效影响，为后续计算力矩补偿和误差通道规范化提供基础。
+式~\eqref{eq:joint_model_relabelled}~即为本文后续控制律设计的基础模型。该约化模型保留了基座反作用对关节动力学的等效影响，将原 \(6+n\) 维耦合系统降为 \(n\) 维关节空间形式，为计算力矩补偿和误差通道的线性化提供了分析基础。
+
+\begin{remark}[空间 CRBA 数值实现]
+  在实际数值实现中，完整惯性矩阵 \(H_{\text{full}}(q)\in\mathbb R^{(6+n)\times(6+n)}\) 可通过空间复合刚体算法（Composite Rigid Body Algorithm, CRBA）计算：将各连杆的空间惯性矩阵 \(I_i\in\mathbb R^{6\times6}\) 经伴随变换表达在基座坐标系中求和，即
+  \[
+  H_{\text{full}} = \sum_{i=0}^{n} J_i^\top I_i J_i,
+  \]
+  其中 \(J_i\in\mathbb R^{6\times(6+n)}\) 为连杆 \(i\) 在自身坐标系中的空间雅可比。该方法的计算复杂度为 \(O(n^2)\)，适用于在线实现。科里奥利/离心项 \(C_{\text{full}}\dot q_{\text{full}}\) 可通过 Christoffel 符号的数值微分计算。完整的前向动力学求解步骤为
+  \[
+  \ddot q_{\text{full}} = H_{\text{full}}^{-1}\bigl([0_{6\times1}^\top,\;\tau^\top]^\top - C_{\text{full}}\dot q_{\text{full}}\bigr),
+  \]
+  其中前 \(6\) 个加速度分量对应基座自由度，后 \(n\) 个对应关节自由度。提取 Schur 补 \(M_e = H_m - H_{bm}^\top H_b^{-1} H_{bm}\) 及等效科里奥利向量 \(C_e\dot q = C_m - H_{bm}^\top H_b^{-1} C_b\) 即可用于控制器设计。本文第~\ref{sec:simulation}~节的仿真采用基于该方法参数的正定名义关节空间模型，完整的 CRBA 递推动力学实现留待后续工作验证。
+\end{remark}

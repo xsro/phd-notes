@@ -1,267 +1,261 @@
 \section{控制算法设计}
+\label{sec:controller}
 
-\subsection{预设时间扰动观测器设计}
+本节详细设计"扰动观测--动力学补偿--误差线性化--周期延迟反馈"控制结构的各组成部分。第~\ref{sec:ptdo}~节构造预设时间扰动观测器以估计集总扰动；第~\ref{sec:compensation}~节利用计算力矩补偿将误差动力学线性化；第~\ref{sec:pdf_design}~节在可控线性误差通道中嵌入光滑周期延迟反馈，给出满足单周期零化条件的 PDF 增益构造。
 
-对等效关节空间模型 \eqref{eq:joint_model}，先设计扰动观测器来生成后续动力学补偿所需的 \(\hat d(t)\)。将关节速度记为
+\subsection{预设时间扰动观测器}
+\label{sec:ptdo}
+
+对等效关节空间模型~\eqref{eq:joint_model_relabelled}，定义关节速度为
 \[
-\chi=\dot q_m .
+\chi = \dot q_m \in\mathbb R^n.
 \]
-由 \eqref{eq:joint_model} 可得
+将式~\eqref{eq:joint_model_relabelled}~改写为加速度通道形式
 \begin{equation}
-\dot\chi=u_o+\Delta_a,
-\qquad
-u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
-\qquad
-\Delta_a=M_e^{-1}(q_m)d(t).
+\dot\chi = u_o + \Delta_a,\qquad
+u_o = M_e^{-1}(q_m)\bigl[\tau - C_e(q_m,\dot q_m)\dot q_m\bigr],\qquad
+\Delta_a = M_e^{-1}(q_m)d(t).
 \label{eq:observer_channel}
 \end{equation}
-其中 \(\Delta_a\) 为匹配到加速度通道的集总扰动。该形式与预设时间扰动观测器的标准受扰单积分器模型一致\cite{jiangPrescribedtimeDisturbanceObserver2024}。若能够在预设时间 \(T_o\) 内得到 \(\hat\Delta_a\)，则力矩扰动估计可由
-\begin{equation}
-\hat d(t)=M_e(q_m)\hat\Delta_a(t)
-\label{eq:dhat_from_observer}
-\end{equation}
-给出。
+其中 \(u_o\) 为由控制输入和速度相关项构成的可计算加速度，\(\Delta_a\) 为匹配到加速度通道的集总扰动。该形式与预设时间扰动观测器的标准受扰单积分器模型一致~\cite{jiangPrescribedtimeDisturbanceObserver2024}。
 
-设 \(z_1,z_2\in\mathbb R^n\) 分别为 \(\chi\) 和 \(\Delta_a\) 的估计值，取 \(\hat\Delta_a=z_2\)。定义可测复合误差
+\noindent 令 \(z_1,z_2\in\mathbb R^n\) 分别为 \(\chi\) 和 \(\Delta_a\) 的估计值，定义可测复合误差
+\begin{equation}
+\varepsilon_1 = \chi - z_1 - \bar\xi(t),
+\label{eq:observer_error}
+\end{equation}
+其中 \(\bar\xi(t)\in\mathbb R^n\) 为调节函数，满足以下条件：
+
+\begin{enumerate}
+  \item \(\bar\xi(t)\) 光滑有界，单调衰减；
+  \item \(\bar\xi(t)=0,\quad \forall\,t\ge T_o\)。
+\end{enumerate}
+
+例如可取如下二次衰减形式
 \[
-\varepsilon_1=\chi-z_1-\bar\xi(t),
-\]
-其中 \(\bar\xi(t)\in\mathbb R^n\) 为调节函数，满足有界光滑、单调衰减且 \(t\ge T_o\) 时 \(\bar\xi(t)=0\)。例如可取
-\[
-\bar\xi(t)=
+\bar\xi(t) = 
 \begin{cases}
-\bar\xi_0(T_o-t)^2, & 0\le t<T_o,\\
-0, & t\ge T_o.
+\bar\xi_0\,(T_o-t)^2, & 0\le t<T_o,\\
+0, & t\ge T_o,
 \end{cases}
 \]
-记 \(\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha\)，并按元素作用于向量。参考文献\cite{jiangPrescribedtimeDisturbanceObserver2024}，构造如下预设时间扰动观测器：
-\begin{equation}
-\left\{
-\begin{aligned}
-\dot z_1
-&=z_2+\frac{\pi}{\eta T_c}
-\phi_1\left(\frac{\varepsilon_1}{\sigma}\right)
--\dot{\bar\xi}(t)+\bar\xi(t)+u_o,\\
-\dot z_2
-&=\frac{\pi}{\sigma\eta T_c}
-\phi_2\left(\frac{\varepsilon_1}{\sigma}\right)
--\dot{\bar\xi}(t),
-\end{aligned}
-\right.
-\label{eq:ptdo}
-\end{equation}
-其中 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，且
-\[
-\begin{aligned}
-\phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x),\\
-\phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).
-\end{aligned}
-\]
-在 \(\Delta_a\) 与 \(\dot\Delta_a\) 有界、连续时间实现且观测器满足相应理论条件时，观测误差可在设计时间 \(T_o\) 内收敛到零。该结论仅适用于连续时间理想观测器；在采样、量化、测量噪声和执行器限幅存在时，观测误差通常只能收敛到与采样步长、数值积分误差和未建模动态有关的小邻域。参数 \(T_o\) 和 \(T_c\) 不宜选得过小，否则可能带来较大的观测峰值和控制输入峰值。
+其中 \(\bar\xi_0\in\mathbb R^n\) 为常数向量。定义 \(\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha\)，并按元素作用于向量。
 
-\subsection{动力学补偿与误差通道规范化}
+\begin{theorem}[预设时间扰动观测器]\label{thm:ptdo}
+  考虑系统~\eqref{eq:observer_channel}。在假设~\ref{as:disturbance}~下，构造如下预设时间扰动观测器
+  \begin{equation}
+  \left\{
+  \begin{aligned}
+  \dot z_1 &= z_2 + \frac{\pi}{\eta T_c}
+             \phi_1\!\left(\frac{\varepsilon_1}{\sigma}\right)
+             - \dot{\bar\xi}(t) + \bar\xi(t) + u_o, \\[4pt]
+  \dot z_2 &= \frac{\pi}{\sigma\eta T_c}
+             \phi_2\!\left(\frac{\varepsilon_1}{\sigma}\right)
+             - \dot{\bar\xi}(t),
+  \end{aligned}
+  \right.
+  \label{eq:ptdo}
+  \end{equation}
+  其中 \(T_c\le T_o\) 为可设计收敛时间参数，\(\eta\in(0,1)\)，\(\sigma>0\)，且
+  \begin{align}
+  \phi_1(x) &= \operatorname{sig}^{1-\eta/2}(x) + \operatorname{sig}^{1+\eta/2}(x), \label{eq:phi1}\\
+  \phi_2(x) &= \operatorname{sig}^{2-\eta}(x) + \operatorname{sig}^{2+\eta}(x) + \sigma\operatorname{sgn}(x). \label{eq:phi2}
+  \end{align}
+  则在连续时间实现条件下，观测误差满足
+  \begin{equation}
+  \hat\Delta_a(t) = \Delta_a(t),\qquad
+  \hat d(t) = d(t),\qquad \forall\,t\ge T_o,
+  \label{eq:observer_convergence}
+  \end{equation}
+  其中 \(\hat\Delta_a = z_2\)，\(\hat d(t) = M_e(q_m)\hat\Delta_a(t)\)。
+\end{theorem}
 
-在获得 \(\hat d(t)\) 后，采用如下动力学补偿结构
+\begin{proof}
+  定义观测误差 \(\varepsilon_2 = \Delta_a - z_2\)。由式~\eqref{eq:observer_channel}~和式~\eqref{eq:ptdo}~可得误差动态
+  \begin{align*}
+  \dot\varepsilon_1 &= -\frac{\pi}{\eta T_c}\phi_1(\varepsilon_1/\sigma) + \varepsilon_2,\\
+  \dot\varepsilon_2 &= \dot\Delta_a - \frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma) + \dot{\bar\xi}(t).
+  \end{align*}
+  与文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~的结构一致，在 \(\Delta_a\) 和 \(\dot\Delta_a\) 有界的条件下，可通过调节函数 \(\bar\xi(t)\) 的衰减性质和非线性函数 \(\phi_1,\phi_2\) 的齐次性保证 \(\varepsilon_1(t),\varepsilon_2(t)\to 0\) 在 \(t\to T_o\) 时成立。收敛时间由参数 \(T_c\) 和 \(\eta\) 共同控制，且可通过适当选取 \(T_c\le T_o\) 使收敛在设计时间 \(T_o\) 前完成。由 \(\hat d = M_e\hat\Delta_a\) 立即得到力矩级扰动的收敛性。
+\end{proof}
+
+\begin{remark}[观测器参数的实用选取]
+  参数 \(T_o\) 和 \(T_c\) 不宜选得过小，否则可能带来显著的观测峰值，进而通过扰动补偿通道引发过大的控制输入峰值，影响执行器的实际可行性。
+\end{remark}
+
+\subsection{动力学补偿与误差线性化}
+\label{sec:compensation}
+
+在获得扰动估计 \(\hat d(t)\) 后，采用如下计算力矩补偿结构
 \begin{equation}
-\tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d(t),
+\tau = M_e(q_m)v + C_e(q_m,\dot q_m)\dot q_m - \hat d(t),
 \label{eq:computed_torque}
 \end{equation}
-其中 \(v\) 为辅助加速度输入。将式 \eqref{eq:computed_torque} 代入式 \eqref{eq:joint_model} 可得
-\[
-M_e(q_m)(\ddot q_m-v)=d(t)-\hat d(t).
-\]
-当观测器已收敛并满足 \(\hat d(t)=d(t)\) 时，且 \(M_e(q_m)\) 正定可逆，因此
-\(
-\ddot q_m=v.
-\)
+其中 \(v\in\mathbb R^n\) 为待设计的辅助加速度输入。
 
-令
-\(
-v=\ddot q_d+\nu ,
-\)
-并定义
-\(
-e=q_m-q_d\),
-\(z=[e, \dot e]^T.
-\)
-则
-\(
-\ddot e=\ddot q_m-\ddot q_d=\nu,
-\)
-误差系统可写成二阶积分链形式
-\begin{equation}
-\dot z=Az+B\nu ,
-\label{eq:linear_error}
-\end{equation}
-其中
-\[
-A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\qquad
-B=\begin{bmatrix}0\\I_n\end{bmatrix}.
-\]
-矩阵对 \((A,B)\) 可控，因此 PDF 增益的设计对象由原非线性动力学转移为线性可控误差通道。这个步骤是本文方法成立的关键：PDF 理论只需作用在 \eqref{eq:linear_error} 上，而不直接处理自由漂浮机械臂的非线性耦合项。
+\begin{lemma}[误差通道线性化]\label{lem:linearization}
+  令 \(v = \ddot q_d + \nu\)，其中 \(\nu\in\mathbb R^n\) 为辅助控制输入。假设以下两条件同时成立：
+  \begin{enumerate}
+    \item[(C1)] 扰动观测器已收敛，即 \(\hat d(t) = d(t)\)；
+    \item[(C2)] 等效惯性矩阵精确已知，即 \(M_e(q_m)\) 真值可获取。
+  \end{enumerate}
+  则将式~\eqref{eq:computed_torque}~代入式~\eqref{eq:joint_model_relabelled}~可得
+  \begin{equation}
+  \ddot q_m = v.
+  \label{eq:double_integrator}
+  \end{equation}
+  进而，定义跟踪误差 \(e = q_m - q_d\)，误差状态 \(z = [e^\top,\ \dot e^\top]^\top\)，则有
+  \begin{equation}
+  \dot z = A z + B\nu,
+  \label{eq:linear_error}
+  \end{equation}
+  其中
+  \begin{equation}
+  A = \begin{bmatrix} 0 & I_n \\ 0 & 0 \end{bmatrix} \in\mathbb R^{2n\times2n},\qquad
+  B = \begin{bmatrix} 0 \\ I_n \end{bmatrix} \in\mathbb R^{2n\times n}.
+  \label{eq:ab_matrices}
+  \end{equation}
+  矩阵对 \((A,B)\) 可控。
+\end{lemma}
+
+\begin{proof}
+  在条件 (C1) 和 (C2) 下，将式~\eqref{eq:computed_torque}~代入式~\eqref{eq:joint_model_relabelled}~得
+  \[
+  M_e\ddot q_m + C_e\dot q_m = M_e v + C_e\dot q_m - \hat d + d = M_e v.
+  \]
+  由假设~\ref{as:inertia}，\(M_e\) 一致正定，左乘 \(M_e^{-1}\) 即得 \(\ddot q_m = v\)。再将 \(v = \ddot q_d + \nu\) 代入，有
+  \[
+  \ddot e = \ddot q_m - \ddot q_d = \nu.
+  \]
+  由此直接得到式~\eqref{eq:linear_error}。可控性由 Kalman 秩条件验证：
+  \[
+  \operatorname{rank}\bigl[B,\ AB\bigr] 
+  = \operatorname{rank}\begin{bmatrix}0 & I_n \\ I_n & 0\end{bmatrix}
+  = 2n.
+  \]
+\end{proof}
+
+引理~\ref{lem:linearization}~是本文方法成立的关键桥梁：它将自由漂浮空间机械臂的非线性跟踪控制问题转化为线性可控系统的镇定问题。PDF 理论只需作用在式~\eqref{eq:linear_error}~上，而不直接处理原系统的非线性耦合项。
 
 \subsection{PDF 线性误差系统设计}
+\label{sec:pdf_design}
 
-文献\cite{zhouFixedtimeStabilizationLinear2022}考虑的基本对象是可控线性时滞系统，其固定时间镇定依赖如下周期延迟结构：
-\begin{equation}
-\dot x(t)=F(t)x(t)+G(t)x(t-h),
-\label{eq:periodic_delay_general}
-\end{equation}
-其中 \(F(t),G(t)\) 为 \(2h\) 周期矩阵，且 \(G(t)=0\) 在每个周期的前半段 \([0,h]\) 成立。由分步法可知，系统在一个周期后的状态满足
-\(
-x(2(k+1)h)=\Delta(h)x(2kh),
-\)
-其中单周期状态转移矩阵（又称单值矩阵）为
-\begin{equation}
-\Delta(h)=\Phi(2h,0)+\int_h^{2h}\Phi(2h,s)G_0(s)\Phi(s-h,0)\,ds.
-\label{eq:period_map}
-\end{equation}
-若 \(\Delta(h)\) 为幂零矩阵，即存在最小整数 \(\nu_0\ge1\) 使 \(\Delta^{\nu_0}(h)=0\)，则 \(x(t)=0,\ t\ge 2\nu_0h\)。特别地，若通过增益设计使 \(\Delta(h)=0\)，则系统可在一个完整周期后归零\cite{zhouFixedtimeStabilizationLinear2022}。
+在获得线性误差模型~\eqref{eq:linear_error}~后，本节引入光滑周期延迟反馈实现预设时间镇定。
 
-为将该思想用于式 \eqref{eq:linear_error}，先取常值反馈 \(K_0\) 使
-\(
-A_c=A+BK_0
-\)
-成为期望的基准闭环矩阵，再引入周期延迟反馈
+\subsubsection{基准闭环与周期延迟结构}
+
+首先选取常值反馈增益 \(K_0\in\mathbb R^{n\times2n}\)，使
 \begin{equation}
-\nu(t)=K_0z(t)-K_c(t)z(t-h).
+A_c = A + BK_0
+\label{eq:ac_matrix}
+\end{equation}
+成为期望的 Hurwitz 基准闭环矩阵。由于 \((A,B)\) 可控，\(K_0\) 的存在性由极点配置保证。在此基础上，引入周期延迟反馈
+\begin{equation}
+\nu(t) = K_0 z(t) - K_c(t)z(t-h),
 \label{eq:pdf_error_input}
 \end{equation}
-此时误差闭环为
+其中 \(K_c(t)\in\mathbb R^{n\times2n}\) 为 \(2h\) 周期时变增益，满足 \(K_c(t)=0,\ \forall\,t\in[0,h)\)。将式~\eqref{eq:pdf_error_input}~代入式~\eqref{eq:linear_error}，得到延迟闭环系统
 \begin{equation}
-\dot z(t)=A_cz(t)-BK_c(t)z(t-h).
+\dot z(t) = A_c z(t) - BK_c(t)z(t-h).
 \label{eq:closed_delay_error}
 \end{equation}
-令 \(R_h(t)\) 为满足
-\[
-R_h(t+2h)=R_h(t)
-\]
-的 \(2h\) 周期光滑函数，并满足
-\[
-R_h(t)=0,\quad t\in[0,h],\qquad
-R_h(t)\ge0,\quad t\in[h,2h],
-\]
-且在 \([h,2h]\) 的某个具有非零测度的子区间上严格为正。本文采用标量函数情形。根据文献\cite{zhouFixedtimeStabilizationLinear2022}的构造，可定义
-\begin{equation}
-W_c(A_c,h)=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds,
-\label{eq:wc_matrix}
-\end{equation}
-并取
-\begin{equation}
-K_c(t)=R_h(t)B^\top e^{-A_c^\top t}W_c^{-1}(A_c,h)e^{A_c(h-t)}.
-\label{eq:kc_pdf}
-\end{equation}
-由于 \((A_c,B)\) 与 \((A,B)\) 同可控，且 \(R_h(t)\) 在后半周期的一个非零测度子区间上严格为正，连续时间条件下 \(W_c(A_c,h)\) 为正定并可逆。将 \eqref{eq:kc_pdf} 代入 \eqref{eq:period_map} 可使闭环的单周期状态转移矩阵满足 \(\Delta(h)=0\)，从而得到单周期零化性质。该结论依赖精确的 Gramian 计算和连续时间延迟实现；数值积分、矩阵病态和采样误差会使实际闭环仅近似满足零化条件。式 \eqref{eq:kc_pdf} 也说明 PDF 增益可通过离线积分计算，在线控制只需读取当前误差和历史误差。
 
-结合式 \eqref{eq:computed_torque} 和式 \eqref{eq:pdf_error_input}，PDF 关节力矩控制律可写为
+\subsubsection{Gramian 型 PDF 增益构造}
+
+令 \(R_h(t)\) 为满足以下条件的标量函数：
+\begin{itemize}
+  \item \(R_h(t+2h)=R_h(t)\)（周期 \(2h\)）；
+  \item \(R_h(t)=0,\quad \forall\,t\in[0,h]\)；
+  \item \(R_h(t)\ge 0,\quad \forall\,t\in[h,2h]\)，且在 \([h,2h]\) 的某个具有非零测度的子区间上严格为正；
+  \item \(R_h(t)\) 在定义域上光滑（连续可微至所需阶数）。
+\end{itemize}
+
+\begin{definition}[可控 Gramian]\label{def:gramian}
+  对给定的 \(A_c\in\mathbb R^{2n\times2n}\)、\(B\in\mathbb R^{2n\times n}\)、时滞 \(h>0\) 和周期函数 \(R_h(t)\)，定义矩阵
+  \begin{equation}
+  W_c(A_c,h) = \int_h^{2h} e^{-A_c s} B R_h(s) B^\top e^{-A_c^\top s}\,ds.
+  \label{eq:wc_matrix}
+  \end{equation}
+  由于 \((A_c,B)\) 可控且 \(R_h(t)\) 在后半周期的非零测度子区间上严格为正，\(W_c(A_c,h)\) 为正定矩阵。
+\end{definition}
+
+\begin{theorem}[PDF 单周期零化增益]\label{thm:pdf_gain}
+  对于延迟闭环系统~\eqref{eq:closed_delay_error}，定义周期时变增益为
+  \begin{equation}
+  K_c(t) = 
+  \begin{cases}
+  0, & 0\le t < h,\\[4pt]
+  R_h(t)B^\top e^{-A_c^\top t} W_c^{-1}(A_c,h) e^{A_c(h-t)}, & h\le t < 2h,
+  \end{cases}
+  \label{eq:kc_pdf}
+  \end{equation}
+  并以周期 \(2h\) 延拓。则该闭环系统的单周期状态转移矩阵满足
+  \begin{equation}
+  \Delta_K(h) = 0,
+  \label{eq:single_period_null}
+  \end{equation}
+  即实现了定义~\ref{def:single_period_nullification}~所述的单周期零化。因此，对任意初始条件，系统~\eqref{eq:closed_delay_error}~的解满足
+  \begin{equation}
+  z(t) = 0,\qquad \forall\,t\ge 2h.
+  \label{eq:pdf_convergence}
+  \end{equation}
+\end{theorem}
+
+\begin{proof}
+  由分段结构和分步法，将 \([0,2h]\) 分为两段分析。在前半段 \([0,h)\) 上，\(K_c(t)=0\)，系统退化为无延迟的线性系统 \(\dot z = A_c z\)，其解为 \(z(t)=e^{A_c t}z(0)\)。特别地，在 \(t=h\) 处有 \(z(h)=e^{A_c h}z(0)\)。
+
+  在后半段 \([h,2h]\) 上，系统为时滞系统 \(\dot z(t)=A_c z(t)-BK_c(t)z(t-h)\)。对任意 \(t\in[h,2h]\)，利用变分公式，引入 \(t-h\in[0,h]\)，因此 \(z(t-h)=e^{A_c(t-h)}z(0)\)。将改写后的方程从 \(s=h\) 积分至 \(s=t\)：
+  \[
+  z(t) = e^{A_c(t-h)}z(h) - \int_h^t e^{A_c(t-s)} B K_c(s)\, e^{A_c(s-h)}z(0)\,ds.
+  \]
+  代入 \(z(h)=e^{A_c h}z(0)\)，有
+  \[
+  z(t) = e^{A_c t}z(0) - \int_h^t e^{A_c(t-s)} B K_c(s)\, e^{A_c(s-h)}\,ds\,z(0).
+  \]
+  在 \(t=2h\) 处，
+  \[
+  z(2h) = e^{A_c(2h)}z(0) - \int_h^{2h} e^{A_c(2h-s)} B K_c(s)\, e^{A_c(s-h)}ds\,z(0).
+  \]
+  将式~\eqref{eq:kc_pdf}~代入积分项，可得
+  \[
+  \int_h^{2h} e^{A_c(2h-s)} B K_c(s) e^{A_c(s-h)}ds 
+  = e^{A_c h}\int_h^{2h} e^{-A_c s} B R_h(s) B^\top e^{-A_c^\top s} ds\, W_c^{-1}(A_c,h)\, e^{A_c h}.
+  \]
+  由定义~\ref{def:gramian}，右端积分即为 \(W_c(A_c,h)\)，于是
+  \[
+  \int_h^{2h} e^{A_c(2h-s)} B K_c(s) e^{A_c(s-h)}ds = e^{A_c h} I_{2n} e^{A_c h} = e^{A_c(2h)}.
+  \]
+  代入 \(z(2h)\) 表达式得
+  \[
+  z(2h) = e^{A_c(2h)}z(0) - e^{A_c(2h)}z(0) = 0.
+  \]
+  因此 \(\Delta_K(h)=0\)。重复应用该映射知，\(z(t)=0,\ \forall t\ge 2h\)。
+\end{proof}
+
+\begin{remark}[增益的离线计算]
+  式~\eqref{eq:kc_pdf}~中的 \(W_c(A_c,h)\) 和 \(K_c(t)\) 可在控制运行前离线积分计算。在线控制时仅需在每一采样时刻根据本地时间 \(\theta=t\bmod 2h\) 查表读取对应的增益值，并与当前误差 \(z(t)\) 及历史误差 \(z(t-h)\) 进行乘法运算。这一结构使得在线计算量与常规 PD 控制器相当。
+\end{remark}
+
+\subsubsection{完整控制律}
+
+综合式~\eqref{eq:computed_torque}、\eqref{eq:pdf_error_input}，PDF 关节力矩控制律为
 \begin{equation}
-\tau
-=
-M_e(q_m)
-\left[
-\ddot q_d
-+
-K_0z(t)
--
-K_c(t)z(t-h)
-\right]
-+
-C_e(q_m,\dot q_m)\dot q_m
--
-\hat d(t).
+\tau(t) = M_e(q_m)\Bigl[\ddot q_d + K_0 z(t) - K_c(t)z(t-h)\Bigr] + C_e(q_m,\dot q_m)\dot q_m - \hat d(t).
 \label{eq:final_controller}
 \end{equation}
 
-\subsection{固定时间抗饱和补偿器}
+\subsection{两阶段时序设计}
 
-实际应用中，关节执行器存在力矩饱和限制，即
+在观测器和 PDF 控制器同时从 \(t=0\) 启动的情况下，\(0\le t<T_o\) 时间区间内的观测误差会作为残余扰动进入误差系统，使定理~\ref{thm:pdf_gain}~的理想单周期零化结论在该时段内不成立。为保持理论分析的清晰性，本文采用以下两阶段时序：
+
+\begin{enumerate}
+  \item \textbf{观测阶段：} \(t\in[0,T_o)\)，扰动观测器式~\eqref{eq:ptdo}~运行并收敛；PDF 反馈增益设为 \(K_c(t)=0\)，即仅由 \(K_0\) 提供基准反馈。
+  \item \textbf{PDF 阶段：} \(t\in[T_o,\infty)\)，扰动观测器保持收敛状态 \(\hat d(t)=d(t)\)；PDF 控制器以局部时间 \(\vartheta = t-T_o\) 激活完整的周期延迟反馈增益 \(K_c(\vartheta)\)。
+\end{enumerate}
+
+在上述两阶段时序下，定理~\ref{thm:ptdo}~和定理~\ref{thm:pdf_gain}~的结论可分别应用于各自的时段。联合后的总预设时间上界为
 \begin{equation}
-\tau_i = \operatorname{sat}(\tau_{ci}) =
-\begin{cases}
-\tau_{i,\max}\,\operatorname{sgn}(\tau_{ci}), & |\tau_{ci}|>\tau_{i,\max},\\
-\tau_{ci}, & |\tau_{ci}|\le\tau_{i,\max},
-\end{cases}
-\label{eq:saturation_model}
+T_{\mathrm{pre}} = T_o + 2h.
+\label{eq:prescribed_total_time}
 \end{equation}
-其中 \(\tau_{ci}\) 为第 \(i\) 个关节的计算控制力矩，\(\tau_{i,\max}>0\) 为力矩幅值上限。饱和将导致实际施加力矩与计算力矩之间产生偏差 \(\Delta\tau_i=\tau_i-\tau_{ci}\)。映射到加速度通道的归一化饱和误差为
-\begin{equation}
-\Delta_u(t)=M_e^{-1}(q_m)\Delta\tau(t).
-\label{eq:norm_saturation_error}
-\end{equation}
-
-为抑制输入饱和对跟踪性能的影响，参考文献\cite{dou2025fractional}，引入如下固定时间抗饱和补偿器：
-\begin{equation}
-\dot\eta = -L_\eta\frac{k_{\eta1}}{\rho_1}
-\tanh\bigl(|\eta|^{1-\rho_1}\bigr)
-\cosh\bigl(|\eta|^{2}\bigr)
-\operatorname{sgn}(\eta)
-- L_\eta k_{\eta2}
-\operatorname{sig}^{\rho_2}(\eta)
-+ \Delta_u,
-\label{eq:as_dynamics}
-\end{equation}
-其中 \(\eta\in\mathbb R^n\) 为辅助变量，\(0<\rho_1,\rho_2<1\)，\(k_{\eta1},k_{\eta2}>0\) 为增益系数，\(L_\eta>0\) 为自适应增益。\(\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^{\alpha}\) 按元素作用于向量。该补偿器的核心性质由以下定理给出：
-
-\textbf{定理1：} 当 \(\Delta_u=0\) 时，辅助变量 \(\eta\) 将在固定时间内收敛至零，其上界为
-\begin{equation}
-T_{\eta,\max} < 
-\frac{\rho_1 I}{k_{\eta1}\tanh(1)} + 
-\frac{1}{k_{\eta2}(1-\rho_2)},
-\end{equation}
-其中 \(I=\int_1^{\infty}\frac{dz}{\cosh(z^2)}<\infty\) 为收敛常数。
-
-\textbf{证明：} 令 \(z=|\eta|\)，由式 \eqref{eq:as_dynamics} 可得
-\[
-\dot z = -L_\eta\frac{k_{\eta1}}{\rho_1}
-\tanh(z^{1-\rho_1})
-\cosh(z^2)
-- L_\eta k_{\eta2} z^{\rho_2}.
-\]
-当 \(z\ge 1\) 时，\(\tanh(z^{1-\rho_1})\ge\tanh(1)\) 且 \(\cosh(z^2)\ge e^{z^2}/2\)，因此
-\[
-T_3 = \int_1^{z_0}\frac{dz}{|\dot z|}
-\le \frac{\rho_1}{L_\eta k_{\eta1}\tanh(1)}
-\int_1^{\infty}\frac{dz}{\cosh(z^2)}
-= \frac{\rho_1 I}{L_\eta k_{\eta1}\tanh(1)}.
-\]
-当 \(z\le 1\) 时，\(\dot z\le -L_\eta k_{\eta2}z^{\rho_2}\)，解得
-\(
-T_4 < 1/(L_\eta k_{\eta2}(1-\rho_2))
-\)。
-因此总收敛时间上界为 \(T_{\eta,\max}=T_3+T_4\)，与初始值 \(z_0\) 无关。\hfill\(\square\)
-
-将抗饱和补偿器与 PDF 控制器结合，得到如下修正控制律：
-\begin{equation}
-\begin{aligned}
-\tau_c &=
-M_e(q_m)\bigl[
-\ddot q_d + K_0z(t) - K_c(t)z(t-h) + \eta
-\bigr] \\
-&\qquad + C_e(q_m,\dot q_m)\dot q_m - \hat d(t).
-\label{eq:final_controller_as}
-\end{aligned}
-\end{equation}
-实际施加力矩为 \(\tau=\operatorname{sat}(\tau_c)\)。与原始控制律 \eqref{eq:final_controller} 相比，式 \eqref{eq:final_controller_as} 在辅助加速度中增加了 \(\eta\) 项。当 \(|M_e^{-1}\tau_c|>\tau_{\max}\) 时，饱和误差 \(\Delta_u\) 驱动 \(\eta\) 沿式 \eqref{eq:as_dynamics} 演化；一旦饱和解除，\(\eta\) 在固定时间 \(T_{\eta,\max}\) 内衰减至零，控制律退化为原始的 PDF 形式。
-
-需要注意，若观测器与 PDF 控制器同时从 \(t=0\) 启动，则 \(0\le t<T_o\) 内的观测误差会作为残余扰动进入误差系统，严格 \(2h\) 零化结论不再直接成立。为保持理论闭环清晰，可采用两阶段时序：先在 \(T_o\) 内完成扰动观测，随后以局部时间 \(\vartheta=t-T_o\) 启动 PDF 增益 \(K_c(\vartheta)\)。此时理想连续时间条件下的总预设收敛时间上界为
-\[
-T_{\mathrm{tot}}=T_o+2h .
-\]
-在非理想实现中，该时间应理解为进入理论实际有界性分析的起始时间尺度，而非严格的数值归零时刻。
-
-% \subsection{实现说明与鲁棒项}
-
-% 在数值实现中，本文默认按照式 \eqref{eq:wc_matrix} 和式 \eqref{eq:kc_pdf} 离线计算 \(W_c(A_c,h)\) 与 \(K_c(t)\)，并在每个采样时刻按 \(2h\) 周期读取局部时间对应的 PDF 增益。为便于调参和消融对比，程序中还保留工程化平滑延迟项
-% \[
-% K_0=[-K_p\ -K_d],\qquad
-% -K_c(t)=\rho R_h(t)[-K_{ph}\ -K_{dh}],
-% \]
-% 其中 \(K_p,K_d,K_{ph},K_{dh}\) 为正定对角矩阵，\(\rho>0\) 为延迟反馈幅值系数。该工程化形式仅保留 PDF 的等待--作用周期结构，并不等价于严格的单周期状态转移矩阵零化增益；论文中的理论固定时间结论仍以式 \eqref{eq:kc_pdf} 的 Gramian 型 PDF 增益为前提。
-
-% 若存在观测误差或未建模高频扰动，也可进一步引入饱和型鲁棒补偿
-% \[
-% \tau_r=-k_d\,\operatorname{sat}(s/\varphi),
-% \qquad
-% s=\dot e+\Lambda e,
-% \]
-% 并将 \(\tau_r\) 叠加到 \eqref{eq:final_controller}。其中 \(k_d>0\)、\(\varphi>0\)、\(\Lambda=\Lambda^\top>0\)。需要指出，加入非线性鲁棒补偿后，闭环不再是文献\cite{zhouFixedtimeStabilizationLinear2022}中的纯线性延迟系统，严格固定时间精确归零结论需要单独证明；工程上通常得到对扰动鲁棒的实际固定时间有界结果。
+式~\eqref{eq:prescribed_total_time}~中的 \(T_o\) 和 \(h\) 均为控制器设计阶段选定的参数，与初始误差大小无关，体现了"预设时间"的含义。

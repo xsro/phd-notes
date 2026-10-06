@@ -1,6 +1,7 @@
 \documentclass[UTF8,a4paper,12pt,fontset=none]{ctexart}
 
 \usepackage{amsmath,amssymb,bm}
+\usepackage{amsthm}
 \usepackage{graphicx}
 \usepackage{geometry}
 \usepackage{booktabs}
@@ -20,8 +21,22 @@
 \setlength{\parindent}{2em}
 \setlength{\parskip}{0.25em}
 
-\title{基于光滑周期延迟反馈的自由漂浮空间机械臂预设时间轨迹跟踪控制}
-\author{}
+% --- Theorem environments ---
+\theoremstyle{definition}
+\newtheorem{assumption}{假设}[section]
+\newtheorem{definition}{定义}[section]
+\newtheorem{problem}{问题}[section]
+
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{proposition}{命题}[section]
+\newtheorem{corollary}{推论}[section]
+
+\theoremstyle{remark}
+\newtheorem{remark}{注}[section]
+
+\title{基于光滑周期延迟反馈的自由漂浮空间机械臂\\预设时间轨迹跟踪控制}
 \date{}
 
 \begin{document}
@@ -29,7 +44,7 @@
 \maketitle
 
 \begin{abstract}
-针对捕获前自由漂浮空间机械臂基座不受控、系统动力学强耦合且末端轨迹跟踪精度要求高的问题，本文提出一种基于光滑周期延迟反馈（smooth periodic delayed feedback, PDF）的关节空间轨迹跟踪控制方法。首先依据动量守恒关系，将含基座反作用运动的系统动力学约化为等效关节空间模型；针对有界集总扰动，设计预设时间扰动观测器生成 \(\hat d(t)\)，用于在指定观测时间后补偿匹配扰动；随后构造动力学补偿项，在误差动力学下建立具有可控规范形的辅助输入通道；最后引入周期时变延迟反馈，构造由当前误差和延迟误差共同组成的预设时间跟踪控制律。理想连续时间、精确模型和精确补偿条件下，闭环误差动态与 PDF 理论所要求的线性可控延迟系统相匹配，并可在预设时间 \(T_o+2h\) 后实现误差精确归零；在存在观测误差、模型近似、执行器限制和数值离散时，结论相应退化为预设时间附近的实际有界跟踪。基于七自由度空间机械臂参数构造的名义等效关节空间模型 MATLAB 仿真用于验证控制结构在有界扰动下的数值可行性。
+针对捕获前自由漂浮空间机械臂基座不受控、系统动力学强耦合且末端轨迹跟踪精度要求高的问题，本文提出一种基于光滑周期延迟反馈（smooth periodic delayed feedback, PDF）的关节空间轨迹跟踪控制方法。首先依据动量守恒关系，将含基座反作用运动的系统动力学约化为等效关节空间模型；针对有界集总扰动，设计预设时间扰动观测器生成 \(\hat d(t)\)，用于在指定观测时间后补偿匹配扰动；随后构造动力学补偿项，在误差动力学下建立具有可控规范形的辅助输入通道；最后引入周期时变延迟反馈，构造由当前误差和延迟误差共同组成的预设时间跟踪控制律。本文在定理--证明框架下给出以下理论结果：(i) 在连续时间、精确模型和精确补偿条件下，闭环误差可在预设时间 \(T_o+2h\) 后精确归零；(ii) 在存在观测误差、模型近似、执行器限制和数值离散时，结论退化为预设时间附近的实际有界跟踪，并给出明确的误差上界表达式。基于七自由度空间机械臂参数的名义等效关节空间模型 MATLAB 仿真验证了控制结构在有界扰动下的数值可行性。
 \end{abstract}
 
 \noindent\textbf{关键词：}自由漂浮空间机械臂；轨迹跟踪；预设时间控制；周期延迟反馈；扰动观测器
