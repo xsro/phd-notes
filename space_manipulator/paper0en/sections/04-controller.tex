@@ -2,9 +2,12 @@
 \subsection{Prescribed-Time Disturbance Observer}\label{sec:ptdo}
 Let $\chi=\dot q_m$. Then
 \begin{equation}\dot\chi=u_o+\Delta_a,\quad u_o=M_e^{-1}[\tau-C_e\dot q_m],\quad\Delta_a=M_e^{-1}d.\label{eq:observer_channel}\end{equation}
-Let $z_1,z_2$ estimate $\chi,\Delta_a$ and $\varepsilon_1=\chi-z_1-\bar\xi(t)$. With $\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha$, use
+Let $z_1,z_2$ estimate $\chi,\Delta_a$ and
+\begin{equation}\varepsilon_1=\chi-z_1-\bar\xi(t).\label{eq:observer_error}\end{equation} With $\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha$, use
 \begin{equation}\left\{\begin{aligned}\dot z_1&=z_2+\frac{\pi}{\eta T_c}\phi_1(\varepsilon_1/\sigma)-\dot{\bar\xi}+u_o,\\\dot z_2&=\frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma),\end{aligned}\right.\label{eq:ptdo}\end{equation}
-where $\phi_1(x)=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x)$ and $\phi_2(x)=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x)$. Under Assumption~\ref{as:disturbance}, $\hat\Delta_a=z_2$ converges to $\Delta_a$ by $T_o$, and $\hat d=M_e\hat\Delta_a$.
+where
+\begin{align}\phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x),\label{eq:phi1}\\
+\phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).\label{eq:phi2}\end{align} Under Assumption~\ref{as:disturbance}, $\hat\Delta_a=z_2$ converges to $\Delta_a$ by $T_o$, and $\hat d=M_e\hat\Delta_a$.
 \begin{theorem}[Prescribed-time disturbance observer]\label{thm:ptdo}
 Under the stated boundedness assumptions and continuous-time implementation, the observer above satisfies $\hat\Delta_a(t)=\Delta_a(t)$ and $\hat d(t)=d(t)$ for all $t\ge T_o$.
 \end{theorem}
@@ -18,7 +21,9 @@ The homogeneous terms have the prescribed-time finite-time convergence property;
 Use
 \begin{equation}\tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d.\label{eq:computed_torque}\end{equation}
 With $v=\ddot q_d+\nu$ and exact compensation, $\ddot q_m=v$ and
+\begin{equation}\ddot q_m=v.\label{eq:double_integrator}\end{equation}
 \begin{equation}\dot z=Az+B\nu,\quad A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\quad B=\begin{bmatrix}0\\I_n\end{bmatrix}.\label{eq:linear_error}\end{equation}
+\begin{equation}A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\quad B=\begin{bmatrix}0\\I_n\end{bmatrix}.\label{eq:ab_matrices}\end{equation}
 The pair $(A,B)$ is controllable. Indeed, $\operatorname{rank}[B,AB]=2n$.
 \subsection{PDF Error-System Design}\label{sec:pdf_design}
 Choose $K_0$ so that $A_c=A+BK_0$ is Hurwitz, and set

@@ -39,6 +39,10 @@ $\Gamma_h$ is the maximum one-period input-to-state integral gain of the homogen
 \begin{proof}
 The homogeneous one-period term vanishes. Variation of constants and the residual bound give the inequality.
 \end{proof}
+\begin{corollary}[Bounded tracking at arbitrary times]\label{cor:arbitrary_time}
+Under the preceding assumptions, there is a constant $\Gamma_h^*>0$ such that $\|z(t)\|\le\Gamma_h^*\bar\Delta_r$ for all $t\ge T_o$.
+\end{corollary}
+
 If instead $\|\Delta_K(h)\|\le\varepsilon_\Delta<1$, then
 \begin{equation}\|z_{k+1}\|\le\varepsilon_\Delta\|z_k\|+\Gamma_h\bar\Delta_r,\qquad \limsup_{k\to\infty}\|z_k\|\le\frac{\Gamma_h\bar\Delta_r}{1-\varepsilon_\Delta}.\label{eq:approx_recursion}\end{equation}
 If $\|M_e^{-1}\|\le\bar m^{-1}$ and the three residual terms are bounded by $\bar d_o,\bar\Delta_m,\bar\Delta_\tau$, then
