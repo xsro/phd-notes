@@ -1,23 +1,82 @@
 \section{Problem Statement}\label{sec:problem}
-Given a smooth bounded reference $q_d(t),\dot q_d(t),\ddot q_d(t)$, define
-\begin{equation}e=q_m-q_d,\qquad\dot e=\dot q_m-\dot q_d,\qquad z=[e^\top,\dot e^\top]^\top.\label{eq:tracking_errors}\end{equation}
+Given a reference $q_d\in C^2([0,\infty);\mathbb R^n)$ with bounded
+$q_d$, $\dot q_d$, and $\ddot q_d$, define
+\begin{equation}
+ e=q_m-q_d,\qquad \dot e=\dot q_m-\dot q_d,\qquad
+ z=[e^\top,\dot e^\top]^\top.
+ \label{eq:tracking_errors}
+\end{equation}
+The objective is to prescribe the total settling time through two design
+parameters, $T_o$ and $h$:
+\begin{equation}
+ T=T_{\rm pre}=T_o+2h.
+ \label{eq:prescribed_time_definition}
+\end{equation}
 \begin{problem}[Prescribed-time joint trajectory tracking]\label{prob:tracking}
-Design $\tau(t)$ such that, for a prescribed $T>0$, $e(t)=\dot e(t)=0$ for all $t\ge T$ under ideal continuous-time exact compensation. With nonidealities, require $\|z(t)\|\le\delta(\bar\Delta_r)$, where $\delta$ is increasing and $\delta(0)=0$.
+Design $\tau(t)$ such that $e(t)=\dot e(t)=0$ for all $t\geq T$ under
+ideal continuous-time exact compensation. Under nonidealities, establish an
+explicit ultimate bound in terms of the residual acceleration disturbance.
 \end{problem}
+
 \subsection{Basic Assumptions}
-\begin{assumption}[Invertible equivalent inertia]\label{as:inertia} $M_e(q_m)\succeq\underline m I_n$ and its nominal value is available.\end{assumption}
-\begin{assumption}[Bounded reference]\label{as:reference} $q_d,\dot q_d,\ddot q_d$ are bounded and continuously differentiable; $q_m,\dot q_m$ are measured.\end{assumption}
-\begin{assumption}[Available delay history]\label{as:delay_history} The history $z(t-h)$ is available from a buffer, with bounded piecewise-continuous initial function.\end{assumption}
-\begin{assumption}[Bounded disturbance]\label{as:disturbance} $\Delta_a=M_e^{-1}d$ and $\dot\Delta_a$ are uniformly bounded.\end{assumption}
-\begin{assumption}[Ideal conditions]\label{as:ideal} Exact prescribed-time tracking assumes continuous time, no saturation, exact $M_e,C_e$, and exact observer convergence; otherwise only practical bounded tracking is claimed.\end{assumption}
-\subsection{Preliminaries: Smooth Periodic Delayed Feedback}
-Consider $\dot x(t)=F(t)x(t)+G(t)x(t-h)$, with $2h$-periodic coefficients and $G(t)=0$ on the first half-period. Then
-\begin{equation}x\bigl(2(k+1)h\bigr)=\Delta(h)x(2kh),\qquad k=0,1,2,\ldots.\label{eq:period_map_abstract}\end{equation}
-The one-period matrix has the explicit representation
-\begin{equation}\Delta(h)=\Phi(2h,0)+\int_h^{2h}\Phi(2h,s)G_0(s)\Phi(s-h,0)\,ds.\label{eq:period_map_explicit}\end{equation}
+\begin{assumption}[Equivalent inertia]\label{as:inertia}
+There is $\underline m>0$ such that
+$M_e(q_m)\succeq\underline m I_n$ on the considered workspace. The nominal
+$M_e$ and $C_e$ used by the controller are available.
+\end{assumption}
+\begin{assumption}[Reference and measurements]\label{as:reference}
+$q_d\in C^2$, and $q_d$, $\dot q_d$, and $\ddot q_d$ are bounded. The states
+$q_m$ and $\dot q_m$ are measured and all signals used by the controller are
+well defined on the considered interval.
+\end{assumption}
+\begin{assumption}[Delay history]\label{as:delay_history}
+The function $z(t)$ is available on $[T_o-h,T_o]$ and the delayed signal is
+implemented from a bounded, piecewise-continuous buffer. This history need not
+satisfy the nominal model before $T_o$.
+\end{assumption}
+\begin{assumption}[Disturbance regularity]\label{as:disturbance}
+The lumped disturbance is such that $\Delta_a=M_e^{-1}d$ is absolutely
+continuous and there exist finite constants $\bar\Delta_a,L_d$ satisfying
+\begin{equation}
+ \|\Delta_a(t)\|\leq\bar\Delta_a,\qquad
+ \|\dot\Delta_a(t)\|\leq L_d
+\end{equation}
+for almost every $t$. The observer gains are selected using the hypotheses of
+the observer theorem stated in Section~\ref{sec:controller}.
+\end{assumption}
+\begin{assumption}[Ideal implementation]\label{as:ideal}
+The exact prescribed-time result refers to continuous-time implementation,
+absence of actuator saturation and measurement noise, exact model matching,
+and an observer satisfying Assumption~\ref{as:observer_interface}. With
+sampling, saturation, or model error, only the practical bound in
+Section~\ref{sec:practical} is claimed.
+\end{assumption}
+
+\subsection{Delay-system preliminaries}
+For a retarded linear delay system
+\begin{equation}
+ \dot x(t)=F(t)x(t)+G(t)x(t-h),
+ \label{eq:abstract_delay_system}
+\end{equation}
+with a bounded initial history on an interval of length $h$, let $\Psi(t,s)$
+denote its causal state-transition operator. If $F$ and $G$ are $2h$-periodic,
+then the sampled state at period boundaries has a linear map
+\begin{equation}
+ x(2(k+1)h)=\Delta(h)x(2kh),\qquad k=0,1,\ldots,
+ \label{eq:period_map_abstract}
+\end{equation}
+whenever the history has been included in the state representation. For the
+PDF design below, $G(t)=0$ on the first half-period, so the delayed signal on
+the second half-period is explicitly determined by the first-half trajectory
+and the map can be calculated by variation of constants.
+
 \begin{definition}[Single-period nullification]\label{def:single_period_nullification}
-If $\Delta(h)=0$, then $x(t)=0$ for all $t\ge2h$.
+A PDF system has single-period nullification if its one-period map satisfies
+$\Delta(h)=0$. In that case the state at the end of every complete period is
+zero under ideal homogeneous dynamics, independently of the state entering the
+period.
 \end{definition}
 \begin{definition}[Nilpotent nullification]\label{def:nilpotent_nullification}
-If $\Delta(h)$ is nilpotent of index $\nu_0$, then $x(t)=0$ for all $t\ge2\nu_0h$.
+If $\Delta(h)$ is nilpotent of index $\nu_0$, then the sampled state is zero
+at or before $2\nu_0h$ under ideal homogeneous dynamics.
 \end{definition}

@@ -1,48 +1,129 @@
 \section{Controller Design}\label{sec:controller}
-\subsection{Prescribed-Time Disturbance Observer}\label{sec:ptdo}
-Let $\chi=\dot q_m$. Then
-\begin{equation}\dot\chi=u_o+\Delta_a,\quad u_o=M_e^{-1}[\tau-C_e\dot q_m],\quad\Delta_a=M_e^{-1}d.\label{eq:observer_channel}\end{equation}
-Let $z_1,z_2$ estimate $\chi,\Delta_a$ and
-\begin{equation}\varepsilon_1=\chi-z_1-\bar\xi(t).\label{eq:observer_error}\end{equation} With $\operatorname{sig}^{\alpha}(x)=\operatorname{sgn}(x)|x|^\alpha$, use
-\begin{equation}\left\{\begin{aligned}\dot z_1&=z_2+\frac{\pi}{\eta T_c}\phi_1(\varepsilon_1/\sigma)-\dot{\bar\xi}+u_o,\\\dot z_2&=\frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma),\end{aligned}\right.\label{eq:ptdo}\end{equation}
+
+This section separates the observer result from the delayed-feedback result. The
+latter is proved exactly; the observer is required to satisfy the explicit
+finite-time interface stated in Lemma~\ref{lem:observer_interface}.
+
+\subsection{Disturbance-observer interface}\label{sec:ptdo}
+Let $\chi=\dot q_m$ and define
+\begin{equation}
+ \dot\chi=u_o+\Delta_a,\qquad
+ u_o=M_e^{-1}(q_m)[\tau-C_e(q_m,\dot q_m)\dot q_m],\qquad
+ \Delta_a=M_e^{-1}(q_m)d.
+ \label{eq:observer_channel}
+\end{equation}
+The following assumption is the precise interface needed by the controller.
+\begin{assumption}[Observer interface]\label{as:observer_interface}
+There are $T_o>0$ and an estimate $\hat\Delta_a$ such that, under the
+continuous-time observer, $\hat\Delta_a(t)=\Delta_a(t)$ for all $t\geq T_o$.
+Before $T_o$, the observation error is bounded. The estimate is formed as
+$\hat d=M_e\hat\Delta_a$.
+\end{assumption}
+
+For completeness, the observer used in the simulations is the prescribed-time
+homogeneous observer
+\begin{equation}
+\begin{aligned}
+ \dot z_1&=z_2+u_o+\ell_1(t)\,\phi_1(\varepsilon_1/\sigma),\\
+ \dot z_2&=\ell_2(t)\,\phi_2(\varepsilon_1/\sigma),
+ \qquad \varepsilon_1=\chi-z_1,
+\end{aligned}\label{eq:ptdo}
+\end{equation}
 where
-\begin{align}\phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x),\label{eq:phi1}\\
-\phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+\operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x).\label{eq:phi2}\end{align} Under Assumption~\ref{as:disturbance}, $\hat\Delta_a=z_2$ converges to $\Delta_a$ by $T_o$, and $\hat d=M_e\hat\Delta_a$.
-\begin{theorem}[Prescribed-time disturbance observer]\label{thm:ptdo}
-Under the stated boundedness assumptions and continuous-time implementation, the observer above satisfies $\hat\Delta_a(t)=\Delta_a(t)$ and $\hat d(t)=d(t)$ for all $t\ge T_o$.
-\end{theorem}
+\begin{align}
+ \phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+
+             \operatorname{sig}^{1+\eta/2}(x),\\
+ \phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+
+             \operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x),
+ \end{align}
+$0<\eta<1$, and $\ell_1,\ell_2$ are selected according to the
+prescribed-time homogeneous-observer design in~\cite{jiangPrescribedtimeDisturbanceObserver2024}.
+The gains must be selected using the disturbance regularity bounds required by
+that design; in particular, Assumption~\ref{as:disturbance} alone is not
+sufficient to establish exact convergence of~\eqref{eq:ptdo}.
+
+\begin{lemma}[Observer interface lemma]\label{lem:observer_interface}
+Suppose the hypotheses of the prescribed-time homogeneous-observer theorem
+used to select $\ell_1,\ell_2$ hold, including the required bound on
+$\dot\Delta_a$. Then the Filippov solution of~\eqref{eq:ptdo} satisfies
+$z_2(t)=\Delta_a(t)$ for all $t\geq T_o$.
+\end{lemma}
 \begin{proof}
-Let $\varepsilon_2=\Delta_a-z_2$. Substitution gives
-\[\dot\varepsilon_1=-\frac{\pi}{\eta T_c}\phi_1(\varepsilon_1/\sigma)+\varepsilon_2,\qquad
-\dot\varepsilon_2=\dot\Delta_a-\frac{\pi}{\sigma\eta T_c}\phi_2(\varepsilon_1/\sigma).\]
-The homogeneous terms have the prescribed-time finite-time convergence property; bounded $\Delta_a,\dot\Delta_a$ are accommodated by the two homogeneous powers. Choosing $T_c\le T_o$ yields convergence by $T_o$. Therefore $z_2=\Delta_a$ and multiplication by $M_e$ gives $\hat d=d$.
+The error variables $\varepsilon_1=\chi-z_1$ and
+$\varepsilon_2=\Delta_a-z_2$ satisfy the homogeneous observer error system
+obtained by subtracting~\eqref{eq:ptdo} from~\eqref{eq:observer_channel}.
+The cited prescribed-time homogeneous-observer theorem applies to this
+system because its vector field is homogeneous in the two error variables and
+its perturbation is $\dot\Delta_a$. It provides a Lyapunov function $V$ and
+positive constants $c_1,c_2$ for which the time-rescaled error system obeys
+$\dot V\leq-c_1V^{\alpha}-c_2V^{\beta}$, with $0<\alpha<1<\beta$.
+The standard fixed-time integral bound gives a settling time no larger than
+$T_o$ after the prescribed time transformation. Strong invariance of the
+sliding set then gives $\varepsilon_1=\varepsilon_2=0$ for all subsequent
+time. Hence $z_2=\Delta_a$ and $\hat d=d$ after $T_o$.
 \end{proof}
-\subsection{Dynamic Compensation and Error Linearization}\label{sec:compensation}
+
+\subsection{Dynamic compensation and error linearization}
 Use
-\begin{equation}\tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d.\label{eq:computed_torque}\end{equation}
-With $v=\ddot q_d+\nu$ and exact compensation, $\ddot q_m=v$ and
-\begin{equation}\ddot q_m=v.\label{eq:double_integrator}\end{equation}
-\begin{equation}\dot z=Az+B\nu,\quad A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\quad B=\begin{bmatrix}0\\I_n\end{bmatrix}.\label{eq:linear_error}\end{equation}
-\begin{equation}A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\quad B=\begin{bmatrix}0\\I_n\end{bmatrix}.\label{eq:ab_matrices}\end{equation}
-The pair $(A,B)$ is controllable. Indeed, $\operatorname{rank}[B,AB]=2n$.
-\subsection{PDF Error-System Design}\label{sec:pdf_design}
-Choose $K_0$ so that $A_c=A+BK_0$ is Hurwitz, and set
-\begin{equation}\nu(t)=K_0z(t)-K_c(t)z(t-h),\qquad\dot z=A_cz-BK_c(t)z(t-h).\label{eq:pdf_error_input}\end{equation}
-Let $R_h$ be smooth, $2h$-periodic, zero on $[0,h)$ and positive on a nonzero-measure subset of $[h,2h]$. Define
-\begin{equation}W_c=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds.\label{eq:wc_matrix}\end{equation}
-Then
-\begin{equation}K_c(t)=\begin{cases}0,&0\le t<h,\\R_h(t)B^\top e^{-A_c^\top t}W_c^{-1}e^{A_c(h-t)},&h\le t<2h,\end{cases}\label{eq:kc_pdf}\end{equation}
-periodically extended, yields $\Delta_K(h)=0$ and $z(t)=0$ for $t\ge2h$.
-\begin{theorem}[PDF single-period nullification gain]\label{thm:pdf_gain}
-For the delayed closed loop, the gain above makes the one-period transition matrix satisfy
-\begin{equation}\Delta_K(h)=0.\label{eq:single_period_null}\end{equation}
-Consequently $z(t)=0$ for every $t\ge2h$.
-\end{theorem}
+\begin{equation}
+ \tau=M_e(q_m)v+C_e(q_m,\dot q_m)\dot q_m-\hat d,
+ \qquad v=\ddot q_d+\nu.
+ \label{eq:computed_torque}
+\end{equation}
+Under exact model matching and Assumption~\ref{as:observer_interface},
+$\hat d=d$ for $t\geq T_o$, and~\eqref{eq:joint_model_relabelled} gives
+$\ddot q_m=v$. Consequently, with
+$e=q_m-q_d$ and $z=[e^\top,\dot e^\top]^\top$,
+\begin{equation}
+ \dot z=Az+B\nu,
+ \qquad A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},
+ \qquad B=\begin{bmatrix}0\\I_n\end{bmatrix}.
+ \label{eq:linear_error}
+\end{equation}
+The pair $(A,B)$ is controllable since
+$\operatorname{rank}[B,AB]=2n$.
+
+\subsection{Smooth periodic delayed feedback}\label{sec:pdf_design}
+Choose $K_0$ so that $A_c=A+BK_0$ is Hurwitz. Let $h>0$ and let
+$R_h:[0,2h]\to\mathbb R$ be smooth, nonnegative, zero on $[0,h]$, and
+positive on a subset of positive measure in $(h,2h)$. Define
+\begin{equation}
+ W_c=\int_h^{2h}e^{-A_cs}B R_h(s)B^\top e^{-A_c^\top s}\,ds.
+ \label{eq:wc_matrix}
+\end{equation}
+\begin{lemma}[Positivity of the PDF Gramian]\label{lem:gramian}
+If $(A_c,B)$ is controllable, then $W_c\succ0$.
+\end{lemma}
 \begin{proof}
-On $[0,h)$, $z(t)=e^{A_ct}z(0)$. On $[h,2h]$, variation of constants gives
-\[z(2h)=\left[e^{2A_ch}-\int_h^{2h}e^{A_c(2h-s)}BK_c(s)e^{A_c(s-h)}ds\right]z(0).\]
-Inserting the Gramian construction makes the integral equal to $e^{2A_ch}$, hence $z(2h)=0$. Periodic repetition proves the result.
-\end{proof} The complete law is
-\begin{equation}\tau=M_e[\ddot q_d+K_0z-K_c(t)z(t-h)]+C_e\dot q_m-\hat d.\label{eq:final_controller}\end{equation}
-The observer phase $[0,T_o)$ uses $K_c=0$; the PDF phase starts at $T_o$ with local time $\vartheta=t-T_o$. Hence
-\begin{equation}T_{\mathrm{pre}}=T_o+2h.\label{eq:prescribed_total_time}\end{equation}
+For any $x\in\mathbb R^{2n}$,
+\[
+ x^\top W_cx=\int_h^{2h}R_h(s)\|B^\top e^{-A_c^\top s}x\|^2ds\geq0.
+\]
+If this quantity is zero, continuity implies
+$B^\top e^{-A_c^\top s}x=0$ on an interval contained in the set where
+$R_h>0$. The left-hand side is analytic in $s$, hence it vanishes for all
+$s$. Differentiating at any point gives
+$B^\top(A_c^\top)^kx=0$ for every $k\geq0$. Controllability of
+$(A_c,B)$ implies $x=0$. Therefore $W_c$ is positive definite.
+\end{proof}
+
+For local PDF time $\vartheta=t-T_o$, define the $2h$-periodic gain
+\begin{equation}
+ K_c(\vartheta)=\begin{cases}
+ 0,&0\leq\vartheta<h,\\
+ R_h(\vartheta)B^\top e^{-A_c^\top\vartheta}W_c^{-1}
+ e^{A_c(h-\vartheta)},&h\leq\vartheta<2h,
+ \end{cases}
+ \label{eq:kc_pdf}
+\end{equation}
+and extend it periodically. The control input is
+\begin{equation}
+ \nu(t)=K_0z(t)-K_c(t-T_o)z(t-h),\qquad t\geq T_o.
+ \label{eq:pdf_error_input}
+\end{equation}
+Thus the complete controller is
+\begin{equation}
+ \tau=M_e\left[\ddot q_d+K_0z-K_c(t-T_o)z(t-h)\right]
+ +C_e\dot q_m-\hat d.
+ \label{eq:final_controller}
+\end{equation}
