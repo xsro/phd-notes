@@ -20,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
+from matplotlib import font_manager
 from itertools import combinations
 from pathlib import Path
 
@@ -380,93 +381,105 @@ def main():
             t_end=t_end, dt=dt,
         )
 
-    # ── Plot ──────────────────────────────────────────────────────────
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
-    markers = ["o", "s", "^", "D"]
+    plot_comparison(algorithms, results, target)
 
-    n_plots = len(algorithms)
-    n_cols = 2
-    n_rows = 3
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows))
-    axes = np.atleast_1d(axes).flatten()
 
-    # First row spans both columns — remove the duplicate cell
-    fig.delaxes(axes[1])
-    axes[0].set_position([0.12, 0.68, 0.78, 0.28])  # [left, bottom, width, height]
+def plot_comparison(algorithms, results, target):
+    """Draw the compact five-panel layout used in target.png."""
+    available_fonts = {font.name for font in font_manager.fontManager.ttflist}
+    chinese_fonts = [
+        "SimHei", "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei",
+        "WenQuanYi Zen Hei", "Arial Unicode MS", "Heiti SC", "Songti SC",
+    ]
+    font = next((name for name in chinese_fonts if name in available_fonts), None)
+    # Use English labels when no Chinese font is installed.
+    titles = ([name.split("\n")[0] for name, _, _ in algorithms] if font else [
+        "No rotation (baseline)", "Same-side rotation (Chen19)",
+        "Opposite-side rotation", "Distance-based rotation", "Repulsion-based rotation",
+    ])
+    agent_labels = [f"智能体 {i + 1}" if font else f"Agent {i + 1}" for i in range(4)]
+    target_label = "目标" if font else "Target"
+    hull_label = "凸包" if font else "Convex hull"
+    colors = ["#0072BD", "#D95319", "#EDB120", "#7E2F8E"]
 
-    plot_axes = [axes[0], axes[2], axes[3], axes[4], axes[5]]
-
-    for idx, (name, rot_type, _) in enumerate(algorithms):
-        ax = plot_axes[idx]
-        traj = results[name]
-
-        # Trajectories
-        for i in range(len(positions_init)):
-            ax.plot(traj[:, i, 0], traj[:, i, 1],
-                    color=colors[i], linewidth=1.2, alpha=0.6)
-
-        # Final positions
-        final = [traj[-1, i] for i in range(len(positions_init))]
-        for i, fp in enumerate(final):
-            ax.plot(fp[0], fp[1], marker=markers[i], color=colors[i],
-                    markersize=9, markeredgecolor="black", markeredgewidth=1)
-
-        # Target
-        ax.plot(target[0], target[1], marker="*", color="black",
-                markersize=18, markeredgecolor="black")
-
-        # Convex hull of final positions
-        hull = convex_hull(final)
-        if len(hull) >= 3:
-            ax.add_patch(Polygon(hull, closed=True, facecolor="gray",
-                                 alpha=0.15, edgecolor="gray", linestyle="--"))
-
-        # Initial positions (small dots)
-        for i, ip in enumerate(positions_init):
-            ax.plot(ip[0], ip[1], marker=".", color=colors[i],
-                    markersize=4, alpha=0.3)
-
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_title(name, fontsize=11, fontweight="bold")
-        ax.axis("equal")
-        ax.grid(True, alpha=0.3)
-
-    # ── Legend (bottom) ───────────────────────────────────────────────
-    legend_elements = []
-    for i in range(len(positions_init)):
-        legend_elements.append(
-            plt.Line2D([0], [0], marker=markers[i], color="w",
-                       markerfacecolor=colors[i], markersize=10,
-                       markeredgecolor="black", markeredgewidth=1,
-                       label=f"Agent {i+1}")
+    style = {
+        "font.family": "sans-serif",
+        "font.sans-serif": [font, "DejaVu Sans"] if font else ["DejaVu Sans"],
+        "font.size": 9,
+        "axes.linewidth": 0.6,
+        "axes.unicode_minus": False,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+    }
+    with plt.rc_context(style):
+        fig = plt.figure(figsize=(7.2, 5.4), facecolor="none")
+        grid = fig.add_gridspec(
+            3, 2, left=0.13, right=0.91, bottom=0.11, top=0.925,
+            hspace=0.48, wspace=0.28,
         )
-    legend_elements.append(
-        plt.Line2D([0], [0], marker="*", color="w",
-                   markerfacecolor="black", markersize=15,
-                   markeredgecolor="black", label="Target")
-    )
-    legend_elements.append(
-        plt.Line2D([0], [0], linestyle="--", color="gray",
-                   label="Convex Hull")
-    )
+        plot_axes = [fig.add_subplot(grid[0, :])]
+        plot_axes.extend(fig.add_subplot(grid[row, col])
+                         for row in (1, 2) for col in (0, 1))
 
-    fig.legend(handles=legend_elements, loc="lower center", ncol=4,
-              fontsize=10, frameon=True)
+        for idx, ((name, _, _), ax) in enumerate(zip(algorithms, plot_axes)):
+            traj = results[name]
+            final = traj[-1]
+            hull = convex_hull(final)
+            if len(hull) >= 3:
+                ax.add_patch(Polygon(
+                    hull, closed=True, facecolor="#E6E0ED", edgecolor="#777777",
+                    linewidth=0.8, linestyle="--", zorder=1,
+                ))
+            elif len(hull) == 2:
+                # The baseline hull degenerates to a line segment.
+                ax.plot(*np.asarray(hull).T, color="#777777",
+                        linewidth=0.8, linestyle="--", zorder=1)
 
-    fig.suptitle(
-        "规避直线队形的旋转算法对比\n"
-        "智能体: (0,0) (3,0) (6,0) (9,0)  →  目标: (10,0)",
-        fontsize=14, fontweight="bold"
-    )
+            for i, color in enumerate(colors):
+                ax.plot(traj[:, i, 0], traj[:, i, 1],
+                        color=color, linewidth=1.0, zorder=2)
+                ax.plot(*final[i], marker="o", linestyle="none", color=color,
+                        markersize=5.5, markeredgewidth=0, zorder=3,
+                        clip_on=False)
 
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.10)
+            ax.plot(*target, marker="x", linestyle="none", color="#333333",
+                    markersize=4, markeredgewidth=0.8, zorder=4)
+            ax.set_title(titles[idx], fontsize=9, pad=5)
+            ax.set_xlim(0, 12)
+            ax.set_xticks(np.arange(0, 13, 2))
+            ax.set_ylim((-1.25, 1.25) if idx == 0 else (-2.5, 2.5))
+            ax.set_yticks([-1, 0, 1] if idx == 0 else [-2, 0, 2])
+            ax.set_aspect("auto")
+            ax.set_facecolor("white")
+            ax.tick_params(direction="in", length=2.5, width=0.5)
+            ax.spines[["top", "right"]].set_visible(False)
+            ax.grid(False)
 
-    out = Path(__file__).resolve().parent / "rotation_comparison.png"
-    plt.savefig(out, dpi=150, bbox_inches="tight")
-    print(f"\nPlot saved to: {out}")
-    plt.close()
+        legend_elements = [
+            plt.Line2D([], [], marker="x", linestyle="none", color="#333333",
+                       markersize=4, markeredgewidth=0.8, label=target_label),
+        ]
+        legend_elements.extend(
+            plt.Line2D([], [], marker="o", linestyle="none", color=color,
+                       markersize=5.5, markeredgewidth=0, label=label)
+            for color, label in zip(colors, agent_labels)
+        )
+        legend_elements.append(
+            plt.Line2D([], [], linestyle="--", color="#777777",
+                       linewidth=0.8, label=hull_label)
+        )
+        fig.legend(
+            handles=legend_elements, loc="lower center", bbox_to_anchor=(0.5, 0.012),
+            ncol=6, fontsize=8, frameon=True, fancybox=False, framealpha=1,
+            edgecolor="#BBBBBB", facecolor="white", borderpad=0.35,
+            handlelength=1.6, handletextpad=0.4, columnspacing=0.9,
+        )
+
+        out = Path(__file__).resolve().parent / "rotation_comparison.png"
+        # Transparent surrounding canvas, with opaque white plot and legend panels.
+        fig.savefig(out, dpi=200, facecolor=fig.get_facecolor())
+        print(f"\nPlot saved to: {out}")
+        plt.close(fig)
 
 
 if __name__ == "__main__":

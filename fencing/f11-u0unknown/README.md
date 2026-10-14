@@ -13,14 +13,13 @@ extracted from the [fencer](https://github.com/earendil-works/fencer) project.
 
 ## Algorithms Compared
 
-| # | Algorithm | Type | Breaks Collinearity? |
-|---|-----------|------|---------------------|
-| 1 | No Rotation (Baseline) | Attraction + Repulsion only | ❌ |
-| 2 | Chen19 Rotation | `RotationChen19` | ✅ |
-| 3 | Our1 (chen19 strategy) | `RotationOur1` → `chen19` | ✅ |
-| 4 | Our1 (opposite strategy) | `RotationOur1` → `opposite` | ❌ |
-| 5 | Our1 (distance strategy) | `RotationOur1` → `distance` | ✅ |
-| 6 | Our1 (psi strategy) | `RotationOur1` → `psi` | ✅ |
+| # | Algorithm | Type |
+|---|-----------|------|
+| 1 | No Rotation (Baseline) | Attraction + Repulsion only |
+| 2 | Same-side Rotation (Chen19) | `RotationChen19` |
+| 3 | Opposite-side Rotation (angle ∈ [π−δ, π]) | `RotationOppositePiOnly` |
+| 4 | Distance-based Rotation | `RotationOur1` → `distance` |
+| 5 | Repulsion-based Rotation | `RotationOur1` → `psi` |
 
 ## Quick Start
 
@@ -28,24 +27,22 @@ extracted from the [fencer](https://github.com/earendil-works/fencer) project.
 # Directly (if numpy + matplotlib are already installed)
 python3 compare_rotations.py
 
-# With uv — run from outside the project directory to avoid
-# pulling in the parent project's dependencies:
-cd /tmp && uv run --with numpy --with matplotlib \
+# With uv — ignore the parent project's dependencies:
+uv run --no-project --with numpy --with matplotlib \
     python compare_rotations.py
 ```
 
 ## Output
 
-Generates `rotation_comparison.png` (output of `compare_rotations.py`) — a 2×3 grid of subplots, one per algorithm.
+Generates `rotation_comparison.png` in the compact layout of `target.png`: one full-width baseline panel above a 2×2 grid of rotation strategies. The canvas is transparent and the plot panels are white.
 Each subplot shows:
 
 - Coloured lines: agent trajectories
-- Coloured markers (circle, square, triangle, diamond): final agent positions
-- Black star: target position
-- Grey dashed polygon: convex hull of final positions
-- Small dots: initial positions
+- Blue, orange, yellow, and purple circles: final agent positions
+- Small dark cross: target position
+- Grey dashed polygon with a pale fill: convex hull of final positions
 
-Legend at the bottom.
+A single-row legend sits at the bottom. Chinese labels use an available Chinese font; English labels are used if none is installed. Simulation parameters and trajectories are unchanged.
 
 ## Parameters
 
