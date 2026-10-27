@@ -57,14 +57,6 @@
 \DeclareMathOperator{\sgn}{sgn}
 \DeclareMathOperator{\co}{co}
 
-% ---- 图位占位（仿真图待补） ----
-\newcommand{\figph}[2]{%
-  \begin{center}
-    \setlength{\fboxsep}{10pt}%
-    \fbox{\parbox[c][2.6cm][c]{0.86\textwidth}{%
-      \centering\color{gray}\small 【待补充：仿真图】\\[2pt]#1}}\\[2pt]
-    {\small 图：\refstepcounter{figure}\thefigure\quad #2}
-  \end{center}}
 
 \title{\bfseries 围捕控制器的旋转现象\\[0.3em]
 \large 平均速度跟踪算法为何使编队绕目标旋转：机理、频率、稳定性与长期行为}
