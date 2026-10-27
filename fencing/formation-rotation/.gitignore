@@ -1,3 +1,4 @@
 *.pdf
 !figures/*.pdf
 scripts/cache/
+__pycache__/
