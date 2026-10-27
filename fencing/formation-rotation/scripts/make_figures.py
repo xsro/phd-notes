@@ -629,8 +629,7 @@ def fig3d_breathing(force=False):
 
 def fig_nscaling(force=False):
     """N-scaling from the stored scan data: breathing vs locked regime."""
-    path = os.path.join(DATA, "fencing_simulation", "N_scaling",
-                        "n_scaling_results.json")
+    path = os.path.join(HERE, "..", "data", "n_scaling_results.json")
     recs = json.load(open(path))
     N = np.array([r["N"] for r in recs], float)
     fr = np.array([r["f_rot"] for r in recs])
@@ -680,7 +679,7 @@ ALPHA_FORMS = ["standard", "power", "rational", "log", "stiff", "exponential"]
 def fig_alpha(force=False):
     """Six continuous alpha forms: period is form independent."""
     import csv as _csv
-    base = os.path.join(DATA, "fencing_simulation", "continuous_alpha_results")
+    base = os.path.join(HERE, "..", "data", "alpha")
     fig, ax = plt.subplots(1, 2, figsize=(6.6, 2.5))
     for form in ALPHA_FORMS:
         path = os.path.join(base, f"results_{form}.csv")

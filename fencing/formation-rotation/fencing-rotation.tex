@@ -8,12 +8,14 @@
 %   scripts/fencing_lib.py    闭环 ODE、被测度量、共旋线性化
 %   scripts/make_figures.py   生成全部插图（cache/ 中缓存积分结果）
 %   scripts/summarize.py      打印正文引用的全部数字
+%   data/                     两份沿用旧扫描结果的数据（n_scaling、alpha 形式对比）
 %
 % 重新生成图片：
 %   cd scripts && uv run --no-project --with numpy,scipy,matplotlib python make_figures.py all
 %
 % 原素材（fencing-rotation-report/、fencing-rotation-conjecture/、fencing_simulation/）
-% 的有效内容已并入本报告；仿真图不再依赖原文档。
+% 的有效内容已并入本报告，源目录已于 2026-10 清理（见 git 历史）；除 data/ 下的两份
+% 扫描数据外，全部插图都由本目录的脚本重新计算。
 
 \documentclass[11pt,a4paper]{ctexart}
 
@@ -869,7 +871,7 @@ $\sigma_3/\sigma_1=0.863$（图~\ref{fig:3d}a,c）。而以平面正六边形初
 \end{figure}
 
 \subsection{规模 $N$ 与斥力函数形式}
-图~\ref{fig:ns} 用已有的 $N=3,\dots,35$ 扫描数据（$k_1=k_2=0.5$，$\mu$ 随 $N$ 缩放）把每个
+图~\ref{fig:ns} 用 \texttt{data/n\_scaling\_results.json}（$N=3,\dots,35$ 的旧扫描结果）（$k_1=k_2=0.5$，$\mu$ 随 $N$ 缩放）把每个
 车辆相对编队中心的运动分解为径向（呼吸）与切向（旋转）两个频率。可以看到两个区制：
 小 $N$ 时 $f_{\text{tan}}\approx f_{\text{rot}}=\sqrt{k_2}/(2\pi)$ 而 $f_{\text{rad}}/f_{\text{rot}}=1.4$–$1.9$
 （呼吸区，切向仍是中性模）；$N\ge15$ 时两个模态\emph{锁频}，
@@ -885,7 +887,7 @@ $f_{\text{rad}}=f_{\text{tan}}\approx(1.5$–$1.8)f_{\text{rot}}$（锁定区）
   \label{fig:ns}
 \end{figure}
 
-图~\ref{fig:alpha} 比较六种连续化的斥力幅值（标准、幂、有理、对数、二次、指数；均满足
+图~\ref{fig:alpha} 比较六种连续化的斥力幅值（\texttt{data/alpha/}）（标准、幂、有理、对数、二次、指数；均满足
 $\alpha(s)\to\infty$（$s\to d^+$）、$\alpha=0$（$s>\mu$））。对 $k_2\ge0.3$，六条周期曲线
 几乎重合成 $T\approx0.52\cdot2\pi/\sqrt{k_2}$，只有 $k_2$ 很小时指数型偏离（其奇异项更强，
 把呼吸推慢）；而呼吸\emph{强度}（频谱峰值比）随形式变化很大（$0.37$–$0.93$）。因此“周期由
