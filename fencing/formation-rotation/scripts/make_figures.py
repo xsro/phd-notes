@@ -24,6 +24,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from numpy.fft import rfft, rfftfreq
+from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 
 from fencing_lib import (distances, integrate_double, integrate_single,
@@ -796,13 +797,176 @@ def fig_jam(force=False):
     plt.close(fig)
 
 
+
+# --------------------------------------------------------------------------- #
+# literature mechanisms: displacement consensus & distance gradient
+# --------------------------------------------------------------------------- #
+def _rot(th):
+    return np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
+
+
+def _neighbours(n, edges):
+    nbr = [[] for _ in range(n)]
+    for i, j in edges:
+        nbr[i].append(j)
+        nbr[j].append(i)
+    return nbr
+
+
+def displacement_run(pstar, edges, vstar=None, kappa=0.0, scale=None,
+                     misalign=None, tf=40.0, n_eval=1200, p0=None):
+    """TAC-2021 displacement-consensus loop with modified weights / bad sensing.
+
+    mu_ij (m x m) is built so that  kappa * sum_j mu_ij z*_ij = kappa * v*  when
+    a common desired velocity v* is requested (Sec. IV-C of the paper).
+    """
+    m = len(pstar)
+    nbr = _neighbours(m, edges)
+    mu = {}
+    if vstar is not None:
+        for i in range(m):
+            for j in nbr[i]:
+                zs = pstar[i] - pstar[j]
+                mu[(i, j)] = np.outer(vstar, zs) / (len(nbr[i]) * (zs @ zs))
+    a = np.ones(m) if scale is None else np.asarray(scale, float)
+    R = [np.eye(2)] * m if misalign is None else misalign
+
+    def rhs(t, y):
+        p = y.reshape(m, 2)
+        u = np.zeros_like(p)
+        for i in range(m):
+            for j in nbr[i]:
+                z = p[i] - p[j]
+                zs = pstar[i] - pstar[j]
+                if vstar is None:                     # bad sensing only
+                    u[i] -= a[i] * (R[i] @ z) - zs
+                else:                                # designed maneuvering
+                    u[i] -= (a[i] * (R[i] @ z) - zs) + kappa * (mu[(i, j)] @ z)
+        return u.ravel()
+    if p0 is None:
+        p0 = pstar + np.array([[0.5, -0.3], [-0.4, 0.5], [0.3, 0.4],
+                               [-0.5, -0.6], [0.6, 0.2], [0.1, -0.5]])[:m]
+    tt = np.linspace(0.0, tf, n_eval)
+    sol = solve_ivp(rhs, (0.0, tf), p0.ravel(), t_eval=tt, method="LSODA",
+                    rtol=1e-10, atol=1e-12)
+    return {"t": sol.t, "p": sol.y.T.reshape(-1, m, 2)}
+
+
+def distance_run(xstar, edges, dmap, tf=600.0, n_eval=6000):
+    """TRO-2015 distance-gradient loop with per-agent perceived distances."""
+    m = len(xstar)
+
+    def rhs(t, y):
+        x = y.reshape(m, 2)
+        u = np.zeros_like(x)
+        for i, j in edges:
+            z = x[i] - x[j]
+            nz = np.linalg.norm(z)
+            u[i] -= z * (nz ** 2 - dmap[(i, j)] ** 2)
+            u[j] += z * (nz ** 2 - dmap[(j, i)] ** 2)
+        return u.ravel()
+    tt = np.linspace(0.0, tf, n_eval)
+    sol = solve_ivp(rhs, (0.0, tf), np.asarray(xstar, float).ravel(), t_eval=tt,
+                    method="LSODA", rtol=1e-10, atol=1e-12)
+    return {"t": sol.t, "x": sol.y.T.reshape(-1, m, 2)}
+
+
+SQUARE = np.array([[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0]])
+SQUARE_CYC = [(0, 1), (1, 2), (2, 3), (3, 0)]
+SQUARE_TREE = [(0, 1), (1, 2), (2, 3)]
+VSTAR = np.array([0.5, -0.3])
+
+
+def fig_rotation_methods(force=False):
+    """Reproduce the two literature mechanisms and their residual-motion boundary."""
+    # (b) designed translational maneuvering, small kappa / (c) too large kappa
+    man = {}
+    for kap in [0.0, 1.0, 5.0]:
+        man[kap] = cached_run(
+            f"method_man_k{kap:g}",
+            lambda kap=kap: displacement_run(SQUARE, SQUARE_TREE, VSTAR, kap,
+                                             tf=40.0, n_eval=1200), force)
+    # (d) one agent off, (e) all agents identically off
+    bad1 = cached_run("method_bad_one", lambda: displacement_run(
+        SQUARE, SQUARE_CYC, None, scale=[1.1, 1, 1, 1], tf=200.0, n_eval=2000),
+        force)
+    badall = cached_run("method_bad_all", lambda: displacement_run(
+        SQUARE, SQUARE_CYC, None, scale=[1.1] * 4, tf=200.0, n_eval=2000),
+        force)
+    # (f) distance gradient with an inconsistent desired distance
+    tri = np.array([[0.0, 0.0], [1.0, 0.0], [0.5, np.sqrt(3) / 2]])
+    e3 = [(0, 1), (1, 2), (2, 0)]
+    dmap = {}
+    for i, j in e3:
+        dmap[(i, j)] = dmap[(j, i)] = 1.0
+    dmap[(1, 0)] = 1.06
+    dg = cached_run("method_distgrad", lambda: distance_run(tri, e3, dmap),
+                    force)
+
+    fig, ax = plt.subplots(2, 3, figsize=(7.2, 4.5))
+
+    def draw(a, run, key, label, lw=0.9):
+        p = run[key]
+        for i in range(p.shape[1]):
+            a.plot(p[:, i, 0], p[:, i, 1], lw=lw)
+            a.plot(p[-1, i, 0], p[-1, i, 1], "o", ms=3)
+        a.set_aspect("equal")
+        a.set_title(label, fontsize=9)
+
+    # (a) pure displacement consensus: static
+    draw(ax[0, 0], man[0.0], "p", "(a) $\\mu_{ij}=0$: static shape")
+    ax[0, 0].plot(SQUARE[:, 0], SQUARE[:, 1], "k*", ms=4)
+
+    draw(ax[0, 1], man[1.0], "p", "(b) designed $v^*$, small $\\kappa$")
+    draw(ax[0, 2], man[5.0], "p", "(c) same $\\mu_{ij}$, $\\kappa$ too large")
+
+    draw(ax[1, 0], bad1, "p", "(d) one agent with $a_i=1.1$")
+    draw(ax[1, 1], badall, "p", "(e) every agent $a_i=1.1$")
+
+    x = dg["x"]
+    for i in range(x.shape[1]):
+        ax[1, 2].plot(x[:, i, 0], x[:, i, 1], lw=0.5)
+    ax[1, 2].set_aspect("equal")
+    ax[1, 2].set_title("(f) inconsistent $d_{21}$: closed orbit", fontsize=9)
+    for a in ax.ravel():
+        a.set_xlabel("$p_1$", fontsize=8)
+        a.set_ylabel("$p_2$", fontsize=8)
+        a.tick_params(labelsize=6.5)
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig-methods.pdf"))
+    plt.close(fig)
+
+    # numbers quoted in the text
+    for kap in [0.0, 1.0, 5.0]:
+        r = man[kap]
+        v = (r["p"][-1] - r["p"][-101]) / (r["t"][-1] - r["t"][-101])
+        g = np.linalg.norm(r["p"][:, 0] - r["p"][:, 1], axis=1)
+        print(f"  kappa={kap}: mean v={np.round(v.mean(axis=0), 4)} "
+              f"(pred {np.round(-kap * VSTAR, 4)}), side {g[0]:.3f}->{g[-1]:.3f}")
+    for name, r in [("one agent off", bad1), ("all agents off", badall)]:
+        v = (r["p"][-1] - r["p"][-501]) / (r["t"][-1] - r["t"][-501])
+        c = r["p"].mean(axis=1, keepdims=True)
+        rad = np.linalg.norm(r["p"][-1] - c[-1], axis=1)
+        print(f"  {name}: |v|={np.linalg.norm(v.mean(axis=0)):.4f} "
+              f"v-spread={np.linalg.norm(v - v.mean(axis=0), axis=1).max():.1e} "
+              f"radii={np.round(rad, 3)}")
+    g = np.linalg.norm(dg["x"][:, 0] - dg["x"][:, 1], axis=1)
+    c = dg["x"].mean(axis=1, keepdims=True)
+    rad = np.linalg.norm(dg["x"] - c, axis=-1)[:, 0]
+    vv = np.linalg.norm(np.gradient(dg["x"], axis=0) /
+                        (dg["t"][1] - dg["t"][0]), axis=-1)[:, 0]
+    print(f"  distance mismatch: gap {g[0]:.3f}->{g[-1]:.4f}, radius "
+          f"{rad[-1]:.4f}, speed {vv[-1]:.4f} (constant: "
+          f"{vv[len(vv) // 2:].std():.1e})")
+
 # --------------------------------------------------------------------------- #
 # driver
 # --------------------------------------------------------------------------- #
 ORDER = ["fig1d", "fig2d-rotation", "fig2d-omega-sweep", "fig2d-shape-branch",
          "fig2d-degenerate", "fig2d-spectrum", "fig2d-direction",
          "fig2d-breathing", "fig2d-bistability", "fig3d-breathing",
-         "fig-nscaling", "fig-alpha", "fig-double", "fig-jam"]
+         "fig-nscaling", "fig-alpha", "fig-double", "fig-jam",
+         "fig-rotation-methods"]
 
 FUNCS = {name: globals()[name.replace("-", "_")] for name in ORDER}
 

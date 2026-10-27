@@ -23,6 +23,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
@@ -77,7 +78,11 @@
 自我维持圆周运动。本报告给出：角速度被动力学唯一选定（$|\omega|=\sqrt{k_2}$）的严格定理、
 个体位置误差的有界性、基于形状能量的局部轨道稳定性分析、旋转方向的环量判据、第二种控制器
 消除旋转的代数原因、双积分器推广（$|\omega|=\sqrt{k_3/k_2}$），以及把长期行为分为
-“旋转/卡死/呼吸”三类的猜想。
+“旋转/卡死/呼吸”三类的猜想。第~\ref{sec:methods} 节把本文的旋转与编队控制文献中另外两条
+路线并置对照：一是位移一致性下的\emph{设计机动}（修改 Laplacian 权重产生匀速平移，旋转需另设
+机制），二是距离梯度控制中由\emph{测量失配}诱发的寄生旋转（闭合圆轨道/螺旋，可用内模估计器
+消除）。三类机制的触发条件、形状性质、速率来源与消除手段互不相同，本文的旋转属于“约束缺失型”，
+既不能被标定掉，也不由设计参数决定。
 
 第~\ref{sec:sim} 节的全部插图由本目录的 Python 脚本重新计算：$k_2$ 扫过 $40$ 倍时实测
 $\abs{\omega}$ 与 $\sqrt{k_2}$ 的相对误差低于 $10^{-4}$；共旋线性化只有一个零模态（其余谱横坐标
@@ -95,6 +100,9 @@ $\abs{\omega}$ 与 $\sqrt{k_2}$ 的相对误差低于 $10^{-4}$；共旋线性�
         因为内部中心力的合力矩恒为零。
   \item \textbf{局部轨道稳定}：共旋坐标下的线性化只有一个零特征值（相位模），其余模态均衰减；
         全局证明受阻于阻尼矩阵 $B=k_1I-\nabla^2P$ 远离平衡点时变号。
+  \item \textbf{与文献的三类机制对照}：位移一致性的\emph{设计机动}给出匀速平移（旋转需另设机制），
+        距离梯度的\emph{测量失配}给出寄生闭合轨道（内模估计器可消除），而本文的旋转源于
+        \emph{约束缺失}——触发条件、形状、速率与处方都不同（\S\ref{sec:methods}）。
   \item \textbf{旋转可被消除}：第二种控制器在观测器中加入斥力项 $\phi_i$，使 $\dot V$ 成为负平方和，
         从而耗散\emph{每一个}个体的速度误差。
 \end{itemize}
@@ -518,12 +526,8 @@ $\dot V\le0$ 成立的关键是 $\partial V/\partial x_i=-\phi_i+k_1(x_i-x_0)$ �
 \end{remark}
 
 \begin{remark}[与刚性编队控制文献的关系]
-“编队本该静止却持续整体旋转”在刚性编队控制里被称为\emph{寄生集体旋转}，已有系统研究
-（如 Garcia de Marina 等关于双边距离测量不一致、尺度因子失配、航向偏置诱发稳态旋转的工作）。
-那里的成因是\emph{测量失配}：控制器本身以静止编队为目标，失配使闭环平衡点变成匀速旋转的
-极限轨道。此处的情形不同：控制器以\emph{平均}速度跟踪为目标，个体速度误差根本不在被控量里，
-因此旋转不是误差，而是闭环的\emph{精确}解族。两者的共同点是结构性的——旋转都来自“某个本该
-被约束的方向其实没有被约束”，且都由零内力矩/力矩平衡钉住转速。
+“编队本该静止却持续整体旋转”在刚性编队控制里已有系统研究，另有“如何主动让编队转起来”的一
+整套方法。二者的机理、判据与消除手段都与本文不同，第~\ref{sec:methods} 节专门作对照。
 \end{remark}
 
 \section{推广：双积分器动力学}
@@ -602,6 +606,261 @@ $k_1k_2>k_3$——与平均动力学的稳定条件 \eqref{eq:dstab} 完全一�
 $k_2\omega=k_3/\omega$ 给出上述关系。其二，$k_2=0$ 是奇异情形：无力矩平衡的非零有限频率解，
 故上述结论要求正的速度阻尼。目标加速度 $a_0$ 被观测器的常值偏置 $\bar w\to a_0$ 吸收，不改变旋转
 动力学。
+
+\section{编队旋转的方法：与编队控制文献的对照}
+\label{sec:methods}
+
+前几节回答的是“围捕控制器\emph{为什么}会绕目标旋转”。但在多智能体编队控制里，“整个编队持续
+转动”本身是一个独立的研究主题，既有“如何把它设计出来”，也有“为什么它会不受控地冒出来”。
+本节对照三类机制，并说明它们与本文对象的关系。
+
+\subsection{一条主线：编队机动（maneuvering）}
+\label{sec:meth_maneuver}
+
+设智能体为单积分器 $\dot p_i=u_i$，$p_i\in\R^m$。\emph{位移一致性}（displacement-consensus）
+控制为~\cite{tac2021}
+\begin{equation}
+  u_i=-\sum_{j\in\calN_i}\omega_{ij}\bigl(z_{ij}-z_{ij}^{*}\bigr),
+  \qquad z_{ij}=p_i-p_j,\quad z^*_{ij}=p^*_i-p^*_j ,
+  \label{eq:disp}
+\end{equation}
+其矩阵形式为 $\dot p=-\bar L(p-p^*)$，其中 $\bar L=\bar B D_\omega\bar B^{\mathsf T}$ 是
+（无向）Laplacian。它只把编队拉回
+$\mathcal S=\{p^*+\mathbf 1_n\otimes b,\ b\in\R^m\}$，即\emph{只允许平移}——因为位移约束把
+“相对位置向量”本身钉死，编队的朝向也被钉死，刚体旋转根本不在允许的位移之内。
+
+要机动，就必须修改闭环。~\cite{tac2021} 的做法是把 Laplacian 的权重改成\emph{非对称}的
+\begin{equation}
+  \tilde\omega_{ij}=\omega_{ij}-\kappa\mu_{ij}\quad(\mu_{ij}\neq\mu_{ji}),
+  \qquad
+  \dot p=-(\bar L-\kappa\hat\Lambda)p+\bar Lp^*,
+  \qquad
+  (\hat\Lambda p)_i=\sum_{j\in\calN_i}\mu_{ij}z_{ij},
+  \label{eq:modlap}
+\end{equation}
+并要求设计参数 $\mu_{ij}$ 使每个智能体的期望稳态速度相同：
+\begin{equation}
+  v_i^*=\kappa\sum_{j\in\calN_i}\mu_{ij}z^{*}_{ij}=v^*\quad\forall i .
+  \label{eq:vstar}
+\end{equation}
+此时闭环有一个显式特解
+\begin{equation}
+  p_p(t)=p^*+(\kappa\hat\Lambda p^*)\,t=p^*+(\mathbf 1_n\otimes v^*)\,t ,
+  \label{eq:pparticular}
+\end{equation}
+配合 $\bar L-\kappa\hat\Lambda$ 的“单零特征值、其余正实部”，得到 $p(t)\to\mathcal S$ 且
+$\dot p_i(t)\to\kappa v^*$：\textbf{形状不变、整体匀速平移}。若某个智能体的邻居数少于 $m$，
+标量 $\mu_{ij}$ 无法张成任意 $v^*$，此时把 $\mu_{ij}$ 换成 $m\times m$ 矩阵即可，例如
+\begin{equation}
+  v_i^*=\kappa\Bigl(a\,I+b\,J\Bigr)z^{*}_{ij}
+  \quad\Longrightarrow\quad
+  \text{切向驱动（绕 }z^*_{ij}\text{ 旋转 90°）},
+  \label{eq:muJ}
+\end{equation}
+即 $\mu$ 的反对称部分 $bJ$ 提供“与相对位置垂直”的速度分量。
+
+两条工程要点。其一，$\abs{\kappa}$ 必须足够小：对\emph{树图}有显式上界
+\begin{equation}
+  \abs{\kappa}<\omega^*\,\frac{\lambda_{\min}(\bar B^{\mathsf T}\bar B)}
+                            {\norm{\bar B^{\mathsf T}\hat M}_2},
+  \label{eq:kappa_bound}
+\end{equation}
+而在\emph{带环图}上 $\bar B^{\mathsf T}\bar B$ 奇异（环上 $z_{12}+z_{23}+z_{31}=0$），没有这种
+简单判据，必须先把 $z$ 分解为独立/相关坐标再分析稳定性。其二，该方案给出的机动是“公共速度”，
+因此是平移；若要\emph{有意}的旋转机动，需要额外机制（时变参考构型，或下一小节的设计性失配）。
+
+图~\ref{fig:methods}(a)--(c) 是我们的复现（四车正方形，路径图/树）：$\kappa=0$ 时收敛到静态
+参考形状；$\kappa=1$ 时四条轨迹成为平行直线、边长保持 $2.000$，实测公共速度为
+$(-0.50,+0.30)=-\kappa v^*$；保持同一 $\mu_{ij}$ 而把 $\kappa$ 提高到 $5$，边长发散到 $143$，
+形状被彻底破坏——这正是 \eqref{eq:kappa_bound} 所警告的现象。作为对照，同规模的四环在
+$\kappa=20$ 时仍保持形状并给出 $-\kappa v^*$：约束 \eqref{eq:kappa_bound} 只覆盖树图，
+带环图的实际容忍度可以大得多，但缺乏一般判据。
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig-methods.pdf}
+  \caption{两类文献机理的复现（$p_1,p_2$ 为平面坐标，圆点为末态）。
+  (a) 位移一致性 $\mu_{ij}=0$：收敛到静态参考形状。
+  (b) 设计机动（树图，$\kappa=1$）：四条轨迹成为平行直线，形状不变，实测公共速度
+  $-\kappa v^*$（$v^*=(0.5,-0.3)$）。
+  (c) 同一 $\mu_{ij}$、$\kappa=5$：形状失稳、边长从 $1.36$ 发散到 $143$，即
+  \eqref{eq:kappa_bound} 所禁止的区域。
+  (d) 位移一致性 $+$ 单个 agent 的尺度因子 $a_0=1.1$：形状扭曲但刚性，四车共享同一速度
+  $\abs{v}=0.066$（离散度 $10^{-17}$），整体匀速平移。
+  (e) 四个 agent 全部取 $a_i=1.1$：残余速度为零，形状静止且被统一缩放（$1.414\to1.286$）。
+  (f) 距离梯度 $+$ 一条边的标准距离不一致（$6\%$）：边长收敛到恒定的 $1.0302$，三车各自沿
+  半径 $0.583$ 的圆轨道以恒定速率 $0.0557$ 运动，即~\cite{tro2015} 的寄生闭合轨道。}
+  \label{fig:methods}
+\end{figure}
+
+\subsection{鲁棒性：残余运动什么时候出现}
+\label{sec:meth_robust}
+
+同一框架下更微妙的问题是：\emph{感知不完美}时闭环是否还会停住。~\cite{tac2021} 采用的感知模型是
+\begin{equation}
+  (p_j-p_i)\big|_{\text{meas}}=a_iR_i\,(p_j-p_i),\qquad a_i>0,\ R_i\in SO(m),
+  \label{eq:badsense}
+\end{equation}
+即每个智能体各有\emph{尺度因子} $a_i$ 与\emph{局部坐标系旋转} $R_i$（罗盘/航向偏置）。记
+$D_x=\bar D_aD_R$，闭环变成 $\dot p=-D_x\bar Lp+\bar Lp^*$，与设计机动 \eqref{eq:modlap}
+形式相似但本质不同：扰动直接乘在 Laplacian 上。
+
+结论可以压缩成一句判据：\textbf{残余运动来自“分歧”，而不是“误差”}。若所有智能体的失配完全
+相同（$a_i=a^*$、$R_i=R^*$），则残余速度为零，位置收敛到静态的、只是被统一缩放/旋转过的形状
+\begin{equation}
+  \tilde p^*=\frac{1}{a^*}\bigl(I_n\otimes R^{*\mathsf T}\bigr)p^*+\mathbf 1_n\otimes b ;
+  \label{eq:trivial}
+\end{equation}
+只要有一个智能体的 $(a_i,R_i)$ 与他人不同，闭环就收敛到“扭曲的形状 + 常值残余速度”：
+\begin{equation}
+  \tilde z^*=\bigl(\bar B^{\mathsf T}D_x\bar B D_\omega\bigr)^{-1}\bar B^{\mathsf T}\bar BD_\omega z^*,
+  \qquad
+  D_x\bar L\tilde p^*-\bar Lp^*=-(\mathbf 1_n\otimes\tilde v^*).
+  \label{eq:residual}
+\end{equation}
+~\cite{tac2021} 的定理 2 证明：图\emph{无环}（树）且至少有一个智能体的尺度或坐标系与他人不同、
+$D_x\approx I$ 时，\eqref{eq:residual} 成立，编队以常速 $\tilde v^*$ 平移。带环图的相应结论
+\emph{没有}被证明：$\bar B^{\mathsf T}\bar B$ 奇异使 \eqref{eq:residual} 的第一式不可直接求解，
+只能先分解独立坐标；“$\tilde z^*\notin\ker\check M$（即 $\tilde v^*\neq0$）”被作者明确列为开
+问题。这就是“树 vs 带环”的实质差别：树有闭式判据，带环只有部分结果。
+
+图~\ref{fig:methods}(d)(e) 复现了这条判据。四车正方形环，仅让 $a_0=1.1$、其余为 $1$：形状收敛
+到\emph{刚性但扭曲}的正方形（到质心距离 $1.414\to\{1.332,1.414,1.365,1.414\}$），四车共享同一个
+速度 $\abs{v}=0.066$（车与车之间的离散度 $1.6\times10^{-17}$）。把四个 $a_i$ 全部取 $1.1$：残余
+速度为零，形状静止，半径 $1.414\to1.286=1.414/1.1$，正好是 \eqref{eq:trivial}。
+
+一个容易被误读的点值得说清：在这个\emph{位移一致性}框架里，残余运动是“扭曲形状的匀速平移”
+（$\tilde v^*$ 是公共速度），并不自旋——我们的数值实验中每辆车的方位角变化为零。\emph{旋转型}
+的残余运动出现在下一小节的\emph{距离}型闭环中（闭合圆轨道），以及罗盘失配类工作（如
+~\cite{tac2021} 引用的 “mismatched compasses”）中；平移与转动同时出现的机动方案见
+~\cite{tro2016}。
+
+\subsection{距离梯度控制中的寄生旋转}
+\label{sec:meth_parasitic}
+
+最经典的“不该转却转了”是~\cite{tro2015}。距离梯度控制为
+\begin{equation}
+  u_i=-\sum_{k_{ij}\in\mathcal E_i}z_{ij}\,e_{k_{ij}},
+  \qquad
+  e_{k_{ij}}=\norm{z_{ij}}^2-d_{k_{ij}}^2 ,
+  \label{eq:grad}
+\end{equation}
+即势函数 $\frac14\sum_k e_k^2$ 的梯度。当同一条边两端的“标准距离/实测距离”不一致
+（$\bar d_{k_{ij}}\neq\bar d_{k_{ji}}$，等价地 $e_{k_{ij}}\neq e_{k_{ji}}$）时，
+\eqref{eq:grad} 不再是任何单一势函数的梯度，于是出现两种不良行为：
+\begin{enumerate}[leftmargin=2.2em]
+  \item \emph{未知的扭曲终态形状}：$e_k$ 收敛到小的非零常值，形状被永久扭曲；
+  \item \emph{稳态集体运动}：$\R^2$ 中整个编队沿一条闭合轨道运动，轨道由\emph{单一正弦信号}
+        决定；$\R^3$ 中则变成螺旋（正弦 + 常值漂移）。
+\end{enumerate}
+这里的关键洞察是：\textbf{指数收敛只对“误差信号”成立}，它不允许我们推断位置或速度也收敛
+——$e_k\to$ 常数并不排斥 $\dot p_i$ 停在非零值。这是梯度型编队控制被低估的鲁棒性陷阱。
+
+图~\ref{fig:methods}(f) 是三车等边三角形的复现：把 $\bar d_{21}$ 从 $1$ 改成 $1.06$（$6\%$），
+边长收敛到恒定的 $1.0302$（扭曲但刚性），三车各自在半径 $0.5829$ 的圆上以恒定速率 $0.0557$
+运动（末段速率标准差 $1.6\times10^{-9}$），质心同时缓慢漂移——正是“刚性但扭曲 + 闭合轨道”。
+
+消除办法是\emph{分布式内模估计器}~\cite{tro2015}。对每条边指定一个 estimating agent，把不一致
+$\mu_k$ 建模为“常值 $+$ 有限个已知频率正弦”的外系统输出 $\mu_k(t)=\alpha_k+\sum_i\beta_i\sin(\omega_it+\phi_i)$，
+用 $(\xi_k,\hat\mu_k)$ 估计它，并在控制中补偿：
+\begin{equation}
+  u_i=-\sum_{k_{ij}\in\mathcal E_i}z_{k_{ij}}e_{k_{ij}}
+      +\sum_{k_{ij}\in\kappa_i}z_{k_{ij}}\hat\mu_k,
+  \qquad
+  \dot\xi_k=\Lambda\xi_k+\kappa B_k\bigl(e_{k_{ij}}+\mu_k-\hat\mu_k\bigr),
+  \ \hat\mu_k=B_k^{\mathsf T}\xi_k .
+  \label{eq:internalmodel}
+\end{equation}
+其定理 5.1 说：若
+\begin{equation}
+  Z=-R(z^*)R(z^*)^{\mathsf T}+R(z^*)S_1(z^*)^{\mathsf T}
+  \label{eq:Zmat}
+\end{equation}
+在期望构型（$e=0$）处 Hurwitz，则存在 $\kappa^*,b^*$，只要增益足够大、$B_k$ 的振荡分量足够小，
+闭环就有一个局部指数吸引的不变流形 $\mathcal Q=\{(w,x,\xi)\,|\,e=0,\ \xi=w\}$：形状指数收敛到
+期望形状、$\hat\mu\to\mu$、并且 $\dot x\to0$（\emph{整个编队最终停住}）。该文还给出如何系统
+地挑选 estimating agents（三角编队、以及由 Henneberg 插入生成的一类最小刚性图上有组合判据），
+并用三台 e-puck 实验说明：不加估计器时机器人“永不停止”（速度始终不衰减），加了之后停住。
+
+\subsection{二阶（双积分器）版本}
+\label{sec:meth_second}
+
+同样的现象在双积分器上重现~\cite{sun2017robust}。设 $\ddot p_i=-\gamma\dot p_i
+-\sum_j e_{k_{ij}}(p_i-p_j)+\sum_{j\in\calN_i^-}\mu_{k_{ij}}(p_i-p_j)$，则小常值失配下：
+距离误差指数收敛到非零常值；形状指数收敛到（扭曲的）刚性形状；而位置轨迹（stabilization 版）
+或其\emph{速度}轨迹（flocking 版）收敛到 $\R^2$ 的圆轨道 / $\R^3$ 的螺旋轨道
+（该文定理 3、4）。
+
+值得与本报告第~\ref{sec:double} 节对照：那里的旋转\emph{不需要}任何失配——观测器
+$\dot w_i=-k_3e_i$ 自己就制造了切向驱动力，转速由力矩平衡钉死为 $\sqrt{k_3/k_2}$；而这里的旋转
+完全由失配提供动力，无失配时编队会停住。两者形式上都是“二阶系统 + 一个积分型的内部状态”，
+但一个是\emph{结构性的精确解}，一个是\emph{扰动诱发的极限轨道}。
+
+\subsection{三类机制的对比}
+\label{sec:meth_table}
+
+表~\ref{tab:methods} 把三类机制并排。可以看出它们在“旋转由谁供能”“速率由谁决定”“怎么消除”
+三件事上完全不同。
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{三类编队旋转机制的对照。}
+\label{tab:methods}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.15\textwidth}
+                >{\raggedright\arraybackslash}p{0.24\textwidth}
+                >{\raggedright\arraybackslash}p{0.26\textwidth}
+                >{\raggedright\arraybackslash}p{0.27\textwidth}}
+\toprule
+ & \textbf{(A) 设计机动} & \textbf{(B) 测量失配（寄生）} & \textbf{(C) 约束缺失（本报告）}\\
+\midrule
+控制框架 & 位移一致性 $+$ 修改 Laplacian & 距离/位移梯度 & 围捕控制器 \eqref{eq:ctrl7}\\
+触发条件 & 人为取 $\mu_{ij}\neq\mu_{ji}$ & 端点标准或感知不一致（$a_i$、$R_i$、
+            $\bar d_{k_{ij}}$ 有分歧） & 无需任何分歧：只约束平均\\
+形状 & 严格保持 $\mathcal S$ & 扭曲但刚性（误差停在非零常值） & 刚性，成对距离收敛到常数\\
+运动 & 匀速平移（公共 $v^*$）；旋转需另设机制 & 2D 闭合圆轨道 / 3D 螺旋 / 扭曲形状的匀速平移 &
+           绕目标的刚体旋转\\
+速率由谁定 & 设计参数 $\kappa b$ & 由失配量与闭环算子决定，一般无闭式 & 力矩平衡强制
+           $\abs{\omega}=\sqrt{k_2}$\\
+消除/避免 & 无需消除（$\kappa$ 需足够小，树图有界） & 内模估计器补偿 $\mu_k$，或一致化标定 &
+           观测器中加入 $\phi_i$（\S\ref{sec:second}）\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{与围捕控制器的结构对应}
+\label{sec:meth_relation}
+
+把三类机制放在一起看，本报告的围捕控制器其实与 (A)、(B) 各有一半的“血缘”，但都不重合。
+
+\paragraph{(i) 观测器 $=$ 相位滞后 $90^\circ$ 的切向注入。}
+第一种控制器的观测器在旋转稳态上给出 $\tv_i=\frac{k_2}{\omega}J\txi_i$，即一个\emph{与相对
+位置垂直}的速度分量，比例系数 $k_2/\omega$。这与 \eqref{eq:muJ} 中“把 $\mu$ 的反对称部分
+$bJ$ 取出来”得到切向驱动的做法在形式上完全同型：围捕控制器相当于用\emph{积分器自动实现了
+非对称权重}，不需要显式设计 $\mu_{ij}$。
+
+\paragraph{(ii) 但速率的来源完全不同。}
+设计中 $\mu_{ij}$ 的速率是自由参数（$\kappa b$），想快就调大；围捕控制器的速率却被闭环
+\emph{强制}为 $\sqrt{k_2}$（命题~\ref{prop:omega}），既不能设计也不能调参改变——因为它是
+“中心内力矩恒为零”这一几何事实与观测器积分的耦合结果。这正是本文旋转区别于文献机动方案的
+本质：\emph{不是把旋转设计出来，而是发现旋转是唯一的自洽解}。
+
+\paragraph{(iii) 消除手段的共同结构。}
+~\cite{tro2015} 消除寄生轨道的方法是“用内模估计器把不一致显式补偿掉”，本报告消除旋转的方法
+是“在观测器里加 $\phi_i$，让 $\dot V$ 成为负平方和”（\S\ref{sec:second}）。两者手法不同，
+逻辑相同：把那个“没有被约束/被扰动的方向”显式地阻尼或补偿掉。反过来说，任何“只约束平均”
+的设计都注定要面对一个类似的中性方向。
+
+\paragraph{(iv) 互相不可替代。}
+失配型旋转的前提是“分歧”：所有智能体一致地错（$a_i\equiv a^*$、$R_i\equiv R^*$）时残余运动
+为零（\eqref{eq:trivial}）。围捕控制器的旋转不需要任何分歧——所有车辆对目标速度、对邻居距离的
+认知完全一致，旋转来自\emph{约束的缺失}而不是\emph{感知的偏差}。因此 (A) 的“一致化标定/估计器”
+处方对本文的旋转无效（标定得再准也会转），而本文的“观测器加 $\phi_i$”处方对失配型问题也没有
+意义（那里本该静止却动了）。这也解释了为什么两类文献长期各自为政。
+
+
 
 \section{长期行为：旋转／卡死／呼吸的三分法}
 \label{sec:trichotomy}
@@ -975,6 +1234,28 @@ doi:10.1109/TAC.2021.3075320.
 Z.~Chen,
 ``A cooperative target-fencing protocol of multiple vehicles,''
 \emph{Automatica}, vol.~107, pp.~591--594, 2019.
+
+\bibitem{tro2015}
+H.~Garcia de Marina, M.~Cao, and B.~Jayawardhana,
+``Controlling rigid formations of mobile agents under inconsistent measurements,''
+\emph{IEEE Transactions on Robotics}, vol.~31, no.~1, pp.~31--39, Feb.~2015,
+doi:10.1109/TRO.2014.2373145.
+
+\bibitem{tac2021}
+H.~Garcia de Marina,
+``Maneuvering and robustness issues in undirected displacement-consensus-based formation control,''
+\emph{IEEE Transactions on Automatic Control}, 2021,
+doi:10.1109/TAC.2020.3019780; arXiv:2008.03544.
+
+\bibitem{sun2017robust}
+Z.~Sun, B.~D.~O.~Anderson, S.~Mou, and A.~S.~Morse,
+``Robustness issues in double-integrator undirected rigid formation systems,''
+\emph{IFAC-PapersOnLine}, 2017, doi:10.1016/j.ifacol.2017.08.221.
+
+\bibitem{tro2016}
+H.~Garcia de Marina, B.~Jayawardhana, and M.~Cao,
+``Distributed rotational and translational maneuvering of rigid formations and their applications,''
+\emph{IEEE Transactions on Robotics}, vol.~32, no.~3, pp.~684--697, Jun.~2016.
 \end{thebibliography}
 
 \end{document}
