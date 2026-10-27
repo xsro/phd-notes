@@ -1,1 +1,3 @@
 *.pdf
+!figures/*.pdf
+scripts/cache/

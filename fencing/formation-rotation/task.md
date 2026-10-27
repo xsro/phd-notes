@@ -12,3 +12,5 @@
 ```
 tectonic fencing-rotation.tex 
 ```
+
+python代码使用`uv --no-project`运行
