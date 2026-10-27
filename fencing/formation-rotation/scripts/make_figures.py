@@ -360,7 +360,7 @@ def fig2d_degenerate(force=False):
         ax[1].semilogy(run["t"], np.abs(g - D), ls, lw=1.0, label=lab)
     ax[1].set_xlabel("$t$")
     ax[1].set_ylabel("$\min\|x_{ij}\|-d$")
-    ax[1].set_title("(b) junction: jam vs rotation")
+    ax[1].set_title("(b) jam vs. rigid rotation")
     ax[1].legend(fontsize=6.5)
     fig.tight_layout()
     fig.savefig(os.path.join(FIG, "fig2d-degenerate.pdf"))
