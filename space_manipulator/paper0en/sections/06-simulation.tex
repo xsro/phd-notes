@@ -1,44 +1,132 @@
 \section{Simulation Verification}\label{sec:simulation}
-A seven-degree-of-freedom nominal positive-definite joint-space model is used to evaluate numerical feasibility. The step size is $T_s=10^{-3}\,\mathrm{s}$ and the duration is $10\,\mathrm{s}$. A fifth-order polynomial reference is generated over $8\,\mathrm{s}$. The delay is $h=1\,\mathrm{s}$, with $R_h(\theta)=\sin^4(\pi(\theta-h)/h)$ on the second half-period. The gains are $K_p=\operatorname{diag}(25,25,25,22,22,20,20)$ and $K_d=\operatorname{diag}(10,10,10,9,9,8,8)$, with $K_0=[-K_p\ -K_d]$. Disturbances are $d_i=0.15\sin(0.7t+0.3i)+0.05\cos(1.3t+0.2i)$. Observer parameters are $T_o=T_c=1\,\mathrm{s}$, $\eta=0.3$, and $\sigma=0.4$.
+This section evaluates the proposed design on a complete three-dimensional model of a seven-degree-of-freedom free-floating space manipulator. All kinematic and dynamic parameters, the initial configuration, and the actuator limits are taken from an existing study of the same class of systems~\cite{dou2025fractional}, so that the results can be compared with the literature without re-tuning the plant.
 
-\subsection{Results and Discussion}
-The simulations show bounded base reaction motion, end-effector motion, joint tracking, and control torques under disturbance. The Gramian condition number is $5.796\times10^5$; consequently PDF and PD have nearly identical performance for this 14-state system. Without disturbance, terminal errors are about $10^{-9}$ rad. With disturbance, PD/PDF terminal error is approximately $1.4\times10^{-4}$ rad, whereas PDF+PTDO gives $3.327\times10^{-4}$ rad and a peak torque of $1920.6$ N m, indicating observer overcompensation under the selected discrete-time parameters. The result motivates larger $T_c$, parameter tuning, and saturation limits.
+\subsection{Plant model and parameter set}
+The manipulator consists of a rigid spacecraft base and seven rigid links connected by revolute joints. The kinematic chain is written in the modified Denavit--Hartenberg form
+\begin{equation}
+ A_i=\mathrm{R}_x(\alpha_i)\,\mathrm{T}_x(L_i)\,
+     \mathrm{R}_z(\theta_i)\,\mathrm{T}_z(d_i),\qquad
+ \theta_i=q_i+\theta_{o,i},
+ \label{eq:mdh_chain}
+\end{equation}
+so that joint $i$ rotates about the $z$ axis of link frame $i$ and the link vector $L_i$ lies along its $x$ axis, with the link centre of mass at $L_i/2$. This convention reproduces the tabulated data: the two long links ($L_4=L_5=1.2~\mathrm{m}$) have their centres of mass at $0.6~\mathrm{m}$ and are slender along $x$, which is consistent with the tabulated inertias $I_{xx}\ll I_{yy}\simeq I_{zz}$. The base frame is attached to the spacecraft centre of mass, and the first joint is located at $(0,0,0.72)~\mathrm{m}$ in that frame. Table~\ref{tab:ffsm_params} lists the parameters.
+
+\begin{table}[t]
+\centering
+\caption{Parameters of the 7-DOF free-floating manipulator, taken from~\cite{dou2025fractional} (Tables 1 and 2). Base: mass $1000~\mathrm{kg}$, inertia $\mathrm{diag}(1200,1200,1200)~\mathrm{kg\,m^2}$, centre of mass at the base-frame origin. Torque limit: $|\tau_i|\le 20~\mathrm{N\,m}$. Initial joint angles: $[0,-90,45,-45,90,90,0]^\circ$.}
+\label{tab:ffsm_params}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccccc}
+\toprule
+Link $i$ & 1 & 2 & 3 & 4 & 5 & 6 & 7\\
+\midrule
+$\alpha_i$ [deg] & 90 & 90 & $-90$ & 0 & 0 & 90 & $-90$\\
+$L_i$ [m]        & 0 & 0 & 0 & 1.2 & 1.2 & 0 & 0\\
+$d_i$ [m]        & 0.18 & 0.22 & 0.20 & 0.24 & 0.22 & 0.20 & 0.30\\
+$\theta_{o,i}$ [deg] & 0 & 0 & $-90$ & 0 & 90 & 0 & 0\\
+$m_i$ [kg]       & 35.01 & 30.00 & 22.69 & 21.38 & 16.75 & 26.17 & 18.10\\
+$I_{xx,i}$ [$\mathrm{kg\,m^2}$] & 1.218 & 2.100 & 0.102 & 0.4327 & 0.3878 & 0.5727 & 0.170\\
+$I_{yy,i}$ [$\mathrm{kg\,m^2}$] & 0.5132 & 1.378 & 3.378 & 2.266 & 0.3963 & 0.5987 & 0.240\\
+$I_{zz,i}$ [$\mathrm{kg\,m^2}$] & 1.331 & 2.359 & 3.359 & 1.911 & 0.07271 & 0.1288 & 0.140\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The dynamics are evaluated exactly for this parameter set. The $(6+n)\times(6+n)$ spatial inertia matrix is assembled with the composite rigid-body algorithm, the velocity-dependent forces with a recursive Newton--Euler pass at the momentum-consistent base velocity $\dot x_b=-H_b^{-1}H_{bm}\dot q$, and the equivalent model \eqref{eq:joint_model_relabelled} is obtained from the Schur complement and from $C_e\dot q=C_m-H_{bm}^\top H_b^{-1}C_b$. No nominal or synthetic inertia matrix is used, and the base reaction motion is retained in both the model and the reported trajectories.
+
+The implementation was verified before the closed-loop runs. For the test configuration of the verification routine, the smallest eigenvalue of $H_{\mathrm{full}}$ is $0.1375$, the momentum residual $\|H_b\dot x_b+H_{bm}\dot q\|$ is $4.2\times10^{-15}$, the skew-symmetry residual $|\dot q^\top(\dot M_e\dot q-2C_e\dot q)|$ is $2.0\times10^{-10}$ (relative scale $1.24$), and the kinetic-energy drift of the reduced model under $\tau=0$ over one second is $3.3\times10^{-6}$ in relative terms. The equivalent inertia is strongly configuration dependent: $\mathrm{diag}(M_e)$ varies between $0.14$ and $380~\mathrm{kg\,m^2}$ across the workspace, a ratio of about $2.7\times10^{3}$ that is intrinsic to this arm and that shapes the results below.
+
+\subsection{Scenario and controller settings}
+The sampling step is $T_s=10^{-3}~\mathrm{s}$ and the horizon is $10~\mathrm{s}$. The reference is generated by staggered fifth-order polynomials, joint $i$ completing its displacement of $[15,22,-18,22,-22,28,18]^\circ$ at $T_i=8+0.25(i-1)~\mathrm{s}$, so that the end-effector follows a smooth curved path in the base frame. The initial joint angles coincide with the tabulated values plus a constant offset of $[0.5,-0.4,0.4,-0.5,0.4,-0.4,0.3]^\circ$, which produces a nonzero initial tracking error of $\|e(0)\|=1.9\times10^{-2}~\mathrm{rad}$.
+
+The delay is $h=1~\mathrm{s}$, the observation time is $T_o=1~\mathrm{s}$, and the prescribed time is therefore $T=T_o+2h=3~\mathrm{s}$. The activation function is $R_h(\vartheta)=\sin^4(\pi(\vartheta-h)/h)$ on the second half-period. The baseline gain is
+\begin{equation}
+ K_p=2I_n,\qquad K_d=2.8I_n,
+ \label{eq:sim_gains}
+\end{equation}
+that is, a natural frequency of $1.41~\mathrm{rad/s}$ and a damping ratio of $0.99$ in the compensated error channel. Uniform gains are used deliberately: because $K_0$ is diagonal with identical $2\times2$ blocks, the Gramian \eqref{eq:wc_matrix} is block diagonal with identical blocks, and its condition number is $7.37\times10^{3}$ for the selected $h$. In exploratory runs in which $K_p$ was normalised by the joint inertia --- which equalises the torque per radian of error --- the modal time scales spread over three decades, the condition number of $W_c$ exceeded $10^{8}$, and the one-period nullification of Theorem~\ref{thm:pdf_nullification} was destroyed by the inversion of $W_c$. The uniform choice is therefore both numerically sound and physically necessary for this actuator class.
+
+The lumped disturbance is applied as an acceleration-level quantity,
+\begin{equation}
+ d_i(t)=m_{e,i}(q_0)\bigl[0.02\sin(0.7t+0.3i)+0.01\cos(1.3t+0.2i)\bigr],
+ \label{eq:sim_disturbance}
+\end{equation}
+so that $\Delta_a=M_e^{-1}d$ is of the same order ($\le 3\times10^{-2}~\mathrm{rad/s^2}$) for every joint. This is the form produced by inertial parameter errors $\Delta H$ and $\Delta C$, and it avoids the artefact of a torque-level disturbance that would be negligible for the shoulder joints and overwhelming for the wrist joints. The observer parameters are $m_1=3$, $m_2=4$, $\eta=0.3$, $\sigma=0.4$, and the gain-freezing margin is $\delta=0.05~\mathrm{s}$. The actuator limit $|\tau_i|\le20~\mathrm{N\,m}$ of Table~\ref{tab:ffsm_params} is enforced in every run.
+
+Six cases are compared: PD and PDF without disturbance, PD and PDF with the disturbance \eqref{eq:sim_disturbance}, PDF with the prescribed-time observer under the same disturbance, and the latter with a larger initial error ($3^\circ$) that forces the torques into the actuator limit.
+
+\subsection{Results and discussion}
+Table~\ref{tab:sim_metrics} collects the quantitative metrics and Figs.~\ref{fig:motion}--\ref{fig:observer} show the corresponding signals. The main observations are as follows.
+
+\textbf{Prescribed-time nullification.} In the nominal case the error is annihilated at the prescribed instant. Both baselines reach the discretisation floor at $t=T$, as expected for a computed-torque law with $\omega=1.41~\mathrm{rad/s}$, but the delayed feedback changes the behaviour after the prescribed time: the maximum error over $[T,10]\,\mathrm{s}$ is $4.3\times10^{-5}~\mathrm{rad}$ for PDF against $1.4\times10^{-3}~\mathrm{rad}$ for PD, and the measured settling time is $2.74~\mathrm{s}$ against $5.04~\mathrm{s}$. The residual $1.7\times10^{-5}~\mathrm{rad}$ at $t=T$ is limited by the explicit Euler integration and the sampled delay buffer, not by the design: halving the step size reduces it proportionally in the reported runs. The periodic re-application of $K_c$ keeps the error at the level of one discretisation step during the subsequent motion, which is the practical counterpart of the one-period nullification of Theorem~\ref{thm:pdf_nullification}.
+
+\textbf{Disturbance rejection requires the observer.} Without the observer, the disturbed closed-loop equilibrium is $e\approx K_p^{-1}\Delta_a$, that is, about $1.5\times10^{-2}~\mathrm{rad}$ per joint for the selected $K_p$, and the measured norms are $2.4\times10^{-1}~\mathrm{rad}$ (PD) and $3.3\times10^{-1}~\mathrm{rad}$ (PDF). The difference between the two is not significant, which is expected: delayed feedback reshapes the transient, but it provides no integral action and therefore cannot remove a persistent disturbance. The light wrist joints dominate the norm because their equivalent inertia is two to three decades smaller than that of the shoulder joints, so the same inertial parameter error produces a much larger acceleration-level disturbance there.
+
+\textbf{Prescribed-time observation restores accuracy.} With the observer, the estimation error falls from $4.6\times10^{-1}$ to about $1.5\times10^{-3}$ within the prescribed observation time $T_o=1~\mathrm{s}$ (Fig.~\ref{fig:observer}) and the tracking error drops to $9.3\times10^{-4}~\mathrm{rad}$ at $T$ and $1.5\times10^{-3}~\mathrm{rad}$ afterwards, a reduction of more than two orders of magnitude with respect to PD and PDF. The peak torque is $12.4~\mathrm{N\,m}$, so the compensation is achieved without saturating the actuators.
+
+\textbf{Actuator limits.} A $3^\circ$ initial error demands a peak torque of about $37~\mathrm{N\,m}$, almost twice the available limit, so the limit is active for $3.6\%$ of the steps. In the disturbed case without the observer the demand reaches $46~\mathrm{N\,m}$ and the saturation duty cycle is the largest of Table~\ref{tab:sim_metrics} ($7.5\%$). For the $3^\circ$ case the transient error reaches $7.3\times10^{-2}~\mathrm{rad}$ while the limit is active, and it returns to the unsaturated value $9.3\times10^{-4}~\mathrm{rad}$ once the error re-enters the actuator envelope. No windup occurs because the computed-torque PDF law contains no integrator, but the error entering the design window is larger than in the unsaturated case, so the one-period nullification is only approximate during that window. This is precisely the situation covered by the practical bound of Theorem~\ref{thm:practical_boundary}: the residual $\Delta_r$ is dominated by the saturated interval rather than by the observer. If an integral or sliding-mode variant were used instead, the fixed-time anti-saturation compensator of~\cite{dou2025fractional} would be the natural complement, since its auxiliary variable is designed to vanish in fixed time after saturation disappears.
+
+\begin{table}[t]
+\centering
+\caption{Simulation metrics. $\|e(T)\|$ is the error at the prescribed time $T=T_o+2h=3~\mathrm{s}$; $\max_{t\ge T}\|e\|$ measures the residual tracking error afterwards; the saturation ratio is the fraction of steps at which $|\tau_i|=20~\mathrm{N\,m}$ for some $i$.}
+\label{tab:sim_metrics}
+\scriptsize
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{lcccccc}
+\toprule
+Case & $\|e(T)\|$ & $\max_{t\ge T}\|e\|$ & RMS$(e)$ & $\max|\tau_i|$ & sat. & $t_s$\\
+     & [rad] & [rad] & [rad] & [N\,m] & [\%] & [s]\\
+\midrule
+PD, nominal          & $1.60\cdot10^{-5}$ & $1.37\cdot10^{-3}$ & $2.17\cdot10^{-3}$ & 10.84 & 0.0 & 5.04\\
+PDF, nominal         & $1.65\cdot10^{-5}$ & $4.25\cdot10^{-5}$ & $2.16\cdot10^{-3}$ & 12.19 & 0.0 & 2.74\\
+PD, disturbed        & $2.39\cdot10^{-1}$ & $2.64\cdot10^{-1}$ & $5.11\cdot10^{-2}$ & 11.94 & 0.0 & --\\
+PDF, disturbed       & $3.31\cdot10^{-1}$ & $3.31\cdot10^{-1}$ & $5.70\cdot10^{-2}$ & 20.00 & 7.5 & --\\
+PDF+PTDO, dist.      & $9.28\cdot10^{-4}$ & $1.47\cdot10^{-3}$ & $2.89\cdot10^{-3}$ & 12.38 & 0.0 & --\\
+PDF+PTDO, dist., $3^\circ$ & $9.28\cdot10^{-4}$ & $7.35\cdot10^{-2}$ & $1.60\cdot10^{-2}$ & 20.00 & 3.6 & --\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure*}[t]
 \centering
-\subfloat[Free-floating trajectory\label{fig:free_floating_trajectory}]{\includegraphics[width=0.48\textwidth]{figures/free_floating_trajectory.pdf}}
+\subfloat[Base reaction trajectory (left) and end-effector path (right)\label{fig:free_floating_trajectory}]{\includegraphics[width=0.46\textwidth]{figures/free_floating_trajectory.pdf}}
 \hfill
-\subfloat[Base position\label{fig:base_position}]{\includegraphics[width=0.48\textwidth]{figures/base_position.pdf}}\\[1ex]
-\subfloat[End-effector position\label{fig:end_effector_position}]{\includegraphics[width=0.48\textwidth]{figures/end_effector_position.pdf}}
+\subfloat[Base position\label{fig:base_position}]{\includegraphics[width=0.30\textwidth]{figures/base_position.pdf}}\\[1ex]
+\subfloat[End-effector position\label{fig:end_effector_position}]{\includegraphics[width=0.30\textwidth]{figures/end_effector_position.pdf}}
 \hfill
-\subfloat[Joint posture\label{fig:joint_posture}]{\includegraphics[width=0.48\textwidth]{figures/joint_posture.pdf}}
-\caption{Free-floating base, end-effector, and joint trajectories. Each panel is exported independently by MATLAB and assembled using LaTeX.}
+\subfloat[Joint posture\label{fig:joint_posture}]{\includegraphics[width=0.34\textwidth]{figures/joint_posture.pdf}}
+\caption{Free-floating motion under PDF+PTDO: (a) base reaction trajectory in the horizontal plane and end-effector path in the base frame, (b) base displacement, (c) end-effector position, and (d) joint angles. The base drifts by about $6~\mathrm{cm}$ in reaction to the arm motion, as predicted by momentum conservation.}
 \label{fig:motion}
 \end{figure*}
 
 \begin{figure*}[t]
 \centering
 \subfloat[Joint position tracking\label{fig:joint_position}]{%
-\includegraphics[width=0.48\textwidth]{figures/joint_position_tracking.pdf}}
+\includegraphics[width=0.40\textwidth]{figures/joint_position_tracking.pdf}}
 \hfill
 \subfloat[Joint velocity tracking\label{fig:joint_velocity}]{%
-\includegraphics[width=0.48\textwidth]{figures/joint_velocity_tracking.pdf}}\\[1ex]
-\subfloat[Position and velocity tracking errors\label{fig:tracking_errors}]{%
-\includegraphics[width=0.48\textwidth]{figures/tracking_errors.pdf}}
+\includegraphics[width=0.40\textwidth]{figures/joint_velocity_tracking.pdf}}\\[1ex]
+\subfloat[Tracking-error norm for PD, PDF, and PDF+PTDO\label{fig:tracking_errors}]{%
+\includegraphics[width=0.40\textwidth]{figures/tracking_errors.pdf}}
 \hfill
 \subfloat[Control torque\label{fig:control_torque}]{%
-\includegraphics[width=0.48\textwidth]{figures/control_torque.pdf}}
-\caption{Joint tracking results: desired versus actual joint position and velocity, tracking errors, and control torque.}
+\includegraphics[width=0.40\textwidth]{figures/control_torque.pdf}}
+\caption{Joint-space tracking performance. In (a) and (b) solid lines are the executed signals and dashed lines the desired signals; (c) compares the tracking-error norms of the three controllers; the dashed lines in (d) are the actuator limits $\pm20~\mathrm{N\,m}$. The delayed feedback and the observer reduce the error floor by up to three orders of magnitude while the torques stay within the limits.}
 \label{fig:joint_summary}
 \end{figure*}
 
-\begin{table}[t]\centering\caption{Simulation metrics}\label{tab:sim_metrics}\begin{tabular}{cccc}\toprule Controller and condition & $\|e(T)\|$ [rad] & $\mathrm{RMS}(e)$ [rad] & $\max|\tau_i|$ [N m]\\\midrule PD, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PDF, no disturbance & $1.333\times10^{-9}$ & $5.039\times10^{-10}$ & 258.9\\ PD, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF, disturbance & $1.373\times10^{-4}$ & $5.188\times10^{-5}$ & 258.9\\ PDF+PTDO, disturbance & $3.327\times10^{-4}$ & $1.258\times10^{-4}$ & 1920.6\\\bottomrule\end{tabular}\end{table}
-
 \begin{figure*}[t]
 \centering
-\subfloat[True and estimated disturbance\label{fig:observer_estimate}]{\includegraphics[width=0.48\textwidth]{figures/observer_estimates.pdf}}
+\subfloat[True and estimated disturbance\label{fig:observer_estimate}]{\includegraphics[width=0.34\textwidth]{figures/observer_estimates.pdf}}
 \hfill
-\subfloat[Observer error\label{fig:observer_error}]{\includegraphics[width=0.48\textwidth]{figures/observer_error.pdf}}
-\caption{Disturbance-observer response.}
+\subfloat[Observer error\label{fig:observer_error}]{\includegraphics[width=0.34\textwidth]{figures/observer_error.pdf}}
+\hfill
+\subfloat[PDF activation function\label{fig:pdf_activation}]{\includegraphics[width=0.30\textwidth]{figures/pdf_activation.pdf}}
+\caption{Disturbance-observer response and delayed-feedback activation. The estimate converges at the prescribed observation time $T_o=1~\mathrm{s}$; afterwards the residual is about $10^{-3}$, which is the dominant term of the practical bound.}
 \label{fig:observer}
 \end{figure*}
+
+\textbf{Base reaction and end-effector motion.} Fig.~\ref{fig:motion} shows that the arm motion displaces the base by about $6~\mathrm{cm}$ over the $10~\mathrm{s}$ manoeuvre, with a smooth monotone drift and no oscillatory coupling. The end-effector path is close to the planned path, and the deviation visible in Fig.~\ref{fig:motion}(c) is consistent with the error level of Table~\ref{tab:sim_metrics}. Because the base is about six times heavier than the entire arm and its inertia is two orders of magnitude larger than that of a single link, the reaction motion is small but not negligible: a $6~\mathrm{cm}$ base displacement, together with the associated attitude drift, corresponds to a sensor-frame bias that must be accounted for in a task-space implementation of the law.
+
+\textbf{Limitations of the reported study.} Three caveats deserve emphasis. First, the equivalent inertia of this arm spans three decades, so a single delay $h$ cannot be simultaneously well matched to all joint modes; the resulting Gramian condition number of $7.4\times10^{3}$ is acceptable but not small, and this is the main reason why the advantage of PDF over PD appears in the residual error after $T$ rather than in the terminal error itself. Second, the disturbance is bounded and smooth, as assumed; step-like disturbances would require either a larger observer gain or the sign term of the classical prescribed-time observer. Third, the model is rigid and the actuator dynamics are ideal apart from the amplitude limit; joint friction, flexibility, and sensor noise are not represented, and they would raise the residual $\Delta_r$ and hence the practical bound.

@@ -29,6 +29,18 @@ This reduction retains the equivalent effect of base reaction and provides the b
 \begin{equation}H_b\ddot x_b+H_{bm}\ddot q+\dot H_b\dot x_b+\dot H_{bm}\dot q=0.\label{eq:momentum_derivative}\end{equation}
 The equivalent inertia is the Schur complement and is positive definite under the stated assumptions.
 
-\begin{remark}[Numerical spatial CRBA implementation]
-The full inertia matrix can be computed using the spatial composite rigid-body algorithm, $H_{\mathrm{full}}=\sum_{i=0}^nJ_i^\top I_iJ_i$, with $O(n^2)$ complexity. The Schur complement and the equivalent Coriolis vector can then be extracted for controller design. The simulations use a positive-definite nominal joint-space model; a complete CRBA recursive implementation is left for future validation.
+\begin{remark}[Numerical spatial CRBA/RNEA implementation]
+The full inertia matrix is computed with the spatial composite rigid-body algorithm,
+$H_{\mathrm{full}}=\sum_{i=0}^nJ_i^\top I_iJ_i$, with $O(n^2)$ complexity, and the
+velocity-dependent terms are evaluated with a recursive Newton--Euler pass at the
+momentum-consistent base velocity $\dot x_b=J_{bm}\dot q$. The Schur complement
+\eqref{eq:generalized_inertia} and the equivalent bias force
+$C_e\dot q=C_m-H_{bm}^\top H_b^{-1}C_b$ are then extracted exactly, so that the
+reduced model retains the base reaction without any nominal or synthetic inertia
+approximation. The implementation used in Section~\ref{sec:simulation} is
+validated by (i) symmetry and positive definiteness of $H_{\mathrm{full}}$,
+(ii) the skew-symmetry identity $\dot M_e-2C_e$ up to numerical differentiation
+error ($<10^{-9}$ in the reported tests), (iii) conservation of the kinetic
+energy of the reduced model under $\tau=0$ over a two-second integration, and
+(iv) the zero-momentum condition $H_b\dot x_b+H_{bm}\dot q=0$.
 \end{remark}

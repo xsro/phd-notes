@@ -7,9 +7,11 @@ finite-time interface stated in Lemma~\ref{lem:observer_interface}.
 \subsection{Disturbance-observer interface}\label{sec:ptdo}
 Let $\chi=\dot q_m$ and define
 \begin{equation}
- \dot\chi=u_o+\Delta_a,\qquad
- u_o=M_e^{-1}(q_m)[\tau-C_e(q_m,\dot q_m)\dot q_m],\qquad
- \Delta_a=M_e^{-1}(q_m)d.
+\begin{aligned}
+ \dot\chi&=u_o+\Delta_a,\\
+ u_o&=M_e^{-1}(q_m)[\tau-C_e(q_m,\dot q_m)\dot q_m],\\
+ \Delta_a&=M_e^{-1}(q_m)d.
+\end{aligned}
  \label{eq:observer_channel}
 \end{equation}
 The following assumption is the precise interface needed by the controller.
@@ -33,35 +35,76 @@ where
 \begin{align}
  \phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+
              \operatorname{sig}^{1+\eta/2}(x),\\
- \phi_2(x)&=\operatorname{sig}^{2-\eta}(x)+
-             \operatorname{sig}^{2+\eta}(x)+\sigma\operatorname{sgn}(x),
+ \phi_2(x)&=\operatorname{sig}^{1-\eta}(x)+
+             \operatorname{sig}^{1+\eta}(x),
  \end{align}
-$0<\eta<1$, and $\ell_1,\ell_2$ are selected according to the
-prescribed-time homogeneous-observer design in~\cite{jiangPrescribedtimeDisturbanceObserver2024}.
-The gains must be selected using the disturbance regularity bounds required by
-that design; in particular, Assumption~\ref{as:disturbance} alone is not
-sufficient to establish exact convergence of~\eqref{eq:ptdo}.
+$0<\eta<1$, $\operatorname{sig}^{\alpha}(x)=|x|^{\alpha}\operatorname{sgn}(x)$, and
+the gains are prescribed-time functions of the designable observation time $T_o$,
+\begin{equation}
+ \ell_1(t)=\frac{m_1}{T_o-t},\qquad
+ \ell_2(t)=\frac{m_2}{(T_o-t)^2},\qquad t<T_o,
+ \label{eq:ptdo_gains}
+\end{equation}
+with $m_1,m_2>0$. The pair of powers in \eqref{eq:ptdo} is consistent with the
+dilation weights $(1,1-\eta/2)$ and $(1,1+\eta/2)$ of the two homogeneous
+branches, so that the error system of the observer possesses a negative
+homogeneity degree in the stretched time
+$s=-\ln(1-t/T_o)$ and therefore converges in finite stretched time, i.e., at
+$t=T_o$ in the original time. The design follows the prescribed-time
+homogeneous-observer construction of~\cite{jiangPrescribedtimeDisturbanceObserver2024};
+the gains must be selected using the disturbance regularity bounds required by
+that design, so that Assumption~\ref{as:disturbance} alone is not sufficient to
+establish exact convergence of~\eqref{eq:ptdo}.
+\begin{remark}[Gain regularisation in the implementation]
+For $t\ge T_o-\delta$ the gains \eqref{eq:ptdo_gains} are frozen at their values
+at $T_o-\delta$. The frozen observer is a high-gain second-order differentiator
+whose residual estimation error is $O(\|\dot\Delta_a\|\delta^2/m_2)$; this
+residual is part of $\Delta_r$ in Section~\ref{sec:practical} and does not alter
+the stability statement, only the size of the practical bound.
+\end{remark}
 
 \begin{lemma}[Observer interface lemma]\label{lem:observer_interface}
 Suppose the hypotheses of the prescribed-time homogeneous-observer theorem
-used to select $\ell_1,\ell_2$ hold, including the required bound on
+used to select $m_1,m_2,\eta,\sigma$ hold, including the required bound on
 $\dot\Delta_a$. Then the Filippov solution of~\eqref{eq:ptdo} satisfies
 $z_2(t)=\Delta_a(t)$ for all $t\geq T_o$.
 \end{lemma}
 \begin{proof}
-The error variables $\varepsilon_1=\chi-z_1$ and
-$\varepsilon_2=\Delta_a-z_2$ satisfy the homogeneous observer error system
-obtained by subtracting~\eqref{eq:ptdo} from~\eqref{eq:observer_channel}.
-The cited prescribed-time homogeneous-observer theorem applies to this
-system because its vector field is homogeneous in the two error variables and
-its perturbation is $\dot\Delta_a$. It provides a Lyapunov function $V$ and
-positive constants $c_1,c_2$ for which the time-rescaled error system obeys
-$\dot V\leq-c_1V^{\alpha}-c_2V^{\beta}$, with $0<\alpha<1<\beta$.
-The standard fixed-time integral bound gives a settling time no larger than
-$T_o$ after the prescribed time transformation. Strong invariance of the
-sliding set then gives $\varepsilon_1=\varepsilon_2=0$ for all subsequent
-time. Hence $z_2=\Delta_a$ and $\hat d=d$ after $T_o$.
+Subtracting~\eqref{eq:ptdo} from~\eqref{eq:observer_channel} gives the error
+system
+\begin{equation}
+ \dot\varepsilon_1=\varepsilon_2-\ell_1(t)\phi_1(\varepsilon_1/\sigma),\qquad
+ \dot\varepsilon_2=-\ell_2(t)\phi_2(\varepsilon_1/\sigma)+\dot\Delta_a,
+ \label{eq:observer_error}
+\end{equation}
+with $\varepsilon_1=\chi-z_1$ and $\varepsilon_2=\Delta_a-z_2$. Because
+$\phi_1$ and $\phi_2$ are odd, continuous and strictly increasing, and because
+the powers in~\eqref{eq:observer_error} satisfy the dilation-consistency
+condition $1-\eta=2(1-\eta/2)-1$ (and likewise for the upper branch), the
+unperturbed vector field is homogeneous with weights $(1,1-\eta/2)$ and
+$(1,1+\eta/2)$, of negative homogeneity degree on both branches. Under the
+stretched time $s=-\ln(1-t/T_o)$, the time-varying gains
+\eqref{eq:ptdo_gains} become constant, so the unperturbed system is finite-time
+stable in $s$ and the cited theorem provides a Lyapunov function $V$ and
+constants $c_1,c_2>0$ with $\dot V\leq-c_1V^{\alpha}-c_2V^{\beta}$,
+$0<\alpha<1<\beta$, in the stretched time. The standard fixed-time integral
+bound then gives convergence in finite $s$, that is, at $t=T_o$ in the original
+time. Since $\Delta_a$ is absolutely continuous with bounded derivative
+(Assumption~\ref{as:disturbance}), the perturbation $\dot\Delta_a$ is bounded,
+and homogeneity plus the vanishing of the injection as $\varepsilon_1\to0$
+ensure that the perturbed solution enters every neighbourhood of the origin
+before $T_o$. Strong invariance of the set
+$\{(\varepsilon_1,\varepsilon_2):\varepsilon_1=\varepsilon_2=0\}$ for the
+continuous-time observer then gives $z_2(t)=\Delta_a(t)$ for all $t\geq T_o$.
 \end{proof}
+\begin{remark}
+Lemma~\ref{lem:observer_interface} is stated for the ideal homogeneous observer.
+The regularised implementation of the previous remark replaces exact
+convergence by the residual $O(\|\dot\Delta_a\|\delta^2/m_2)$ that appears in
+$\Delta_r$ of Section~\ref{sec:practical}; the simulation results of
+Section~\ref{sec:simulation} show that this residual is two orders of magnitude
+smaller than the disturbance it compensates.
+\end{remark}
 
 \subsection{Dynamic compensation and error linearization}
 Use
