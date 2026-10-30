@@ -1,0 +1,61 @@
+\documentclass[journal]{IEEEtran}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage[caption=false,font=footnotesize]{subfig}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{definition}{Definition}
+\newtheorem{problem}{Problem}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% IEEE TAES Correspondence version.
+% Target: <= 8 pages (two-column IEEEtran), all figures/tables embedded.
+% Long derivations are confined to the Appendix, which can be moved to the
+% supplementary material if a shorter limit applies.
+
+\title{Prescribed-Time Joint Tracking of a Free-Floating Space Manipulator via Smooth Periodic Delayed Feedback}
+
+\author{Author~Name and Author~Name\\
+\thanks{Manuscript received XX Month 2025; revised XX Month 2025; accepted XX Month 2025. Date of publication XX Month 2025; date of current version XX Month 2025. This work was supported in part by XXX under Grant XXX. \emph{(Corresponding author: XXX.)}
+The authors are with the Department of XXX, XXX University, XXX 000000, China (e-mail: author@xxx.edu.cn).}}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Free-floating space manipulators are strongly coupled, torque limited, and their settling time is normally fixed by the controller gains rather than by the task. This correspondence shows that such a manipulator can be converted into a controllable error channel for smooth periodic delayed feedback (PDF), so that a designer-specified settling time is met without nonsmooth terminal terms. Momentum conservation and the Schur complement of the full spatial inertia matrix give an exact joint-space model, a prescribed-time observer with a designable observation time provides the disturbance interface, and a Gramian-based periodic gain annihilates the one-period state-transition operator of the error channel. In the ideal case the tracking error is exactly zero after $T_o+2h$; with observation error, model mismatch, actuator limits, and sampling, an explicit practical bound is obtained. On the three-dimensional model of a seven-degree-of-freedom space manipulator with tabulated parameters and $\pm20~\mathrm{N\,m}$ actuators, the delayed feedback reduces the post-settling error from $1.4\times10^{-3}$ to $4.3\times10^{-5}\,\mathrm{rad}$, and the observer reduces the disturbed error from $2.6\times10^{-1}$ to $1.5\times10^{-3}\,\mathrm{rad}$ without saturating the actuators. A design rule relating the inertia spread to the Gramian conditioning is reported.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Delay feedback, disturbance observers, free-floating manipulators, prescribed-time control, trajectory tracking.
+\end{IEEEkeywords}
+
+\input{taes/sec1_intro}
+\input{taes/sec2_model}
+\input{taes/sec3_controller}
+\input{taes/sec4_stability}
+\input{taes/sec5_simulation}
+\input{taes/sec6_conclusion}
+
+\appendices
+\input{taes/appendix}
+
+\bibliographystyle{IEEEtran}
+\bibliography{refs/local}
+
+% IEEE TAES publishes short author biographies. Uncomment and complete for
+% the final files; they are omitted from the review version.
+% \input{taes/bios}
+
+\end{document}

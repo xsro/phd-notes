@@ -1,0 +1,35 @@
+\section{Conclusion}\label{sec:conclusion}
+A free-floating space manipulator is reduced exactly to a controllable error
+channel, observed by a prescribed-time disturbance observer, and stabilised by
+smooth periodic delayed feedback. The one-period map of the error channel is
+annihilated in the ideal case, so the settling time is a design parameter; with
+observation error, model mismatch, actuator limits, and sampling, an explicit
+practical bound follows. On the three-dimensional model of a
+seven-degree-of-freedom manipulator with published parameters and
+$\pm20~\mathrm{N\,m}$ actuators, the delayed feedback reduces the post-settling
+error by more than an order of magnitude and halves the settling time, while
+the observer is what rejects a persistent disturbance. The study also exposes
+the binding constraint: the equivalent inertia spans three decades, so a single
+delay is ill matched to the fastest joint modes and the Gramian conditioning,
+rather than the control law, sets the design margin.
+
+Two modelling assumptions delimit the result: the momentum is zero, and the
+plant is rigid apart from the actuator saturation. Nonzero momentum adds a
+constant input channel that the observer would have to absorb, and appendage
+flexibility introduces high-frequency dynamics that the delay buffer cannot
+nullify; both would raise the residual in \eqref{eq:delta_r} and hence the
+practical bound. The example also shows that the binding constraint is the
+actuator envelope rather than the convergence mechanism: with
+$\pm20~\mathrm{N\,m}$, a $1^\circ$ error on the shoulder joints already demands
+about $11~\mathrm{N\,m}$.
+
+Three extensions follow directly. A per-channel or multi-rate delay, with the
+period map evaluated blockwise, would let the slow and fast joints be nullified
+in their own time scales; the condition number of $W_c$ would then become a
+design objective. A saturation-aware restart of the design window, or a
+feasibility condition mapping the initial error, the torque limit, and the
+delay into an admissible set, would restore the exact guarantee in the
+torque-limited regime. Finally, closing the loop through the generalized
+Jacobian with a reaction null space, and validating the delay buffer on
+hardware, would connect the present joint-space result to a task-space
+on-orbit servicing controller.

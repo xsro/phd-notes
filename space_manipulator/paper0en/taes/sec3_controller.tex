@@ -1,0 +1,127 @@
+\section{Controller Design}\label{sec:control}
+
+\subsection{Tracking objective and timing}
+Let $q_d\in C^2([0,\infty);\mathbb R^n)$ be a bounded reference with bounded
+derivatives and define
+\begin{equation}
+ e=q-q_d,\qquad \dot e=\dot q-\dot q_d,\qquad z=[e^\top,\dot e^\top]^\top .
+ \label{eq:errors}
+\end{equation}
+The total settling time is prescribed by two design parameters, the
+observation time $T_o$ and the delay $h$:
+\begin{equation}
+ T=T_o+2h .
+ \label{eq:prescribed}
+\end{equation}
+The objective is $e(t)=\dot e(t)=0$ for $t\ge T$ under exact compensation,
+and an explicit ultimate bound in terms of the residual acceleration otherwise.
+
+\subsection{Prescribed-time disturbance observer}\label{sec:ptdo}
+Let $\chi=\dot q$ and write the mechanical subsystem as
+\begin{equation}
+ \dot\chi=u_o+\Delta_a,\qquad
+ u_o=M_e^{-1}\bigl[\tau-C_e\dot q\bigr],\qquad
+ \Delta_a=M_e^{-1}d .
+ \label{eq:channel}
+\end{equation}
+The following observer is used:
+\begin{equation}
+ \dot z_1=z_2+u_o+\ell_1(t)\phi_1(\varepsilon_1/\sigma),\qquad
+ \dot z_2=\ell_2(t)\phi_2(\varepsilon_1/\sigma),
+ \label{eq:ptdo}
+\end{equation}
+with $\varepsilon_1=\chi-z_1$,
+\begin{equation}
+\begin{aligned}
+ \phi_1(x)&=\operatorname{sig}^{1-\eta/2}(x)+\operatorname{sig}^{1+\eta/2}(x),\\
+ \phi_2(x)&=\operatorname{sig}^{1-\eta}(x)+\operatorname{sig}^{1+\eta}(x),
+\end{aligned}
+ \label{eq:phi}
+\end{equation}
+$\operatorname{sig}^{\alpha}(x)=|x|^{\alpha}\operatorname{sgn}(x)$,
+$0<\eta<1$, and the prescribed-time gains
+\begin{equation}
+ \ell_1(t)=\frac{m_1}{T_o-t},\qquad
+ \ell_2(t)=\frac{m_2}{(T_o-t)^2},\qquad t<T_o .
+ \label{eq:gains}
+\end{equation}
+The powers in \eqref{eq:phi} are dilation-consistent,
+$1-\eta=2(1-\eta/2)-1$ and $1+\eta=2(1+\eta/2)-1$, so each branch of the error
+system is homogeneous of negative degree with weights $(1,1\mp\eta/2)$; the
+gains \eqref{eq:gains} serve as the time rescaling $s=-\ln(1-t/T_o)$.
+
+\begin{assumption}[Observer interface]\label{as:interface}
+There exist $T_o>0$ and an estimate $\hat\Delta_a$ such that, under the
+continuous-time observer \eqref{eq:ptdo}, $\hat\Delta_a(t)=\Delta_a(t)$ for all
+$t\ge T_o$, with a bounded error before $T_o$. The disturbance estimate fed to
+the controller is $\hat d=M_e\hat\Delta_a$.
+\end{assumption}
+
+\begin{remark}\label{rem:frozen}
+In the implementation the gains \eqref{eq:gains} are frozen at their value at
+$T_o-\delta$. The frozen observer is a high-gain second-order differentiator
+with residual $O(\|\dot\Delta_a\|\delta^2/m_2)$, which is part of the residual
+$\Delta_r$ of Section~\ref{sec:stability}; it affects the size of the practical
+bound, not the stability statement.
+\end{remark}
+
+\subsection{Dynamic compensation}
+Using
+\begin{equation}
+ \tau=M_e(q)v+C_e(q,\dot q)\dot q-\hat d,
+ \qquad v=\ddot q_d+\nu,
+ \label{eq:computed_torque}
+\end{equation}
+and invoking Assumption~\ref{as:interface} for $t\ge T_o$, the error dynamics
+of \eqref{eq:reduced} become the double integrator
+\begin{equation}
+ \dot z=Az+B\nu,\qquad
+ A=\begin{bmatrix}0&I\\0&0\end{bmatrix},\quad
+ B=\begin{bmatrix}0\\I\end{bmatrix},
+ \label{eq:error_channel}
+\end{equation}
+which is controllable since $\mathrm{rank}[B,AB]=2n$.
+
+\subsection{Smooth periodic delayed feedback}\label{sec:pdf}
+Choose $K_0$ so that $A_c=A+BK_0$ is Hurwitz, let $h>0$, and let
+$R_h:[0,2h]\to\mathbb R$ be smooth, nonnegative, zero on $[0,h]$ and positive
+on a subset of positive measure in $(h,2h)$. Define the Gramian
+\begin{equation}
+ W_c=\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}\,ds
+ \label{eq:wc}
+\end{equation}
+and, for the local time $\vartheta=t-T_o$, the $2h$-periodic gain
+\begin{equation}
+ K_c(\vartheta)=
+ \begin{cases}
+ 0, & 0\le\vartheta<h,\\
+ R_h(\vartheta)B^\top e^{-A_c^\top\vartheta}W_c^{-1}
+ e^{A_c(h-\vartheta)}, & h\le\vartheta<2h .
+ \end{cases}
+ \label{eq:kc}
+\end{equation}
+The control input is
+\begin{equation}
+ \nu(t)=K_0z(t)-K_c(t-T_o)z(t-h),\qquad t\ge T_o,
+ \label{eq:nu}
+\end{equation}
+so that the complete law is
+\begin{equation}
+ \tau=M_e\bigl[\ddot q_d+K_0z-K_c(t-T_o)z(t-h)\bigr]+C_e\dot q-\hat d .
+ \label{eq:law}
+\end{equation}
+During the first half-period $K_c=0$ and the delayed state is only recorded;
+the delayed term acts in the second half-period, where its product with the
+phase-one trajectory cancels the period map.
+
+\begin{remark}[Gain selection]\label{rem:gains}
+A uniform baseline gain $K_0=[-K_p,\,-K_d]$ with $K_p=k_pI_n$,
+$K_d=k_dI_n$ is used. Then $A_c$ is block diagonal with identical $2\times2$
+blocks and $W_c$ inherits the same structure, with a condition number of
+$7.4\times10^3$ for the example below. Normalising $K_p$ by the joint inertia
+equalises the torque per radian of error but spreads the modal time scales over
+three decades; in that case $\mathrm{cond}(W_c)$ exceeds $10^8$ and the
+one-period nullification is destroyed by the inversion in \eqref{eq:kc}. The
+uniform choice is therefore both numerically sound and, for this actuator
+class, physically necessary.
+\end{remark}

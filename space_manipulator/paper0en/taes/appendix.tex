@@ -1,0 +1,53 @@
+\section{Proofs}\label{app:proofs}
+
+\subsection{Positive definiteness of the Gramian}
+For any $x\in\mathbb R^{2n}$,
+\begin{equation}
+ x^\top W_cx=\int_h^{2h}R_h(s)\,\|B^\top e^{-A_c^\top s}x\|^2ds\ge0 .
+\end{equation}
+If the integral vanishes, continuity gives $B^\top e^{-A_c^\top s}x=0$ on an
+interval contained in the set where $R_h>0$. The function
+$s\mapsto B^\top e^{-A_c^\top s}x$ is analytic, hence it vanishes for all $s$,
+and differentiating at any point gives $B^\top(A_c^\top)^kx=0$ for every
+$k\ge0$. Controllability of $(A_c,B)$ then implies $x=0$, so $W_c\succ0$.
+
+\subsection{Observer error system}
+Subtracting \eqref{eq:ptdo} from \eqref{eq:channel} with
+$\varepsilon_1=\chi-z_1$ and $\varepsilon_2=\Delta_a-z_2$ yields
+\begin{equation}
+ \dot\varepsilon_1=\varepsilon_2-\ell_1(t)\phi_1(\varepsilon_1/\sigma),
+ \qquad
+ \dot\varepsilon_2=-\ell_2(t)\phi_2(\varepsilon_1/\sigma)+\dot\Delta_a .
+ \label{eq:obs_err}
+\end{equation}
+Let $s=-\ln(1-t/T_o)$, so $ds/dt=1/(T_o-t)$. Since
+$\ell_1=m_1\,ds/dt$ and $\ell_2=m_2\,(ds/dt)^2$, the unperturbed observer is a
+homogeneous double integrator with constant gains in the stretched time.
+Because $\phi_1$ and $\phi_2$ are odd, continuous, and
+strictly increasing, and since the powers satisfy
+$1\mp\eta=2(1\mp\eta/2)-1$, the unperturbed field of \eqref{eq:obs_err} is
+homogeneous with weights $(1,1\mp\eta/2)$ and has negative degree on both
+branches; hence it is finite-time stable in $s$, which corresponds to
+convergence at $t=T_o$ in the original time. With
+$\|\dot\Delta_a\|\le L_d$ the perturbation is bounded, so the perturbed
+solution enters every neighbourhood of the origin before $T_o$, and strong
+invariance of $\{\varepsilon_1=\varepsilon_2=0\}$ gives
+$z_2(t)=\Delta_a(t)$ for $t\ge T_o$. The regularised implementation freezes the
+gains at $T_o-\delta$, which replaces exactness by the residual
+$O(L_d\delta^2/m_2)$ used in \eqref{eq:delta_r}.
+
+\subsection{Explicit residual}
+Combining \eqref{eq:reduced} with the implemented torque \eqref{eq:law} and
+writing $\tilde M=M_e^{-1}\hat M_e-I_n$ for the relative model error gives
+\begin{equation}
+ \ddot e=\nu+\tilde M\bigl(\ddot q_d+\nu\bigr)
+ +M_e^{-1}\bigl[(\hat C_e-C_e)\dot q+(d-\hat d)\bigr],
+\end{equation}
+so that the residual acceleration in \eqref{eq:error_channel} is bounded by
+\begin{equation}
+ \|\Delta_r\|\le\|\tilde M\|\,(\|\ddot q_d+\nu\|)
+ +\underline m^{-1}\bigl(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\bigr),
+\end{equation}
+with $\bar d_o$ the observation residual, $\bar\Delta_m$ the torque-level model
+error, and $\bar\Delta_\tau$ the torque clipping. This is the estimate used in
+\eqref{eq:bound}--\eqref{eq:eps_bound}.

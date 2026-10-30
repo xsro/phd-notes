@@ -1,0 +1,87 @@
+\section{Stability and Practical Bound}\label{sec:stability}
+
+\begin{theorem}[One-period nullification]\label{thm:null}
+Suppose Assumptions~\ref{as:momentum}--\ref{as:interface} hold, the model is
+exact, the actuator is not saturated, and $W_c\succ0$. Then the error channel
+\eqref{eq:error_channel} under \eqref{eq:nu} satisfies
+$z(T_o+2h)=0$ for every finite $z(T_o)$, and $z(t)=0$ for all
+$t\ge T_o+2h$.
+\end{theorem}
+
+\begin{proof}
+For $0\le\vartheta<h$ the delayed term vanishes, hence
+$z(T_o+\vartheta)=e^{A_c\vartheta}z(T_o)$ and, in particular,
+$z(T_o+h)=e^{A_ch}z(T_o)$. For $h\le\vartheta\le2h$, variation of constants
+gives
+\begin{equation}
+\begin{aligned}
+ z(T_o+2h)=\Bigl[&e^{2A_ch}\\
+ &-\int_h^{2h}e^{A_c(2h-s)}BK_c(s)e^{A_c(s-h)}ds\Bigr]z(T_o).
+\end{aligned}
+ \label{eq:voc}
+\end{equation}
+Substituting \eqref{eq:kc}, and using $e^{A_c(h-s)}e^{A_c(s-h)}=I$, the
+integral equals
+\begin{multline}
+ \int_h^{2h}e^{A_c(2h-s)}BR_h(s)B^\top e^{-A_c^\top s}
+ W_c^{-1}e^{A_c(h-s)}e^{A_c(s-h)}ds\\
+ =e^{2A_ch}\Bigl[\int_h^{2h}e^{-A_cs}BR_h(s)B^\top e^{-A_c^\top s}ds\Bigr]W_c^{-1}
+ =e^{2A_ch},
+\end{multline}
+so $z(T_o+2h)=0$. Since the delayed history is zero afterwards and the
+dynamics are homogeneous, uniqueness gives $z(t)=0$ for all later time.
+\end{proof}
+
+\begin{corollary}\label{cor:exact}
+Under the assumptions of Theorem~\ref{thm:null}, $e(t)=\dot e(t)=0$ for all
+$t\ge T_o+2h=T$, and the settling time is independent of $z(0)$.
+\end{corollary}
+
+\begin{theorem}[Practical bound]\label{thm:practical}
+Let the implemented model, the observation residual, and the saturation
+generate a residual acceleration $\Delta_r$ in \eqref{eq:error_channel}, and
+suppose $\|\Delta_r(t)\|\le\bar\Delta_r$ for $t\ge T_o$. Let
+$\Psi(\vartheta,s)$ be the causal transition operator of the homogeneous
+delayed system and
+\begin{equation}
+ \Gamma_h=\sup_{0\le\vartheta\le2h}\int_0^\vartheta\|\Psi(\vartheta,s)B\|\,ds .
+ \label{eq:gamma}
+\end{equation}
+Then, for $t_k=T_o+2kh$,
+\begin{equation}
+\begin{aligned}
+ \|z(t_{k+1})\|&\le\Gamma_h\bar\Delta_r,\qquad k\ge0,\\
+ \|z(t)\|&\le\Gamma_h\bar\Delta_r,\qquad t\ge T_o+2h .
+\end{aligned}
+ \label{eq:bound}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Variation of constants over one period gives
+$z(t_{k+1})=\Delta_Kz(t_k)+\int_{t_k}^{t_{k+1}}\Psi(t_{k+1},s)B\Delta_r(s)ds$
+with $\Delta_K=0$ by Theorem~\ref{thm:null}; taking norms and using
+\eqref{eq:gamma} yields the boundary estimate, and the within-period estimate
+follows because the homogeneous period-boundary state is zero and the
+within-period transition operators are bounded by the same constant.
+\end{proof}
+
+If the actuator limits are active or the model is perturbed during the design
+window, the one-period map is only approximately annihilated. Writing
+$\|\Delta_K\|\le\varepsilon_\Delta<1$ gives the geometric bound
+\begin{equation}
+ \limsup_{k\to\infty}\|z(t_k)\|\le\frac{\Gamma_h\bar\Delta_r}
+ {1-\varepsilon_\Delta},
+ \label{eq:eps_bound}
+\end{equation}
+which is the form that applies to the saturated case of
+Section~\ref{sec:simulation}. If $\|M_e^{-1}\|\le\underline m^{-1}$ and the
+observation, model, and actuation residuals are bounded by $\bar d_o$,
+$\bar\Delta_m$, $\bar\Delta_\tau$, then
+\begin{equation}
+ \bar\Delta_r\le\underline m^{-1}\bigl(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\bigr).
+ \label{eq:delta_r}
+\end{equation}
+The bound \eqref{eq:bound} is conservative: it is a worst-case estimate over
+the period, whereas the measured residuals in Section~\ref{sec:simulation} are
+two orders of magnitude smaller.

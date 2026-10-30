@@ -1,0 +1,78 @@
+\section{Reduced Dynamics}\label{sec:model}
+Consider a free-floating manipulator with a rigid base and $n$ revolute joints, with joint vector $q\in\mathbb R^n$, joint torque $\tau\in\mathbb R^n$, base velocity $\dot x_b=[v_b^\top,\omega_b^\top]^\top\in\mathbb R^6$, and end-effector velocity $\dot x_e\in\mathbb R^6$.
+
+\subsection{Momentum reduction}
+With no external force or torque, the kinetic energy is
+\begin{equation}
+ T=\tfrac12\begin{bmatrix}\dot x_b^\top&\dot q^\top\end{bmatrix}
+ \begin{bmatrix}H_b&H_{bm}\\H_{bm}^\top&H_m\end{bmatrix}
+ \begin{bmatrix}\dot x_b\\\dot q\end{bmatrix},
+ \label{eq:kinetic}
+\end{equation}
+and the Lagrange equations read
+\begin{equation}
+ \begin{bmatrix}H_b&H_{bm}\\H_{bm}^\top&H_m\end{bmatrix}
+ \begin{bmatrix}\ddot x_b\\\ddot q\end{bmatrix}
+ +\begin{bmatrix}C_b&C_{bm}\\C_{bm}^\top&C_m\end{bmatrix}
+ \begin{bmatrix}\dot x_b\\\dot q\end{bmatrix}
+ =\begin{bmatrix}0\\\tau\end{bmatrix}.
+ \label{eq:full}
+\end{equation}
+
+\begin{assumption}\label{as:momentum}
+The initial linear and angular momenta are zero, i.e.,
+$H_b(q)\dot x_b+H_{bm}(q)\dot q=0$, and $H_b(q)$ is uniformly positive
+definite on the workspace.
+\end{assumption}
+
+Under Assumption~\ref{as:momentum},
+\begin{equation}
+ \dot x_b=-H_b^{-1}(q)H_{bm}(q)\dot q\triangleq J_{bm}(q)\dot q,
+ \label{eq:jbm}
+\end{equation}
+\begin{equation}
+ \dot x_e=\bigl[J_m(q)+J_b(q)J_{bm}(q)\bigr]\dot q\triangleq J_g(q)\dot q,
+ \label{eq:gjm}
+\end{equation}
+where $J_g$ is the generalized Jacobian. Differentiating the momentum
+constraint and eliminating $\ddot x_b$ gives the exact equivalent model
+\begin{equation}
+ M_e(q)\ddot q+C_e(q,\dot q)\dot q=\tau+d(t),
+ \label{eq:reduced}
+\end{equation}
+with
+\begin{equation}
+\begin{aligned}
+ M_e&=H_m-H_{bm}^\top H_b^{-1}H_{bm},\\
+ C_e\dot q&=C_m-H_{bm}^\top H_b^{-1}C_b,
+\end{aligned}
+ \label{eq:schur}
+\end{equation}
+where $C_b$ and $C_m$ are the bias forces of \eqref{eq:full} evaluated at the
+momentum-consistent base velocity \eqref{eq:gjm}. The signal $d(t)$ collects
+parameter errors, unmodeled dynamics, and external disturbances.
+
+\begin{assumption}\label{as:inertia}
+There is $\underline m>0$ such that $M_e(q)\succeq\underline m I_n$ on the
+workspace, and the nominal $M_e$, $C_e$ are available to the controller.
+\end{assumption}
+
+\begin{remark}\label{rem:implementation}
+Equations \eqref{eq:schur} are implemented exactly: $H_{\mathrm{full}}$ is
+assembled with the spatial composite rigid-body algorithm, the bias forces with
+a recursive Newton--Euler pass at $\dot x_b=J_{bm}\dot q$, and the Schur
+complement and $C_e\dot q$ are extracted afterwards. For the seven-degree-of-freedom
+manipulator of Section~\ref{sec:simulation} the implementation returns
+$\lambda_{\min}(H_{\mathrm{full}})=0.1375$, a momentum residual
+$\|H_b\dot x_b+H_{bm}\dot q\|=4.2\times10^{-15}$, a skew-symmetry residual
+$|\dot q^\top(\dot M_e\dot q-2C_e\dot q)|=2.0\times10^{-10}$, and a relative
+kinetic-energy drift of $3.3\times10^{-6}$ over one second with $\tau=0$.
+\end{remark}
+
+\begin{remark}\label{rem:spread}
+For the same manipulator, $\mathrm{diag}(M_e)$ varies between $0.14$ and
+$380~\mathrm{kg\,m^2}$, i.e., over a factor of $2.7\times10^3$. This spread,
+not the control law, fixes the numerical conditioning of the design in
+Section~\ref{sec:control} and the admissible initial error for a given torque
+limit.
+\end{remark}
