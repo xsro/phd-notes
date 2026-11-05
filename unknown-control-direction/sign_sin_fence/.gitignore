@@ -1,2 +1,4 @@
 out
 *.pdf
+simulation/result4/figures
+simulation/result4/*.txt

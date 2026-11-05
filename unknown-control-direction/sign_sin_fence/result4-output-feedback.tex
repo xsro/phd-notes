@@ -1,0 +1,985 @@
+% !TEX program = xelatex
+% ============================================================
+%  result4-output-feedback.tex
+%  未知控制方向多智能体合围：无速度观测器的输出反馈方案（result 4）
+%  独立可编译：xelatex result4-output-feedback.tex
+%  思路来源：J.-X. Zhang, Q.-G. Wang, W. Ding,
+%    "Global Output-Feedback Prescribed Performance Control of Nonlinear
+%     Systems With Unknown Virtual Control Coefficients", IEEE TAC, 2022.
+%    (DOI: 10.1109/TAC.2021.3137103)
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+
+\geometry{margin=2.4cm}
+
+\newcommand{\ub}{\underline{b}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\co}{\operatorname{co}}
+\newcommand{\diag}{\operatorname{diag}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\arraystretch}{1.2}
+\setlist[enumerate]{label=(\arabic*),leftmargin=2.2em}
+\setlist[itemize]{leftmargin=1.6em}
+
+\title{\bfseries 未知控制方向多智能体合围控制：\\[2pt]
+无速度观测器的输出反馈方案（result 4）}
+\author{陈\quad 刘}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\sloppy
+本文给出一种不依赖目标相对速度观测器的输出反馈合围方案。核心是把
+“期望速度” $k_1p_{i0}-\varphi_i$ 积分进本地状态 $\eta_i$（从而消去 $\dot\varphi_i$），
+与 $p_{i0}$ 组合成\emph{本地可算}的组合输出 $y_i=\eta_i+k_2p_{i0}$，
+使 $y_i$ 与 $u_i$ 之间呈现相对阶 $2$；再用
+\textbf{调谐函数（TF）+ 障碍函数（BF）+ 方向函数（OF）}
+替代本文既有的
+“时变增益超螺旋观测器 + $\sgn[\sin(\pi s/\varepsilon)]$ 周期到达律”。
+所得闭环无需 $v_{i0}$、无需邻居相对速度、无需 $\ub_{i\ell}$ 与 $\bar w_{i\ell}$ 进入控制增益，
+控制律连续，且\textbf{与初始条件无关}（可离线设计）。
+性能上把原有 $P1,P3$ 的“渐近到零”弱化为\textbf{显式规定的最终球}：
+质心误差指数收敛到半径 $\kappa=D_1/k_1$ 的球，速度一致误差被 $\bar V$ 界定，
+避碰仍为严格不变式。本文同时给出全部常数的显式表达式、
+完整的“首次逃逸”证明链、以及七条诚实的证明缺口与开放问题。
+
+\smallskip
+\noindent\textbf{检验结论（第~\ref{sec:numeric}~节）}：按本文定理实现的闭环确实满足第 1 级漏斗
+并使质心收敛，但数值检验（\texttt{uv run --no-project sim\_result4.py}）表明
+(i) 闭环只能工作在 $\tan$ 漏斗壁上（$|e_1|\approx0.73\sim0.86\kappa_1$ 常驻），
+(ii) 第 2 级漏斗在控制方向切换后失守（越界截断 3144 次），
+(iii) $|u|$ 峰值达 $10^3\sim10^4$ 量级，
+(iv) 避碰与速度一致失守（$\min\|p_{ij}\|=0.303<d=0.45$，$\max\|v_i-v_0\|=63.6$）。
+因此本方案\textbf{不可直接实施}；其中唯一可可靠移植的是\emph{调谐函数}（TF）。
+\end{abstract}
+
+\tableofcontents
+
+% ============================================================
+\section{结论摘要}
+% ============================================================
+\begin{enumerate}[label=\textbf{\arabic*.}]
+\item \textbf{构造上可行、工程上不可行}：以“本地可算的组合输出 $y_i=\eta_i+k_2p_{i0}$ +
+二阶输入驱动滤波器 $(\xi_1,\xi_2)$ + $\tan$ 障碍 + 方向函数 $g=\cos$”确实可以完全去掉
+$v_{i0}$ 观测器、去掉对邻居相对速度 $v_{ij}$ 的需求、去掉 $\ub_{i\ell},\bar w_{i\ell}$
+进入控制增益、去掉 $\dot\varphi_i$——\textbf{但第~\ref{sec:numeric}~节的数值检验表明该闭环
+只能工作在漏斗壁上，且输入、避碰、速度一致三项均失守}。
+\item \textbf{可证内容}：漏斗全局不变（显式裕度，与初值无关，$e(0)=0$ 由调谐函数保证）；
+所有闭环信号在任意有限区间上有界；质心误差\textbf{指数收敛到可预先整形的球}
+\begin{equation*}
+\dist(p_0,\co(p))\;\le\;\|\tilde p(\tau)\|\,e^{-\frac{k_1}{k_2}(t-\tau)}+\kappa,
+\qquad \kappa=\frac{D_1}{k_1},
+\end{equation*}
+即“最终中心有界收敛”；避碰与速度一致同样弱化为显式界。
+\item \textbf{代价}：失去 $T^{\mathrm r}_{i\ell}$ 的有限时间到达与 $\lambda_{i\ell}$ 到达裕度；
+$P1,P3$ 由 $=0$ 退化为 $\le\kappa$；一致有界性依赖显式的半径有界假设 \textbf{(A9)}
+（第~\ref{sec:gaps}~节给出严格化路线）。
+\item \textbf{额外收益}：`result2/result3' 中“到达阶段 $\dot s_{i0}\in L_\infty$ 无法由
+$s_{i0}\in L_\infty$ 推出”的注记被彻底消解——因为统一输入界
+$|u|\le\rho_2$ 由漏斗不变性\textbf{直接}给出。
+\item \textbf{不可实施的项目与原因}（第~\ref{sec:numeric}~节）：方向函数对纯双积分器呈
+\emph{正反馈}；未知符号使“内点稳定”对两种符号不可能同时成立；输入驱动滤波器的误差只有界、
+不衰减，故物理速度误差被 $\bar b\rho_s$ 锁定；而 $\rho_2$ 的量级为 $10^4$，
+“$|u|\le\rho_2$” 失去约束力。
+\item \textbf{顺带修正了原始文献的一处严格性缺陷}：其 Lemma~3 的
+$\limsup/\liminf$ 论证隐含“轨迹会扫过振荡区”。本文改用
+$\theta=\tan(\pi e/2\kappa)$ 坐标下的\textbf{停点（stop point）}论证，
+得到完全严格的漏斗不变性引理（附录~\ref{app:strict}），且对 $b_{i\ell}(t)$ 时变、
+符号切换均成立。
+\end{enumerate}
+
+% ============================================================
+\section{问题与记号}
+% ============================================================
+考虑 $N$ 个智能体与一个目标，$p_i,v_i,p_0,v_0\in\mathbb R^m$。智能体 $i$ 第 $\ell$ 个分量的
+\emph{相对动力学}为
+\begin{equation}
+\dot p_{i0,\ell}=v_{i0,\ell},\qquad
+\dot v_{i0,\ell}=b_{i\ell}(t)\,u_{i\ell}+w_{i\ell}(t),
+\tag{1.1}
+\end{equation}
+其中 $p_{i0}=p_i-p_0$、$v_{i0}=v_i-v_0$，$w_{i\ell}=d_{i\ell}-u_{0\ell}$ 且
+$|w_{i\ell}|\le\bar w_{i\ell}$；$B_i(t)=\diag\{b_{i1},\dots,b_{im}\}$ 对角、符号未知、
+允许有限次切换但不穿零。
+
+\paragraph{可测/本地可算量}
+$p_{i0}$（$b_i=1$ 的智能体直接测量，其余由静态分布式线性方程精确恢复，见
+§\ref{sec:static}）、$p_{ij}=p_i-p_j$、以及由此算出的势场项 $\varphi_i$。
+
+\paragraph{不可测/不可算量}
+$v_{i0}$、$\dot\varphi_i$、$b_{i\ell}$（含符号与幅值）、$w_{i\ell}$。
+
+\begin{table}[H]
+\centering
+\caption{性能指标的弱化对照}
+\begin{tabular}{c|p{6.1cm}|p{6.1cm}}
+\hline
+编号 & 现文（result1/2/3） & 本文（result 4，可接受）\\
+\hline
+$P1$ & $\lim_{t}\dist(p_0,\co(p))=0$ &
+$\dist\le\|\tilde p(\tau)\|e^{-\frac{k_1}{k_2}(t-\tau)}+\kappa,\ t\ge\tau$\\
+\hline
+$P2$ & $\|p_{ij}(t)\|>d,\ \forall t$ & 同（严格不变式）\\
+\hline
+$P3$ & $\|v_i-v_0\|\to0$ & $\|v_i-v_0\|\le\sqrt m\,\bar V$\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{核心思路（一句话）}
+把“期望速度” $k_1p_{i0}-\varphi_i$ \textbf{积分}进 $\eta_i$（消掉 $\dot\varphi_i$），
+与 $p_{i0}$ 组合成\textbf{可算}的组合输出 $y_i$，使 $y_i$ 与 $u_i$ 之间呈现\textbf{相对阶 $2$}；
+再用输入驱动滤波器在 $u$-坐标中“顶替”不可测的 $v_{i0}$，
+用 $\tan$ 障碍把 $y_i$ 关进规定管道，用方向函数 $g(\cos)$ 吃掉 $b_{i\ell}$ 的未知符号。
+
+% ============================================================
+\section{算法}\label{sec:alg}
+% ============================================================
+\subsection{记号约定}
+下文中每个式子\emph{逐智能体 $i$、逐分量 $\ell$} 成立，为简洁省略下标 $i,\ell$；
+向量量按分量（Hadamard 积 $\odot$）运算。除 $\eta_i(0)=0$、$\xi_i(0)=0$ 外初值任意。
+
+\subsection{设计参数（全部为正常数，与系统参数无关）}\label{sec:params}
+\begin{table}[H]
+\centering
+\caption{设计参数}
+\begin{tabular}{c|p{6.5cm}|p{4.6cm}}
+\hline
+参数 & 含义 & 取值建议\\
+\hline
+$k_1$ & 位置环增益（决定 $\eta$ 的积分速度与 $\kappa$ 的量级） & $0.5\sim2$\\
+$k_2$ & 输出加权（$y=\eta+k_2p$），质心收敛速率 $k_1/k_2$ & $0.5\sim2$\\
+$\kappa_1$ & 第 1 级漏斗高度（规定 $\|y_i\|_\infty$） & $0.05\sim0.2$\\
+$\kappa_2$ & 第 2 级漏斗高度（规定“速度级”残差） & $0.5\sim2$\\
+$c_1,c_2$ & 中间控制/控制增益 & $1\sim10$\\
+$a_1,a_2$ & 滤波器系数（$A$ Hurwitz） & $a_1=2\omega,\ a_2=\omega^2$\\
+$\tau$ & 规定瞬态时间（$\phi(t)\equiv1,\ t\ge\tau$） & $3\sim10$\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{输出与本地信号（无需速度、无需 $\dot\varphi$）}\label{sec:static}
+
+\paragraph{(a) 静止式恢复 $p_{i0}$（$b_i=0$ 的智能体）}
+由 $p_{ij}=p_{i0}-p_{j0}$ 与少数智能体的 $p_{i0}^{\mathrm{meas}}$，$p_{i0}$ 满足\emph{代数}方程
+\begin{equation*}
+\bigl(\mathcal L(0)+\mathcal B\bigr)\begin{bmatrix}p_{10}\\ \vdots\\ p_{N0}\end{bmatrix}=r,
+\end{equation*}
+其中右端 $r$ 完全由 $p_{ij}$ 与 $p_{i0}^{\mathrm{meas}}$ 组成。由“$\mathcal G(0)$ 无向连通、
+$\mathcal B\neq0$”得 $\mathcal L(0)+\mathcal B\succ0$，故解\textbf{精确}。
+分布式实现（有限时间静态平均或若干轮共识）给出有界误差时，把该误差并入 $w_{i\ell}$
+即可。\textbf{该环节不需要任何动态观测器，也不需要速度。}
+
+\paragraph{(b) 排斥/吸引势场（成对抵消）}
+\begin{equation*}
+\varphi_i=\sum_{j\in\mathcal N_i(t)}\rho(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|}
++\sum_{j\in\mathcal N_i(0)}\alpha_p(\|p_{ij}\|)\frac{p_{ij}}{\|p_{ij}\|},
+\qquad
+\rho(s)=\max\Bigl\{\tfrac{1}{s-d}-\tfrac{1}{\mu-d},0\Bigr\},
+\end{equation*}
+$\alpha_p:(d,\mu)\to(-\infty,0]$ 连续、$\lim_{s\to d^+}\alpha_p=0$、
+$\lim_{s\to\mu^-}\int_d^s\alpha_p=-\infty$（双侧势垒）。
+无向性给出 $\sum_i\varphi_i=0$、$x^\top\varphi=\varphi^\top x$。
+\textbf{$\varphi_i$ 只含相对位置，其时间导数不进入任何控制律。}
+
+\paragraph{(c) 本地积分状态与组合输出}
+\begin{equation}
+\boxed{\ \dot\eta_i=k_1p_{i0}-\varphi_i,\qquad \eta_i(0)=0,\qquad y_i=\eta_i+k_2p_{i0}\ }
+\label{eq:eta}\tag{2.1}
+\end{equation}
+$y_i$ 完全由本地可测量与本地积分得到，是\textbf{唯一进入漏斗的“输出”}。
+
+\subsection{调谐函数、障碍函数、方向函数}
+\begin{equation}
+\phi(t)=\begin{cases}\sin\dfrac{\pi t}{2\tau},& t<\tau,\\[6pt] 1, & t\ge\tau,\end{cases}
+\qquad \phi(0)=0,\quad \dot\phi>0\ \text{于}\ (0,\tau).
+\label{eq:phi}\tag{2.2}
+\end{equation}
+\begin{equation}
+\boxed{\ e_{i1}=\phi(t)\,y_i,\qquad
+\bar\eta_{i1}=\tan\frac{\pi e_{i1}}{2\kappa_1},\qquad
+\alpha_{i1}=c_1\,\bar\eta_{i1}\odot g(\bar\eta_{i1})\ }
+\label{eq:alpha}\tag{2.3}
+\end{equation}
+取 $g(\cdot)=\cos(\cdot)$（$\sin$ 同理）。$g$ 只需：$|g|,|g'|$ 在有界集上有界，
+且 $m(\eta):=\eta g(\eta)$ 在 $|\eta|\to\infty$ 时取到任意负值（原始文献式 (18)(19)）。
+
+\subsection{输入驱动滤波器（替代时变增益观测器）}
+\begin{equation}
+\boxed{\ \dot\xi_{i1}=-a_1\xi_{i1}+\xi_{i2},\qquad
+\dot\xi_{i2}=-a_2\xi_{i1}+u_i,\qquad \xi_i(0)=0\ }
+\label{eq:xi}\tag{2.4}
+\end{equation}
+逐分量，$A=\begin{bmatrix}-a_1&1\\-a_2&0\end{bmatrix}$ Hurwitz。
+\textbf{只由 $u_i$ 驱动}，不需要 $v_{i0}$，不需要任何邻居信息。
+
+\subsection{控制律}
+\begin{equation}
+\boxed{\ e_{i2}=\xi_{i2}-\alpha_{i1},\qquad
+\bar\eta_{i2}=\tan\frac{\pi e_{i2}}{2\kappa_2},\qquad
+u_i=-c_2\,\bar\eta_{i2}\ }
+\label{eq:u}\tag{2.5}
+\end{equation}
+逐分量。整个控制律\textbf{不出现}：$v_{i0}$、$\dot\varphi_i$、$v_{ij}$、$b_{i\ell}$、
+$\sgn(b_{i\ell})$、$\ub_{i\ell}$、$\bar w_{i\ell}$、$|\Delta_{i\ell}|$、$\sgn(\cdot)$。
+
+\noindent\textbf{实现注意}：$\tan$ 在 $|e|\to\kappa$ 处发散，实践上必须限幅或改用有界障碍
+（如 $\sigma\tanh\frac{\pi e}{2\kappa}$），并重做附录~\ref{app:strict} 的停点论证；
+限幅会破坏不变性，见第~\ref{sec:gaps}~节 (6) 与第~\ref{sec:numeric}~节的检验。
+
+% ============================================================
+\section{主要结果}
+% ============================================================
+\subsection{假设}
+\begin{assumption}\label{as:b}
+相对阶 $2$ 已知，$B_i=\diag\{b_{i\ell}\}$，$0<\ub\le|b_{i\ell}(t)|\le\bar b$，
+符号允许有限次切换、不穿零。
+\end{assumption}
+\begin{assumption}\label{as:pw}
+$b_{i\ell}(t)$ 分段常值（或 $\sup_t|\dot b_{i\ell}|/|b_{i\ell}|<\infty$）。
+\end{assumption}
+\begin{assumption}\label{as:w}
+$|w_{i\ell}|\le\bar w_{i\ell}$，且 $\ub,\bar b,\bar w_{i\ell}$ 已知。
+\end{assumption}
+\begin{assumption}\label{as:graph}
+$\mathcal G(0)$ 无向连通、$\mathcal B\neq0$；$p_{ij}$ 可测；$p_{i0}$ 由
+§\ref{sec:static}(a) 恢复（恢复误差有界，并入 $w_{i\ell}$）。
+\end{assumption}
+\begin{assumption}\label{as:pot}
+$\varphi_i$ 为无向成对势场（$\sum_i\varphi_i=0$），双侧势垒：$\rho$ 在 $d^+$ 发散、
+$\int_d^{\cdot}(-\alpha_p)$ 在 $\mu^-$ 发散；$d<\mu$。
+\end{assumption}
+\begin{assumption}\label{as:init}
+$\|p_{ij}(0)\|\in(d,\mu)$ 对所有 $i<j$；$p_{i0}(0)$ 任意有界。
+\end{assumption}
+\begin{assumption}\label{as:g}
+$g=\cos$（或 $\sin$），满足原始文献式 (18)(19)。
+\end{assumption}
+\begin{assumption}\label{as:phi}
+参考 $r\equiv0$；$\phi$ 如 \eqref{eq:phi}。
+\end{assumption}
+\begin{assumption}[一致有界性]\label{as:A9}
+沿闭环成立 $\sup_{t\ge0}\|p_{i0}(t)\|\le\bar P<+\infty$。
+\end{assumption}
+
+\begin{remark}\label{rem:A9}
+\ref{as:A9} 是唯一需要额外补证的假设，严格化路线见第~\ref{sec:gaps}~节 (1)。
+在其之下所有常数化为显式、与时间无关；去掉它仍可得
+“任意有限区间上有界 + 无有限时间逃逸”（定理~\ref{thm:main} 末尾的加注）。
+\end{remark}
+
+\subsection{主定理}
+\begin{theorem}\label{thm:main}
+在 Assumption~\ref{as:b}--\ref{as:A9} 下，对任意初值
+$(\eta_i(0)=0,\ \xi_i(0)=0,\ p_i(0),\ v_i(0))$ 与任意满足 §\ref{sec:params} 的参数，
+由 \eqref{eq:eta}、\eqref{eq:phi}--\eqref{eq:u} 构成的闭环满足：
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item \textbf{漏斗全局不变（规定瞬态与稳态包络）}
+\begin{equation*}
+|e_{i1,\ell}(t)|\le\frac{2\kappa_1}{\pi}\arctan\bar\theta_1<\kappa_1,
+\qquad
+|e_{i2,\ell}(t)|\le\frac{2\kappa_2}{\pi}\arctan\frac{\rho_2}{c_2}<\kappa_2,
+\qquad \forall t\ge0,\ \forall i,\ell,
+\end{equation*}
+其中 $\bar\theta_1\in(\pi/2,3\pi/2)$ 为
+$\cos\bar\theta_1=-\dfrac{D_1}{\zeta\,\bar\theta_1}$ 的最小正解，
+$\zeta:=c_1k_2\ub$。当 $D_1\ll\zeta$ 时 $\bar\theta_1\to\frac{3\pi}{2}$，
+即 $|e_{i1}|\le0.858\,\kappa_1$。
+\textbf{与初值无关}：$e_{i1}(0)=\phi(0)y_i(0)=0\Rightarrow e_{i2}(0)=0$
+（Lemma~\ref{lem:init}），故 $\kappa_1,\kappa_2$ 可\emph{离线}设定。
+
+\item \textbf{信号有界（显式界）}
+\begin{equation*}
+|u_{i\ell}|\le\rho_2,\qquad
+|v_{i0,\ell}|\le\bar b\bigl(\rho_s+C_\xi\rho_2\bigr)=:\bar V,\qquad
+\|p_{i0}\|\le\bar P ,
+\end{equation*}
+且 $\|\tilde s\|,\|\xi\|,|\alpha_{i1}|,|\dot\alpha_{i1}|$ 均有显式界（§\ref{sec:const}）。
+
+\item \textbf{中心有界收敛（$P1$ 的弱化）} 对所有 $t\ge\tau$：
+\begin{equation}
+\dist\bigl(p_0(t),\co(p(t))\bigr)\ \le\ \|\tilde p(t)\|
+\ \le\ \|\tilde p(\tau)\|\,e^{-\frac{k_1}{k_2}(t-\tau)}
++\frac{D_1}{k_1},
+\label{eq:kappa}\tag{3.1}
+\end{equation}
+其中 $\tilde p=\frac1N\sum_ip_{i0}$，$\kappa:=D_1/k_1$ 可离线整形。
+若 $b_{i\ell}$ 的符号已知，可取速度级漏斗使 $\kappa$ 任意小（附录~\ref{app:known}）。
+
+\item \textbf{速度一致（$P3$ 的弱化）}
+$\|v_i(t)-v_0(t)\|=\|v_{i0}(t)\|\le\sqrt m\,\bar V,\ \forall t\ge0$。
+
+\item \textbf{避碰与连通（$P2$，不变式）}
+$\|p_{ij}(t)\|>d$，且对初始边 $\|p_{ij}(t)\|<\mu$，$\forall t\ge0,\ \forall i<j$。
+\end{enumerate}
+\end{theorem}
+
+% ============================================================
+\section{证明}
+% ============================================================
+固定 $i,\ell$，省略下标。定义标度状态（$b_1:=k_2>0$ 已知常数，$b_2:=b(t)$）
+\begin{equation}
+s_1:=\frac{y}{k_2b(t)},\qquad s_2:=\frac{v}{b(t)},\qquad
+\tilde s:=s-\xi,\qquad \zeta(t):=c_1k_2b(t).
+\label{eq:sdef}\tag{4.1}
+\end{equation}
+由 Assumption~\ref{as:b} 与 \ref{as:pw} 有 $|b|\in[\ub,\bar b]$、$\dot b=0$ a.e.，于是
+\begin{equation}
+\dot s_1=\underbrace{\frac{k_1p-\varphi}{k_2b}}_{=:h_1}+s_2,\qquad
+\dot s_2=\underbrace{\frac{w}{b}}_{=:h_2}+u .
+\label{eq:sdot}\tag{4.2}
+\end{equation}
+关键：$h_1,h_2$ \textbf{不含 $v$}（原始文献式 (6)(7) 的标度技巧）。
+
+\begin{lemma}[误差方程]\label{lem:err}
+记 $\tilde s=[\tilde s_1,\ \tilde s_2]^\top$，则
+\begin{equation}
+\dot{\tilde s}=A\tilde s+H+a\,s_1,\qquad
+A=\begin{bmatrix}-a_1&1\\-a_2&0\end{bmatrix},\quad
+H=\begin{bmatrix}h_1\\h_2\end{bmatrix},\quad a=\begin{bmatrix}a_1\\a_2\end{bmatrix},
+\label{eq:serr}\tag{4.3}
+\end{equation}
+\begin{equation}
+\dot e_1=\delta_1+\zeta(t)\phi(t)\,\bar\eta_1\cos\bar\eta_1,\qquad
+\delta_1:=\dot\phi\,y+\phi\bigl(k_1p-\varphi+k_2b\tilde s_2+k_2b\,e_2\bigr),
+\label{eq:e1}\tag{4.4}
+\end{equation}
+\begin{equation}
+\dot e_2=\delta_2-c_2\bar\eta_2,\qquad
+\delta_2:=-a_2\,s_1+a_2\tilde s_1-\dot\alpha_1,
+\label{eq:e2}\tag{4.5}
+\end{equation}
+\begin{equation}
+v=b\,(\tilde s_2+\xi_2)=b\,(\tilde s_2+e_2+\alpha_{i1}).
+\label{eq:v}\tag{4.6}
+\end{equation}
+\end{lemma}
+\begin{proof}
+由 \eqref{eq:eta}、\eqref{eq:xi}、\eqref{eq:u} 与 \eqref{eq:sdef}、\eqref{eq:sdot}
+直接求导，与原始文献的 (8)(9)(31)--(39) 一一对应（见附录~\ref{app:map}）。
+\end{proof}
+
+\begin{remark}[全篇枢纽]
+\eqref{eq:e2} 里唯一“难缠”的项 $-a_2\xi_1$ 用恒等式
+$\xi_1=s_1-\tilde s_1$、$s_1=y/(k_2b)$ 替换：在 $y$ 有界、$|b|\ge\ub$ 时即有界，
+\textbf{不需要 $u$ 的先验界}。这正是原始文献在其式 (39) 中对
+$\hat s_1=y/\underline b_1-\tilde s_1$ 所做的替换；本文因 $b$ 时变仍成立，
+因为只需 $|b|\ge\ub$。该替换同时消解了既有稿件中
+“$\bar n(t)$ 无界”与“$\dot s_{i0}$ 无统一界”两处病根。
+\end{remark}
+
+\begin{lemma}[初值消失]\label{lem:init}
+对任意初值，$e_{i1}(0)=0$ 且 $e_{i2}(0)=0$。
+\end{lemma}
+\begin{proof}
+$e_{i1}(0)=\phi(0)y_i(0)=0$；$\bar\eta_{i1}(0)=0\Rightarrow\alpha_{i1}(0)=0$；
+$\xi_{i2}(0)=0\Rightarrow e_{i2}(0)=0$。
+\end{proof}
+
+\begin{corollary}\label{cor:global}
+$|e_{i1}(0)|<\kappa_1$、$|e_{i2}(0)|<\kappa_2$ 对\emph{任意}初值与\emph{任意}
+$\kappa_j>0$ 成立，故增益可离线设计、结果全局。
+\end{corollary}
+
+\begin{lemma}[漏斗不变性；严格的停点版]\label{lem:funnel}
+设区间 $I$ 上 $|e_1|<\kappa_1,\ |e_2|<\kappa_2$（归纳/候选假设），
+$|s_1(t)|\le S_1$，$\|\tilde s(t)\|\le\rho_s$，且
+$|\delta_1(t)|\le D_1$、$|\dot\alpha_1(t)|\le A_1$。记
+$\theta:=\tan\frac{\pi e_1}{2\kappa_1}$、$\mu_2:=\tan\frac{\pi e_2}{2\kappa_2}$。则
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item $\theta$ 不可能穿越 $\pm\bar\theta_1$，即
+$|\theta(t)|\le\bar\theta_1$、
+$|e_1(t)|\le\frac{2\kappa_1}{\pi}\arctan\bar\theta_1<\kappa_1$；
+\item $|\mu_2(t)|\le\rho_2/c_2$，其中 $\rho_2:=a_2S_1+a_2\rho_s+A_1$，从而
+$|e_2(t)|\le\frac{2\kappa_2}{\pi}\arctan\frac{\rho_2}{c_2}<\kappa_2$ 且
+$|u(t)|=c_2|\mu_2|\le\rho_2$；
+\item 上述结论对 $b(t)$ 任意有限次切换成立；无限次切换需驻留时间
+（此时 \eqref{eq:e1} 按 Filippov 意义理解）。
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+见附录~\ref{app:strict}。
+\end{proof}
+
+\begin{remark}
+与原始文献第 3 引理相比：原文只证了点态性质
+“$\limsup_{\eta\to\infty}=+\infty$、$\liminf=-\infty$”，随后隐含
+“轨迹必扫过振荡区”；本文的停点论证不需要该隐含前提，给出\textbf{显式阈值}
+$\bar\theta_1$，且\textbf{不要求 $b$ 为常值}。
+\end{remark}
+
+\begin{lemma}[$\dot\alpha_1$ 有界，无需测速]\label{lem:alphadot}
+若 $|e_1|<\kappa_1$ 且 $|\dot e_1|\le\dot E_1$，则
+\begin{equation*}
+|\dot\alpha_1|\le
+c_1\Bigl(\frac{\pi}{2\kappa_1}\Bigr)\bigl(1+\bar\theta_1^2\bigr)\bigl(1+\bar\theta_1\bigr)\dot E_1
+=:A_1,
+\end{equation*}
+且 $\dot E_1\le D_1+\bar\zeta\bar\theta_1$，$\bar\zeta:=c_1k_2\bar b$。
+全过程\textbf{只用} $y,p,\varphi,\tilde s,e_2$ 的有界性，不用 $v_{i0}$。
+\end{lemma}
+\begin{proof}
+$\dot{\bar\eta}_1=\dfrac{\pi\dot e_1}{2\kappa_1\gamma_1^2}$，
+$\gamma_1=\cos\frac{\pi e_1}{2\kappa_1}$，$1/\gamma_1^2=1+\bar\eta_1^2\le1+\bar\theta_1^2$；
+$\dot\alpha_1=c_1\dot{\bar\eta}_1(g+\bar\eta_1g')$，对 $g=\cos$ 有
+$|g+\bar\eta_1g'|=|\cos\bar\eta_1-\bar\eta_1\sin\bar\eta_1|\le1+\bar\theta_1$。
+\end{proof}
+
+\begin{lemma}[滤波器 ISS]\label{lem:iss}
+设区间 $I$ 上 $|y(t)|\le Y$、$\|H(t)\|\le\bar H$，则
+\begin{equation*}
+\|\tilde s(t)\|\le\rho_s:=C_A\Bigl(\bar H+\|a\|\frac{Y}{k_2\ub}\Bigr),
+\qquad
+C_A:=\sup_{t\ge0}\Bigl\|\int_0^te^{A(t-\tau)}d\tau\Bigr\|<\infty,
+\end{equation*}
+且 $|v|\le\bar b(\rho_s+C_\xi\sup|u|)$，其中
+$C_\xi:=\sup_t\bigl\|\int_0^te^{A(t-s)}\begin{bmatrix}0\\1\end{bmatrix}ds\bigr\|$。
+\end{lemma}
+\begin{proof}
+$A$ Hurwitz，对 \eqref{eq:serr} 作标准 ISS 估计；第二式由 \eqref{eq:v} 与线性滤波器
+对 $u$ 的增益得到。
+\end{proof}
+
+\begin{lemma}[势能—质心关系]\label{lem:W}
+定义
+\begin{equation*}
+W:=\frac{k_1}{2}\sum_i\|p_{i0}\|^2
++\underbrace{\frac12\sum_i\sum_{j\in\mathcal N_i}\int_{\|p_{ij}\|}^{\mu}\rho(s)\,ds
++\frac12\sum_i\sum_{j\in\mathcal N_i(0)}\int_{d}^{\|p_{ij}\|}\bigl(-\alpha_p(s)\bigr)ds}_{\displaystyle U_{\mathrm{pot}}\ \ge0},
+\end{equation*}
+则在任何使解存在的区间上
+\begin{equation}
+\dot W=\sum_i v_{i0}^{\top}\bigl(k_1p_{i0}-\varphi_i\bigr)
+=\sum_i v_{i0}^{\top}g_i,\qquad g_i:=k_1p_{i0}-\varphi_i=\dot\eta_i .
+\label{eq:Wdot}\tag{4.7}
+\end{equation}
+又 $v_{i0}=(\dot y_i-g_i)/k_2$，代入并用 Young 不等式得
+\begin{equation}
+\dot W\le\frac{1}{4k_2}\sum_i\|\dot y_i\|^2 .
+\label{eq:Wdot2}\tag{4.8}
+\end{equation}
+\end{lemma}
+\begin{proof}
+与既有 result1/result2 的增广势函数计算相同：无向成对性给出 $\sum_i\varphi_i=0$、
+$x^\top\varphi=\varphi^\top x$；$\dot y_i=\dot\eta_i+k_2\dot p_{i0}=g_i+k_2v_{i0}$。
+\end{proof}
+
+\begin{remark}
+\eqref{eq:Wdot2} 表明 $\dot W$ 只由 $\dot y_i$ 控制；而 $\dot y_i$ 的有界性由
+Lemma~\ref{lem:funnel} 与 Lemma~\ref{lem:iss} 保证，
+\textbf{不再需要} $|\varphi_i|$ 或 $|\Delta_{i\ell}|$ 的先验界。
+这就是对既有稿件中相关注记的替代。
+\end{remark}
+
+\subsection{定理~\ref{thm:main} 的证明（首次逃逸 + 顺序归纳）}
+设 $t^\ast\in(0,+\infty]$ 为满足下列任一条件的\textbf{首次}时刻：
+存在 $i,\ell$ 使 $|e_{i1,\ell}|=\kappa_1$ 或 $|e_{i2,\ell}|=\kappa_2$；
+或存在 $i<j$ 使 $\|p_{ij}\|\in\{d,\mu\}$；或解在 $t^\ast$ 处不可延拓。
+由局部存在性，在 $[0,t^\ast)$ 上所有信号\textbf{局部有界}（界可依赖 $t^\ast$，
+这正是反证所需）。下面证明 $t^\ast=+\infty$。
+
+\paragraph{步骤 1（漂移项有界）}
+在 $[0,t^\ast)$ 上由 Assumption~\ref{as:A9} 与 $\|p_{ij}\|\in(d,\mu)$ 得
+$\|\varphi_i\|$ 有界，从而
+\begin{equation*}
+|h_1|=\frac{|k_1p-\varphi|}{k_2|b|}\le\frac{k_1\bar P+\bar\varphi}{k_2\ub},
+\qquad |h_2|\le\frac{\bar w}{\ub}.
+\end{equation*}
+由 Lemma~\ref{lem:iss} 得 $\|\tilde s\|\le\rho_s<\infty$。
+
+\paragraph{步骤 2（第 1 级漏斗）}
+由 \eqref{eq:alpha}，$\dot\phi y$、$k_2b\tilde s_2$、$k_2be_2$ 有界
+（$e_2$ 由归纳假设 $|e_2|<\kappa_2$），故由 \eqref{eq:e1}
+\begin{equation*}
+|\delta_1|\le D_1:=\frac{\pi}{2\tau}Y+\bigl(k_1\bar P+\bar\varphi\bigr)
++k_2\bar b(\rho_s+\kappa_2)<\infty,
+\qquad Y:=\sup_{[0,\tau)}|y_i|<\infty,
+\end{equation*}
+其中 $Y<\infty$ 由与原文献 Lemma~2 同型的论证给出：若 $|e_1|<\kappa_1$ 而
+$|y|\to\infty$ 于某 $t'\in[0,\tau)$，则 $\phi(t')\to0$，由 \eqref{eq:phi} 只有
+$t'=0$，而 $y(0)$ 有界，矛盾。于是由 Lemma~\ref{lem:funnel}(a)
+\begin{equation*}
+|\theta(t)|\le\bar\theta_1,\qquad
+|e_1(t)|\le\frac{2\kappa_1}{\pi}\arctan\bar\theta_1<\kappa_1,
+\qquad t\in[0,t^\ast),
+\end{equation*}
+即 $t^\ast$ 不可能由 $|e_1|$ 触界实现。
+
+\paragraph{步骤 3（$\dot\alpha_1$ 有界）}
+由 \eqref{eq:e1} 得 $|\dot e_1|\le D_1+\bar\zeta\bar\theta_1=:\dot E_1$，
+由 Lemma~\ref{lem:alphadot} 得 $|\dot\alpha_1|\le A_1<\infty$。
+
+\paragraph{步骤 4（第 2 级漏斗 $\Rightarrow$ 输入有界）}
+由 \eqref{eq:e2} 与 $\xi_1=s_1-\tilde s_1$：
+\begin{equation*}
+|\delta_2|\le a_2\frac{Y}{k_2\ub}+a_2\rho_s+A_1=:\rho_2<\infty .
+\end{equation*}
+由 Lemma~\ref{lem:funnel}(b)：
+$|e_2(t)|\le\frac{2\kappa_2}{\pi}\arctan\frac{\rho_2}{c_2}<\kappa_2$、
+$|u(t)|\le\rho_2$ 于 $[0,t^\ast)$。即 $t^\ast$ 不可能由 $|e_2|$ 触界实现，
+并且\textbf{得到统一输入界 $\rho_2$}。
+
+\paragraph{步骤 5（$\dot W$ 有界 $\Rightarrow$ 势垒不爆）}
+由 Lemma~\ref{lem:iss}，$\|\xi\|\le C_\xi\rho_2$、
+$|v_{i0}|\le\bar V=\bar b(\rho_s+C_\xi\rho_2)$；再由 \eqref{eq:v} 前的恒等式
+$\dot y_i=g_i+k_2v_{i0}$（不经除法，故在 $t=0$ 处无奇性）得
+\begin{equation*}
+|\dot y_i|\le|g_i|+k_2|v_{i0}|
+\le\bigl(k_1\bar P+\bar\varphi\bigr)+k_2\bar V=:\dot Y<\infty,
+\end{equation*}
+于是由 Lemma~\ref{lem:W}
+\begin{equation*}
+\dot W\le\frac{N}{4k_2}\dot Y^2=:\bar C<\infty
+\quad\Longrightarrow\quad
+W(t)\le W(0)+\bar C\,t^\ast<+\infty .
+\end{equation*}
+即 $U_{\mathrm{pot}}(t)<\infty$ 于 $[0,t^\ast)$，$\|p_{ij}\|$ 不可能在 $t^\ast$
+处触及 $d$ 或 $\mu$（势垒发散与 $W<\infty$ 矛盾），故 $t^\ast$ 不可能由碰撞/断连实现。
+
+\paragraph{步骤 6（结论）}
+三类逃逸（漏斗触界、势垒触界、解爆破解）均不可能，故 $t^\ast=+\infty$，
+定理~\ref{thm:main}(i)(ii)(v) 得证。
+
+\paragraph{步骤 7（质心与实际收敛速率）}
+对 $t\ge\tau$ 有 $\phi\equiv1$、$e_{i1}=y_i=\eta_i+k_2p_{i0}$。对 $i$ 求和并用
+$\sum_i\varphi_i=0$：
+\begin{equation*}
+\bar\eta+k_2\tilde p=\bar e,\qquad \dot{\bar\eta}=k_1\tilde p
+\ \Longrightarrow\ k_2\dot{\tilde p}+k_1\tilde p=\dot{\bar e},
+\end{equation*}
+其中 $\bar e:=\frac1N\sum_ie_{i1}$，$|\dot{\bar e}|\le D_1$（步骤 2）。
+该一阶线性系统 Hurwitz（时间常数 $k_2/k_1$），故 \eqref{eq:kappa} 成立；
+质心恒在凸包内，故 $\dist(p_0,\co(p))\le\|\tilde p\|$，即 (iii)。
+(iv) 由 \eqref{eq:v} 与步骤 5 的 $|v_{i0}|\le\bar V$ 得
+$\|v_i-v_0\|\le\sqrt m\bar V$。\qed
+
+\begin{remark}[去掉 Assumption~\ref{as:A9}]
+若不假设半径有界，则把 $D_1,\rho_2,\bar\theta_1,\kappa$ 视为 $[0,T]$ 上的量，
+得到：对任意 $T>0$，(i)(ii)(v) 在 $[0,T]$ 上成立（常数依赖 $T$），
+即\textbf{无有限时间逃逸 + 有限区间有界}；而 \eqref{eq:kappa} 变为
+\begin{equation*}
+\|\tilde p(t)\|\le\|\tilde p(\tau)\|e^{-\frac{k_1}{k_2}(t-\tau)}
++\frac{D_1(T)}{k_1}.
+\end{equation*}
+这正是“$\varepsilon$-意义下”的合围；$T\to\infty$ 需要
+第~\ref{sec:gaps}~节 (1) 的一致有界性论证。
+\end{remark}
+
+% ============================================================
+\section{显式常数}\label{sec:const}
+% ============================================================
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{全部显式常数}
+\begin{tabular}{c|p{7.3cm}|p{4.4cm}}
+\hline
+符号 & 定义 & 依赖\\
+\hline
+$\bar\theta_1$ & $\cos\bar\theta_1=-\dfrac{D_1}{\zeta\bar\theta_1}$ 的最小正解，
+$\zeta=c_1k_2\ub$；$D_1\ll\zeta$ 时 $\approx 3\pi/2$ & $D_1,\zeta$\\
+\hline
+$D_1$ & $\dfrac{\pi}{2\tau}Y+(k_1\bar P+\bar\varphi)+k_2\bar b(\rho_s+\kappa_2)$
+& $Y,\bar P,\bar\varphi,\rho_s$\\
+\hline
+$Y$ & $\sup_{[0,\tau)}|y_i|$（Lemma~\ref{lem:iss} 与同型 Lemma 2 保证有限） & 初值\\
+\hline
+$\dot E_1$ & $D_1+\bar\zeta\bar\theta_1$，$\bar\zeta=c_1k_2\bar b$ & ---\\
+\hline
+$A_1$ & $c_1\dfrac{\pi}{2\kappa_1}(1+\bar\theta_1^2)(1+\bar\theta_1)\dot E_1$ & ---\\
+\hline
+$\rho_2$ & $a_2\dfrac{Y}{k_2\ub}+a_2\rho_s+A_1$；即 $\sup|u|$ & ---\\
+\hline
+$\rho_s$ & $C_A\bigl(\bar H+\|a\|\frac{Y}{k_2\ub}\bigr)$，
+$\bar H=\sqrt{\frac{(k_1\bar P+\bar\varphi)^2}{(k_2\ub)^2}+\bigl(\frac{\bar w}{\ub}\bigr)^2}$ & ---\\
+\hline
+$C_A,C_\xi$ & $A=\begin{bmatrix}-a_1&1\\-a_2&0\end{bmatrix}$ 的 ISS 增益 & $a_1,a_2$\\
+\hline
+$\bar V$ & $\bar b(\rho_s+C_\xi\rho_2)$；即 $\sup|v_{i0}|$ & ---\\
+\hline
+$\kappa$ & $D_1/k_1$（质心稳态球半径） & ---\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{整定指引}
+\begin{itemize}
+\item 收紧漏斗/加快收敛：$\uparrow c_1,c_2,k_1$；$\downarrow\kappa_1,\kappa_2,k_2$。
+\item $\kappa=D_1/k_1$：$\uparrow k_1$、$\uparrow c_1$ 可减小；注意 $D_1$ 内含
+$k_1\bar P$ 项，见第~\ref{sec:gaps}~节 (2) 的保守性讨论。
+\item 滤波器：$a_1,a_2$ 只通过 $C_A,C_\xi$ 影响 $\rho_s,\bar V$，不影响不变性结论；
+建议 $a_1=2\omega,\ a_2=\omega^2$，$\omega$ 与 $k_1,k_2$ 同量级。
+\item $\tau$：规定瞬态时间；$[0,\tau)$ 内 $|y_i|$ 被 $\phi^{-1}\kappa_1$ 放大，
+$\tau$ 越大越温和。
+\end{itemize}
+
+% ============================================================
+\section{与既有结果的对比}
+% ============================================================
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{五种方案对比}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{p{3.1cm}|p{1.9cm}|p{2.1cm}|p{2.0cm}|p{2.3cm}|p{2.3cm}}
+\hline
+项目 & 方法1 & 方法2 & 方法3 & 观测器方案 & \textbf{result 4}\\
+\hline
+需邻居速度 $v_{ij}$ & 是 & 否 & 否 & 是 & \textbf{否}\\
+需 $v_{i0}$ 观测器 & 是 & 是 & 是 & 是（时变增益超螺旋） & \textbf{否}\\
+$\ub,\bar w$ 进入增益 & 是 & 是 & 是 & 是 & \textbf{否}（仅入常数）\\
+增益有统一上界 & --- & --- & 需 $\gamma_2$ 足够大
+& $\bar n(t)$ 无界 $\Rightarrow$ 时变 $K_b(t)$+慢变条件 & \textbf{线性 Hurwitz}\\
+到达时间 & $T_r<T^{\mathrm r}$ & 同 & 同 & 继承方法1 & \textbf{无显式}\\
+初值无关（离线设计） & 否 & 否 & 否 & 否 & \textbf{是}\\
+$P1$ & $\to0$ & $\to0$ & $\to0$ & $\to0$ & 指数进入球 $\kappa$\\
+$P3$ & 未证 & Barbalat & 未证 & 依赖方法2 & $\le\sqrt m\bar V$\\
+$P2$ 证明完整性 & 自证 & 注记留缺口 & 需快滤波注记 & 需初始裕度 & \textbf{自证}\\
+控制连续性 & 不连续 & 不连续 & 不连续 & 不连续 & \textbf{连续}\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{三点实质改进}
+\begin{enumerate}[label=(\arabic*)]
+\item \textbf{消掉时变增益观测器的无界包络}：原方案需
+$\bar n(t)=\max_i\{\bar b\|u_i\|+\bar w_i\}$ 的在线上包络、
+$K_b(t)\rho\ge\bar n(t)$ 与慢变条件。本方案滤波器线性、Hurwitz，
+只要求 $u$ 有界，而有界性由漏斗不变性直接给出。
+\item \textbf{补齐方法 2/3 的注记}：“到达区间 $\dot s_{i0}$ 的统一界”不再需要——
+\eqref{eq:e2} 用 $\xi_1=s_1-\tilde s_1$ 把 $u$ 从 $\dot e_2$ 中消去，
+$|u|\le\rho_2$ 是\emph{事后}由第 2 级漏斗得到的统一界。
+\item \textbf{严格化方向函数}：附录~\ref{app:strict} 的停点论证替代点态
+$\limsup/\liminf$ 论证，并允许 $b(t)$ 时变切换。
+\end{enumerate}
+
+% ============================================================
+\section{证明缺口与开放问题}\label{sec:gaps}
+% ============================================================
+\begin{enumerate}[label=(\arabic*)]
+\item \textbf{一致有界性 (Assumption~\ref{as:A9}) 的严格化。}
+先用有限区间版本证明无有限时间逃逸；再用势垒与双侧势能及 \eqref{eq:Wdot2}
+做“能量—半径”闭合：$\|p_{i0}\|^2\le\frac{2}{k_1}W$，而 $\dot W$ 的右端不含 $W$
+的高次项，可尝试建立 $\dot W\le a+b\sqrt W$ 型不等式（$W$ 至多线性增长），
+从而得到 $\|p_{i0}\|\le\bar P(T)$ 的显式表达式。
+若需\textbf{一致}界，须附加耗散条件，例如在漏斗内存在 $\epsilon>0$ 使
+$\sum_iv_{i0}^\top g_i\le-\epsilon W+C$。
+\textbf{注意}：\eqref{eq:Wdot2} 只给“线性增长”，不足以得一致界；
+这是本方案与方法 1/2（滑模面上 $\dot V=-k_2\|v\|^2\le0$）的本质差别，
+也是本文唯一的“不干净”之处，须在论文中显式声明。
+
+\item \textbf{$\kappa$ 的保守性。} $\kappa=D_1/k_1$ 中 $D_1$ 含
+$(k_1\bar P+\bar\varphi)$ 项，故 $\kappa\gtrsim\bar P$，与“$\dist\to0$”的直觉
+相去甚远。根因：漏斗放在 $y=\eta+k_2p$（含积分 $\eta$）上而非速度级；
+速度级漏斗会再次引入 $b$ 的符号问题（$\xi_2\approx v/b$，乘以未知 $b$）。锐化路线：
+\begin{itemize}
+\item[(S1)] 若 $\sgn(b_{i\ell})$ 已知（或在线判决得到），改用\emph{速度级漏斗}，
+此时 $\kappa\propto(\bar w+\rho_2)/k_1$ 可任意小（附录~\ref{app:known}）；
+\item[(S2)] 保留 $\sgn[\sin(\pi s/\varepsilon)]$ 作外层（有限时间到达 $\Rightarrow$
+精确滑模 $\Rightarrow$ $P1$ 精确），仅把 $s_{i0}$ 中的 $v_{i0}$ 用 $\xi_{i2}$ 替代、
+把 $R_{i\ell}$ 中的 $|\Delta_{i\ell}|$ 用 $\tan$ 障碍的即时幅值替代（混合方案）；
+\item[(S3)] 用 $\eta$ 的多重积分构造“高阶漏斗”，使 $\bar e$ 的导数进入更低阶——
+但阶数升高后 $e(0)=0$ 的论证与 $\dot\alpha$ 的链式界会复杂化。
+\end{itemize}
+
+\item \textbf{无有限时间到达。} $T_r<\varepsilon/\lambda_{i\ell}$ 在本方案中丢失
+（$\tan$ 障碍只给不变性）。折中方案：最终级保留
+$u_{i\ell}=R_{i\ell}\sgn[\sin(\pi s_{i\ell}/\varepsilon)]$，其中
+$s_{i\ell}:=\xi_{i2,\ell}-\alpha_{i1,\ell}$（可算！），
+$R_{i\ell}$ 由“已知项 + 障碍即时幅值”在线自适应给出
+（避免 $|\Delta|$ 与 $\bar w$ 的先验界）。此时 $\dot s_{i0}$ 的有界性由障碍的
+即时幅值统一给出，缺口可补。
+
+\item \textbf{$b_{i\ell}$ 的时变性与切换。} Assumption~\ref{as:pw} 要求分段常值或
+$|\dot b|/|b|$ 有界。若 $\dot b\neq0$，\eqref{eq:sdot} 的 $\dot s_1$ 多出
+$-y\dot b/(k_2b^2)$ 项，需把 $\sup|\dot b|/\ub$ 并入 $\bar H$（进而
+$\rho_s,\rho_2$）。无限次切换需驻留时间。
+
+\item \textbf{$p_{i0}$ 的静态恢复。} §\ref{sec:static}(a) 是代数问题，
+但分布式精确求解需要有限时间/有限步；若用迭代截断，误差 $\varepsilon_p$ 进入
+$w_{i\ell}$（$\bar w\to\bar w+\bar b\,\varepsilon_p$ 量级），需 $\varepsilon_p$ 与
+$\kappa$ 匹配。若改用有限时间静态估计，则需其收敛时间小于 $\tau$，
+以保证 $e(0)=0$ 的论证不被破坏——\textbf{这一点须单独处理}。
+
+\item \textbf{$\tan$ 的奇异与执行器饱和。}\label{rem:sat} $|e|\to\kappa$ 时
+$|u|\to\infty$。实践上必须限幅，而限幅破坏不变性。补救：改用\emph{有界障碍}
+（如 $\sigma\tanh\frac{\pi e}{2\kappa}$）并重做附录~\ref{app:strict} 的停点论证；
+或做 anti-windup 并在定理中显式给出“不触发饱和”的参数条件
+（$u_{\max}>\rho_2$）。
+
+\item \textbf{分量耦合。} $B_i$ 对角、势场逐分量给出，故控制律逐分量解耦；
+但避碰是\emph{向量范数}约束，已由 $U_{\mathrm{pot}}$ 处理（Lemma~\ref{lem:W}）。
+\end{enumerate}
+
+% ============================================================
+\section{可实现性检验（数值）与算法诊断}\label{sec:numeric}
+% ============================================================
+本节用两个脚本对第~\ref{sec:alg}--\ref{sec:gaps} 节的方案做闭环数值检验，
+全部结果可一键复现：
+\begin{verbatim}
+cd simulation/result4
+uv run --no-project sim_result4.py        # 被检方案（TF+BF+OF）
+uv run --no-project sim_result4_fixed.py  # 朴素修正（高增益观测器+周期律）
+\end{verbatim}
+
+\subsection{被检参数}
+$N=4$、$m=2$、$T=20$、$dt=10^{-4}$（欧拉）、调谐时间 $\tau=8$；
+控制参数 $k_1=k_2=1$、$\kappa_1=1$、$\kappa_2=2$、$c_1=c_2=20$、$a_1=a_2=1$；
+被控对象 $b_{i\ell}\in[0.8,1.4]$ 分段常值、符号在 $t\approx10\sim19$ 切换；
+$|w_{i\ell}|\le0.35$；$d=0.45$、$\mu=1.20$；初值
+$p_1(0)=[2,0.4]$、$p_2(0)=[0.4,1.8]$、$p_3(0)=[-1.8,-0.3]$、$p_4(0)=[-0.2,-1.9]$。
+
+\subsection{实测结果}
+\begin{table}[H]
+\centering\footnotesize
+\caption{被检方案的实测指标（脚本输出 \texttt{metrics.txt}）}
+\begin{tabular}{p{5.0cm}|c|c|c}
+\hline
+指标 & 定理声称 & (S1) 无符号切换 & (S2) 有符号切换\\
+\hline
+$\max|e_{i1,\ell}|/\kappa_1$ & $<1$ & $0.731$ \checkmark & $0.9999$（越界 501 次）\\
+$\max|e_{i2,\ell}|/\kappa_2$ & $<1$ & $0.983$（越界 40 次） & $0.9999$（越界 3144 次）\\
+$\max|u_{i,\ell}|$ & $\le\rho_2$ & $765$ & $10^4$（触及限幅）\\
+$\max\dist(p_0,\co(p))$（后 25\%） & $\le\kappa=D_1/k_1$ & $0.0010$（$\kappa_{\rm meas}=0.72$） & $0.171$（$\kappa_{\rm meas}=14.0$）\\
+$\min_{i<j}\|p_{ij}\|$ & $>d=0.45$ & $\mathbf{0.303}$ $\times$ & $\mathbf{0.303}$ $\times$\\
+$\max\|v_i-v_0\|$ & $\le\sqrt m\,\bar V$ & $\mathbf{21.8}$ & $\mathbf{63.6}$\\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent 表中 (S1) 指在 $t<25$ 内不发生符号切换（但各分量的 $|b_{i\ell}|$ 已按不同幅值分散），
+(S2) 指把切换时刻提前到 $t\approx10\sim19$。读数两点：
+\begin{itemize}
+\item \textbf{质心合围确实成功}：$\dist$ 由 $0.566$ 收敛到 $10^{-3}$ 量级，与
+式~\eqref{eq:kappa} 的指数结构一致——这是本方案唯一的成功项。
+\item \textbf{其余各项全部失守}：第 2 级漏斗越界、输入峰值 $10^3\sim10^4$、
+避碰距离 $0.303<d$（碰撞）、速度误差 $20\sim64$。
+\end{itemize}
+
+\subsection{诊断：五条根因}
+\begin{enumerate}[label=(D\arabic*)]
+\item \textbf{方向项对纯双积分器是正反馈。} 在 $|\bar\eta_1|<\pi/2$ 内
+$m(\eta)=\eta\cos\eta>0$，故 $\alpha_{i1}=c_1m$ 与 $e_{i1}$ \emph{同号}。
+对 $y=\eta+k_2p$、$\dot\eta=k_1p-\varphi$、$\ddot p=b u$、$u\simeq\alpha_{i1}$
+线性化（$G:=b\,c_1(\pi/2\kappa_1)\phi>0$）得特征多项式
+\begin{equation*}
+s^3-Gk_2s-Gk_1=0,
+\end{equation*}
+它有\emph{一个正实根}（如 $Gk_1=Gk_2=1$ 时 $s\approx1.32$）。
+原始文献的船舶算例中 $f_1=-Cy$ 自带阻尼（见其 (58) 式），恰好掩盖了这一项；
+本文的智能体是纯双积分器，没有天然阻尼。
+
+\item \textbf{未知符号使“内点稳定”不可能。} $e_{i1}$ 方程中的受控项为
+$\zeta(t)\phi\,\bar\eta_1\cos\bar\eta_1$，而 $\zeta=c_1k_2b_{i\ell}(t)$ 的符号未知。
+把 $g$ 反号（取 $-\cos$）可使 $b>0$ 时内点稳定，但同时对 $b<0$ 变成正反馈。
+因此\emph{任何固定符号的 $g$ 都不可能对两种符号同时稳定}；闭环只能依靠漏斗壁
+（$\cos<0$ 的分支）提供负反馈，即\textbf{必然工作在 $\tan$ 壁上}——实测
+$|e_1|/\kappa_1=0.73\sim0.86$ 常驻，与 $\bar\theta_1\approx2.4$ 的预测一致。
+$\tan$ 的无限斜率随之带来颤振：实测输入峰值 $765$（无切换）与 $10^4$（有切换）。
+
+\item \textbf{输入驱动滤波器的误差只有界、不衰减。} 引理~\ref{lem:iss} 给出的是
+$\|\tilde s\|\le\rho_s$（本参数下 $\rho_s\approx10$ 量级）而非 $\tilde s\to0$。
+由式~\eqref{eq:v}，\emph{物理}速度误差被 $\bar b\rho_s$ 锁定，实测
+$\max\|v_i-v_0\|=21.8$；故定理~\ref{thm:main}(iv) 的界在此毫无意义。
+换言之：$u$ 追踪的只是滤波坐标 $\xi_2$，与真实速度之间始终差一个不衰减的偏差。
+
+\item \textbf{$\rho_2$ 的量级使 $|u|\le\rho_2$ 空洞。} 由引理~\ref{lem:alphadot}，
+\begin{equation*}
+A_1=c_1\frac{\pi}{2\kappa_1}\bigl(1+\bar\theta_1^2\bigr)\bigl(1+\bar\theta_1\bigr)\dot E_1
+\ \propto\ \frac{c_1}{\kappa_1},
+\qquad
+\rho_2=a_2\frac{Y}{k_2\ub}+a_2\rho_s+A_1,
+\end{equation*}
+本参数下 $\rho_2$ 已达 $10^4$ 量级。定理~\ref{thm:main}(ii) 的
+“$|u|\le\rho_2$” 因此不提供任何工程约束；而执行器限幅一旦触发，
+不变性即被破坏——这正是 (S2) 一列两级漏斗同时越界的原因。
+
+\item \textbf{漏斗建在积分组合上，且 $\kappa$ 不随 $\kappa_1$ 收缩。}
+$y_i=\eta_i+k_2p_{i0}$ 含积分状态，$|y_i|<\kappa_1$ 不是“位置精度”，
+而是“位置与积分状态的组合精度”；质心界 $\kappa=D_1/k_1$ 中 $D_1$ 含
+$k_1\bar P$ 项，故 $\kappa\gtrsim\bar P$。实测 $\kappa_{\rm meas}=0.72$（无切换）
+与 $14.0$（有切换）；且 (S1) 中 $\min\|p_{ij}\|=0.303<d$，
+\textbf{避碰也失守}（大控制 + 壁滑把智能体压穿安全距离）。
+\end{enumerate}
+
+\subsection{朴素修正同样失败}
+把不可测的 $v_{i0}$ 换成一阶高增益观测器
+$\dot{\hat p}=\hat v+\frac{2}{\varepsilon_o}(p-\hat p)$、
+$\dot{\hat v}=\frac{1}{\varepsilon_o^2}(p-\hat p)$，
+并保留周期律 $u=R\tanh\!\bigl(\sin(\pi s/\varepsilon)/\delta\bigr)$、
+$R=\bigl(|\Delta|+\bar w+\varepsilon/T^{\mathrm r}\bigr)/\ub$
+（\texttt{sim\_result4\_fixed.py}，$\varepsilon_o=0.05$、$\varepsilon=0.25$）：
+观测器误差为 $O(\varepsilon_o|\dot v_{i0}|)=O(\varepsilon_o\bar bR)\approx4\gg\varepsilon$，
+于是 $|s|/\varepsilon\to7\times10^4$、质心发散到 $59.2$。
+要使其可用必须 $\varepsilon_o\ll\varepsilon/(\bar bR)$，即快速观测器（peaking、噪声敏感），
+代价与本方案“无观测器、简单”的卖点相抵。
+
+\subsection{结论与唯一可靠的移植方式}
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+\item \textbf{BF+OF 不可移植}：对纯双积分器 + 未知控制方向，$\tan$ 障碍 + 方向函数
+只能给出“漏斗壁上的不变性”；壁滑带来的颤振、$10^3\sim10^4$ 的输入峰值、
+以及不衰减的滤波误差，使避碰、速度一致、输入有界三项在工程上全部失守。
+\item \textbf{若坚持使用 BF+OF}，必须\textbf{先判定 $\operatorname{sign}(b_{i\ell})$}
+（例如先用周期律运行一个短窗口，由 $s$ 的漂移方向判决），再取
+$g(\eta)=-\cos\eta$（等价地使 $\alpha_{i1}e_{i1}<0$），从而获得真正的内点稳定性；
+此时应同时启用第~\ref{sec:gaps}~节 (2)(S1) 与附录~\ref{app:known} 的速度级漏斗，
+$\kappa$ 才可整定为小量。
+\item \textbf{唯一无需额外假设即可移植的是调谐函数（TF）}：令
+\begin{equation}
+s_{i0}(t):=\phi(t)\,\bigl[\eta_{i}+k_2p_{i0}+v_{i0}\bigr],
+\qquad \phi\ \text{如}\ \eqref{eq:phi},
+\tag{8.1}
+\end{equation}
+即把\emph{既有周期滑模变量}（result1/2/3 的 $s_{i0}$）乘以 $\phi$。于是
+$s_{i0}(0)=0$ 对任意初值成立，到达时间
+$T_r\le|s_{i0}(0)|/\lambda_{i\ell}$ 中的 $|s_{i0}(0)|$ 可离线预先给定
+（取代现有稿件“需 $s_{i0}(0)$ 有界/落入管道”的注记），
+而 $t\ge\tau$ 后 $\phi\equiv1$，滑模律与全部稳定性证明\emph{完全不变}。
+该改动零成本、零风险，是本轮检验建议采用的唯一改动。
+\end{enumerate}
+
+\section{并入主文件的方式}\label{sec:merge}
+% ============================================================
+\begin{enumerate}[label=\arabic*.]
+\item 本文 §\ref{sec:alg}--§\ref{sec:gaps} 可拆为 \texttt{body/result4.tex}（沿用主文件
+\texttt{sign-switching-fencing.tex} 的宏包与定理环境，与本文一致）；
+\item 在主文件中 \verb|\input{body/result4.tex}|，置于 \texttt{body/observer.tex} 之前；
+\item \texttt{body/comparison.tex} 增加一列“result 4”：需邻居速度=否、
+需 $v$ 观测器=否、$\ub,\bar w$ 进增益=否、终值 $\dist\le\kappa$、到达时间=无显式；
+\item \texttt{body/observer.tex} 的定位改为“若要求精确 $P1/P3$（$\dist\to0$）仍需观测器；
+本方案在 $\kappa$-精度下可完全去掉观测器”，二者构成“精度—代价”权衡；
+\item §\ref{sec:gaps} 全文必须以 \verb|\begin{remark}| 或附录形式保留——
+这是审稿人必然追问之处。
+\end{enumerate}
+
+\appendix
+\section{与原始文献的逐式对应}\label{app:map}
+% ============================================================
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{4.5cm}|p{4.0cm}|p{6.0cm}}
+\hline
+原始文献 & 含义 & 本文对应\\
+\hline
+(1) $x_1=y$（唯一可测） & 可测输出 & $y_i=\eta_i+k_2p_{i0}$，式 \eqref{eq:eta}\\
+$b_1,\dots,b_n$ 未知常值 & 虚拟控制系数 & $b_1=k_2$（已知）、$b_2=b_{i\ell}(t)$\\
+(3) 输入驱动滤波器 & 替代不可测状态 & 式 \eqref{eq:xi}\\
+(6)(7) $s_i=x_i/(b_i\cdots b_n)$ & $u$-单位标度 & 式 \eqref{eq:sdef}\eqref{eq:sdot}\\
+(9) $\dot{\tilde s}=L\tilde s+H+\frac{y}{\ub_1}L_1$ & 滤波误差 & 式 \eqref{eq:serr}\\
+(10) $\phi(t)=\sin(\pi t/2\tau)$ & 调谐函数 & 式 \eqref{eq:phi}\\
+(11)(12) $e_1=\phi(y-r)$，$e_1(0)=0$ & 初值消失 & 式 \eqref{eq:alpha}，Lemma~\ref{lem:init}\\
+(17) $\eta_1=\tan(\pi e_1/2k_1)$ & 障碍函数 & 式 \eqref{eq:alpha}\\
+(18)(19) $g(\eta)$ 的条件 & 方向函数 & $g=\cos$，Assumption~\ref{as:g}\\
+(25)(28)(29) $\alpha_1=c_1\eta_1g$，$\alpha_i=-c_i\eta_i$，$u=\alpha_n$ & 递推律
+& 式 \eqref{eq:alpha}\eqref{eq:u}\\
+Lemma 1 & $y$ 有界 $\Rightarrow$ 未测状态有界 & Lemma~\ref{lem:iss}\\
+Lemma 2 & $y$ 在 $[0,\tau)$ 有界 & 步骤 2 的 $Y$\\
+Lemma 3 & $g$ 的 $\limsup/\liminf$ & \textbf{Lemma~\ref{lem:funnel}（严格停点版）}\\
+Lemma 4 & $e_i(0)=0$ & Lemma~\ref{lem:init}\\
+Lemma 5 & $\dot\alpha_i$ 有界 & Lemma~\ref{lem:alphadot}\\
+(36)--(39) & 误差动态 & 式 \eqref{eq:e1}\eqref{eq:e2}\\
+(50)--(54) $V_2$ 论证 & 第 2 级漏斗 & Lemma~\ref{lem:funnel}(b)\\
+Theorem 1 & 全局 PPC & 定理~\ref{thm:main}\\
+（无对应） & 质心/合围 & Lemma~\ref{lem:W} + 步骤 7\\
+（无对应） & 避碰 & Lemma~\ref{lem:W} + 步骤 5\\
+\hline
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{漏斗不变性引理的严格证明（停点论证）}\label{app:strict}
+% ============================================================
+\paragraph{(a) 第 1 级。} 记 $\theta=\tan\frac{\pi e_1}{2\kappa_1}\in\mathbb R$，
+$\theta$ 绝对连续，
+\begin{equation}
+\dot\theta=\frac{\pi}{2\kappa_1}\bigl(1+\theta^2\bigr)\dot e_1
+=\frac{\pi}{2\kappa_1}\bigl(1+\theta^2\bigr)
+\Bigl[\delta_1(t)+\zeta(t)\phi(t)\,\theta\cos\theta\Bigr].
+\label{eq:B1}\tag{B.1}
+\end{equation}
+因 $a_1(\theta):=\frac{\pi}{2\kappa_1}(1+\theta^2)>0$，$\theta$ 的单调性与
+$\bigl[\delta_1+\zeta\phi\,\theta\cos\theta\bigr]$ 的符号一致。
+
+取 $\bar\theta_1\in(\pi/2,3\pi/2)$ 为 $\cos\bar\theta_1=-\dfrac{D_1}{\zeta\bar\theta_1}$
+的最小正解（在 $(\pi/2,3\pi/2)$ 上 $\theta\mapsto-\zeta\theta\cos\theta$ 自 $0$ 上升
+至最大后回落，与 $D_1$ 的下降段交点存在且唯一）。则在任意满足
+$\theta(t)=\pm\bar\theta_1$ 的时刻，
+\begin{equation*}
+\theta\dot\theta\Big|_{\theta=\bar\theta_1}
+=\frac{\pi}{2\kappa_1}(1+\bar\theta_1^2)
+\Bigl[\bar\theta_1\delta_1+\zeta\phi\,\bar\theta_1\cos\bar\theta_1\Bigr]
+=\frac{\pi}{2\kappa_1}(1+\bar\theta_1^2)
+\Bigl[\bar\theta_1\delta_1-\frac{\zeta(t)}{\zeta}D_1\Bigr]\le0,
+\end{equation*}
+因为 $|\bar\theta_1\delta_1|\le\bar\theta_1D_1$ 而
+$\dfrac{\zeta(t)}{\zeta}=\dfrac{b(t)}{\ub}\ge1$。
+同理 $\theta=-\bar\theta_1$ 时 $\theta\dot\theta\le0$。
+于是集合 $\{\theta\le\bar\theta_1\}\cap\{\theta\ge-\bar\theta_1\}$ 正向不变：
+若存在首次穿越时刻 $t_1$，则 $\theta(t_1)=\pm\bar\theta_1$ 且 $\theta\dot\theta>0$，
+与上式矛盾。结合 $\theta(0)=0$ 得 $|\theta(t)|\le\bar\theta_1$。
+\hfill$\square$
+
+\paragraph{(b) 第 2 级。} 记 $\mu_2=\tan\frac{\pi e_2}{2\kappa_2}$，则
+\begin{equation*}
+\mu_2\dot\mu_2=\frac{\pi}{2\kappa_2}(1+\mu_2^2)\,\mu_2(\delta_2-c_2\mu_2)
+\le\frac{\pi}{2\kappa_2}(1+\mu_2^2)\,|\mu_2|\bigl(|\delta_2|-c_2|\mu_2|\bigr)\le0
+\quad\text{当}\ |\mu_2|=\frac{\rho_2}{c_2},
+\end{equation*}
+故 $|\mu_2|\le\max\{|\mu_2(0)|,\rho_2/c_2\}=\rho_2/c_2$（因 $\mu_2(0)=0$）。
+\hfill$\square$
+
+\paragraph{(c) 备注（$g=\sin$ 与有界障碍）}
+取 $g=\sin$ 时把 $\cos$ 换成 $\sin$ 并作平移 $\theta\mapsto\theta-2\pi n$ 即同结论。
+若用有界障碍 $\bar\eta=\sigma\tanh\frac{\pi e}{2\kappa}$（避免 $\tan$ 奇异），
+则须在 $e$ 坐标下改写 \eqref{eq:B1}，并验证 $m(\eta)=\eta g(\eta)$ 仍“取到
+$\le-D/\zeta$”；$\tanh$ 型满足该条件，但不变集不再有
+$\bar\theta_1\to3\pi/2$ 的显式形式，需数值标定。
+
+% ============================================================
+\section{符号已知时的加强版（$\kappa\to0$）}\label{app:known}
+% ============================================================
+若 $\sgn(b_{i\ell})$ 与幅值下界 $\ub$ 已知，可把漏斗放在\textbf{速度级}：
+取期望速度（可算）
+\begin{equation*}
+g_i=k_1p_{i0}-\varphi_i\quad(\text{无需微分}),
+\end{equation*}
+令 $\alpha_{i1}=g_i/\hat b$（$\hat b$ 取 $\ub\,\sgn(b)$ 或 $\bar b\,\sgn(b)$，
+符号已知），滤波器仍取 \eqref{eq:xi}，$e_2=\xi_2-\alpha_{i1}$，
+$u=-c_2\bar\eta_2$。此时 $\delta_2$ 不含符号不确定项，停点论证退化为线性情形，且
+\begin{equation*}
+|\tilde s|\le\rho_s,\qquad
+\bigl|v_{i0}-g_i\bigr|\le\bar b\Bigl(\frac{2\kappa_2}{\pi}\arctan\frac{\rho_2}{c_2}+\rho_s\Bigr),
+\end{equation*}
+于是 $P1$ 的稳态球半径
+$\kappa\propto(\bar w+\rho_s+\kappa_2)/\bigl(\ub k_1\bigr)$，
+可由 $\uparrow k_1$、$\uparrow c_2$、$\downarrow\kappa_2$ \textbf{任意减小}。
+须强调：这仍是“实用渐近”而非 $\lim=0$——因为 $\tan$ 障碍只提供不变性，
+不提供把误差驱向零的机制（要得到 $\lim=0$ 需另加积分/内模或自适应补偿，
+那将牺牲“无估计、无辨识”的设计卖点）。
+
+\end{document}
