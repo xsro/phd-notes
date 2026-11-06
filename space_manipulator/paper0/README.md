@@ -24,14 +24,23 @@ paper0/
 │   ├── local.bib
 │   └── my_library.bib         # Zotero 引用
 ├── figures/                   # 仿真输出图片
-└── simulation/                # MATLAB 仿真代码
-    ├── run_final_paper_sim.m           # 主仿真脚本（5 算例）
-    ├── compute_floating_base_inertia.m # Jacobian 求和法 (6+n)×(6+n) 惯性矩阵 ✅
-    ├── compute_coriolis_force.m        # 数值 Christoffel C(q,dq) ✅
-    ├── spatial_crba.m                  # 空间 CRBA + 数值 Christoffel ⚠️
-    ├── main_ffsm_pdf_tracking_yan_params.m  # 原始仿真（名义模型）
-    └── plot_ffsm_pdf_tracking_results.m     # 原始结果绘图
+└── simulation/                # MATLAB 仿真代码（文献 259 参数）
+    ├── README.md                       # 仿真说明（含文献 259 模型与参数）
+    ├── main_dou_yue_259_compare.m      # 主脚本：参数取 259，10 算例对比
+    ├── dou_yue_259_parameters.m        # Table 1/2 参数（OKB doc 259）
+    ├── dou_yue_259_control_params.m    # Table 3 控制参数
+    ├── dou_yue_259_disturbance.m       # Eq (74) 扰动力矩
+    ├── ffsm259_model.m                 # DH + Schur 补完整动力学 ✅
+    ├── fonsm259_init.m / fonsm259_step.m   # FONTSM / FOSM 控制器
+    ├── ftdob_step.m                    # 有限时间扰动观测器
+    ├── build_pdf_gain.m / pdf_gain_at.m    # PDF Gramian 增益
+    ├── validate_ffsm259_model.m        # 模型校核（Robotics Toolbox 对比）
+    ├── dou_yue_259_check_consistency.m # Table 1 一致性核查
+    └── calib_kappa.m                   # 增益标定扫描
 ```
+
+> 原基于严宇新表 2-1 的仿真脚本已删除（见 §已归档），可用
+> `git log -- simulation/` 找回旧版本。
 
 ---
 
@@ -50,16 +59,43 @@ paper0/
 | §6 仿真 | Jacobian 法完整数据、诚实讨论 PDF/PTDO 数值局限、模型定位 Remark |
 | §7 结论 | 5 点未来工作（CRBA 验证、Gramian 优化、任务空间集成、离散时间理论、实验验证） |
 
-### 🖥️ 仿真代码
+### 🖥️ 仿真代码（全部基于文献 259 参数）
 
 | 文件 | 方法 | 状态 |
 |------|------|------|
-| `compute_floating_base_inertia.m` | **Jacobian 求和法** — 对串联链每体构造 6×(6+n) 空间雅可比，累加 `J_i^T * I_i * J_i` 得到 H_full | ✅ **已验证**：H 正定（min eig=1.22），对称误差 1.8e-13，H_b cond=13.6，H_m cond=2059 |
-| `compute_coriolis_force.m` | **数值 Christoffel** — 用有限差分计算 `∂H/∂q_k`，进而计算 `C(q,dq)*dq = dH/dt*dq - 0.5*∇(dq'*H*dq)` | ✅ **已验证**：C(q,0)=0，C 有非零基座分量（物理正确） |
-| `spatial_crba.m` | **空间 CRBA** — 复合刚体算法 + 数值 Christoffel（避免 RNEA 坐标系 Bug）| ⚠️ H 正定（min eig=0.29），前向动力学一致（残差 3e-13），但与 Jacobian 法 H 差异 ~100%，需第三方验证 |
-| `run_final_paper_sim.m` | **5 算例完整仿真** — PD / PDF / PDF+PTDO 对比（含扰动） | ✅ 运行成功（54 s） |
+| `ffsm259_model.m` | **DH 正解 + 质心雅可比求和惯性**，Schur 补得 `M_θm/M_r`，中心差分 Christoffel 得 `C_θm`，广义雅可比 `J` | ✅ 与 Robotics System Toolbox 交叉校核：正运动学 **2.3e−16 m**、固定基座质量矩阵 **8.5e−16**、性质 2（`Ṁ−2C` 反对称）**1.4e−16**、动量守恒 5e−14 |
+| `main_dou_yue_259_compare.m` | **10 算例 × 2 种增益标定** — PD / PDF / PDF+FTDOB vs FONTSM / FOSM 的三种补偿器 | ✅ 运行成功（约 9–10 min） |
+| `fonsm259_step.m` + `ftdob_step.m` | Eq (15)(35)(36)(37)(44)(50)(57) 逐条实现 | ✅ 与原文 Case (1)(2)(3) 对应 |
+| `validate_ffsm259_model.m` | 模型正定性 / 工具箱对比 / 能量与动量守恒 | ✅ 全部通过 |
 
-### 📊 仿真结果
+### 📊 文献 259（Dou & Yue 2025, IJRNC）参数复现与算法对比
+
+被控对象、初始状态、扰动与饱和限幅全部取自 OKB doc 259 的 Table 1/2 与 Eq (74)，
+初始误差 0.5°，κ = 0.01，Ts = 2 ms，Tf = 20 s：
+
+| 控制器 | \|e(T)\| [rad] | RMS_ss | t_s [s] | max\|τ\| | sat% |
+|---|---|---|---|---|
+| PD（无扰动） | 2.50e-14 | 1.44e-06 | 3.18 | 20.0 | 5.3 |
+| PDF（无扰动） | 2.58e-14 | 1.47e-06 | 3.15 | 20.0 | 5.3 |
+| PD（有扰动） | 5.43e-02 | 6.60e-02 | — | 20.0 | 5.7 |
+| PDF（有扰动） | 6.02e-02 | 6.91e-02 | — | 20.0 | 5.7 |
+| **PDF + FTDOB[259]** | **1.24e-04** | **6.29e-05** | 3.45 | 20.0 | 5.6 |
+| FONTSM+FTDOB（无补偿） | 1.99e-03 | 1.20e-02 | — | 20.0 | 4.6 |
+| FONTSM+FTDOB+FTAC[29] | 1.41e-03 | 1.16e-02 | — | 20.0 | 4.6 |
+| FONTSM+FTDOB+FTASC | 1.97e-03 | 1.20e-02 | — | 20.0 | 4.6 |
+| FONTSM+FTDOB+FTASC+自适应 | 1.30e-03 | 1.14e-02 | — | 20.0 | 4.7 |
+| FOSM+FTDOB+FTASC | 1.29e-02 | 3.39e-02 | — | 14.7 | 0.0 |
+
+要点：（a）`Table 3` 的增益需按 `M_θm` 量级重新标定（κ，稳定边界 ≈ 0.015），
+否则全程饱和并发散；（b）加上 259 的 FTDOB 后，本工程的 PDF 稳态精度
+（6.3e-05）明显优于 FONTSM 族（1.1e-02 ~ 1.2e-02）；（c）同等条件下
+FONTSM 比 FOSM 好约 2.8 倍，与原文结论方向一致。详见 `simulation/README.md`。
+
+### 📊 已归档：旧参数（严宇新表 2-1）的历史结果
+
+> 对应脚本（`run_final_paper_sim.m`、`main_ffsm_pdf_tracking_yan_params.m`、
+> `compute_floating_base_*.m`、`spatial_crba.m`）已删除，数据保留供论文 §6 引用。
+> 基座 1000 kg / I=72，连杆 4.25–7 kg；`τmax` 无限制（峰值 259 Nm）。
 
 | Controller | \|e(T)\| [rad] | RMS(e) [rad] | max\|τ\| [Nm] |
 |---|---|---|---|
@@ -74,44 +110,42 @@ paper0/
 ## 环境要求
 
 - **MATLAB R2025b** 或更高版本
-- **Toolbox**: Robotics System Toolbox（用于 `rigidBodyTree` 参考）、Control System Toolbox（`expm`，`ctrb`）、Symbolic Math Toolbox（可选）
+- **Toolbox**: Control System Toolbox（`expm`）；Robotics System Toolbox 仅用于模型校核的可选对比（缺失时自动跳过）
 - **LaTeX**: XeLaTeX + ctex + biber + biblatex（gb7714-2015 样式）
 - **字体**: Songti SC, PingFang SC（macOS 预装）
 
 ## 仿真运行方法
 
-### 快速运行（5 算例，约 54 秒）
+### 主对比（文献 259 参数，约 9–10 分钟）
 
 ```bash
 cd simulation
-/Applications/MATLAB_R2025b.app/bin/matlab -batch "run('run_final_paper_sim.m')"
+matlab -batch "main_dou_yue_259_compare"
 ```
 
 输出：
-- 终端：5 个算例的 `|e(T)|`, `RMS(e)`, `max|tau|`
-- 图片：`figures/sim_overview.png`（跟踪误差 + 速度误差 + 控制力矩）
-- 数据：`simulation/final_results.mat`
+- 终端：两张对比表（`kappa` 标定 / `kappa = 1` 原文增益）
+- 图片：`figures/dou_yue_259_compare.png`
+- 数据：`simulation/results_dou_yue_259.mat`
 
-### 单算例调试
+### 模型校核与参数核查（各约 1 分钟）
+
+```bash
+matlab -batch "validate_ffsm259_model"         # 对称性/正定性/工具箱对比/性质 2
+matlab -batch "dou_yue_259_check_consistency"  # Table 1 一致性核查
+matlab -batch "calib_kappa"                    # 增益标定扫描（约 2 分钟）
+```
+
+### 单次求值
 
 ```matlab
 addpath('simulation');
-[H, C, Me, Ce] = compute_floating_base_inertia(P, q_joint);
-C_dq = compute_coriolis_force(P, q_joint, dq_joint);
-```
-
-### 动力学验证
-
-```matlab
-% 正定性检查
-[H,~,~,~] = compute_floating_base_inertia(P, q);
-min(eig(H))  % 应为正值
-
-% 动量守恒
-[H, Hb, Hbm, ~] = compute_floating_base_inertia(P, q);
-xb_dot = -Hb \ (Hbm * dq_joint);
-momentum = H * [xb_dot; dq_joint];
-norm(momentum)  % 应接近 0
+P = dou_yue_259_parameters();
+S = ffsm259_model(P, P.q0, zeros(P.n,1));
+S.Me        % 等效关节空间惯性 (Schur 补)
+S.Cmat      % 等效科里奥利矩阵
+S.J         % 广义雅可比 (3 x n)
+S.pe        % 末端位置
 ```
 
 ### 论文编译
@@ -127,18 +161,18 @@ xelatex paper.tex
 
 ## 已知问题
 
-### 1. ~~CRBA vs Jacobian 法 H 矩阵分歧~~ ✅ 已解决
+> 下列 1、2、4 条涉及已删除的旧脚本，保留结论供论文 §6 引用；
+> 3 条（Gramian 病态）在文献 259 参数下同样成立（`cond(W_c) = 4.9e11`）。
 
-**状态**: 已定位并验证。
+### 1. ~~CRBA vs Jacobian 法 H 矩阵分歧~~ ✅ 已解决（旧模型）
 
-**根因**: `compute_floating_base_inertia.m` 中 Jacobian 构造有两个 bug：
-- `J(:, 1:6) = eye(6)` 应为 `J(:, 1:6) = adj(inv(T))`（将基座速度变换到体坐标系）
-- `Ad_base_to_body = adj(T{body+1})` 应为 `adj(inv(T{body+1}))`（方向反了）
+**状态**: 已定位并验证；两套旧实现（`compute_floating_base_inertia.m` 的
+Jacobian 求和法与 `spatial_crba.m` 的 CRBA）已**删除**，现统一由
+`ffsm259_model.m` 实现，并经 Robotics System Toolbox 三方校核通过
+（正运动学 2.3e−16 m，固定基座质量矩阵 8.5e−16）。
 
-**当前状态**:
-- `spatial_crba.m` 的 H 与手动并行轴定理计算完全一致（diff = 8.6e-17）✅
-- `compute_floating_base_inertia.m`（已尝试修复，但 H_b 仍有 47% 残留差异，H_bm 和 H_m 已修复为 1.78e-16）
-- **建议使用 `spatial_crba.m` 作为主要动力学方法**
+**当时的根因**: Jacobian 构造有两个 bug：基座速度未做 `adj(inv(T))` 变换、
+`Ad_base_to_body` 方向取反。
 
 ### 2. PTDO 过补偿 🔴
 
@@ -156,18 +190,21 @@ xelatex paper.tex
 
 **论文处理**: 已在 §5 Gramian 病态性 Remark 中诚实讨论，指出 PDF 在 n ≤ 3 时效果最佳，高维 MIMO 需改用结构化延迟反馈参数化。
 
-### 4. CRBA C(q,0) "不为零" 🟢
+### 4. CRBA C(q,0) “不为零” 🟢（旧模型）
 
-**实际**: 测试代码 `C0 = spatial_crba(P, q, zeros(7,1))` 只接收了 1 个输出参数（返回 H 而非 C），所以 `norm(C0)` 实际是 `norm(H)`。C(q,0) = 0 的性质已通过数值 Christoffel 方法的内部逻辑保证（dq=0 → 动能为 0 → H_dot=0 且 ∇KE=0）。
+**实际**: 当时的测试代码只接收了 1 个输出参数（返回 H 而非 C），所以
+`norm(C0)` 实际是 `norm(H)`。C(q,0) = 0 的性质已由数值 Christoffel 方法
+的内部逻辑保证；现实现中 `ffsm259_model(P,q,0).Ce_qd` 可直接验证为零。
 
 ---
 
 ## 下一步建议
 
-### P0 — CRBA 交叉验证（2-3 周）
-1. 在 Simscape Multibody 中搭建浮基 7-DOF 机械臂模型
-2. 在相同构型下提取惯性矩阵，与 CRBA / Jacobian 法三方对比
-3. 确定正确的 H 矩阵后，修复 spatial_crba.m 中的坐标系约定
+### P0 — 任务空间扩展（建议优先）
+1. 把 `fonsm259_step.m` 的滑模面从关节误差换成末端误差
+   `x_e^d - x_e` 与 `J_E⁺(ẍ^r - J̇θ̇)`（原文 Eq 48–51）
+2. 叠加基座姿态稳定的二级任务（Eq 52–56，需 `H̄_w/H̄_m/C̄_b1/C̄_m1` 的 v/w 分块）
+3. 与现有关节空间结果对比，验证两种任务表述的一致性
 
 ### P1 — PTDO 参数整定（1 周）
 1. 降低观测器增益：η = 0.1, T_c = 2.0
@@ -179,9 +216,10 @@ xelatex paper.tex
 2. 改用截断 SVD 替代 Tikhonov 正则化
 3. 尝试结构化延迟反馈参数化（`-K_c(t) = ρ(t)·K_h`）
 
-### P3 — Terminal SMC 对比（3 天）
-1. 完善 `run_final_paper_sim.m` 中的 `ctrl_tsmc` 函数
-2. 将 Terminal SMC 加入 5 算例对比
+### P3 — 强饱和工况（3 天）
+1. 降低 `τmax` 或增大初始误差，使 259 的三种补偿器差异显现
+   （现工况饱和占空比仅 ~4.6%）
+2. 在 `main_dou_yue_259_compare.m` 中新增一个 `cfg` 分支并单独成表
 
 ### P4 — 蒙特卡洛统计分析（3 天）
 1. 对随机初始误差运行 30 次 MC 仿真
