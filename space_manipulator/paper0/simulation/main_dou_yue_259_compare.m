@@ -94,7 +94,7 @@ ctrl.pdf = build_pdf_gain(ctrl.K0, n, ctrl.h);
 fprintf('\nPDF Gramian: cond(W_c) = %.3e, h = %.1f s\n', ctrl.pdf.condition_number, ctrl.h);
 
 %% ---------------- 5. 算例定义 ----------------
-%  kind: 'pd' | 'pdf' | 'pdfdob' | 'fonsm' | 'fosm'
+%  kind: 'pd' | 'pdf' | 'pdfptdo' | 'pdfptdo1' | 'pdfdob' | 'fonsm' | 'fosm'
 %  asc : 'none' | 'ftac' | 'ftasc'
 cases = struct('name', {}, 'kind', {}, 'dob', {}, 'asc', {}, 'dist', {}, 'adp', {});
 
@@ -102,6 +102,8 @@ cases(end+1) = mk("PD, 无扰动",                'pd',     false, 'none',  fals
 cases(end+1) = mk("PDF, 无扰动",               'pdf',    false, 'none',  false, false);
 cases(end+1) = mk("PD, 有扰动",                'pd',     false, 'none',  true,  false);
 cases(end+1) = mk("PDF, 有扰动",               'pdf',    false, 'none',  true,  false);
+cases(end+1) = mk("PDF+PTDO[本文], 有扰动",    'pdfptdo',false, 'none',  true,  false);
+cases(end+1) = mk("PDF+PTDO(T_c=1), 有扰动",   'pdfptdo1',false,'none',  true,  false);
 cases(end+1) = mk("PDF+FTDOB[259], 有扰动",    'pdfdob', true,  'none',  true,  false);
 cases(end+1) = mk("FONTSM+FTDOB, 无补偿",      'fonsm',  true,  'none',  true,  false);
 cases(end+1) = mk("FONTSM+FTDOB+FTAC[29]",     'fonsm',  true,  'ftac',  true,  false);
@@ -196,9 +198,13 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
         dob.phat = dob.phat0;
         dob.tauhat = zeros(n, 1);
     end
+    if any(strcmp(cs.kind, {'pdfptdo','pdfptdo1'}))
+        ost = struct('z1', zeros(n,1), 'z2', zeros(n,1));   % PTDO 状态
+    end
 
     E = zeros(n, N);  Ed = zeros(n, N);  TAU = zeros(n, N);
     ETA = zeros(n, N);  TH = zeros(n, N);  DST = zeros(n, N);
+    DAH = zeros(n, N);  DDA = zeros(n, N);
     SAT = false(1, N);  PE = zeros(1, N);
 
     for k = 1:N-1
@@ -231,6 +237,17 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
                 nu = ctrl.K0*z - pdf_gain_at(ctrl.pdf, tk)*z_hist(:,end);
                 tau_cmd = Cn*dq + Mn*(ref.ddqd(:,k) + nu);
 
+            case {'pdfptdo','pdfptdo1'}
+                % 本文方法: PDF + 预设时间扰动观测器 (Eq 19-22)
+                if strcmp(cs.kind, 'pdfptdo1'), oprm = CP.ptdo_tc1; else, oprm = CP.ptdo; end
+                z = [q - ref.qd(:,k); dq - ref.dqd(:,k)];
+                z_hist = [z, z_hist(:,1:end-1)];
+                nu = ctrl.K0*z - pdf_gain_at(ctrl.pdf, tk)*z_hist(:,end);
+                u_o = Mn \ (tau_act_prev - Cn*dq);
+                [ost, da_hat] = ptdo_step(ost, dq, u_o, tk, Ts, oprm);
+                tau_cmd = Cn*dq + Mn*(ref.ddqd(:,k) + nu - da_hat);
+                DAH(:,k) = da_hat;
+
             case 'pdfdob'
                 z = [q - ref.qd(:,k); dq - ref.dqd(:,k)];
                 z_hist = [z, z_hist(:,1:end-1)];
@@ -256,6 +273,7 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
             d = zeros(n, 1);
         end
         DST(:,k) = d;
+        DDA(:,k) = Ma \ d;
 
         % ---------- 记录 + 半隐式积分 ----------
         TAU(:,k) = tau_act;
@@ -296,7 +314,8 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
 
     r = struct('name', cs.name, 'kind', cs.kind, 'asc', cs.asc, 'dob', cs.dob, ...
         'dist', cs.dist, 'kappa', kappa, 'm', m, 'E', E, 'Ed', Ed, ...
-        'TAU', TAU, 'PE', PE, 'ETA', ETA, 'TH', TH, 'DST', DST, 'e_norm', en);
+        'TAU', TAU, 'PE', PE, 'ETA', ETA, 'TH', TH, 'DST', DST, ...
+        'DAH', DAH, 'DDA', DDA, 'e_norm', en);
 end
 
 % ------------------------------------------------------------------------

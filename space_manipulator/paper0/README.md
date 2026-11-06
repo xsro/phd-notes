@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-本仓库实现自由漂浮空间机械臂的关节空间轨迹跟踪控制，控制方法为"扰动观测（PTDO）—动力学补偿—误差线性化—光滑周期延迟反馈（PDF）"四阶段结构。论文已编译为 27 页 PDF（`paper.pdf`），包含理论推导、定理-证明体系、扰动有界性分析和仿真验证。
+本仓库实现自由漂浮空间机械臂的关节空间轨迹跟踪控制，控制方法为"扰动观测（PTDO）—动力学补偿—误差线性化—光滑周期延迟反馈（PDF）"四阶段结构。论文已编译为 28 页 PDF（`paper.pdf`），包含理论推导、定理-证明体系、扰动有界性分析和仿真验证。
 
 ---
 
@@ -11,7 +11,7 @@
 ```
 paper0/
 ├── paper.tex                  # 主文档（ctexart, amsthm 定理环境）
-├── paper.pdf                  # 当前编译版本（27 页）
+├── paper.pdf                  # 当前编译版本（约 28 页）
 ├── sections/                  # 论文章节
 │   ├── 01-introduction.tex
 │   ├── 02-modeling.tex
@@ -23,7 +23,7 @@ paper0/
 ├── refs/                      # 参考文献
 │   ├── local.bib
 │   └── my_library.bib         # Zotero 引用
-├── figures/                   # 仿真输出图片
+├── figures/                   # 仿真输出图片（论文图 1-3 + 对比总览）
 └── simulation/                # MATLAB 仿真代码（文献 259 参数）
     ├── README.md                       # 仿真说明（含文献 259 模型与参数）
     ├── main_dou_yue_259_compare.m      # 主脚本：参数取 259，10 算例对比
@@ -50,13 +50,13 @@ paper0/
 
 | 部分 | 内容 |
 |------|------|
-| paper.tex | 添加 `amsthm` 宏包（theorem/lemma/proof/definition/assumption/remark），27 页无编译错误 |
+| paper.tex | 添加 `amsthm` 宏包（theorem/lemma/proof/definition/assumption/remark），28 页无编译错误 |
 | §1 引言 | 结构化 "相关工作" + "本文贡献"，贡献项编号化，对应后文定理 |
 | §2 建模 | 浮基 → Schur 补推导，空间 CRBA 数值实现说明，3 条形式化假设 |
 | §3 问题定义 | 问题 1（预设时间跟踪）、定义 1/2（单周期/幂零零化）、5 条假设环境 |
 | §4 控制器 | 定理 1（PTDO 收敛）、引理 1（误差线性化+Kalman 秩证明）、定义 3（可控 Gramian）、定理 2（PDF 单周期零化+完整变分公式证明） |
 | §5 稳定性 | 定理 3（精确跟踪，5 条理想条件）、定理 4（周期边界有界跟踪，完整证明）、命题 1（近似零化稳态上界）、Gramian 病态性 Remark、推论 1-3、理论结果总结表 |
-| §6 仿真 | Jacobian 法完整数据、诚实讨论 PDF/PTDO 数值局限、模型定位 Remark |
+| §6 仿真 | 完整浮基动力学（文献 259 参数）、12 算例对比、PTDO 整定与抖振讨论、与 FONTSM/FOSM 对比 |
 | §7 结论 | 5 点未来工作（CRBA 验证、Gramian 优化、任务空间集成、离散时间理论、实验验证） |
 
 ### 🖥️ 仿真代码（全部基于文献 259 参数）
@@ -74,22 +74,26 @@ paper0/
 初始误差 0.5°，κ = 0.01，Ts = 2 ms，Tf = 20 s：
 
 | 控制器 | \|e(T)\| [rad] | RMS_ss | t_s [s] | max\|τ\| | sat% |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | PD（无扰动） | 2.50e-14 | 1.44e-06 | 3.18 | 20.0 | 5.3 |
 | PDF（无扰动） | 2.58e-14 | 1.47e-06 | 3.15 | 20.0 | 5.3 |
 | PD（有扰动） | 5.43e-02 | 6.60e-02 | — | 20.0 | 5.7 |
 | PDF（有扰动） | 6.02e-02 | 6.91e-02 | — | 20.0 | 5.7 |
-| **PDF + FTDOB[259]** | **1.24e-04** | **6.29e-05** | 3.45 | 20.0 | 5.6 |
-| FONTSM+FTDOB（无补偿） | 1.99e-03 | 1.20e-02 | — | 20.0 | 4.6 |
-| FONTSM+FTDOB+FTAC[29] | 1.41e-03 | 1.16e-02 | — | 20.0 | 4.6 |
-| FONTSM+FTDOB+FTASC | 1.97e-03 | 1.20e-02 | — | 20.0 | 4.6 |
+| **PDF + PTDO（本文，T_c=5 s）** | **3.96e-06** | **4.81e-06** | 3.50 | 20.0 | 7.2 |
+| PDF + PTDO（T_c=1 s，未整定） | 5.98e-05 | 1.59e-04 | 8.02 | 20.0 | 17.0 |
+| PDF + FTDOB[259] | 1.24e-04 | 6.29e-05 | 3.45 | 20.0 | 5.6 |
+| FONTSM+FTDOB（无补偿，C3） | 1.99e-03 | 1.20e-02 | — | 20.0 | 4.6 |
+| FONTSM+FTDOB+FTAC[29]（C2） | 1.41e-03 | 1.16e-02 | — | 20.0 | 4.6 |
+| FONTSM+FTDOB+FTASC（C1） | 1.97e-03 | 1.20e-02 | — | 20.0 | 4.6 |
 | FONTSM+FTDOB+FTASC+自适应 | 1.30e-03 | 1.14e-02 | — | 20.0 | 4.7 |
 | FOSM+FTDOB+FTASC | 1.29e-02 | 3.39e-02 | — | 14.7 | 0.0 |
 
 要点：（a）`Table 3` 的增益需按 `M_θm` 量级重新标定（κ，稳定边界 ≈ 0.015），
-否则全程饱和并发散；（b）加上 259 的 FTDOB 后，本工程的 PDF 稳态精度
-（6.3e-05）明显优于 FONTSM 族（1.1e-02 ~ 1.2e-02）；（c）同等条件下
-FONTSM 比 FOSM 好约 2.8 倍，与原文结论方向一致。详见 `simulation/README.md`。
+否则全程饱和并发散；（b）PTDO 的 `T_c` 需与对象时间尺度匹配：`T_c=1 s` 时
+观测器抖振使饱和率达 17 %、`t_s=8.0 s`，`T_c=5 s` 时降到 7.2 %/3.5 s，
+终端误差 3.96e-06 rad，优于全部 FONTSM 方案（1.1e-02 ~ 1.2e-02）约三个数量级；
+（c）同等条件下 FONTSM 比 FOSM 好约 2.8 倍，与原文结论方向一致。
+详见 `simulation/README.md`。
 
 ### 📊 已归档：旧参数（严宇新表 2-1）的历史结果
 
@@ -134,7 +138,19 @@ matlab -batch "main_dou_yue_259_compare"
 matlab -batch "validate_ffsm259_model"         # 对称性/正定性/工具箱对比/性质 2
 matlab -batch "dou_yue_259_check_consistency"  # Table 1 一致性核查
 matlab -batch "calib_kappa"                    # 增益标定扫描（约 2 分钟）
+matlab -batch "tune_ptdo"                      # PTDO 参数扫描（约 3 分钟）
 ```
+
+### 生成论文图片（约 1 分钟）
+
+```bash
+matlab -batch "make_paper_figures"
+```
+
+输出 `figures/` 下的三张论文图（按 6.3 in 版心宽、300 dpi 导出）：
+`end_effector_joint_position_trajectory.png`（图 1）、
+`joint_tracking_error_torque_summary.png`（图 2）、
+`disturbance_observer.png`（图 3），并打印表 2 所需的全部数值。
 
 ### 单次求值
 

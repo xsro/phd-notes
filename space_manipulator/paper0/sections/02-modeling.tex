@@ -118,5 +118,5 @@ M_e(q_m)\ddot q_m + C_e(q_m,\dot q_m)\dot q_m = \tau + d(t).
   \[
   \ddot q_{\text{full}} = H_{\text{full}}^{-1}\bigl([0_{6\times1}^\top,\;\tau^\top]^\top - C_{\text{full}}\dot q_{\text{full}}\bigr),
   \]
-  其中前 \(6\) 个加速度分量对应基座自由度，后 \(n\) 个对应关节自由度。提取 Schur 补 \(M_e = H_m - H_{bm}^\top H_b^{-1} H_{bm}\) 及等效科里奥利向量 \(C_e\dot q = C_m - H_{bm}^\top H_b^{-1} C_b\) 即可用于控制器设计。本文第~\ref{sec:simulation}~节的仿真采用基于该方法参数的正定名义关节空间模型，完整的 CRBA 递推动力学实现留待后续工作验证。
+  其中前 \(6\) 个加速度分量对应基座自由度，后 \(n\) 个对应关节自由度。提取 Schur 补 \(M_e = H_m - H_{bm}^\top H_b^{-1} H_{bm}\) 及等效科里奥利向量 \(C_e\dot q = C_m - H_{bm}^\top H_b^{-1} C_b\) 即可用于控制器设计。本文第~\ref{sec:simulation}~节的仿真即按上述方式构造完整惯性矩阵并经 Schur 补提取 \(M_e\) 与 \(C_{\theta m}\)，所用物理参数取自文献~\cite{dou2025fractional}~，实现细节与校核数据见该节。
 \end{remark}

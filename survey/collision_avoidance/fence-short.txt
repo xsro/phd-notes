@@ -1,0 +1,64 @@
+以下保留“一法一段”，文献按 **GB/T 7714—2015** 著录（`[J]` 期刊 / `[C]` 会议；西文姓全大写、名缩写；>3 人取前 3 加 `et al`）。
+
+---
+
+**① 自身双观测点 → 三角测距（已知边在观测端）**
+同一机体上两个传感器相距基线 `b`（已知），各自测同一目标得两条 bearing，交会即得距离：`D ≈ b/Δθ`（远距）或 `D = b·sinθ₂/sin(θ₂−θ₁)`。优点是不必在邻机上装任何标定物、基线可比杆长更长；难点是双目同步与小基线远距退化（角度噪声被 `1/Δθ` 放大）。这是视觉标准做法，但在 bearing-only 编队避碰文献中几乎无人真用——库内做三角剖分的三篇全是定位/里程计而非避碰，因而也是本方向最干净的空位。
+**典型文献：**
+[1] ZHENG C L, MI Y Z, GUO H Q, et al. Optimal spatial-temporal triangulation for bearing-only cooperative motion estimation[J]. Automatica, 2025: 112216. DOI: 10.1016/j.automatica.2025.112216.
+[2] YIN Q Y, XU C, ZHOU P, et al. Dual-UAV cooperative bearing-only target localization based on multi-level box particle filter[J]. Digital Signal Processing, 2025: 105572. DOI: 10.1016/j.dsp.2025.105572.
+[3] YANG Z, LI Y Y, DU H Z, et al. Accurate visual odometry by leveraging 2DoF bearing-only measurements[J]. IEEE Transactions on Instrumentation and Measurement, 2025, 74. DOI: 10.1109/TIM.2024.3522706.
+
+---
+
+**② 目标侧已知尺寸 → 张角测距（已知边在目标端）**
+给每台邻机装尺寸已知的标定物（竖杆长 `l_j` 或球半径 `r_j`），观测者测**同一物体上两点**的 bearing（杆底/杆顶、球两切点），得张角 `θ`，则 `D = l_j·cotθ`（2D）、`D = r_j·√(2/(1−g′ᵀg″))`（3D）。它是①的对偶切法：同一三角形，只把已知边画到目标身上，故单目即可测距。代价是需加装标定物，精度随 `1/sin²θ` 恶化——最优取 `l_j = d_f`、`r_j = d_f/2`，即"已知长度应与被测距离同量级"。变体是把未知尺寸 `ℓ` 作状态量在线估计，从而无需预知尺寸。
+**典型文献：**
+[4] SONG Z L, HUANG H C, FENG G. Bearing-only collision-free formation tracking control for multiagent systems: a safety-critical control approach[J]. IEEE Transactions on Industrial Electronics, 2026. DOI: 10.1109/TIE.2026.3730129.
+[5] NING Z, ZHANG Y, LI J N, et al. A bearing-angle approach for unknown target motion analysis based on visual measurements[J]. The International Journal of Robotics Research, 2024. DOI: 10.1177/02783649241229172.
+[6] SU H F, YANG Z W, ZHU S Y, et al. Bearing-based multi-agent formation control: a survey and taxonomy[J]. Annual Reviews in Control, 2026. DOI: 10.1016/j.arcontrol.2025.101043.
+
+---
+
+**③ 不借尺度，改用结构/初值条件（隐式安全）**
+不构造安全约束，而证明闭环轨迹本身不相交：只要初始位置误差足够小，`‖δ(0)‖ < (1/√n)(min_{i,j}‖p*_i−p*_j‖ − γ)`，则全程 `‖p_i−p_j‖ > γ`；安全性由目标构型最小间距与初值精度共同保证，零额外传感、零通信。它还点明物理根源：两机一旦重合，bearing 在数学上无定义，稳定性结论只到碰撞前一刻。代价是条件保守、给的是"安全条件"而非"安全约束"；另有"构型式 keep-out"（把闭环轨迹设计在凸包外侧）属同思路变体。
+**典型文献：**
+[7] ZHAO S Y, ZELAZO D. Bearing rigidity and almost global bearing-only formation stabilization[J]. IEEE Transactions on Automatic Control, 2016. DOI: 10.1109/TAC.2015.2459191.
+[8] WU K F, HU J Y, LENNOX B, et al. Finite-time bearing-only formation tracking of heterogeneous mobile robots with collision avoidance[J]. IEEE Transactions on Circuits and Systems II: Express Briefs, 2021. DOI: 10.1109/TCSII.2021.3066555.
+[9] CAO S D, LI R, SHI Y J, et al. Safe convex-circumnavigation of one agent around multiple targets using bearing-only measurements[J]. Automatica, 2021: 109934. DOI: 10.1016/j.automatica.2021.109934.
+[10] TRINH M H, ZHAO S Y, SUN Z Y, et al. Bearing-based formation control of a group of agents with leader-first follower structure[J]. IEEE Transactions on Automatic Control, 2018. DOI: 10.1109/TAC.2018.2836022.
+
+---
+
+**④ 显式测距/相对位置（放弃 bearing-only）**
+直接取得障碍物或邻机的距离/相对位置，再用 CBF-QP 或行为式规则做安全滤波：非完整机器人可借"手点" `q_i = p_i + l_i e_1i` 把 CBF 相对度降到 1（但 `h` 中仍是真距离 `‖q_i−o_k‖`）；航天器多智能体用 backstepping + CBF-QP 同时处理静态与动态障碍，并配输入式动态事件触发；机器人实验在 15 cm 内用短程红外同时取方位与距离。这是工程上最可靠的一支，唯一要求是诚实声明"安全层不是 bearing-only"（前者恰恰未声明障碍位置来源，引用时须补注）。
+**典型文献：**
+[11] TRAN Q V, LEE C Y, YUAN X, et al. Control barrier function-based bearing-only formation tracking of mobile agents with obstacle avoidance[C]//Preprints of the 23rd IFAC World Congress. 2020.
+[12] LI J, KANG H L, LI J F, et al. Bearing-based collision-free formation control for spacecrafts under dynamic event-triggered input[J]. IEEE Transactions on Automation Science and Engineering, 2025, 22: 14855-14866. DOI: 10.1109/TASE.2025.3564742.
+[13] ZHENG R H, LIU Y H, SUN D. Enclosing a target by nonholonomic mobile robots with bearing-only measurements[J]. Automatica, 2015, 53: 400-407. DOI: 10.1016/j.automatica.2015.01.014.
+
+---
+
+**⑤ 角度扇区 / 碰撞锥（纯角度 + 最坏情况过估计）**
+只用视线角构造禁区：把视线向两侧各转 `±ψ` 得一对射线，其围成的锥形区域即"可能导致碰撞的区域"，对所有其他智能体取并集作保守过估计；名义控制若落入禁区，则投影到区外（`u_i = g_is g_isᵀ u′_i`，`g_is` 由最大化内积的小优化给出）。配合角间距估计器与近/远邻分类，可在零通信、零测距、无标签下实现有限时间环绕并保证两两不重合；代价是仅保证"点模型不重合"、无最小安全间距 `r_min`，且需数量假设 `n ≤ ⌈ψ_a/(2ψ_b)⌉`。同族经典碰撞锥本质亦为角度几何，只是原始公式仍含距离 `r₀`。
+**典型文献：**
+[14] SUI D L. Collision-free zero-communication finite-time target localization and circumnavigation by multiple agents using bearing-only measurements[J]. Journal of the Franklin Institute, 2024, 361: 106972. DOI: 10.1016/j.jfranklin.2024.106972.
+[15] CHAKRAVARTHY A, GHOSE D. Obstacle avoidance in a dynamic environment: a collision cone approach[J]. IEEE Transactions on Systems, Man, and Cybernetics—Part A: Systems and Humans, 1998. DOI: 10.1109/3468.709600.
+[16] PALANI T, WIJESUNDERA S, FUKUSHIMA H. Collision avoidance control of multiple UAVs using collision cones and control barrier functions[J]. Artificial Life and Robotics, 2025. DOI: 10.1007/s10015-025-01020-6.
+[17] TAYAL M, SINGH R, KESHAVAN J, et al. Control barrier functions in dynamic UAVs for kinematic obstacle avoidance: a collision cone approach[C]//2024 American Control Conference (ACC). 2024. DOI: 10.23919/ACC60939.2024.10644548.
+
+---
+
+**⑥ 估计器路线（让距离"算"出来）**
+既不装标定物也不加测距，而靠**可观性**：距离在 bearing-only 下本质不可观，但通过主动机动（如螺旋制导）使视线方向持续激励（PE），再用伪线性卡尔曼滤波类估计器把位置/距离估出，进而用**估计**距离做 range control；其反问题同样成立——若只有测距（UWB/TWR + 单路标），可用收缩理论估计器估出 bearing，再以 `h = y² − ρ²` 构造 CBF（此为 range-only，非 bearing-only）。此路把"尺度"换成"可观性 + 估计误差界"，代价是需额外机动（常与任务冲突）或另一类传感器，精度依赖 PE 条件。
+**典型文献：**
+[18] LI J N, NING Z, HE S M, et al. Three-dimensional bearing-only target following via observability-enhanced helical guidance[J]. IEEE Transactions on Robotics, 2023. DOI: 10.1109/TRO.2022.3218268.
+[19] CHEN J, LI M, MARCANTONI M, et al. Range-only distributed safety-critical formation control based on contracting bearing estimators and control barrier functions[J]. IEEE Internet of Things Journal, 2025, 12(19): 40968-40979. DOI: 10.1109/JIOT.2025.3590774.
+
+---
+
+**著录说明（两点，建议保留在文献表下方脚注）**
+1. 部分条目库内缺**卷/期/页**，已按 GB/T 7714—2015 "有则著录、无则省略" 处理并补附 DOI；投稿前建议逐条补全（`[1][2][3][4][5][6][7][8][9][10][15][16][18]`）。
+2. `[11]` 库内年份著录不一致（一处 2019、一处 2026），按第 23 届 IFAC World Congress（柏林，2020，会议录为 Preprints）著录为 2020，引用前请核对正式出处（IFAC-PapersOnLine 卷期）。
+
+需要的话我可以把这 19 条替换掉 `bearing-only.md` §9 的简写文献表，并在 §0 六个思路段末加上对应编号引用（`doc:NNNN` 索引照旧保留在文末附录）。

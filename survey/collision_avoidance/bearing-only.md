@@ -18,11 +18,37 @@
 | # | 思路 | 尺度（已知长度）在哪 | 典型测法 | 代表工作 | 还是严格 bearing-only？ |
 |---|---|---|---|---|:---:|
 | **①** | **自身双观测点 → 三角测距** | **在自己身上**：两个传感器间的**基线** `b` 已知 | 同时测邻机的**两条** bearing，交会得距离；`D ≈ b/Δθ`（远距） | 立体视觉/双目；多机或多时刻基线：`doc:328`（时空三角测量）、`doc:36`（双 UAV）、`doc:1107`（时间基线里程计） | 是（但需双目或已知基线） |
-| **②** | **目标侧已知尺寸 → 张角测距** | **在目标身上**：邻机上的标定物**尺寸** `l_j / r_j` 已知 | 测**同一个物体上的两个点**（竖杆顶/底、球两侧切点）→ 张角 `θ` → 距离 | `doc:3948` §IV.A（elevation angle，2D 杆 / 3D 球）；变体 `doc:2061`（尺寸 ℓ **在线估**） | 是（加装已知尺寸物） |
+| **②** | **目标侧已知尺寸 → 张角测距** | **在目标身上**：邻机上的标定物**尺寸** `l_j / r_j` 已知 | 测**同一个物体上的两个点**（竖杆顶/底、球两侧切点）→ 张角 `θ` → 距离 | `doc:3948`(TII 2026) §IV.A（elevation angle，2D 杆 / 3D 球）；变体 `doc:2061`（尺寸 ℓ **在线估**） | 是（加装已知尺寸物） |
 | **③** | **不测距，改为结构/初值条件** | **哪也不借**：靠闭环轨迹本身不交叉 | 证明"初值误差足够小 + 构型间距足够大 ⇒ 永不相撞" | `doc:3103` Theorem 12（Zhao & Zelazo，**源头**）、`doc:2082`、`doc:2605`、`doc:2579` | 是（零额外信息，代价最保守） |
-| ④ | 显式测距/相对位置（**放弃** bearing-only） | 直接测 | 障碍物位置、机间距离、短程红外 | `doc:3501`、`doc:237`、`doc:1055`（15 cm 内红外） | 否 |
+| ④ | 显式测距/相对位置（**放弃** bearing-only） | 直接测 | 障碍物位置、机间距离、短程红外、UWB/TWR 测距 | `doc:3501`、`doc:237`、`doc:1055`（15 cm 内红外）、`doc:3171`（range-only + 估 bearing） | 否 |
 | ⑤ | 角度扇区 / 碰撞锥（纯角度 + 最坏情况过估计） | 不借尺度，只保证"不重合" | 把视线两侧转 `±ψ` 围出禁区，把控制投影到区外 | `doc:3892`（机间，`n ≤ ⌈ψ_a/2ψ_b⌉`）、`doc:725`/`doc:701`/`doc:1655`（collision cone，经典式仍含 `r₀`） | 是（但只保点模型不撞） |
-| ⑥ | 估计器路线（距离"算"出来） | 借可观性 | 机动增强 PE + 滤波器估距离；或 range-only 反推 bearing（对偶） | `doc:2785`（螺旋制导 + PLKF）、`doc:3171`（range-only + bearing 估计器） | 是（需额外机动/另一类传感器） |
+| ⑥ | 估计器路线（距离"算"出来） | 借可观性 | 机动增强 PE + 滤波器估距离 | `doc:2785`（螺旋制导 + PLKF 的 range control） | 是（需额外机动，与任务有冲突） |
+
+> **注（避免误读）**：`doc:3171` 虽标题带 "bearing estimator"，但它是 **range-only**：测的是距离（UWB/TWR），
+> bearing 是**内部估出来**的（§III 的收缩估计器），CBF 的 `h = y_oi² − ρ²` 用的是**实测距离** `y_oi`，
+> 估计 bearing 只用来定梯度方向 `z_oi = y_oi[cos θ̂, sin θ̂]`。所以它**不是 bearing-only 方法**，
+> 在本调研里只作"信息互补/反向参照"（见 §6.2 末段），不能当成 bearing-only 避碰的证据。
+
+**两问定类（把"已知长度"拆清楚，否则 ①②④ 很容易混）**：
+
+- **Q1**：这个已知长度**是否进入测距计算**（即它是否真的把角度换算成了距离）？
+- **Q2**：它在**谁身上**（观测端 / 目标端 / 环境）？
+
+| 工作 | 已知长度 | Q1 用于测距？ | Q2 在谁身上 | 归类 |
+|---|---|:---:|---|:---:|
+| 双目/立体视觉、`doc:328`、`doc:36` | 两传感器基线 `b` | ✅ `D ≈ b/Δθ` | 观测端（自身） | **①** |
+| `doc:3948`、`doc:2061` | 邻机杆长 `l_j` / 球半径 `r_j` / 尺寸 `ℓ` | ✅ `D = l_j cot θ` | **目标端**（邻机） | **②** |
+| `doc:3501` | 手点前移量 `l_i` | ❌ **不测距** | 自身 | **④**（仍需外部距离） |
+
+两个补充判断：
+
+1. **`doc:3948` 可以看作"① 的测量形式 + ② 的几何"**：两条 bearing（`g_ij` 到邻机中心、`g_ij'` 到杆顶/切点）
+   **确实都是同一台机器人自己测的**（这一点与双目相同），但那个已知边不在自己身上、而在邻机身上。
+   它与双目是**同一个三角形的两种切法**：基线在观测端 ⇒ `D ≈ b/Δθ`；基线在目标端 ⇒ `D = l_j cot θ`。
+2. **`doc:3501` 不能归 ①②**：它的 `l_i` 只把 CBF 的**评价点**前移（把相对度从 2 降到 1），
+   `h = ‖q_i − o_k‖ − (r_i + R_k)` 里**仍然出现障碍物距离**，信息量一点没变 ⇒ 必须额外拿到障碍距离/位置。
+   但两者有一个可写入设计规范的共同点：**已知长度与被测距离同量级时精度最好**
+   （`doc:3948` Lemma 4 就是 `l_j = d_f`）；`doc:3501` 的 `l_i` 越大，转向项 `γωl_i` 越强、转向越灵敏。
 
 **两条最有用的直觉**：
 
@@ -33,7 +59,7 @@
   且碰撞临界时 bearing 本身失效（`doc:3103` 原文："if two neighbors collide, the bearing between them will be
   mathematically invalid"）。
 
-下文 §2~§5 按方法族展开（隐式条件 / CBF-QP / 角度反推距离 / 角度扇区），§6 把这些整理成"距离的 7 种来源"，
+下文 §2~§5 按方法族展开（隐式条件 / CBF-QP / 角度反推距离 / 角度扇区），§6 把这些整理成"距离的 6 种来源"、并附"口径核查"，
 §8 附 Shiyu Zhao 相关工作盘点。
 
 ---
@@ -57,7 +83,7 @@
 | `doc:1055` | 2015 Automatica | Enclosing a target by nonholonomic robots with bearing-only measurements | agent–agent（实验） | 行为式 + **短程测距** |
 | `doc:2605` | 2021 Automatica | Safe convex-circumnavigation around multiple targets (bearing-only) | 目标凸包（keep-out） | 几何构型设计（隐式） |
 | `doc:3949` | 预印本 | Bearing-Only Formation Tracking for EL MAS Without Communication | —— | **无**安全保证（对照组） |
-| `doc:3171` | 2025 IoT-J | Range-only distributed safety-critical formation control（bearing 估计器 + CBF） | agent / 障碍 | **对偶问题**：range + bearing 估计 |
+| `doc:3171` | 2025 IoT-J | Range-only distributed safety-critical formation control（bearing 估计器 + CBF） | agent / 障碍 | **range-only**（测距 + 估 bearing），**非 bearing-only**，作反向参照 |
 | `doc:3838` | 2026 ARC | Bearing-based multi-agent formation control: A survey and taxonomy | 综述（§9.3 安全性小节） | explicit vs implicit 分类 |
 
 几何类旁证（角度几何避碰，非编队控制）：`doc:725`（collision cone 原始文献）、
@@ -86,7 +112,7 @@
 | L0 纯 bearing + 假设 | 方位 + 初值/数量/角间距假设 | `doc:2082`、`doc:3892`、`doc:2605` | 保守、只对特定场景成立 |
 | L1 bearing + **已知尺度** | 方位 + 邻机已知几何尺寸（杆长/球半径） | `doc:3948` | 需在机器人上加装已知尺寸的标定物，近距离时精度下降 |
 | L2 bearing（编队）+ **局部测距** | 编队用方位，安全用短程测距/障碍物相对位置 | `doc:1055`（15 cm 红外）、`doc:237`、`doc:3501` | 少量距离传感器，但保证较弱（行为式）或需障碍物全局位置 |
-| L3 range-only 对偶 | 测距 + 方位估计器 | `doc:3171` | 传感器与估计器设计复杂度互换 |
+| L3（反向参照）range-only | 测距 + bearing 估计器 | `doc:3171` | **不是 bearing-only**，仅说明"谁测谁估可互换" |
 
 ---
 
@@ -131,6 +157,11 @@
 - **关键技巧**：不用机器人中心 `p_i`，而用"手点" `q_i = p_i + l_i e_1i`（`l_i > 0` 为常数）。
   这样 `q̇_i = R_i(θ_i) B [u_i, ω_i]^T`，控制量同时出现在 `ḣ` 中，且
   `∇h = b_{o_k i} ≠ 0` 在边界上处处非零 ⇒ **相对度 1 的有效 CBF**（避免高阶 CBF）。
+  **注意：`l_i` 不是尺度信息、不参与测距**——它只是把评价点前移，`h` 中依旧是真距离 `‖q_i − o_k‖`；
+  所以本文属"显式测距/已知障碍位置"一类，而不是 bearing-only（详见 §0 的"两问定类"）。
+- **口径说明（重要）**：本文标题的 "bearing-only" 修饰的是 **formation tracking**，不是避障。正文原话只承诺机间感知：
+  "the other robots … **sense only bearings to several neighbors**"。但全文（含仿真 §4）**从未声明 `o_k` 与 `R_k` 从哪来**
+  （仿真里是世界坐标直接给定的）。因此引用时必须补注："障碍物位置/半径已知，其 bearing-only 仅指机间编队部分"。
 - CBF：`h(q_i) = ‖q_i − o_k‖ − (r_i + R_k)`（`o_k` 为障碍中心，`R_k` 为其半径，凸形障碍可用外接圆保守化）。
 - QP（FC-CBF）：`min ½‖μ̄_i − μ_i‖²` s.t. `b_{io_k}^T μ̄_i − γ h(q_i) ≤ 0`，其中名义流
   `μ_i = k_p Σ_j (b_ij − b*_ij) + v_c`（`v_c` 为领航者共同的期望速度）。
@@ -252,24 +283,51 @@
 3. **工程失效模式**：`doc:3948` 指出近距离会**降低 bearing 测量质量**甚至导致系统失效，
    所以安全距离 `r_ij` 还承担"保证 bearing 有效"的第二重作用。
 
-### 6.2 距离的 7 种"来源"（按侵入性排序）
+### 6.2 距离的 6 种"来源"（按侵入性排序）
 
 | # | 距离从哪来 | 代表 | 是否需要额外硬件 | 保证强度 |
 |---|---|---|---|---|
 | 1 | **完全不需要**，改为初值/角间距/数量假设 | `doc:2082`、`doc:3892`、`doc:2605` | 否 | 弱~中（点模型、条件性） |
 | 2 | 用**已知物理尺寸 + 俯仰角/张角**反算 | `doc:3948`、`doc:2061` | 加装已知尺寸杆/球 | 中~强（含置信界，误差可分析） |
 | 3 | **短程测距**（近距才开） | `doc:1055` | 红外/超声/近距雷达 | 弱（行为式，实验验证） |
-| 4 | 全程**相对位置/障碍物位置** | `doc:3501`、`doc:237` | 需障碍物地图或测距 | 强（CBF 前向不变） |
-| 5 | **range-only** 反向补 bearing（对偶） | `doc:3171` | 测距 + 单路标 bearing 估计器 | 强（估计器收敛 + CBF 证明） |
-| 6 | 靠**机动增强可观性** + 滤波器在线估距离 | `doc:2785`（螺旋制导 + PLKF 的 range control） | 否（但需额外机动，易与任务冲突） | 中（依赖 PE 条件） |
-| 7 | **检测框张角 + 尺寸 ℓ 在线估计** | `doc:2061`（bearing-angle, IJRR 2024） | 否（用现成 bbox） | 中~强（ℓ 作状态估计，无需预知尺寸） |
+| 4 | 全程**相对位置/测距**（含 range-only） | `doc:3501`、`doc:237`、`doc:3171` | 需障碍物地图、测距或 UWB | 强（CBF 前向不变） |
+| 5 | 靠**机动增强可观性** + 滤波器在线估距离 | `doc:2785`（螺旋制导 + PLKF 的 range control） | 否（但需额外机动，易与任务冲突） | 中（依赖 PE 条件） |
+| 6 | **检测框张角 + 尺寸 ℓ 在线估计** | `doc:2061`（bearing-angle, IJRR 2024） | 否（用现成 bbox） | 中~强（ℓ 作状态估计，无需预知尺寸） |
 
-`doc:3171` 特别值得并列阅读：它用 **range-only** 测量 + 一个**对单路标的 bearing 估计器**，
-再用估计 bearing 构造 CBF 保证避障，并在四旋翼上做了杂乱实验室环境实验。
-它和 `doc:3948` 构成一对镜像：**一篇把距离从 bearing 里推出来，一篇把 bearing 从距离里估出来**——
-说明"到底缺 b 还是缺 d"取决于传感器配置，"混合 + 估计器"是被接受的工程路线。
+**关于 `doc:3171`（别把它当 bearing-only）**：它是 **range-only**——每个智能体测"到单一路标的距离" `y_i`
+（UWB/TWR），再靠自里程计积分 `u` 用收缩估计器估出方位 `θ̂_i`（§III）；CBF 的 `h_i = y_oi² − ρ_i²` 用的是
+**实测到障碍的距离** `y_oi`（文中直接假设 `y_oi` 与 `ẏ_oi` 可测/可算），估计 bearing 只用于给出梯度方向
+`z_oi = y_oi[cos θ̂_oi, sin θ̂_oi]`（式 (27)–(33)，并用到估计误差界 `δe^{−λt}`）。
 
-### 6.3 实务建议（写给自己的课题）
+它能给我们的启发只有一条：**安全层真正需要的是一对量（距离 + 方向），二者谁测谁估可以互换**。
+所以严格说它是"与 bearing-only 互补的另一半"，**不能当作 bearing-only 能实现避碰的证据**。
+
+### 6.3 口径核查：谁真的 bearing-only（引用/写作时要小心）
+
+同一篇论文里的 "bearing-only" 可能只管**编队**，不管**安全**。逐篇核对标题口径与正文假设：
+
+| 工作 | 标题/正文的说法 | 实际信息需求 | 正文是否声明？ |
+|---|---|---|:---:|
+| `doc:3948` | "Bearing-Only **Collision-Free** Formation Tracking" | 机间仅 bearing、无通信；距离由**自造**（杆/球）得到 | ✅ 明确（§IV.A 专门写清距离估计及其误差） |
+| `doc:3501` | "Bearing-Only **Formation Tracking** … with Obstacle Avoidance" | 机间仅 bearing（已声明）；**障碍中心+半径**（未声明） | ❌ 未声明（仿真里世界坐标直接给定） |
+| `doc:237` | "**Bearing-based** collision-free" | bearing **+ 距离**（观测机间与障碍） | ✅ 用词自觉降级为 bearing-**based**，且明写能测距离 |
+| `doc:2082` | "bearing-only … with collision avoidance" | 真·零距离（初值充分条件） | ✅ |
+| `doc:3892` | "using **bearing-only measurements**" | 真·零距离（角度扇区 + 数量上限） | ✅ |
+| `doc:1055` | "with **bearing-only measurements**" | 编队 bearing；实验避碰用短程红外（距离） | ✅ 明写 "uses **not only** bearing information" |
+
+**两个可操作的结论**：
+
+1. `doc:3501` **不算虚假宣传，但属"隐含假设未声明"**：它的 "bearing-only" 在语法上只管 formation tracking，
+   正文也确实只承诺机间使用方位；真正的问题是**避障那一层的信息需求一字未提**。
+   对比 `doc:237` 就写得很满（能测 bearings **and distances**），`doc:1055` 更是直接承认"不只用了 bearing"——
+   可见领域内的好习惯是：**要么真做得到，要么把假设写明**。
+2. **用词规范（写自己的论文时照办）**：
+   - 整体只用方位 ⇒ 用 **bearing-only**（如 `doc:3948`/`doc:2082`/`doc:3892`）；
+   - 编队用方位、安全用别的量 ⇒ 用 **bearing-based**（`doc:237` 的做法）或直接写 "bearing-only formation + range-based safety"；
+   - **切忌**把 "Bearing-Only Formation Tracking with Obstacle Avoidance" 这种并列标题留给读者自己猜 
+     （这正是 3501 被误读为"纯 bearing 避障"的原因，本调研第一版也踩了这个坑）。
+
+### 6.4 实务建议（写给自己的课题）
 
 - **若必须坚持 bearing-only（论文卖点）**：
   走 `doc:3948` 的路线 —— 名义律用投影/Lyapunov 的 bearing 控制（`doc:3948` 式 (5) 或 `doc:3949`），
@@ -330,7 +388,7 @@
    `doc:2061` 把 `ℓ` 作为状态量一起估（球/圆柱直径、车辆高度、四旋翼轴距等"某方向不随视角变化"的尺寸），
    正好把 3948 的**主要弱点**变成可解问题——但它是**估计**问题、不是控制问题，没有避碰约束。
    两者拼起来才是完整链条：bearing + 张角 → 距离 → CBF。
-3. **§6.2 距离来源表第 6/7 行 = `doc:2785` / `doc:2061`**：距离既可"由已知尺度换算"（3948），
+3. **§6.2 距离来源表第 5/6 行 = `doc:2785` / `doc:2061`**：距离既可"由已知尺度换算"（3948），
    也可"由机动 + 滤波器估出"（2785），或"把未知尺寸在线估掉"（2061）。
 
 ### 8.2 两点注意事项
@@ -361,6 +419,6 @@
 - `doc:1055` Enclosing a target by nonholonomic mobile robots with bearing-only measurements, Automatica 53:400–407, 2015
 - `doc:2605` Safe convex-circumnavigation of one agent around multiple targets using bearing-only measurements, Automatica, 2021
 - `doc:3949` Bearing-Only Formation Tracking Control for Euler–Lagrange MAS Without Inter-Agent Communication（无安全层，作对照）
-- `doc:3171` Range-only distributed safety-critical formation control based on contracting bearing estimators and CBFs, IEEE IoT-J 12(19):40968–40979, 2025
+- `doc:3171` Range-only distributed safety-critical formation control based on contracting bearing estimators and CBFs, IEEE IoT-J 12(19):40968–40979, 2025（**range-only**，非 bearing-only）
 - `doc:3838` Bearing-based multi-agent formation control: A survey and taxonomy, Annual Reviews in Control, 2026（§7.1 elevation angle、§9.3 safety-critical）
 - 旁证：`doc:725`（collision cone, 1998）、`doc:701`（CC+CBF, 2025）、`doc:1655`（CC+CBF, ACC 2024）、`doc:2061`（bearing-angle, IJRR 2024）、`doc:3044`（BCB + collision cone，用相对位置）
