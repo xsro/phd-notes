@@ -81,8 +81,11 @@
 “旋转/卡死/呼吸”三类的猜想。第~\ref{sec:methods} 节把本文的旋转与编队控制文献中另外两条
 路线并置对照：一是位移一致性下的\emph{设计机动}（修改 Laplacian 权重产生匀速平移，旋转需另设
 机制），二是距离梯度控制中由\emph{测量失配}诱发的寄生旋转（闭合圆轨道/螺旋，可用内模估计器
-消除）。三类机制的触发条件、形状性质、速率来源与消除手段互不相同，本文的旋转属于“约束缺失型”，
-既不能被标定掉，也不由设计参数决定。
+消除），三是复平面上的\emph{相位加权一致性}~\cite{lin2010}——“把旋转设计出来”的完备方案：
+转速 $\omega$ 是设计参数，向心加速度由与速度垂直的前馈项 $J\omega v_i$ 显式供给，编队形状用复数
+耦合增益 $\rho_i^{-1}\rho_k\mathrm e^{\mathrm j(\theta_i-\theta_k)}$ 锁定。三类机制的触发条件、
+形状性质、速率来源与消除手段互不相同，本文的旋转属于“约束缺失型”，既不能被标定掉，也不由设计
+参数决定；与~\cite{lin2010} 恰成镜像——那里旋转是被写进控制器的，这里旋转是闭环唯一的自洽解。
 
 第~\ref{sec:sim} 节的全部插图由本目录的 Python 脚本重新计算：$k_2$ 扫过 $40$ 倍时实测
 $\abs{\omega}$ 与 $\sqrt{k_2}$ 的相对误差低于 $10^{-4}$；共旋线性化只有一个零模态（其余谱横坐标
@@ -100,7 +103,8 @@ $\abs{\omega}$ 与 $\sqrt{k_2}$ 的相对误差低于 $10^{-4}$；共旋线性�
         因为内部中心力的合力矩恒为零。
   \item \textbf{局部轨道稳定}：共旋坐标下的线性化只有一个零特征值（相位模），其余模态均衰减；
         全局证明受阻于阻尼矩阵 $B=k_1I-\nabla^2P$ 远离平衡点时变号。
-  \item \textbf{与文献的三类机制对照}：位移一致性的\emph{设计机动}给出匀速平移（旋转需另设机制），
+  \item \textbf{与文献的三类机制对照}：位移一致性的\emph{设计机动}给出匀速平移（旋转需另设机制，
+        可由复平面相位加权一致性~\cite{lin2010} 加上前馈 $J\omega v_i$ 实现，此时转速是自由参数），
         距离梯度的\emph{测量失配}给出寄生闭合轨道（内模估计器可消除），而本文的旋转源于
         \emph{约束缺失}——触发条件、形状、速率与处方都不同（\S\ref{sec:methods}）。
   \item \textbf{旋转可被消除}：第二种控制器在观测器中加入斥力项 $\phi_i$，使 $\dot V$ 成为负平方和，
@@ -693,6 +697,67 @@ $\kappa=20$ 时仍保持形状并给出 $-\kappa v^*$：约束 \eqref{eq:kappa_b
   \label{fig:methods}
 \end{figure}
 
+\subsection{把旋转设计出来：复平面相位加权一致性}
+\label{sec:meth_designed}
+
+上一小节说明位移一致性只允许平移。要\emph{设计}旋转，最干净的做法是换到复平面：取
+$r_i,v_i,u_i\in\mathbb C$（虚数单位 $\mathrm j$ 即 $90^\circ$ 旋转算子 $J$），动力学仍是双积分器
+$\dot r_i=v_i,\ \dot v_i=u_i$，并把转速 $\omega>0$ 作为\emph{给定常数}（可证不失一般性取 $\omega=1$）。
+~\cite{lin2010} 的协议为
+\begin{equation}
+  u_i=\underbrace{\mathrm j\omega v_i}_{u_{i1}}
+   -\sum_{k\in\calN_i}a_{ik}\rho_i^{-2}\Bigl[v_i-\frac{\rho_i}{\rho_k}
+     \mathrm e^{\mathrm j(\theta_i-\theta_k)}v_k\Bigr]
+   -\sum_{k\in\calN_i}a_{ik}\bigl(c_i-c_k\bigr),
+  \qquad c_i=r_i+\omega^{-1}\mathrm j v_i ,
+  \label{eq:linproto}
+\end{equation}
+期望构型写成极坐标 $h=[\rho_1\mathrm e^{\mathrm j\theta_1},\dots,\rho_n\mathrm e^{\mathrm j\theta_n}]^{\mathsf T}$，
+其中 $c_i$ 是“圆心”，$\rho_i$ 是半径。三件事值得记下。
+
+\paragraph{(i) 旋转来自前馈，而不是来自共识。}
+$u_{i1}=\mathrm j\omega v_i$ 是\emph{纯向心加速度}：它让每辆车自己进入半径 $\norm{v_i}/\omega$、
+圆心 $c_i$ 的圆周运动（$\dot v_i-\mathrm j\omega v_i\to0$）。共识项 $u_{i2}$ 只负责对齐
+“圆心”与“相位加权速度” $v_i/(\rho_i\mathrm e^{\mathrm j\theta_i})$，形状与转速都不是共识
+“涌现”的。这正是 \eqref{eq:disp} 所缺的那一半：平移机动用非对称 Laplacian 的常值特解
+\eqref{eq:pparticular}，旋转机动用一个与速度垂直的前馈项，二者是同一种“把运动写进闭环”的思路。
+
+\paragraph{(ii) 复增益等价于普通 Laplacian。}
+取 $H=\mathrm{diag}\{\mathrm e^{\mathrm j\theta_i}\}$、$F=\mathrm{diag}\{\rho_i\}$，则耦合矩阵
+$\tilde L_{ik}=\rho_i^{-1}\rho_k^{-1}\mathrm e^{\mathrm j(\theta_i-\theta_k)}l_{ik}$ 可写成
+$\tilde L=F^{-1}HLH^{*}F^{-1}$，与 Laplacian $L$ 相合，故连通图上仍是“一个零特征值、其余正实部”。
+闭环谱因此只有两个“保守”模态（特征值 $0$ 与 $\mathrm j\omega$，对应圆心一致与刚体旋转相位），
+其余 $2n-2$ 个实部为负——需要一条排除广义特征向量与共线退化的假设（原文 Assumption~1）。
+但这类协议只锁\emph{形状}：\cite{lin2010} 的 Remark~2 明确指出，最终构型的\emph{尺寸}由初值决定
+（“quasi-rotating formation”）。
+
+\paragraph{(iii) 半径靠一个估计器钉住。}
+要得到尺寸也正确的旋转编队，需指定一个 agent $s_{i_0}$ 兼任幅值伺服：
+\begin{equation}
+  \dot p=\mathrm j p-\Lambda\sgn(\norm p-1)p
+        -d\Bigl(p-\frac{v_{i_0}}{\rho_{i_0}\mathrm e^{\mathrm j\theta_{i_0}}}\Bigr),
+  \qquad
+  \Lambda=\frac{\kappa_1\norm p^2+\kappa_2}{\norm p^2},\quad \norm{p(0)}=1,
+  \label{eq:linleader}
+\end{equation}
+并在 $u_{i_0}$ 中追加注入项 $\rho_{i_0}\mathrm e^{\mathrm j\theta_{i_0}}p-v_{i_0}$，其余 agent 仍用
+\eqref{eq:linproto} 的 $u_{i2}$ 与 $\mathrm j\omega v_i$ 之和。用 $V_p=p^{*}p$ 可证：只要
+$\kappa_1>d(\sqrt{V_0/\lambda_p}+1)$、$\kappa_2>2d+d\sqrt{V_0/\lambda_p}$，就有
+$\norm{p(t)}\equiv1$，于是理想速度 $\rho_i\mathrm e^{\mathrm j\theta_i}p$ 的模恒为 $\rho_i$——
+半径被钉死，尺寸不再依赖初值。稳定性则归结为一个 Lyapunov 不等式（存在正定 Hermite $\bar P$ 使
+$\bar P\bar\Gamma+\bar\Gamma^{*}\bar P-d(\cdot)<0$，$\bar\Gamma$ 为去掉中性模态后的闭环矩阵）。
+
+\paragraph{与本报告的关系。}
+两条路线在“旋转”这一点上互为镜像，区别可以压缩成三句话。其一，\emph{转速从哪来}：
+~\cite{lin2010} 的 $\omega$ 是设计参数（想快就调大，控制器里显式出现 $\mathrm j\omega v_i$），
+而本报告的 $\abs{\omega}=\sqrt{k_2}$ 被“中心内力矩恒为零”与观测器积分钉死（命题~\ref{prop:omega}），
+既不能设计也不能调参。其二，\emph{切向注入乘在谁身上}：\eqref{eq:linproto} 的 $\mathrm j\omega v_i$ 乘
+\emph{自己的速度}，是前馈，效果是让每辆车在旋转坐标系里做静止调节；本报告稳态观测器给出
+$\tv_i=\frac{k_2}{\omega}J\txi_i$，乘的是\emph{相对位置}，是反馈，效果是刚性形状整体转动。
+其三，\emph{谁决定形状}：\eqref{eq:linproto} 的形状 $h$ 与半径都由设计者指定，而本报告的成对距离、
+转速、旋转方向全部由闭环决定，只能证明局部轨道稳定（\S\ref{sec:stab}）。因此“把 $\omega$ 设计进去”
+的办法无法解释围捕控制器为什么\emph{一定}转，也无法用来消掉这个旋转。
+
 \subsection{鲁棒性：残余运动什么时候出现}
 \label{sec:meth_robust}
 
@@ -820,10 +885,11 @@ $\dot w_i=-k_3e_i$ 自己就制造了切向驱动力，转速由力矩平衡钉�
 触发条件 & 人为取 $\mu_{ij}\neq\mu_{ji}$ & 端点标准或感知不一致（$a_i$、$R_i$、
             $\bar d_{k_{ij}}$ 有分歧） & 无需任何分歧：只约束平均\\
 形状 & 严格保持 $\mathcal S$ & 扭曲但刚性（误差停在非零常值） & 刚性，成对距离收敛到常数\\
-运动 & 匀速平移（公共 $v^*$）；旋转需另设机制 & 2D 闭合圆轨道 / 3D 螺旋 / 扭曲形状的匀速平移 &
+运动 & 匀速平移（公共 $v^*$）；旋转需另设机制，即复平面相位加权
+           $+$ 前馈 $\mathrm j\omega v_i$~\cite{lin2010} & 2D 闭合圆轨道 / 3D 螺旋 / 扭曲形状的匀速平移 &
            绕目标的刚体旋转\\
-速率由谁定 & 设计参数 $\kappa b$ & 由失配量与闭环算子决定，一般无闭式 & 力矩平衡强制
-           $\abs{\omega}=\sqrt{k_2}$\\
+速率由谁定 & 设计参数 $\kappa b$（旋转情形为 $\omega$~\cite{lin2010}） & 由失配量与闭环算子决定，一般无闭式 &
+           力矩平衡强制 $\abs{\omega}=\sqrt{k_2}$\\
 消除/避免 & 无需消除（$\kappa$ 需足够小，树图有界） & 内模估计器补偿 $\mu_k$，或一致化标定 &
            观测器中加入 $\phi_i$（\S\ref{sec:second}）\\
 \bottomrule
@@ -1251,6 +1317,12 @@ doi:10.1109/TAC.2020.3019780; arXiv:2008.03544.
 Z.~Sun, B.~D.~O.~Anderson, S.~Mou, and A.~S.~Morse,
 ``Robustness issues in double-integrator undirected rigid formation systems,''
 \emph{IFAC-PapersOnLine}, 2017, doi:10.1016/j.ifacol.2017.08.221.
+
+\bibitem{lin2010}
+P.~Lin and Y.~Jia,
+``Distributed rotating formation control of multi-agent systems,'' 
+\emph{Systems \& Control Letters}, vol.~59, no.~10, pp.~587--595, 2010,
+doi:10.1016/j.sysconle.2010.06.015.
 
 \bibitem{tro2016}
 H.~Garcia de Marina, B.~Jayawardhana, and M.~Cao,
