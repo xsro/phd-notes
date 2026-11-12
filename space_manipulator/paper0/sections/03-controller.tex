@@ -35,7 +35,7 @@ u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
 \bar\xi(t)=\bar\xi_0(T_o-t)^2\mathbb 1_{\{t<T_o\}},
 \label{eq:observer_error}
 \end{equation}
-其中常向量 \(\bar\xi_0\) 抵消初始观测误差使 \(\eta_1(0)=0\)；注意 \(\bar\xi\in C^{1}\) 且 \(\dot{\bar\xi}(T_o)=0\)。
+若取 \(\bar\xi_0=(\chi(0)-z_1(0))/T_o^2\)，则 \(\eta_1(0)=0\)；该选择要求已知初始化时的测量值与估计器状态。注意 \(\bar\xi\in C^{1}\) 且 \(\dot{\bar\xi}(T_o)=0\)。
 
 \begin{theorem}[预设时间扰动观测器]\label{thm:ptdo}
 考虑 \eqref{eq:observer_channel} 与假设~\ref{as:d}，构造
@@ -63,7 +63,7 @@ z_2(t)=\Delta_a(t),\qquad \hat d(t)=M_e(q_m)z_2(t)=d(t),\qquad \forall t\ge T_o 
 \dot\eta_2=\dot\Delta_a-\frac{\pi}{\sigma\eta T_c}\phi_2\Bigl(\frac{\eta_1}{\sigma}\Bigr).
 \label{eq:observer_errordyn}
 \end{equation}
-\(\phi_1,\phi_2\) 分别为 \(1-\eta/2\) 与 \(2-\eta\) 阶齐次函数，且其符号结构与 \(\sgn\) 项使 \eqref{eq:observer_errordyn}~满足预设时间收敛的齐次性条件。在假设~\ref{as:d}~下，由文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~定理~1 的齐次性分析知对任意初始误差 \(\eta_1,\eta_2\) 在 \(T_c\) 内到达原点并保持为零；由 \(T_c\le T_o\) 得 \eqref{eq:observer_converged}。
+两项不同幂次之和并非单一阶齐次函数；仅由 \(\Delta_a,\dot\Delta_a\) 有界不能推出本式的预设时间收敛。此处的结论是条件性的：由假设~\ref{as:observer} 给出的、适用于\emph{本式}及其 Filippov 解的收敛证书，\(\eta_2(t)=0\) 于 \(t\ge T_c\) 成立，再由 \(T_c\le T_o\) 得 \eqref{eq:observer_converged}。尤其在原点保持 \(\eta_2=0\) 时须有 \(\dot\Delta_{a,i}\in[-\pi/(\eta T_c),\pi/(\eta T_c)]\)（由 \(\sgn(0)=[-1,1]\) 得到）；这是必要条件而非充分的收敛时间证明。文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~的结果只有在逐项核实其观测器形式、增益门槛和解的意义后才能用于提供上述证书。
 \end{proof}
 
 由 \(w=M_e^{-1}(d-\hat d)=\Delta_a-z_2=\eta_2\)，定理~\ref{thm:ptdo}~等价于
@@ -74,7 +74,7 @@ w(t)\equiv0,\qquad \forall t\ge T_o ,
 即“阶段 II 通道无扰动”是\emph{结论}而非假设。阶段 I 中 \(w=\eta_2\neq0\)，其幅度需单独界定以判定贴合深度。
 
 \begin{lemma}[阶段 I 残差一致有界]\label{lem:residual}
-设 \(\sup_{[0,T_o]}\lvert\eta_1\rvert\le\sigma\bar x<\infty\)（不出现无界峰值），则
+设 \(\sup_{[0,T_o]}\lVert\eta_1\rVert_\infty\le\sigma\bar x<\infty\)（不出现无界峰值），则
 \begin{equation}
 \bar w:=\sup_{0\le t\le T_o}\lVert\eta_2(t)\rVert_\infty
 \le 2\lVert\Delta_a\rVert_\infty+\lVert\eta_2(0)\rVert_\infty
@@ -201,6 +201,6 @@ R_h(\vartheta)B^{\top}e^{-A_c^{\top}\vartheta}W_c^{-1}e^{A_c(h-\vartheta)}, & \v
 \subsection{完整算法与参数约束}
 \label{sec:algorithm}
 
-实现流程为：\textbf{(1)} 选定 \(T_o\)、\(\rho_{i0}>\rho_{i\infty}>0\)、\(m\ge5\)；\textbf{(2)} 选定 \(k_{1i},k_{2i}\) 并按推论~\ref{cor:exponential}~校验 \(2\underline k_iT_o\gtrsim\ln(\rho_{i0}/\rho_{i\infty})\)；\textbf{(3)} 选定 \(T_c\le T_o,\eta,\sigma,\bar\xi_0\)；\textbf{(4)} 选定 \(K_0,h,R_h\)，数值积分 \(W_c\)（建议 Tikhonov 正则化求逆）；\textbf{(5)} \textbf{校验} \(\lVert\Delta_K(h)\rVert\) 与 \(\operatorname{cond}(W_c)\)，若不达标返回 (4)；\textbf{(6)} 由命题~\ref{prop:stage2}~算 \(M_h\) 并校验包络交接。第 (5) 步是算法可靠性的必要环节：若数值精度使 \(\Delta_K(h)\neq0\)，结论退化为命题~\ref{prop:approx}；若 \(\lVert\Delta_K(h)\rVert\ge1\)，连有界性都无法由该递推得到（第~\ref{sec:infeasible}~节）。
+实现流程为：\textbf{(1)} 选定 \(T_o\)、\(\rho_{i0}>\rho_{i\infty}>0\)（本文固定五次多项式）；\textbf{(2)} 选定 \(k_{1i},k_{2i}\) 并按推论~\ref{cor:exponential}~校验 \(2\underline k_iT_o\gtrsim\ln(\rho_{i0}/\rho_{i\infty})\)；\textbf{(3)} 选定 \(T_c\le T_o,\eta,\sigma,\bar\xi_0\)，并核验假设~\ref{as:observer} 的收敛证书；不能核验时只使用残差有界的阶段 I 结论；\textbf{(4)} 选定 \(K_0,h,R_h\)，数值积分 \(W_c\)（正则化求逆只给近似零化，不满足精确归零定理）；\textbf{(5)} \textbf{校验} \(\lVert\Delta_K(h)\rVert\) 与 \(\operatorname{cond}(W_c)\)，若不达标返回 (4)；\textbf{(6)} 由命题~\ref{prop:stage2}~算 \(M_h\) 并校验包络交接。第 (5) 步是算法可靠性的必要环节：若数值精度使 \(\Delta_K(h)\neq0\)，结论退化为命题~\ref{prop:approx}；若 \(\lVert\Delta_K(h)\rVert\ge1\)，连有界性都无法由该递推得到（第~\ref{sec:infeasible}~节）。
 
 参数耦合须成对检查：增益增大使 \(\vartheta_i\) 减小但力矩峰值上升；误差带收窄使 \(\sigma_i=\bar w/\rho_{i\infty}\) 增大、\(\vartheta_i\to1\)，边际收益递减；\(T_o\) 减小使 \(\dot\rho_i\propto1/T_o\) 增大而力矩上升、增大则残差界（引理~\ref{lem:residual}）线性增大，故存在折中最优；\(h\) 减小使归零更快但 \(W_c\) 条件数恶化。

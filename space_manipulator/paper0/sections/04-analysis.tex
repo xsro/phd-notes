@@ -29,15 +29,15 @@
 \end{theorem}
 
 \begin{proof}
-(i)(ii)：由引理~\ref{lem:residual}~得阶段 I 残差界 \(\bar w<\infty\)，故定理~\ref{thm:funnel}~适用，即得 \eqref{eq:funnel_bound}~与进带估计。
+(i)(ii)：假设~\ref{as:observer} 给出在 \([0,T_o]\) 上的有界观测器轨迹，因而 \(\bar w=\sup_{[0,T_o]}\lVert\eta_2\rVert_\infty<\infty\)；也可在已验证 \(\eta_1\) 有界时使用引理~\ref{lem:residual}~给出的保守上界。故定理~\ref{thm:funnel}~适用，即得 \eqref{eq:funnel_bound}~与进带估计。
 
-(iii)：阶段 II 闭环为线性延迟系统，其解算子是线性的，故存在仅由 \((\alpha)\) 决定的算子 \(\mathcal T(\vartheta,0)\) 使 \(z(\vartheta)=\mathcal T(\vartheta,0)z(T_o)\)。取对应 \(e_i\) 的行块即得 \(\lvert e_i(\vartheta)\rvert\le\lVert\mathcal T_i(\vartheta,0)\rVert_2\lVert z(T_o)\rVert_2\)，结合引理~\ref{lem:handover}~的 \(\lVert z(T_o)\rVert_2\le B_o\) 得 (iii)。
+(iii)：阶段 II 闭环为线性延迟系统，其解算子是线性的，故存在仅由 \(A_c,B,K_c,h\) 决定的算子 \(\mathcal T(\vartheta,0)\) 使 \(z(\vartheta)=\mathcal T(\vartheta,0)z(T_o)\)。取对应 \(e_i\) 的行块即得 \(\lvert e_i(\vartheta)\rvert\le\lVert\mathcal T_i(\vartheta,0)\rVert_2\lVert z(T_o)\rVert_2\)，结合引理~\ref{lem:handover}~的 \(\lVert z(T_o)\rVert_2\le B_o\) 得 (iii)。
 
 (iv)：由定理~\ref{thm:ptdo}，\(w\equiv0\) 于 \(t\ge T_o\)，故通道严格为 \eqref{eq:linear_error}；由定理~\ref{thm:pdf}，对任意有界初值 \(z(T_o)\)（有界性由引理~\ref{lem:handover}）有 \(z(\vartheta)=0,\ \vartheta\ge2h\)，回代 \(t=T_o+\vartheta\) 即得。切换处 \(\nu\) 允许跳变：定理~\ref{thm:pdf}~只把 \(z(T_o)\) 当作初值，不要求 \(\nu\) 连续；唯一要求是假设~\ref{as:ideal}~中的无饱和。
 \end{proof}
 
 \begin{remark}[切换处的力矩跳变]\label{rem:jump}
-取 \(m\ge5\) 时 \(\dot\rho_i(T_o)=\ddot\rho_i(T_o)=0\)，\eqref{eq:nu_ppc}~的虚拟强迫项在 \(T_o\) 消失，跳变仅来自障碍项与 \(K_0z\) 的差异，幅度为 \(\lVert\Delta\tau\rVert\le\lVert M_e\rVert\lVert\nu^{\mathrm{PPC}}(T_o^-)-K_0z(T_o)\rVert\)。该跳变不影响定理~\ref{thm:main}，但计入执行器约束；若不可接受，可在 \([T_o-\delta,T_o]\) 内以 \(C^2\) 权重混合，混合误差作为附加有界匹配扰动进入定理~\ref{thm:funnel}~的 \(\bar w\)。
+由五次性能函数 \eqref{eq:rho} 可知 \(\dot\rho_i(T_o)=\ddot\rho_i(T_o)=0\)，\eqref{eq:nu_ppc}~的虚拟强迫项在 \(T_o\) 消失，跳变仅来自障碍项与 \(K_0z\) 的差异，幅度为 \(\lVert\Delta\tau\rVert\le\lVert M_e\rVert\lVert\nu^{\mathrm{PPC}}(T_o^-)-K_0z(T_o)\rVert\)。该跳变不影响定理~\ref{thm:main}，但计入执行器约束；若不可接受，可在 \([T_o-\delta,T_o]\) 内以 \(C^2\) 权重混合，混合误差作为附加有界匹配扰动进入定理~\ref{thm:funnel}~的 \(\bar w\)。
 \end{remark}
 
 \subsection{阶段 II 的包络校验}
@@ -53,10 +53,10 @@ M_{h,i}=\max_{\vartheta\in[0,2h]}\bigl\lVert\mathcal T_i(\vartheta,0)\bigr\rVert
 \end{equation}
 则 \(\mathcal T\) 可由定理~\ref{thm:pdf}~证明中的同一递推（初始条件取 \(I_{2n}\)，在 \([0,2h]\) 上逐点推进）\emph{精确}得到，故 \(M_{h,i}\) 可离线计算而不必仿真。若
 \begin{equation}
-\max_{i}M_{h,i}B_o\le\min_{i}\rho_{i\infty},
+\max_{i}M_{h,i}B_o<\min_{i}\rho_{i\infty},
 \label{eq:envelope_cond}
 \end{equation}
-则 \(\lvert e_i(t)\rvert\le\rho_{i\infty}\le\rho_i(t)\) 对一切 \(t\ge T_o\) 成立，从而问题~\ref{prob:dual}~(i) 在全程成立；否则只能保证定理~\ref{thm:main}~的分段结论，且 \(|e_i|\) 在 \(t\in[T_o,T_o+2h)\) 上的上界为 \(M_{h,i}B_o\)。
+则 \(\lvert e_i(t)\rvert\le\rho_{i\infty}\le\rho_i(t)\) 对一切 \(t\ge T_o\) 成立，从而问题~\ref{prob:dual}~(i) 在全程成立；否则只能保证定理~\ref{thm:main}~的分段结论，且 \(|e_i|\) 在 \(t\in[T_o,T_o+2h)\) 上的上界为 \(M_{h,i}B_o\)。等号情形只保证非严格的 \(\le\)，不足以证明问题~\ref{prob:dual} 的严格包络。
 \end{proposition}
 
 \begin{proof}
@@ -74,7 +74,7 @@ M_{h,i}\le M_h^{\mathrm{ap}}:=\mathcal E_h^{2}\Bigl(1+\lVert B\rVert\int_h^{2h}\
 \end{remark}
 
 \begin{remark}[判据的结构含义]\label{rem:envelope_cond}
-\eqref{eq:envelope_cond} 由“交接状态规模 \(B_o\)”与“周期内放大因子 \(M_{h,i}\)”之积同“误差带宽度”比较构成，揭示三处耦合：扰动越大则 \(\vartheta_i\) 越大、进带越浅，越易在阶段 II 越界；\(\mathcal E_h\) 随 \(h\) 指数增长，故 \(h\) 不能任意增大；\(\int\lVert K_c\rVert\) 由 Gramian 求逆决定。因此它是“预设包络”与“预设时间”之间唯一真正的牺牲点。
+\eqref{eq:envelope_cond} 由“交接状态规模 \(B_o\)”与“周期内放大因子 \(M_{h,i}\)”之积同“误差带宽度”比较构成，揭示三处耦合：扰动越大则 \(\vartheta_i\) 越大、进带越浅，越易在阶段 II 越界；\(\mathcal E_h\) 与 \(h\) 相关（\(A_c\) Hurwitz 并不意味着它随 \(h\) 单调增长），故 \(h\) 须与 Gramian 增益一起校验；\(\int\lVert K_c\rVert\) 由 Gramian 求逆决定。因此它是“预设包络”与“预设时间”之间唯一真正的牺牲点。
 \end{remark}
 
 \subsection{两条极限情形}
@@ -107,7 +107,7 @@ V_i(t)\le V_i(0)e^{-2\underline k_it},\qquad
 \Delta_r=M_e^{-1}(q_m)\bigl[\Delta d_o+\Delta_m+\Delta_\tau\bigr],
 \label{eq:residual_lumped}
 \end{equation}
-其中 \(\Delta d_o=d-\hat d\)、\(\Delta_m=[M_e-\hat M_e]\ddot q_m+[C_e-\hat C_e]\dot q_m\)、\(\Delta_\tau=\tau_{\mathrm{sat}}-\tau\)，并设 \(\lVert\Delta_r\rVert\le\bar\Delta_r\) 于 \(t\ge T_o\)。定义齐次延迟系统的周期放大系数
+这里假设实际指令为 \(\tau_{\rm cmd}=\hat M_e(\ddot q_d+\nu)+\hat C_e\dot q_m-\hat d\)，实际输入为 \(\tau_{\rm sat}=\tau_{\rm cmd}+\Delta_\tau\)；\(\Delta d_o=d-\hat d\)、\(\Delta_m=(\hat M_e-M_e)(\ddot q_d+\nu)+(\hat C_e-C_e)\dot q_m\)、\(\Delta_\tau=\tau_{\mathrm{sat}}-\tau\)，并设 \(\lVert\Delta_r\rVert\le\bar\Delta_r\) 于 \(t\ge T_o\)。定义齐次延迟系统的周期放大系数
 \begin{equation}
 \Gamma_h=\max_{\theta\in[0,2h]}\int_0^{\theta}\bigl\lVert\mathcal S_h(\theta,s)B\bigr\rVert\dd s,
 \label{eq:Gamma_h}
@@ -124,14 +124,14 @@ V_i(t)\le V_i(0)e^{-2\underline k_it},\qquad
 \end{equation}
 若另有 \(\lVert M_e^{-1}\rVert\le\bar m^{-1}\)、\(\lVert\Delta d_o\rVert\le\bar d_o\)、\(\lVert\Delta_m\rVert\le\bar\Delta_m\)、\(\lVert\Delta_\tau\rVert\le\bar\Delta_\tau\)，则
 \begin{equation}
-\lVert z(t_k)\rVert_\infty\le\frac{\Gamma_h}{\bar m(1-\varepsilon_\Delta)}\bigl(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\bigr),
+\limsup_{k\to\infty}\lVert z(t_k)\rVert_2\le\frac{\Gamma_h}{\bar m(1-\varepsilon_\Delta)}\bigl(\bar d_o+\bar\Delta_m+\bar\Delta_\tau\bigr),
 \label{eq:explicit_bound}
 \end{equation}
-且 \(\bar\Delta_r=0\) 时右端为零、退化为定理~\ref{thm:main}~(iv)。
+此外每个周期边界的有限时间界为 \(\lVert z_k\rVert\le\varepsilon_\Delta^k\lVert z_0\rVert+\Gamma_h\bar\Delta_r(1-\varepsilon_\Delta^k)/(1-\varepsilon_\Delta)\)。周期内若齐次传播范数上界为 \(L_h=\max_{\theta\in[0,2h]}\lVert\mathcal T(\theta,0)\rVert\)，则 \(\lVert z(t_k+\theta)\rVert\le L_h\lVert z_k\rVert+\Gamma_h\bar\Delta_r\)；因此仅在 \(\varepsilon_\Delta=0\) 且 \(\bar\Delta_r=0\) 时才由该论证得到一周期后精确归零。
 \end{proposition}
 
 \begin{proof}
-由变分公式 \(z_{k+1}=\Delta_K(h)z_k+\int_0^{2h}\mathcal S_h(2h,s)B\Delta_r(t_k+s)\dd s\) 取范数即得递推；迭代得 \(\lVert z_k\rVert\le\varepsilon_\Delta^k\lVert z_0\rVert+\frac{1-\varepsilon_\Delta^k}{1-\varepsilon_\Delta}\Gamma_h\bar\Delta_r\)，令 \(k\to\infty\)。再由 \eqref{eq:residual_lumped}~的范数相容性得 \(\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau)\)，代入即得 \eqref{eq:explicit_bound}。
+由变分公式 \(z_{k+1}=\Delta_K(h)z_k+\int_0^{2h}\mathcal S_h(2h,s)B\Delta_r(t_k+s)\dd s\) 取范数即得递推；迭代得 \(\lVert z_k\rVert\le\varepsilon_\Delta^k\lVert z_0\rVert+\frac{1-\varepsilon_\Delta^k}{1-\varepsilon_\Delta}\Gamma_h\bar\Delta_r\)，令 \(k\to\infty\)。再由 \eqref{eq:residual_lumped}~的范数相容性得 \(\bar\Delta_r\le\bar m^{-1}(\bar d_o+\bar\Delta_m+\bar\Delta_\tau)\)，代入极限上界即得 \eqref{eq:explicit_bound}。周期内界由同一变分公式直接得到。
 \end{proof}
 
 \subsection{不可行边界}
@@ -140,27 +140,34 @@ V_i(t)\le V_i(0)e^{-2\underline k_it},\qquad
 本节显式记录三类\emph{不能}成立的命题及原因，以避免把理想结论外推到不具备前提的场景。
 
 \paragraph{(a) 无扰动观测器时“归零”不成立}
-若省去 PTDO，则阶段 II 通道含 \(B\Delta_a\)，由 \(\Delta_K(h)=0\) 与变分公式只能得 \(\lVert z(\vartheta)\rVert\le\Gamma_h\bar\Delta_a\)，即残余带\emph{不可能为零}；且该残余带与阶段 I 已达成的精度无可比性：若
+若省去 PTDO，则阶段 II 通道含 \(B\Delta_a\)，从任意初值出发首周期端点只有 \(\lVert z(2h)\rVert\le\Gamma_h\bar\Delta_a\)，对任意有界扰动的\emph{一致精确归零保证}不再成立；且该残余带与阶段 I 已达成的精度无可比性：若
 \begin{equation}
 \Gamma_h\bar\Delta_a>\vartheta_i\rho_{i\infty},
 \label{eq:no_observer}
 \end{equation}
-则阶段 II 不但不能归零，反而\emph{放大}误差。由于自由漂浮场景中 \(d(t)\) 的解析式通常不可得，故“仅在 \(d\) 已知时成立”的方案不具备工程适用性，这正是引入 PTDO 与三段时序的原因。
+则该上界已超过阶段 I 的误差带内余量，但不能据此断言实际误差必然放大。由于自由漂浮场景中 \(d(t)\) 的解析式通常不可得，故“仅在 \(d\) 已知时成立”的方案不具备工程适用性，这正是引入 PTDO 与三段时序的原因。
 
 \paragraph{(b) \(T_c\le T_o\) 与抖振的定量冲突}
 定理~\ref{thm:main}~(iv) 依赖假设~\ref{as:observer}：观测器必须在 \(T_o\) 前精确收敛，\eqref{eq:w_zero}~才成立。但 PTDO 的时变增益为 \(\pi/(\eta T_c)\) 与 \(\pi/(\sigma\eta T_c)\)，\(T_c\) 过小使增益与采样步长之比过大，在离散实现中产生显著抖振并触发饱和，于是
 \begin{equation}
-\underbrace{T_c\le T_o}_{\text{理论前提}}\quad\Longleftrightarrow\quad
-\underbrace{\frac{\pi}{\eta T_c}\gg\frac{1}{T_s}}_{\text{抖振来源}}\quad\Longleftrightarrow\quad
-\underbrace{\lVert\tau\rVert\le\tau_{\max}}_{\text{执行器约束}}
+T_c\le T_o,\qquad \lVert\dot\Delta_a\rVert_\infty\le\frac{\pi}{\eta T_c}\quad\text{(零点保持的必要条件)},\qquad \lVert\tau_{\rm cmd}\rVert_\infty\le\tau_{\max}\quad\text{(无饱和条件)}
 \label{eq:tc_tradeoff}
 \end{equation}
-三者不能同时最优。可行处理只有两条：增大 \(T_o\)（连同 \(T_{\mathrm{pre}}\) 一并放宽）以容纳较大的 \(T_c\)；或将 \(\phi_2\) 中的 \(\sgn\) 替换为饱和/滤波形式并重新证明收敛性。本文建议前者，因其不改变任何定理的前提。
+这些是必须分别核查的条件，而非相互等价的关系；离散抖振还取决于步长、实现方式与增益，不能仅由上式推出。可行处理只有两条：增大 \(T_o\)（连同 \(T_{\mathrm{pre}}\) 一并放宽）以容纳较大的 \(T_c\)；或将 \(\phi_2\) 中的 \(\sgn\) 替换为饱和/滤波形式并重新证明收敛性。本文建议前者，因其不改变任何定理的前提。
 
 \paragraph{(c) 离散实现的三源残差与 Gramian 病态}
-严格归零在采样实现中不可能，残差至少来自三处：\(\phi_2\) 中 \(\sgn\) 项在步长 \(T_s\) 下的切换；\(\nu\) 在 \(T_o\) 处的跳变（注~\ref{rem:jump}）；Gramian 求逆舍入误差导致的 \(\lVert\Delta_K(h)\rVert>0\)。三者统一体现为命题~\ref{prop:approx}~中的 \(\varepsilon_\Delta\) 与 \(\bar\Delta_r\)，故定理~\ref{thm:main}~(iv) 只是\emph{连续时间}命题，工程表述须用 \eqref{eq:explicit_bound}。此外，当 \(\operatorname{cond}(W_c)\) 达 \(10^{10}\) 量级时 PDF 的时域优势消失、退化为等效 PD；当 \(\varepsilon_\Delta\ge1\) 时 \eqref{eq:approx_ultimate}~失效，连有界性都无法得到。故第~\ref{sec:algorithm}~节第 (5) 步的校验是必要环节。
+严格归零在采样实现中不可能，残差至少来自三处：\(\phi_2\) 中 \(\sgn\) 项在步长 \(T_s\) 下的切换；\(\nu\) 在 \(T_o\) 处的跳变（注~\ref{rem:jump}）；Gramian 求逆舍入误差导致的 \(\lVert\Delta_K(h)\rVert>0\)。只有在采样闭环仍可表示为同一周期递推、且采样/切换误差能被有界匹配项覆盖时，三者才能纳入命题~\ref{prop:approx}~的 \(\varepsilon_\Delta\) 与 \(\bar\Delta_r\)，故定理~\ref{thm:main}~(iv) 只是\emph{连续时间}命题，工程表述须用 \eqref{eq:explicit_bound}。此外，\(\operatorname{cond}(W_c)\) 很大时须用实际算得的 \(\varepsilon_\Delta\) 核验零化精度，不能仅凭条件数断定退化为 PD；当 \(\varepsilon_\Delta\ge1\) 时 \eqref{eq:approx_ultimate}~失效，连有界性都无法得到。故第~\ref{sec:algorithm}~节第 (5) 步的校验是必要环节。
 
 \subsection{理论结果总结}
+
+为使定理可复核，提交前至少需要取得以下信息：
+\begin{enumerate}
+  \item 动力学：惯性块和速度项所用坐标系、基座姿态是否进入模型、\(M_e\) 的正定下界，以及实际控制中 \(M_e,c_e\) 的计算误差界；
+  \item 观测器：\(\Delta_a\) 和 \(\dot\Delta_a\) 的扰动类、初始观测误差、Filippov 解的定义，以及针对所采用 \(\phi_1,\phi_2\) 的收敛证书；证书必须说明 \(T_c,\eta,\sigma\) 的增益条件和原点保持条件；
+  \item 阶段 I：\(\bar w\) 或引理~\ref{lem:residual} 中 \(\bar x,\lVert\Delta_a\rVert_\infty,\lVert\eta_2(0)\rVert_\infty\) 的保守估计，用于计算 \(\vartheta_i,B_o\)；
+  \item 阶段 II：\(A_c\) 的稳定性、\(R_h\) 的正测度支撑、\(W_c\succ0\)、实际数值实现的 \(\varepsilon_\Delta\)、以及 \(M_{h,i},L_h,\Gamma_h\)；
+  \item 工程实现：采样周期、延迟缓存、力矩限幅、测量噪声和量化误差，并证明这些误差可以归入 \(\bar\Delta_r\) 或周期映射误差。若任一项缺失，只报告仿真/实验结果，不宣称相应的精确理论结论。
+\end{enumerate}
 
 \begin{table}[H]
 \centering
@@ -172,10 +179,10 @@ V_i(t)\le V_i(0)e^{-2\underline k_it},\qquad
 \midrule
 残差有限，\(\lvert e_i(0)\rvert<\rho_{i0}\) & \(\lvert e_i(t)\rvert<\rho_i(t)\)，\(t\in[0,T_o]\)（\emph{无需}扰动上界） & 定理~\ref{thm:funnel} \\
 同上 & \(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}\)（预设时间进带） & 定理~\ref{thm:funnel} \\
-\(T_c\le T_o\)，连续时间 & \(\hat d\equiv d\)，通道无扰动 & 定理~\ref{thm:ptdo} \\
+假设~\ref{as:observer} 的收敛证书且 \(T_c\le T_o\) & \(\hat d\equiv d\)，通道无扰动 & 定理~\ref{thm:ptdo} \\
 \(\Delta_K(h)=0\)，精确补偿 & \(e=\dot e=0\)，\(t\ge T_o+2h\) & 定理~\ref{thm:pdf}、\ref{thm:main} \\
-\(M_hB_o\le\min_i\rho_{i\infty}\) & 包络在全程成立 & 命题~\ref{prop:stage2} \\
-\(\lVert\Delta_K(h)\rVert\le\varepsilon_\Delta<1\) & \(\limsup\lVert z_k\rVert\le\Gamma_h\bar\Delta_r/(1-\varepsilon_\Delta)\) & 命题~\ref{prop:approx} \\
+\(\max_iM_{h,i}B_o<\min_i\rho_{i\infty}\) & 严格包络在全程成立 & 命题~\ref{prop:stage2} \\
+\(\lVert\Delta_K(h)\rVert\le\varepsilon_\Delta<1\)，周期误差模型成立 & \(\limsup\lVert z_k\rVert\le\Gamma_h\bar\Delta_r/(1-\varepsilon_\Delta)\) & 命题~\ref{prop:approx} \\
 \bottomrule
 \end{tabular}
 \end{table}

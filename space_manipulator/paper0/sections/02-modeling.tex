@@ -4,7 +4,7 @@
 \subsection{等效关节空间模型}
 \label{sec:modeling}
 
-设基座广义速度 \(\dot x_b=[v_b^{\top},\omega_b^{\top}]^{\top}\in\R^{6}\)，关节变量 \(q\in\R^{n}\)。系统动能为二次型
+设基座体坐标系中的广义速度 \(\dot x_b=[v_b^{\top},\omega_b^{\top}]^{\top}\in\R^{6}\)（此处 \(\dot x_b\) 仅记速度，不表示姿态坐标的普通导数），关节变量 \(q\in\R^{n}\)。以下惯性块与雅可比均在一致的基座体坐标系表达，并可依赖基座姿态 \(g_b\)；在该表达下若惯性块与姿态无关，才简记为 \(H(q)\)。系统动能为二次型
 \begin{equation}
 T=\tfrac12\begin{bmatrix}\dot x_b^{\top}&\dot q^{\top}\end{bmatrix}
 \begin{bmatrix}H_b&H_{bm}\\ H_{bm}^{\top}&H_m\end{bmatrix}
@@ -22,7 +22,7 @@ T=\tfrac12\begin{bmatrix}\dot x_b^{\top}&\dot q^{\top}\end{bmatrix}
 \end{equation}
 第一行右端为零（基座不受控）；惯性块可由空间复合刚体算法以 \(O(n^{2})\) 复杂度计算。
 
-设初始总线动量与角动量均为零，动量守恒给出 \(H_b\dot x_b+H_{bm}\dot q=0\)，即
+设无外力矩且初始空间总动量为零；空间动量始终为零，经可逆的坐标变换后基座体坐标系动量也为零，故 \(H_b\dot x_b+H_{bm}\dot q=0\)，即
 \begin{equation}
 \dot x_b=-H_b^{-1}H_{bm}\dot q\triangleq J_{bm}(q)\dot q
 \ \Longrightarrow\
@@ -31,11 +31,11 @@ T=\tfrac12\begin{bmatrix}\dot x_b^{\top}&\dot q^{\top}\end{bmatrix}
 \end{equation}
 其前提是 \(H_b\) 在工作区域内一致正定。式~\eqref{eq:gjm}~表明基座运动是由关节运动诱导的反作用而非独立控制量。对 \(H_b\dot x_b+H_{bm}\dot q=0\) 求导并与 \eqref{eq:full_dynamics}~两行联立消去 \(\ddot x_b\)，得等效关节空间模型
 \begin{equation}
-M_e(q)\ddot q+C_e(q,\dot q)\dot q=\tau+d(t),\qquad
+M_e(g_b,q)\ddot q+c_e(g_b,q,\dot q)=\tau+d(t),\qquad
 M_e(q)=H_m-H_{bm}^{\top}H_b^{-1}H_{bm},
 \label{eq:ejm}
 \end{equation}
-其中 \(M_e\) 为 Schur 补，\(C_e\dot q\) 汇总递推动力学、动量约束求导与坐标变换产生的速度项，\(d(t)\) 为集总扰动。将关节变量统一记为 \(q_m\)，后文使用的模型为
+其中 \(M_e\) 为 Schur 补，\(c_e\) 汇总递推动力学、动量约束求导与坐标变换产生的速度项，\(d(t)\) 为集总扰动。在选定坐标系下若 \(M_e\) 仅依赖关节、\(c_e=C_e(q,\dot q)\dot q\)，下文采用该简记；否则下列控制律中的 \(M_e,C_e\dot q\) 均须替换为完整的 \(M_e(g_b,q),c_e\)，并实时取得基座位姿以计算它们。将关节变量统一记为 \(q_m\)，后文使用的简记模型为
 \begin{equation}
 M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t).
 \label{eq:model}
@@ -91,9 +91,9 @@ B=\begin{bmatrix}0\\ I_n\end{bmatrix},
 称光滑严格递增的 \(S:\R\to(-1,1)\) 为误差变换函数，若 \(\lim_{\varepsilon\to\pm\infty}S(\varepsilon)=\pm1\)。对归一化误差 \(\xi_i=e_i/\rho_i\in(-1,1)\)，变换误差为 \(\varepsilon_i=S^{-1}(\xi_i)\)。
 \end{definition}
 
-由定义~\ref{def:transform}，\(S\) 是 \((-1,1)\) 与 \(\R\) 的微分同胚，故
+对本文采用的 \(S=\tanh\)，\(S\) 是 \(\R\) 到 \((-1,1)\) 的微分同胚。对任意有限时间区间 \([0,T]\)，一致严格留在包络内部与变换误差一致有界等价（单个时刻的有限值不等于一致有界）：
 \begin{equation}
-\lvert e_i(t)\rvert<\rho_i(t)\iff\varepsilon_i(t)\ \text{有界}.
+\sup_{t\in[0,T]}\lvert e_i(t)/\rho_i(t)\rvert<1\iff\sup_{t\in[0,T]}\lvert\varepsilon_i(t)\rvert<\infty.
 \label{eq:funnel_equiv}
 \end{equation}
 本文取 \(S(\varepsilon)=\tanh\varepsilon\)，但后文的证明直接在 \(\xi_i\) 坐标上进行（注~\ref{rem:barrier}~说明其必要性）。具体采用的多项式性能函数为
@@ -131,13 +131,13 @@ B=\begin{bmatrix}0\\ I_n\end{bmatrix},
 \textup{(i)} \textbf{包络} \(\lvert e_i(t)\rvert<\rho_i(t)\)，\(\forall t\ge0\)；
 \textup{(ii)} \textbf{进带} \(\lvert e_i(T_o)\rvert\le\rho_{i\infty}\)（预设时间 \(T_o\) 进入预设误差带）；
 \textup{(iii)} \textbf{归零} \(e(t)=\dot e(t)=0\)，\(\forall t\ge T_o+2h\)（再经预设时间 \(2h\) 精确归零）。
-理想条件下要求 (i)--(iii) 同时成立；条件被破坏时 (iii) 退化为 \(\lVert z(t)\rVert\le\delta(\bar\Delta_r)\)，其中 \(\delta(0)=0\) 且关于残余扰动上界 \(\bar\Delta_r\) 连续单调递增。
+理想条件下要求 (i)--(iii) 同时成立；当周期零化与补偿存在有界误差时，只在满足命题~\ref{prop:approx} 的递推条件下给出含初态瞬态项的有限时间界及最终界，不能把最终界写成全时域界。
 \end{problem}
 
 问题~\ref{prob:dual}~(ii)(iii) 分别由 PPC 与 PDF 承担，二者共享交接时刻 \(T_o\)，总预设时间 \(T_{\mathrm{pre}}=T_o+2h\)。
 
 \begin{assumption}[模型与惯性]\label{as:inertia}
-\(M_e(q_m)\) 对称、连续、一致正定（\(\exists\underline m>0,\ M_e\succeq\underline m I_n\)）；\(M_e\) 与 \(C_e\dot q_m\) 精确已知。
+\(M_e\) 对称、连续、一致正定（\(\exists\underline m>0,\ M_e\succeq\underline m I_n\)）；实际控制所用的 \(M_e\) 与速度项 \(C_e\dot q_m\) 精确已知；若其依赖基座位姿，则基座位姿可测或可重构。
 \end{assumption}
 
 \begin{assumption}[可测性与参考轨迹]\label{as:meas}
@@ -157,7 +157,7 @@ B=\begin{bmatrix}0\\ I_n\end{bmatrix},
 \end{assumption}
 
 \begin{assumption}[观测器可设计性]\label{as:observer}
-存在 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\) 使第~\ref{sec:ptdo}~节的 PTDO 在连续时间下于 \(T_c\) 内精确收敛。
+给定 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，需另行提供针对实际观测器 \eqref{eq:ptdo} 的收敛证书：在假设~\ref{as:d} 所允许的扰动导数及所选初值范围内，存在全局有界的 Filippov 解，且 \(\eta_1(t)=\eta_2(t)=0\) 对所有 \(t\ge T_c\) 成立。仅知 \(\dot\Delta_a\) 有界、但未知上界时，本文不宣称任意给定 \(T_c,\eta,\sigma\) 都能满足此条件；证书须给出适用扰动类及增益选择依据。
 \end{assumption}
 
 \begin{remark}\label{rem:assumption_cmp}
