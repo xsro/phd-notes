@@ -15,11 +15,25 @@
 
 \addbibresource{/Users/a1/sys/profiles/backup/zotero/我的文库.bib}
 \addbibresource{refs/local.bib}
+\renewcommand*{\bibfont}{\small}
+\DeclareSourcemap{
+  \maps[datatype=bibtex]{
+    \map{
+      \step[fieldset=doi, null]
+      \step[fieldset=url, null]
+      \step[fieldset=urldate, null]
+      \step[fieldset=eprint, null]
+    }
+  }
+}
 
 \geometry{left=2.6cm,right=2.6cm,top=2.6cm,bottom=2.6cm}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
 \setlength{\parindent}{2em}
-\setlength{\parskip}{0.25em}
+\setlength{\emergencystretch}{1.5em}
+\setlength{\parskip}{0.15em}
+\setlength{\abovedisplayskip}{6pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{6pt plus 2pt minus 2pt}
 
 % --- Theorem environments ---
 \theoremstyle{definition}
@@ -36,7 +50,12 @@
 \theoremstyle{remark}
 \newtheorem{remark}{注}[section]
 
-\title{基于光滑周期延迟反馈的自由漂浮空间机械臂\\预设时间轨迹跟踪控制}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\sig}{\operatorname{sig}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\R}{\mathbb R}
+
+\title{基于漏斗预设性能与光滑周期延迟反馈的\\自由漂浮空间机械臂预设时间轨迹跟踪控制}
 \date{}
 
 \begin{document}
@@ -44,18 +63,17 @@
 \maketitle
 
 \begin{abstract}
-针对捕获前自由漂浮空间机械臂基座不受控、系统动力学强耦合且末端轨迹跟踪精度要求高的问题，本文提出一种基于光滑周期延迟反馈（smooth periodic delayed feedback, PDF）的关节空间轨迹跟踪控制方法。首先依据动量守恒关系，将含基座反作用运动的系统动力学约化为等效关节空间模型；针对有界集总扰动，设计预设时间扰动观测器生成 \(\hat d(t)\)，用于在指定观测时间后补偿匹配扰动；随后构造动力学补偿项，在误差动力学下建立具有可控规范形的辅助输入通道；最后引入周期时变延迟反馈，构造由当前误差和延迟误差共同组成的预设时间跟踪控制律。本文在定理--证明框架下给出以下理论结果：(i) 在连续时间、精确模型和精确补偿条件下，闭环误差可在预设时间 \(T_o+2h\) 后精确归零；(ii) 在存在观测误差、模型近似、执行器限制和数值离散时，结论退化为预设时间附近的实际有界跟踪，并给出明确的误差上界表达式。基于七自由度空间机械臂完整浮基动力学模型（参数取自文献）的 MATLAB 仿真验证了控制结构在有界扰动与输入饱和下的数值可行性，并在同一被控对象上与分数阶非奇异终端滑模控制方案进行了对比。
+针对捕获前自由漂浮空间机械臂基座不受控、关节动力学强耦合且末端轨迹跟踪同时要求瞬态包络与可预设收敛时间的问题，本文提出一种“漏斗预设性能—周期延迟零化”两段式控制方法。其基本观察是：预设性能控制（PPC）只约束误差的\emph{路径}而不约束其\emph{时间}，光滑周期延迟反馈（PDF）只约束误差的\emph{时间}而不约束其\emph{路径}，二者语义正交；但 PPC 的时变非线性误差变换会破坏 PDF 单周期零化所依赖的线性周期时滞结构，故不能在全程叠加。为此，本文先利用动量守恒将浮基动力学约化为等效关节空间模型，再用计算力矩补偿把误差通道化为严格解耦的二阶积分器；随后在观测阶段嵌入漏斗型预设性能律，构造与观测器调节函数同构、在预设时刻\emph{精确到达}稳态半径的指定时间可达性能函数；最后在切换时刻无缝激活 Gramian 型 PDF，由单周期零化完成精确归零。主要结论为：(i) 预设性能阶段的包络保持不依赖任何扰动上界与观测器峰值幅度，只要残差有限，误差即严格位于预设包络内，并在预设时间精确进入预设误差带；(ii) 预设时间扰动观测器（PTDO）收敛后误差通道严格无扰动，PDF 对任意有界初值给出精确归零，总预设时间为 \(T_o+2h\)；(iii) 二者的“同时成立”并非无条件——驱动阶段 II 期间误差不越出误差带的充分判据被显式给出，并证明该判据把人工延迟 \(h\)、基准增益与误差带宽度耦合在一起；(iv) 在观测残差、Gramian 数值误差与离散实现下，结论退化为显式有界跟踪，且明确记录了无观测器时“归零”不成立、\(T_c\le T_o\) 与抖振存在定量冲突等不可行边界。在七自由度浮基机械臂（文献 259 参数、\(20\,\mathrm{N\cdot m}\) 限幅、预设总时间 \(7\,\mathrm{s}\)）上的数值实验表明：预设性能阶段的包络违反时长为 0，而同一包络下纯基准反馈违反 \(6.2\,\mathrm{s\cdot joint}\)、归一化比峰值达 \(10.6\)；进带深度为误差带的 \(0.8\%\!-\!5.9\%\)；无扰动时终端误差 \(1.2\times10^{-8}\,\mathrm{rad}\)；PDF 驱动阶段的最大越界比为 \(1.24\)，可通过加宽误差带降至 \(0.69\)，与命题 4.1 的定性结论一致。观测时间扫描进一步给出 \(T_c\) 的定量折中：\(T_c/T_o\ge0.8\) 后阶段 I 饱和占空比趋于零、稳态残差进入 \(10^{-4}\,\mathrm{rad}\) 平台；而 \(T_c/T_o\le0.3\) 时抖振使稳态残差恶化三个数量级，且障碍项在饱和下反而带来失稳风险。
 \end{abstract}
 
-\noindent\textbf{关键词：}自由漂浮空间机械臂；轨迹跟踪；预设时间控制；周期延迟反馈；扰动观测器
+\noindent\textbf{关键词：}自由漂浮空间机械臂；预设性能控制；预设时间控制；周期延迟反馈；单周期零化；扰动观测器
 
 \input{sections/01-introduction}
 \input{sections/02-modeling}
-\input{sections/03-problem}
-\input{sections/04-controller}
-\input{sections/05-stability}
-\input{sections/06-simulation}
-\input{sections/07-conclusion}
+\input{sections/03-controller}
+\input{sections/04-analysis}
+\input{sections/05-simulation}
+\input{sections/06-conclusion}
 
 \printbibliography[title={参考文献}]
 

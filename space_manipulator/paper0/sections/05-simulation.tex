@@ -1,0 +1,163 @@
+\section{数值验证}
+\label{sec:simulation}
+
+本节按第~\ref{sec:controller}~节的三段时序验证定理~\ref{thm:funnel}、\ref{thm:main}~与命题~\ref{prop:stage2}、\ref{prop:approx}。全部结果由 \texttt{simulation/main\_ppc\_pdf\_verify.m} 生成，可复现。
+
+\subsection{被控对象与仿真设置}
+\label{sec:sim_model}
+
+取 \(n=7\) 的自由漂浮空间机械臂，物理参数、初始状态、扰动力矩与关节力矩限幅取自文献~\cite{dou2025fractional}~的表~1、表~2 与式~(74)，以便与分数阶非奇异终端滑模（FONTSM）控制器在同一对象、同一工况下对比。仿真直接在 \(6+n=13\) 维浮基动力学上进行：每一采样时刻由完整惯性矩阵经 Schur 补得 \(M_e\) 与 \(C_e\)，控制器与被控对象之间无模型简化（该模型已与 Robotics System Toolbox 交叉校核，正运动学误差与 \(\dot H-2C\) 反对称性误差均达 \(10^{-16}\) 量级）。参考轨迹为关节空间五次多项式，\(T_{\mathrm{ref}}=8\,\mathrm s\)，幅值 \(10^{\circ}\)--\(20^{\circ}\)；采样步长 \(T_s=2\,\mathrm{ms}\)，仿真时长 \(T_f=20\,\mathrm s\)，\(\tau_{\max}=20\,\mathrm{N\cdot m}\)。初始关节误差为 \(0.5^{\circ}\)--\(0.2^{\circ}\)（\(8.7\times10^{-3}\)--\(3.5\times10^{-3}\,\mathrm{rad}\)）。
+
+需要指出，该对象前四个关节的等效惯量为 \(1.2\times10^{2}\)--\(3.5\times10^{2}\,\mathrm{kg\cdot m^2}\)，而后三个关节仅 \(0.28\)--\(1.15\,\mathrm{kg\cdot m^2}\)，故 \(20\,\mathrm{N\cdot m}\) 限幅下的关节加速度预算很窄；这一点决定了性能包络必须与观测器瞬态相容（第~\ref{sec:sim_infeasible}~节）。
+
+\subsection{控制器参数}
+\label{sec:sim_params}
+
+\begin{table}[H]
+\centering
+\caption{控制器参数}
+\label{tab:sim_params}
+\small\begin{tabular}{p{3.2cm}p{5.4cm}p{4.6cm}}
+\toprule
+参数 & 取值 & 说明 \\
+\midrule
+预设时间 \(T_o\) & \(5\,\mathrm s\) & 总预设时间 \(T_o+2h=7\,\mathrm s\) \\
+观测器 \(T_c,\eta,\sigma\) & \(3\,\mathrm s,\ 0.3,\ 0.4\) & 满足 \(T_c\le T_o\) \\
+延迟 \(h\)，权重 \(R_h\) & \(1\,\mathrm s\)，\(\sin^4\!\bigl(\pi(\theta-h)/h\bigr)\) & \(C^{3}\) 启停 \\
+性能函数 & 式~\eqref{eq:rho}（五次 smootherstep） & \(\rho_i\in C^{2}\) \\
+包络端点 & \(\rho_{i0}=2\lvert e_i(0)\rvert\)，\(\rho_{i\infty}\in\{10^{-3},2\times10^{-3}\}\) & 两组对比 \\
+漏斗增益 & \(k_{1i}=0.5\)，\(k_{2i}=1\) & \(K_p^{\mathrm{eff}}=k_1k_2\)，\(K_d^{\mathrm{eff}}=k_1+k_2\) \\
+基准增益 \(K_0\) & \([-K_p,\,-K_d]\) & \(A_c\) Hurwitz \\
+\(K_p\)（关节 1--7） & 30, 30, 30, 25, 25, 20, 8 & 与既有仿真一致 \\
+\(K_d\)（关节 1--7） & 12, 12, 12, 10, 10, 9, 4 & 同上 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+注意 \(k_1,k_2\) 与基准增益 \(K_0\) 是两套独立参数：\(K_0\) 只在阶段 II 起作用，而 \(k_1,k_2\) 决定阶段 I 的物理等效 PD 增益（\(K_p^{\mathrm{eff}}=k_1k_2=0.5\)，\(K_d^{\mathrm{eff}}=k_1+k_2=1.5\)），因此阶段 I 的控制权柄主要由式~\eqref{eq:nu_ppc}~的\emph{障碍项}提供。这一结构特点在下面的结果讨论中会体现为“\(\tau_{\max}\) 与包络宽度的相容性”。
+
+\subsection{离线判据}
+\label{sec:sim_offline}
+
+按第~\ref{sec:algorithm}~节第 (5) 步与命题~\ref{prop:stage2}~计算：\(\operatorname{cond}(W_c)=4.91\times10^{11}\)，单周期映射 \(\lVert\Delta_K(h)\rVert=3.00\times10^{-5}\)（相对 \(e^{A_c2h}\) 为 \(4.9\times10^{-4}\)）。尽管条件数很差，\texttt{pinv} 的截断正则化使零化残差仍很小，故 \(\varepsilon_\Delta=3.0\times10^{-5}\)、\(1/(1-\varepsilon_\Delta)\approx1.000\)。其余常数：\(\Gamma_h=0.397\)，\(E_h=2.045\)，\(\int_h^{2h}\lVert K_c\rVert\,\mathrm ds=0.850\)，闭式上界 \(M_h^{\mathrm{ap}}=7.73\)，精确算子范数 \(M_{op}=2.045\)。
+
+\subsection{结果}
+\label{sec:sim_results}
+
+四个算例的验收指标列于表~\ref{tab:metrics}，其中 M1a/M1b 分别为观测阶段与 PDF 阶段的包络违反时长（\(\sum_i\int\mathbb 1\{\lvert e_i\rvert>\rho_i\}\mathrm dt\)），M2 为 \(T_o\) 时刻的进带深度 \(\max_i\lvert e_i(T_o)\rvert/\rho_{i\infty}\)，M4 为 PDF 驱动阶段的越界比 \(\max_{t\in[T_o,T_o+2h]}\max_i\lvert e_i\rvert/\rho_{i\infty}\)，M5 为 \(t\ge T_o+2h\) 后的 \(\sup\lVert z\rVert_\infty\)。
+
+\begin{table}[H]
+\centering
+\caption{验收指标 M1--M7（\(T_o=5\,\mathrm s\)，\(h=1\,\mathrm s\)，\(\tau_{\max}=20\,\mathrm{N\cdot m}\)；除标注 \(\ast\) 者外 \(\rho_{i\infty}=10^{-3}\,\mathrm{rad}\)）}
+\label{tab:metrics}
+\small\begin{tabular}{p{5.7cm}cccccc}
+\toprule
+算例 & M1a & M1b & M2 & M4 & M5 & 饱和率 \\
+\midrule
+PD+PTDO+PDF（消融 A） & 6.24 & 0.00 & 0.078 & 0.60 & \(9.5\times10^{-4}\) & 8.6\% \\
+PPC+PTDO+PDF（本文） & \textbf{0.00} & 0.32 & 0.059 & 1.24 & \(2.0\times10^{-3}\) & 0.93\% \\
+PPC+PTDO+PDF\(\;^{\ast}\)宽包络 & 0.002 & \textbf{0.00} & 0.201 & 0.69 & \(2.2\times10^{-3}\) & 3.6\% \\
+PPC+PTDO+PDF（无扰动） & 0.00 & 0.00 & 0.0065 & 0.013 & \(5.8\times10^{-5}\) & 0.36\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/ppc_envelope.png}
+\caption{七关节跟踪误差 \(e_i(t)\) 与预设包络（红虚线 \(\pm\rho_i(t)\)、黑点线 \(\pm\rho_{i\infty}\)；竖实线 \(T_o=5\,\mathrm s\)，竖点划线 \(T_o+2h=7\,\mathrm s\)）。右下为误差包络总览。}
+\label{fig:envelope}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/ppc_timeline.png}
+\caption{三段时序指标：上为 \(\lVert z\rVert_\infty\)（对数），中为归一化包络比 \(\max_i\lvert e_i\rvert/\rho_i\)（须 \(<1\)，红虚线为界），下为 PTDO 残差 \(\lVert\varepsilon_2\rVert_\infty\)（即阶段 I 的 \(w\)）。}
+\label{fig:timeline}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/ppc_phase1_compare.png}
+\caption{阶段 I 对照：纯基准反馈 \(K_0z\)（蓝）与漏斗型 PPC（其余）。观测器峰值期间前者误差达 \(6.3\times10^{-2}\,\mathrm{rad}\)（初始误差的 7.2 倍），后者恒在 \(\rho_i(t)\) 内。}
+\label{fig:phase1}
+\end{figure}
+
+由表~\ref{tab:metrics}~与图~\ref{fig:envelope}--\ref{fig:phase1}~可得以下结论。
+
+\paragraph{(1) 阶段 I 的包络保持（定理~\ref{thm:funnel}、推论~\ref{cor:pd_compare}）}
+PPC 的包络违反时长为 \textbf{0}（图~\ref{fig:phase1}~中归一化比在阶段 I 内最大 0.814），而同一包络下纯基准反馈违反 6.24\,s\(\cdot\)joint、归一化比峰值达 10.6（出现在 \(t=1.58\,\mathrm{s}\) 的观测峰值处）。这正是推论~\ref{cor:pd_compare}~的定量对照：给定同一条 \(\rho(t)\)，PD 的误差随观测残差线性恶化，而漏斗律把它压回包络内。值得强调两者所用\emph{物理}增益相同量级，差异来自障碍项。
+
+\paragraph{(2) 预设时间进带（定理~\ref{thm:funnel}）}
+\(T_o=5\,\mathrm s\) 时刻七个关节的 \(\lvert e_i\rvert\) 为 \(8.1\times10^{-6}\)--\(5.9\times10^{-5}\,\mathrm{rad}\)，即误差带深度的 0.8\%--5.9\%，且 \(\lVert z(T_o)\rVert_\infty=9.3\times10^{-5}\)。需要说明，定理~\ref{thm:funnel}~给出的 \(\vartheta_i\) 在该工况下退化为 1（因为“oracle”残差上界 \(\bar w=0.295\,\mathrm{rad/s^2}\) 由 PTDO 的初始峰值决定，代入式~\eqref{eq:V_c}~得 \(c_i\sim10^{5}\)、\(\bar V_i\sim4.3\times10^{4}\)），故\emph{定理只保证不破包络、不保证深度}；实测深度远优于该（保守）界，与注~\ref{rem:unknown_w}~的解释一致。
+
+\paragraph{(3) 预设时间归零（定理~\ref{thm:main}）}
+无扰动算例中终端误差为 \(1.2\times10^{-8}\,\mathrm{rad}\)，与命题~\ref{prop:approx}~的预测量级一致（\(\varepsilon_\Delta=3.0\times10^{-5}\) 使严格零化在离散实现下变为 \(10^{-8}\) 级）；有扰动算例终端误差 \(9.4\times10^{-6}\,\mathrm{rad}\)，由 PTDO 的稳态残差（\(10^{-3}\,\mathrm{rad/s^2}\) 量级）经 \(\Gamma_h\) 放大而来，满足 M5 的上界 \(9.0\times10^{-3}\)。
+
+\paragraph{(4) PDF 阶段的短暂越界（命题~\ref{prop:stage2}）}
+\(\rho_\infty=10^{-3}\) 时 M4\(=1.24>1\)，即 PDF 的“注入—抵消”过程使误差在 \(t\approx6.76\,\mathrm{s}\) 处短暂超出误差带 24\%（图~\ref{fig:timeline}~中段的小峰），持续 0.32\,s\(\cdot\)joint；把误差带放宽到 \(2\times10^{-3}\) 后 M4\(=0.69\)、全程包络成立。这一定量结果正好验证了注~\ref{rem:envelope_cond}~的论断：\emph{PDF 驱动阶段是两段式结构中唯一可能越界的窗口}，其幅度由 \(M_hB_o/\rho_{i\infty}\) 控制，而放宽 \(\rho_{i\infty}\) 是消除它的最直接手段。同时也要指出，命题~\ref{prop:stage2}~的判据在此工况下给出 781（因 \(B_o=0.78\) 被 \(\sqrt{2\bar V_i^{\max}}\) 主导），\emph{比实测保守三个数量级}：它是充分条件而非必要条件，其价值在于指明耦合关系而非给出紧界。
+
+\paragraph{(5) 执行器负担}
+等效物理增益较软的漏斗律在同一工况下把饱和占空比从 8.6\% 降到 0.93\%（\(\rho_\infty=10^{-3}\)）。原因是阶段 I 的控制量由障碍项按需提供，误差未逼近包络时 \(\nu\) 很小，从而把有限的力矩预算留给参考轨迹的加速段。
+
+\subsection{不可行性与工程边界}
+\label{sec:sim_infeasible}
+
+\paragraph{(a) 包络必须与 PTDO 瞬态相容}
+观测器收敛前的残差是 \(T_o\) 之前误差的主要来源：实测峰值 \(\lVert\varepsilon_2\rVert_\infty=0.295\,\mathrm{rad/s^2}\)，其二次积分给出 \(\sim0.06\,\mathrm{rad}\) 量级的偏移（图~\ref{fig:phase1}），因此\emph{任何} \(\rho_0\lesssim10^{-2}\,\mathrm{rad}\) 的包络在该对象上都只能靠障碍项“硬压”。数值实验表明存在两种结局：要么控制器贴着包络运行（归一化比 0.81，如图~\ref{fig:phase1}），要么在力矩饱和后失稳。一个\emph{无补偿}的保守估计为
+\begin{equation}
+\rho_{i0}\ \gtrsim\ \tfrac12\lVert\varepsilon_2\rVert_\infty\,T_c^{2},
+\label{eq:feasible_envelope}
+\end{equation}
+它与第~\ref{sec:algorithm}~节关于 \(T_o\)（进而 \(T_c\)）折中的讨论一致，并说明“预设包络”与“预设观测时间”不是两个可以独立选取的参数。式~\eqref{eq:feasible_envelope}~在该对象上过于保守（因观测器在收敛过程中已部分补偿），实际阈值由第~\ref{sec:sim_sweep}~节的扫描给出。
+
+\paragraph{(b) 窄包络 + 力矩饱和 \texorpdfstring{$\Rightarrow$}{=>} 结构性失效}
+若强行把 \(\rho_0\) 压到 \(8\times10^{-3}\,\mathrm{rad}\)（仅提高第 7 关节的初始包络），则该关节的归一化初值由 \(0.5\) 降到 \(0.44\)，障碍项权柄减弱，误差在 \(t\approx2.5\,\mathrm{s}\) 处顶到包络，随后力矩饱和、障碍项失去意义，闭环漂移到 \(10^{1}\,\mathrm{rad}\) 量级。这不是数值问题而是第~\ref{sec:infeasible}~节 (c) 的直接后果：\emph{一旦假设~\ref{as:ideal}~的无饱和条件被破坏，定理~\ref{thm:funnel}~的证明链（尤其是式~\eqref{eq:Vdot}~中障碍项与交叉项的精确相消）即不成立}。工程上可行的补救是把障碍项限幅（例如限在 \(\lvert\xi_i\rvert=0.95\) 处的值），使破包络后律退化为有界 PD 型反馈，避免灾难性漂移；代价是包络的\emph{严格}性变为“实际保包络”。
+
+\paragraph{(c) Gramian 病态的现实影响}
+\(\operatorname{cond}(W_c)=4.9\times10^{11}\) 虽未破坏 \(\Delta_K(h)\) 的数值零化（\(\lVert\Delta_K(h)\rVert=3.0\times10^{-5}\)），但使 \(K_c\) 的幅值对参数敏感：\(\int_h^{2h}\lVert K_c\rVert\,\mathrm ds=0.85\) 与 \(E_h=2.05\) 共同决定 \(M_h^{\mathrm{ap}}=7.7\)，而后者是 M4 判据保守性的主要来源。若把 \(h\) 减小到 \(0.3\,\mathrm s\)，\(\operatorname{cond}(W_c)\) 升至 \(10^{13}\) 以上、\(\lVert\Delta_K(h)\rVert\) 超过 \(10^{-2}\)，PDF 的时域优势即消失（与既有结论一致）。故 \(h=1\,\mathrm s\) 是“零化精度”与“周期内放大”之间的折中。
+
+\subsection{观测时间 \(T_c\) 的扫描}
+\label{sec:sim_sweep}
+
+式~\eqref{eq:tc_tradeoff}~断言 \(T_c\) 不能同时最优于“理论前提”“抖振”与“执行器约束”。为定量刻画该三角约束，固定其余参数、令 \(T_c/T_o\in\{0.2,0.3,0.45,0.6,0.8,1,1.5,2,3,5\}\)，对 PPC 与纯 PD 两种阶段 I 各运行 10 次（共 20 次，脚本 \texttt{main\_ppc\_tc\_sweep.m}）。为使扫描反映 \(T_c\) 本身的影响而非包络可行性，本节取与观测瞬态相容的包络：\(\rho_{i0}=6\times10^{-2}\,\mathrm{rad}\)、\(\rho_{i\infty}=5\times10^{-3}\,\mathrm{rad}\)（即 \(k_1k_2\) 决定的软线性增益不变，仅放宽包络）。
+
+\begin{table}[H]
+\centering
+\caption{\(T_c\) 扫描的关键点（PPC \(+\) PTDO \(+\) PDF，\(T_o=5\,\mathrm s\)）}
+\label{tab:sweep}
+\small\begin{tabular}{ccccccc}
+\toprule
+\(T_c/T_o\) & 峰值 \(\lVert\varepsilon_2\rVert_\infty\) & 阶段 I 饱和 & \(\sup\lVert z\rVert_\infty\) & \(\lvert e(T_f)\rvert\) & M1a & M4 \\
+\midrule
+0.2 & \(1.09\) & 73.4\% & \(5.9\times10^{0}\) & \(2.3\times10^{0}\) & 15.3 & \(1.6\times10^{3}\) \\
+0.3 & \(0.295\) & 25.0\% & \(8.2\times10^{-3}\) & \(3.5\times10^{-5}\) & 0 & 0.20 \\
+0.6 & \(0.295\) & 13.9\% & \(1.2\times10^{-3}\) & \(9.3\times10^{-6}\) & 0 & 0.17 \\
+1.0 & \(0.295\) & 6.0\% & \(9.5\times10^{-5}\) & \(4.0\times10^{-6}\) & 0 & 0.015 \\
+2.0 & \(0.295\) & 0.0\% & \(7.7\times10^{-5}\) & \(7.1\times10^{-7}\) & 0 & 0.008 \\
+5.0 & \(0.295\) & 0.0\% & \(9.2\times10^{-5}\) & \(9.8\times10^{-7}\) & 0 & 0.018 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/ppc_tc_sweep_feasible.png}
+\caption{\(T_c/T_o\) 扫描（对数横轴；竖虚线为 \(T_c=T_o\)，其右侧破坏假设~\ref{as:observer}）。(a) 观测器残差峰值（左轴）与阶段 I 饱和占空比（右轴）；(b) 稳态残差与终端误差；(c) 阶段 I 包络违反时长（左轴）与进带深度（右轴）。}
+\label{fig:sweep}
+\end{figure}
+
+由图~\ref{fig:sweep}~与表~\ref{tab:sweep}~可得：
+
+\paragraph{(i) 抖振是 \(T_c\) 的下界约束}
+\(T_c/T_o\le0.6\) 时阶段 I 饱和占空比达 \(14\%\!-\!73\%\)，稳态残差从 \(10^{-5}\) 恶化到 \(10^{-3}\)（\(T_c/T_o=0.3\)）乃至 \(10^{0}\)（\(T_c/T_o=0.2\)）。原因是观测器时变增益 \(\pi/(\eta T_c)\) 与 \(\pi/(\sigma\eta T_c)\) 与步长之比过大，\(\sgn(\cdot)\) 项在 \(T_s=2\,\mathrm{ms}\) 下高频切换。这与既有结论（\(T_c=1\,\mathrm s\) 时力矩抖动达 \(10\,\mathrm{N\cdot m}\) 量级）一致，并在同一对象上把该结论量化到扫描曲线。
+
+\paragraph{(ii) \(T_c/T_o\gtrsim0.8\) 后进入平稳区，继续增大无收益}
+\(T_c/T_o=0.8\) 时阶段 I 饱和降至 \(0.08\%\)，\(1.5\) 及以后完全为 \(0\)；稳态残差在 \(T_c/T_o\ge0.8\) 后稳定在 \(10^{-4}\,\mathrm{rad}\)（终端误差 \(10^{-6}\!-\!10^{-7}\,\mathrm{rad}\)），与图~\ref{fig:sweep}(b) 的平台一致。故 \(T_c/T_o\in[0.8,1]\) 是该对象上的最优区间：既满足假设~\ref{as:observer}~的 \(T_c\le T_o\)，又把抖振压到可忽略。
+
+\paragraph{(iii) \(T_c>T_o\) 不劣化性能，但会失去“精确归零”}
+\(T_c/T_o\in\{1.5,2,3,5\}\) 的稳态残差与 \(T_c=T_o\) 相当，说明该对象的 PTDO 在到达其预设收敛时刻之前残差已足够小、PDF 仍能把它压到 \(10^{-4}\) 量级。但此时 \(\hat d\equiv d\) 于 \(t=T_o\) 并不成立，定理~\ref{thm:main}~(iv) 的前提被破坏，只能引用命题~\ref{prop:approx}~的有界结论。这是“性能可接受但理论保证降级”的典型情形，也解释了既有仿真中 \(T_c=5\,\mathrm{s}>T_o=1\,\mathrm{s}\) 仍能取得好结果的原因。
+
+\paragraph{(iv) 极端抖振下障碍项反而危险}
+在 \(T_c/T_o=0.2\) 处，PPC 的包络违反时长（15.3）与稳态残差（\(5.9\,\mathrm{rad}\)）都\emph{劣于}同工况的纯 PD（\(2.0\)、\(1.1\times10^{-2}\,\mathrm{rad}\)）：抖振把误差推出包络后，障碍项在 \(\lvert\xi\rvert\to1\) 处产生的巨大指令被力矩限幅截断，反而使闭环失去有效反馈。这从反面印证注~\ref{rem:barrier}：障碍型实现必须配合饱和处理（限幅或增益调度），否则“包络保证”会在饱和下变成“失稳风险”。
+

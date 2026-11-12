@@ -1,122 +1,165 @@
-\section{自由漂浮空间机械臂建模}
+\section{动力学模型与问题描述}
+\label{sec:model}
+
+\subsection{等效关节空间模型}
 \label{sec:modeling}
 
-本节建立捕获前自由漂浮空间机械臂的等效关节空间动力学模型。在给出完整动力学方程后，利用动量守恒消去基座加速度，得到一种适用于后续控制器设计的降阶形式。
-
-\subsection{符号与记法}
-
-考虑一个由基座和 \(n\) 个旋转关节组成的自由漂浮空间机械臂。基座广义速度定义为
-\[
-\dot x_b=[v_b^\top,\ \omega_b^\top]^\top\in\mathbb R^6,
-\]
-其中 \(v_b\in\mathbb R^3\) 和 \(\omega_b\in\mathbb R^3\) 分别为基座线速度和角速度。关节变量记为 \(q=[q_1,\ldots,q_n]^\top\in\mathbb R^n\)。末端执行器广义速度为
-\[
-\dot x_e=[v_e^\top,\ \omega_e^\top]^\top\in\mathbb R^6.
-\]
-
-\subsection{完整动力学模型}
-
-在无外力、无外力矩的自由漂浮条件下，系统动能可写为二次型形式
+设基座广义速度 \(\dot x_b=[v_b^{\top},\omega_b^{\top}]^{\top}\in\R^{6}\)，关节变量 \(q\in\R^{n}\)。系统动能为二次型
 \begin{equation}
-T=\frac12
-\begin{bmatrix}\dot x_b^\top & \dot q^\top\end{bmatrix}
-\begin{bmatrix}
-H_b(q) & H_{bm}(q)\\
-H_{bm}^\top(q) & H_m(q)
-\end{bmatrix}
+T=\tfrac12\begin{bmatrix}\dot x_b^{\top}&\dot q^{\top}\end{bmatrix}
+\begin{bmatrix}H_b&H_{bm}\\ H_{bm}^{\top}&H_m\end{bmatrix}
 \begin{bmatrix}\dot x_b\\ \dot q\end{bmatrix},
-\label{eq:kinetic_energy_ffsm}
+\label{eq:kinetic}
 \end{equation}
-其中 \(H_b(q)\in\mathbb R^{6\times6}\)、\(H_m(q)\in\mathbb R^{n\times n}\) 和 \(H_{bm}(q)\in\mathbb R^{6\times n}\) 分别为基座惯性块、机械臂惯性块及基座--机械臂耦合惯性块。式~\eqref{eq:kinetic_energy_ffsm}~中的各惯性块在统一参考系下定义；若采用不同空间坐标约定，应首先通过相应坐标变换统一动量表达。
-
-基于拉格朗日力学，完整动力学方程可写为分块形式
+其中 \(H_b\in\R^{6\times6}\)、\(H_m\in\R^{n\times n}\)、\(H_{bm}\in\R^{6\times n}\)。由拉格朗日方程得完整动力学
 \begin{equation}
-\begin{bmatrix}
-H_b & H_{bm}\\
-H_{bm}^\top & H_m
-\end{bmatrix}
+\begin{bmatrix}H_b&H_{bm}\\ H_{bm}^{\top}&H_m\end{bmatrix}
 \begin{bmatrix}\ddot x_b\\ \ddot q\end{bmatrix}
-+
-\begin{bmatrix}
-C_b & C_{bm}\\
-C_{bm}^\top & C_m
-\end{bmatrix}
++\begin{bmatrix}C_b&C_{bm}\\ C_{bm}^{\top}&C_m\end{bmatrix}
 \begin{bmatrix}\dot x_b\\ \dot q\end{bmatrix}
-=
-\begin{bmatrix}0\\ \tau\end{bmatrix},
-\label{eq:full_ffsm_dynamics}
+=\begin{bmatrix}0\\ \tau\end{bmatrix},
+\label{eq:full_dynamics}
 \end{equation}
-其中 \(\tau=[\tau_1,\ldots,\tau_n]^\top\in\mathbb R^n\) 为关节驱动力矩。式~\eqref{eq:full_ffsm_dynamics}~的第一行体现了自由漂浮的物理条件：基座不直接施加控制力和控制力矩。\(C\) 矩阵的各子块由 Christoffel 符号或递推 Newton--Euler 方法确定，满足 \(\dot H-2C\) 的斜对称性质（在适当定义下）。
+第一行右端为零（基座不受控）；惯性块可由空间复合刚体算法以 \(O(n^{2})\) 复杂度计算。
 
-\subsection{动量守恒与广义雅可比关系}
-
-\noindent\textbf{假设1（零初始动量）：} 系统初始总线动量和总角动量均为零。\hfill\(\blacksquare\)
-
-在假设~1 下，动量守恒约束可写为
+设初始总线动量与角动量均为零，动量守恒给出 \(H_b\dot x_b+H_{bm}\dot q=0\)，即
 \begin{equation}
-H_b(q)\dot x_b + H_{bm}(q)\dot q = 0.
-\label{eq:momentum_constraint}
+\dot x_b=-H_b^{-1}H_{bm}\dot q\triangleq J_{bm}(q)\dot q
+\ \Longrightarrow\
+\dot x_e=\bigl[J_m+J_bJ_{bm}\bigr]\dot q\triangleq J_g(q)\dot q ,
+\label{eq:gjm}
 \end{equation}
-
-\noindent\textbf{假设2（基座惯性可逆）：} 在所考虑的工作区域内，\(H_b(q)\) 一致正定。\hfill\(\blacksquare\)
-
-在假设~2 下，由式~\eqref{eq:momentum_constraint}~可得基座速度与关节速度之间的线性映射关系
+其前提是 \(H_b\) 在工作区域内一致正定。式~\eqref{eq:gjm}~表明基座运动是由关节运动诱导的反作用而非独立控制量。对 \(H_b\dot x_b+H_{bm}\dot q=0\) 求导并与 \eqref{eq:full_dynamics}~两行联立消去 \(\ddot x_b\)，得等效关节空间模型
 \begin{equation}
-\dot x_b = -H_b^{-1}(q)H_{bm}(q)\dot q \triangleq J_{bm}(q)\dot q,
-\label{eq:base_joint_jacobian}
+M_e(q)\ddot q+C_e(q,\dot q)\dot q=\tau+d(t),\qquad
+M_e(q)=H_m-H_{bm}^{\top}H_b^{-1}H_{bm},
+\label{eq:ejm}
 \end{equation}
-其中 \(J_{bm}(q)\in\mathbb R^{6\times n}\) 称为基座--机械臂雅可比矩阵。式~\eqref{eq:base_joint_jacobian}~表明，在自由漂浮模式下，基座速度不是独立控制量，而是由关节运动通过动量守恒诱导产生的反作用运动。
-
-设末端速度由运动学链关系给出
+其中 \(M_e\) 为 Schur 补，\(C_e\dot q\) 汇总递推动力学、动量约束求导与坐标变换产生的速度项，\(d(t)\) 为集总扰动。将关节变量统一记为 \(q_m\)，后文使用的模型为
 \begin{equation}
-\dot x_e = J_b(q)\dot x_b + J_m(q)\dot q,
-\label{eq:end_velocity_common}
+M_e(q_m)\ddot q_m+C_e(q_m,\dot q_m)\dot q_m=\tau+d(t).
+\label{eq:model}
 \end{equation}
-其中 \(J_b(q)\in\mathbb R^{6\times6}\) 和 \(J_m(q)\in\mathbb R^{6\times n}\) 分别为相对于基座坐标的末端雅可比分量。将式~\eqref{eq:base_joint_jacobian}~代入式~\eqref{eq:end_velocity_common}，得到自由漂浮空间机械臂的广义雅可比关系
+式~\eqref{eq:model}~将原 \(6+n\) 维耦合系统降为 \(n\) 维。
+
+\subsection{误差通道}
+\label{sec:error_channel}
+
+给定足够光滑的期望轨迹 \(q_d(t)\)，定义
 \begin{equation}
-\dot x_e = \bigl[J_m(q) + J_b(q)J_{bm}(q)\bigr]\dot q \triangleq J_g(q)\dot q.
-\label{eq:generalized_jacobian}
+e=q_m-q_d,\qquad \dot e=\dot q_m-\dot q_d,\qquad
+z=\begin{bmatrix}e\\ \dot e\end{bmatrix}\in\R^{2n},
+\label{eq:error_state}
 \end{equation}
-该关系表明末端运动同时受关节运动和基座反作用运动的共同影响。当 \(J_g(q)\) 接近秩亏时，关节速度放大、基座反作用增强以及末端可操作性退化可能同时出现。
-
-\subsection{等效关节空间动力学}
-
-将式~\eqref{eq:momentum_constraint}~对时间求导可得
+并取“计算力矩补偿 + 扰动补偿”结构
 \begin{equation}
-H_b\ddot x_b + H_{bm}\ddot q + \dot H_b\dot x_b + \dot H_{bm}\dot q = 0.
-\label{eq:momentum_derivative}
+\tau=M_e(q_m)\bigl(\ddot q_d+\nu\bigr)+C_e(q_m,\dot q_m)\dot q_m-\hat d(t),
+\label{eq:computed_torque}
 \end{equation}
-消去 \(\ddot x_b\)：由式~\eqref{eq:full_ffsm_dynamics}~的第一行解出 \(\ddot x_b\) 的表达式，代入式~\eqref{eq:momentum_derivative}~并与式~\eqref{eq:full_ffsm_dynamics}~的第二行联立，经过代数运算（该运算涉及各惯性块及其时间导数和 Coriolis 项的重新组合），得到等效关节空间动力学
+其中 \(\nu\in\R^{n}\) 为辅助加速度输入，\(\hat d\) 为扰动补偿量。
+
+\begin{lemma}[误差通道解耦]\label{lem:linearization}
+在假设~\ref{as:inertia}~下，将 \eqref{eq:computed_torque} 代入 \eqref{eq:model} 得
 \begin{equation}
-M_e(q)\ddot q + C_e(q,\dot q)\dot q = \tau + d(t).
-\label{eq:joint_model}
+\ddot e_i(t)=\nu_i(t)+w_i(t),\qquad i=1,\dots,n,
+\label{eq:decoupled_channel}
 \end{equation}
-其中等效惯性矩阵为 Schur 补
+其中 \(w=M_e^{-1}(q_m)(d-\hat d)\) 为残余加速度扰动。当 \(\hat d\equiv d\) 时 \(w\equiv0\)，误差通道化为 \(n\) 个解耦二阶积分器
 \begin{equation}
-M_e(q) = H_m(q) - H_{bm}^\top(q)H_b^{-1}(q)H_{bm}(q).
-\label{eq:generalized_inertia}
+\dot z=Az+B\nu,\quad
+A=\begin{bmatrix}0&I_n\\ 0&0\end{bmatrix},\quad
+B=\begin{bmatrix}0\\ I_n\end{bmatrix},
+\label{eq:linear_error}
 \end{equation}
-\(C_e(q,\dot q)\dot q \in\mathbb R^n\) 表示由完整递推动力学、动量约束求导以及坐标变换共同确定的等效速度相关项；该项的具体矩阵分解并不唯一，但应使式~\eqref{eq:joint_model}~与完整动力学方程在零初始动量条件下一致。\(d(t)\in\mathbb R^n\) 为集总扰动项，汇总参数摄动、未建模动力学、外部扰动以及执行器误差等所有非理想因素。
+且 \((A,B)\) 可控。
+\end{lemma}
 
-\noindent\textbf{假设3（等效惯性正定性）：} 在所考虑的工作区域内，\(M_e(q)\) 一致正定且可逆。\hfill\(\blacksquare\)
+\begin{proof}
+代入得 \(M_e\ddot q_m+C_e\dot q_m=M_e(\ddot q_d+\nu)+C_e\dot q_m-\hat d+d\)。由假设~\ref{as:inertia}~中 \(M_e\) 一致正定可左乘 \(M_e^{-1}\)，得 \(\ddot q_m=\ddot q_d+\nu+w\)，与 \eqref{eq:error_state} 相减即得 \eqref{eq:decoupled_channel}。可控性由 \(\operatorname{rank}[B,AB]=\operatorname{rank}\bigl[\begin{smallmatrix}0&I_n\\ I_n&0\end{smallmatrix}\bigr]=2n\) 保证。
+\end{proof}
 
-假设~3 保证式~\eqref{eq:joint_model}~对控制器设计是良定义的。由于式~\eqref{eq:generalized_inertia}~是 Schur 补形式，当完整惯性矩阵正定时该假设自然成立。
+引理~\ref{lem:linearization}~是本结构的枢纽：它把强耦合的浮基跟踪问题化为逐关节标量二阶问题，使漏斗设计不需要反步、函数逼近与关节加速度测量，并使 PDF 理论可直接作用于 \eqref{eq:linear_error}。注意 \eqref{eq:decoupled_channel}~中的 \(w\) 并非待假设的上界：第~\ref{sec:ptdo}~节将证明 \(w\equiv\eta_2\)（PTDO 的第二误差分量），于是“\(t\ge T_o\) 后通道无扰动”是定理结论而非假设。
 
-为与后续控制器记号一致，将关节变量统一记为 \(q_m\in\mathbb R^n\)，将等效动力学写为
+\subsection{性能函数与误差变换}
+\label{sec:performance}
+
+\begin{definition}[指定时间可达性能函数]\label{def:atpf}
+称 \(\rho:\R_{\ge0}\to\R_{>0}\) 为可达时间 \(T_s\)、稳态半径 \(\rho_\infty\) 的指定时间可达性能函数，若 \textup{(i)} \(\rho\) 在 \([0,T_s)\) 上单调递减且为正；\textup{(ii)} \(\lim_{t\to T_s^-}\rho(t)=\rho_\infty>0\)；\textup{(iii)} \(\rho(t)\equiv\rho_\infty\) 于 \(t\ge T_s\)。
+\end{definition}
+
+\begin{definition}[误差变换函数]\label{def:transform}
+称光滑严格递增的 \(S:\R\to(-1,1)\) 为误差变换函数，若 \(\lim_{\varepsilon\to\pm\infty}S(\varepsilon)=\pm1\)。对归一化误差 \(\xi_i=e_i/\rho_i\in(-1,1)\)，变换误差为 \(\varepsilon_i=S^{-1}(\xi_i)\)。
+\end{definition}
+
+由定义~\ref{def:transform}，\(S\) 是 \((-1,1)\) 与 \(\R\) 的微分同胚，故
 \begin{equation}
-M_e(q_m)\ddot q_m + C_e(q_m,\dot q_m)\dot q_m = \tau + d(t).
-\label{eq:joint_model_relabelled}
+\lvert e_i(t)\rvert<\rho_i(t)\iff\varepsilon_i(t)\ \text{有界}.
+\label{eq:funnel_equiv}
 \end{equation}
-式~\eqref{eq:joint_model_relabelled}~即为本文后续控制律设计的基础模型。该约化模型保留了基座反作用对关节动力学的等效影响，将原 \(6+n\) 维耦合系统降为 \(n\) 维关节空间形式，为计算力矩补偿和误差通道的线性化提供了分析基础。
+本文取 \(S(\varepsilon)=\tanh\varepsilon\)，但后文的证明直接在 \(\xi_i\) 坐标上进行（注~\ref{rem:barrier}~说明其必要性）。具体采用的多项式性能函数为
+\begin{equation}
+\rho_i(t)=
+\begin{cases}
+\rho_{i\infty}+\bigl(\rho_{i0}-\rho_{i\infty}\bigr)\varphi\!\Bigl(\dfrac{t}{T_o}\Bigr), & 0\le t<T_o,\\[6pt]
+\rho_{i\infty}, & t\ge T_o,
+\end{cases}
+\qquad
+\varphi(\tau)=1-\bigl(10\tau^{3}-15\tau^{4}+6\tau^{5}\bigr),
+\label{eq:rho}
+\end{equation}
+其中 \(\varphi\) 为五次 smootherstep 的补函数，\(\rho_{i0}>\rho_{i\infty}>0\)。它满足定义~\ref{def:atpf}，并具有下述端点性质，这是把切换点取在 \(T_o\) 的原因。
 
-\begin{remark}[空间 CRBA 数值实现]
-  在实际数值实现中，完整惯性矩阵 \(H_{\text{full}}(q)\in\mathbb R^{(6+n)\times(6+n)}\) 可通过空间复合刚体算法（Composite Rigid Body Algorithm, CRBA）计算：将各连杆的空间惯性矩阵 \(I_i\in\mathbb R^{6\times6}\) 经伴随变换表达在基座坐标系中求和，即
-  \[
-  H_{\text{full}} = \sum_{i=0}^{n} J_i^\top I_i J_i,
-  \]
-  其中 \(J_i\in\mathbb R^{6\times(6+n)}\) 为连杆 \(i\) 在自身坐标系中的空间雅可比。该方法的计算复杂度为 \(O(n^2)\)，适用于在线实现。科里奥利/离心项 \(C_{\text{full}}\dot q_{\text{full}}\) 可通过 Christoffel 符号的数值微分计算。完整的前向动力学求解步骤为
-  \[
-  \ddot q_{\text{full}} = H_{\text{full}}^{-1}\bigl([0_{6\times1}^\top,\;\tau^\top]^\top - C_{\text{full}}\dot q_{\text{full}}\bigr),
-  \]
-  其中前 \(6\) 个加速度分量对应基座自由度，后 \(n\) 个对应关节自由度。提取 Schur 补 \(M_e = H_m - H_{bm}^\top H_b^{-1} H_{bm}\) 及等效科里奥利向量 \(C_e\dot q = C_m - H_{bm}^\top H_b^{-1} C_b\) 即可用于控制器设计。本文第~\ref{sec:simulation}~节的仿真即按上述方式构造完整惯性矩阵并经 Schur 补提取 \(M_e\) 与 \(C_{\theta m}\)，所用物理参数取自文献~\cite{dou2025fractional}~，实现细节与校核数据见该节。
+\begin{lemma}[性能函数的端点性质]\label{lem:rho_smooth}
+由 \eqref{eq:rho} 定义的 \(\rho_i\in C^{2}(\R_{\ge0})\)，且
+\textup{(i)} \(\dot\rho_i(0)=0\)；\quad\textup{(ii)} \(\dot\rho_i(T_o)=\ddot\rho_i(T_o)=0\)；\quad
+\textup{(iii)} \(\sup\lvert\dot\rho_i\rvert\le\frac{15}{8}\frac{\rho_{i0}-\rho_{i\infty}}{T_o}\)，\(\sup\lvert\ddot\rho_i\rvert\le\frac{10}{\sqrt3}\frac{\rho_{i0}-\rho_{i\infty}}{T_o^{2}}\)。
+\end{lemma}
+
+\begin{proof}
+\(\varphi'(\tau)=-30\tau^{2}(1-\tau)^{2}\)、\(\varphi''(\tau)=-60\tau(1-\tau)(1-2\tau)\)，故 \(\varphi'(0)=\varphi'(1)=\varphi''(0)=\varphi''(1)=0\)；结合 \(\tau\to1^{-}\) 时 \(\rho_i\to\rho_{i\infty}\) 与右侧常值分支相接，得 (i)(ii) 与 \(C^{2}\)。再由 \(\max_{\tau}\lvert\varphi'\rvert=30/16=15/8\)（\(\tau=1/2\)）与 \(\max_{\tau}\lvert\varphi''\rvert=60/(6\sqrt3)=10/\sqrt3\)（\(\tau=(3\pm\sqrt3)/6\)）得 (iii)。
+\end{proof}
+
+\begin{remark}[为什么取 \(\dot\rho_i(0)=0\)]\label{rem:rho_zero_slope}
+若改用 \(\rho_i\propto(1-t/T_o)^{m}\)，则 \(\lvert\dot\rho_i\rvert\) 在 \(t=0\) 处\emph{取最大值} \(m(\rho_{i0}-\rho_{i\infty})/T_o\)。此时初始速度误差为零而包络立即收缩，由 \eqref{eq:xi_s} 得 \(\dot\xi_i(0)=-\xi_i(0)\dot\rho_i(0)/\rho_{i0}\) 与 \(\xi_i(0)\) 同量级，控制律 \eqref{eq:nu_ppc} 于是在 \(t=0\) 产生与 \(\rho_{i0}\) 同阶的加速度指令；在等效惯量达 \(3\times10^{2}\,\mathrm{kg\cdot m^2}\) 的关节上，这直接触发饱和（本文数值实验中初始力矩即达 \(20\,\mathrm{N\cdot m}\) 限幅）。取 \(\varphi'(0)=0\) 使包络“从静止开始收缩”，把初始力矩冲击降为 \(O(k_1k_2\xi_i\rho_{i0})\)；而 \(\varphi'(1)=\varphi''(1)=0\) 又保证切换点不产生由 \(\rho\) 引起的力矩跳变（注~\ref{rem:jump}）。
+\end{remark}
+
+\subsection{控制问题与假设}
+\label{sec:problem}
+
+\begin{problem}[双重预设跟踪]\label{prob:dual}
+给定性能函数 \eqref{eq:rho}、预设观测时间 \(T_o\) 与人工延迟 \(h\)，设计形如 \eqref{eq:computed_torque} 的力矩律使
+\textup{(i)} \textbf{包络} \(\lvert e_i(t)\rvert<\rho_i(t)\)，\(\forall t\ge0\)；
+\textup{(ii)} \textbf{进带} \(\lvert e_i(T_o)\rvert\le\rho_{i\infty}\)（预设时间 \(T_o\) 进入预设误差带）；
+\textup{(iii)} \textbf{归零} \(e(t)=\dot e(t)=0\)，\(\forall t\ge T_o+2h\)（再经预设时间 \(2h\) 精确归零）。
+理想条件下要求 (i)--(iii) 同时成立；条件被破坏时 (iii) 退化为 \(\lVert z(t)\rVert\le\delta(\bar\Delta_r)\)，其中 \(\delta(0)=0\) 且关于残余扰动上界 \(\bar\Delta_r\) 连续单调递增。
+\end{problem}
+
+问题~\ref{prob:dual}~(ii)(iii) 分别由 PPC 与 PDF 承担，二者共享交接时刻 \(T_o\)，总预设时间 \(T_{\mathrm{pre}}=T_o+2h\)。
+
+\begin{assumption}[模型与惯性]\label{as:inertia}
+\(M_e(q_m)\) 对称、连续、一致正定（\(\exists\underline m>0,\ M_e\succeq\underline m I_n\)）；\(M_e\) 与 \(C_e\dot q_m\) 精确已知。
+\end{assumption}
+
+\begin{assumption}[可测性与参考轨迹]\label{as:meas}
+\(q_m(t)\)、\(\dot q_m(t)\) 可实时测量；\(q_d,\dot q_d,\ddot q_d\) 连续有界。关节加速度 \(\ddot q_m\) 与 \(d(t)\) 的数值\emph{不}需要测量或已知。
+\end{assumption}
+
+\begin{assumption}[扰动有界性]\label{as:d}
+\(\Delta_a=M_e^{-1}(q_m)d(t)\) 及其导数 \(\dot\Delta_a\) 一致有界，但上界数值未必已知。
+\end{assumption}
+
+\begin{assumption}[初始条件]\label{as:ic}
+\(\lvert e_i(0)\rvert<\rho_{i0}\)，\(i=1,\dots,n\)。
+\end{assumption}
+
+\begin{assumption}[理想实现]\label{as:ideal}
+精确结论要求同时满足：\textup{(i)} 连续时间实现；\textup{(ii)} 无执行器饱和；\textup{(iii)} 模型补偿精确；\textup{(iv)} PTDO 按假设~\ref{as:observer}~收敛。
+\end{assumption}
+
+\begin{assumption}[观测器可设计性]\label{as:observer}
+存在 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\) 使第~\ref{sec:ptdo}~节的 PTDO 在连续时间下于 \(T_c\) 内精确收敛。
+\end{assumption}
+
+\begin{remark}\label{rem:assumption_cmp}
+与“扰动及其导数有界且\emph{上界已知}”的常规设计相比，假设~\ref{as:d}~只要求有界。后文将证明该弱化不削弱包络结论（定理~\ref{thm:funnel}），只削弱进带\emph{深度}的定量性（注~\ref{rem:unknown_w}）。
 \end{remark}
