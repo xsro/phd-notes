@@ -18,7 +18,7 @@
 \end{proof}
 
 \begin{theorem}[双重预设时间跟踪]\label{thm:main}
-设假设~\ref{as:inertia}--\ref{as:observer}~成立。取力矩律 \eqref{eq:computed_torque}、\(\hat d=M_ez_2\)、观测器 \eqref{eq:ptdo}、辅助输入 \eqref{eq:nu_schedule}（\(\nu^{\mathrm{PPC}}\) 由 \eqref{eq:nu_ppc}、\(K_c\) 由 \eqref{eq:Kc} 给出）与性能函数 \eqref{eq:rho}。则
+设假设~\ref{as:inertia}--\ref{as:observer}~成立（其中 \textup{(A)(B)} 支撑 (i)--(iii)，证书 \((\star)\) 支撑 (iv)）。取力矩律 \eqref{eq:computed_torque}、\(\hat d=M_ez_2\)、观测器 \eqref{eq:ptdo}、辅助输入 \eqref{eq:nu_schedule}（\(\nu^{\mathrm{PPC}}\) 由 \eqref{eq:nu_ppc}、\(K_c\) 由 \eqref{eq:Kc} 给出）与性能函数 \eqref{eq:rho}。则
 \begin{enumerate}
   \item[(i)] \textbf{包络}（观测阶段）：\(\lvert e_i(t)\rvert\le\vartheta_i\rho_i(t)<\rho_i(t)\)，\(\forall t\in[0,T_o]\)；
   \item[(ii)] \textbf{进带}（第一预设时间）：\(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}<\rho_{i\infty}\)；
@@ -29,11 +29,11 @@
 \end{theorem}
 
 \begin{proof}
-(i)(ii)：假设~\ref{as:observer} 给出在 \([0,T_o]\) 上的有界观测器轨迹，因而 \(\bar w=\sup_{[0,T_o]}\lVert\eta_2\rVert_\infty<\infty\)；也可在已验证 \(\eta_1\) 有界时使用引理~\ref{lem:residual}~给出的保守上界。故定理~\ref{thm:funnel}~适用，即得 \eqref{eq:funnel_bound}~与进带估计。
+(i)(ii)：由假设~\ref{as:observer}~的\textup{(A)}（亦即可由定理~\ref{thm:ptdo_core}~(3) 核验的 \([0,T_o]\) 一致有界性），\(\bar w=\sup_{[0,T_o]}\lVert\eta_2\rVert_\infty\le M<\infty\)，\emph{无需}任何附加假设；此时引理~\ref{lem:residual}~的显式值 \(\bar x=M/\sigma\) 可直接代入。故定理~\ref{thm:funnel}~适用，即得 \eqref{eq:funnel_bound}~与进带估计。
 
 (iii)：阶段 II 闭环为线性延迟系统，其解算子是线性的，故存在仅由 \(A_c,B,K_c,h\) 决定的算子 \(\mathcal T(\vartheta,0)\) 使 \(z(\vartheta)=\mathcal T(\vartheta,0)z(T_o)\)。取对应 \(e_i\) 的行块即得 \(\lvert e_i(\vartheta)\rvert\le\lVert\mathcal T_i(\vartheta,0)\rVert_2\lVert z(T_o)\rVert_2\)，结合引理~\ref{lem:handover}~的 \(\lVert z(T_o)\rVert_2\le B_o\) 得 (iii)。
 
-(iv)：由定理~\ref{thm:ptdo}，\(w\equiv0\) 于 \(t\ge T_o\)，故通道严格为 \eqref{eq:linear_error}；由定理~\ref{thm:pdf}，对任意有界初值 \(z(T_o)\)（有界性由引理~\ref{lem:handover}）有 \(z(\vartheta)=0,\ \vartheta\ge2h\)，回代 \(t=T_o+\vartheta\) 即得。切换处 \(\nu\) 允许跳变：定理~\ref{thm:pdf}~只把 \(z(T_o)\) 当作初值，不要求 \(\nu\) 连续；唯一要求是假设~\ref{as:ideal}~中的无饱和。
+(iv)：由证书 \((\star)\)（注~\ref{rem:certificate_gap}）与定理~\ref{thm:ptdo_core}~(4)，\(w\equiv0\) 于 \(t\ge T_o\)，故通道严格为 \eqref{eq:linear_error}；由定理~\ref{thm:pdf}，对任意有界初值 \(z(T_o)\)（有界性由引理~\ref{lem:handover}）有 \(z(\vartheta)=0,\ \vartheta\ge2h\)，回代 \(t=T_o+\vartheta\) 即得。切换处 \(\nu\) 允许跳变：定理~\ref{thm:pdf}~只把 \(z(T_o)\) 当作初值，不要求 \(\nu\) 连续；唯一要求是假设~\ref{as:ideal}~中的无饱和。
 \end{proof}
 
 \begin{remark}[切换处的力矩跳变]\label{rem:jump}
@@ -148,7 +148,7 @@ V_i(t)\le V_i(0)e^{-2\underline k_it},\qquad
 则该上界已超过阶段 I 的误差带内余量，但不能据此断言实际误差必然放大。由于自由漂浮场景中 \(d(t)\) 的解析式通常不可得，故“仅在 \(d\) 已知时成立”的方案不具备工程适用性，这正是引入 PTDO 与三段时序的原因。
 
 \paragraph{(b) \(T_c\le T_o\) 与抖振的定量冲突}
-定理~\ref{thm:main}~(iv) 依赖假设~\ref{as:observer}：观测器必须在 \(T_o\) 前精确收敛，\eqref{eq:w_zero}~才成立。但 PTDO 的时变增益为 \(\pi/(\eta T_c)\) 与 \(\pi/(\sigma\eta T_c)\)，\(T_c\) 过小使增益与采样步长之比过大，在离散实现中产生显著抖振并触发饱和，于是
+定理~\ref{thm:main}~(iv) 依赖证书 \((\star)\)（注~\ref{rem:certificate_gap}）：观测器必须在 \(T_o\) 前精确收敛，\eqref{eq:w_zero}~才成立。但 PTDO 的时变增益为 \(\pi/(\eta T_c)\) 与 \(\pi/(\sigma\eta T_c)\)，\(T_c\) 过小使增益与采样步长之比过大，在离散实现中产生显著抖振并触发饱和，于是
 \begin{equation}
 T_c\le T_o,\qquad \lVert\dot\Delta_a\rVert_\infty\le\frac{\pi}{\eta T_c}\quad\text{(零点保持的必要条件)},\qquad \lVert\tau_{\rm cmd}\rVert_\infty\le\tau_{\max}\quad\text{(无饱和条件)}
 \label{eq:tc_tradeoff}
@@ -164,7 +164,7 @@ T_c\le T_o,\qquad \lVert\dot\Delta_a\rVert_\infty\le\frac{\pi}{\eta T_c}\quad\te
 \begin{enumerate}
   \item 动力学：惯性块和速度项所用坐标系、基座姿态是否进入模型、\(M_e\) 的正定下界，以及实际控制中 \(M_e,c_e\) 的计算误差界；
   \item 观测器：\(\Delta_a\) 和 \(\dot\Delta_a\) 的扰动类、初始观测误差、Filippov 解的定义，以及针对所采用 \(\phi_1,\phi_2\) 的收敛证书；证书必须说明 \(T_c,\eta,\sigma\) 的增益条件和原点保持条件；
-  \item 阶段 I：\(\bar w\) 或引理~\ref{lem:residual} 中 \(\bar x,\lVert\Delta_a\rVert_\infty,\lVert\eta_2(0)\rVert_\infty\) 的保守估计，用于计算 \(\vartheta_i,B_o\)；
+  \item 阶段 I：\(\bar w\) 的取值来源——由假设~\ref{as:observer}~\textup{(A)} 得 \(\bar w\le M\)（定性），或按引理~\ref{lem:residual}~以 \(\bar x=M/\sigma\) 离线算出更紧的数值，用于计算 \(\vartheta_i,B_o\)；
   \item 阶段 II：\(A_c\) 的稳定性、\(R_h\) 的正测度支撑、\(W_c\succ0\)、实际数值实现的 \(\varepsilon_\Delta\)、以及 \(M_{h,i},L_h,\Gamma_h\)；
   \item 工程实现：采样周期、延迟缓存、力矩限幅、测量噪声和量化误差，并证明这些误差可以归入 \(\bar\Delta_r\) 或周期映射误差。若任一项缺失，只报告仿真/实验结果，不宣称相应的精确理论结论。
 \end{enumerate}
@@ -179,7 +179,7 @@ T_c\le T_o,\qquad \lVert\dot\Delta_a\rVert_\infty\le\frac{\pi}{\eta T_c}\quad\te
 \midrule
 残差有限，\(\lvert e_i(0)\rvert<\rho_{i0}\) & \(\lvert e_i(t)\rvert<\rho_i(t)\)，\(t\in[0,T_o]\)（\emph{无需}扰动上界） & 定理~\ref{thm:funnel} \\
 同上 & \(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}\)（预设时间进带） & 定理~\ref{thm:funnel} \\
-假设~\ref{as:observer} 的收敛证书且 \(T_c\le T_o\) & \(\hat d\equiv d\)，通道无扰动 & 定理~\ref{thm:ptdo} \\
+证书 \((\star)\) 且 \(T_c\le T_o\)（注~\ref{rem:certificate_gap}） & \(\hat d\equiv d\)，通道无扰动 & 定理~\ref{thm:ptdo} \\
 \(\Delta_K(h)=0\)，精确补偿 & \(e=\dot e=0\)，\(t\ge T_o+2h\) & 定理~\ref{thm:pdf}、\ref{thm:main} \\
 \(\max_iM_{h,i}B_o<\min_i\rho_{i\infty}\) & 严格包络在全程成立 & 命题~\ref{prop:stage2} \\
 \(\lVert\Delta_K(h)\rVert\le\varepsilon_\Delta<1\)，周期误差模型成立 & \(\limsup\lVert z_k\rVert\le\Gamma_h\bar\Delta_r/(1-\varepsilon_\Delta)\) & 命题~\ref{prop:approx} \\

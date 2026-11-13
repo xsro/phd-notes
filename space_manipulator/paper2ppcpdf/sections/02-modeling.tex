@@ -152,14 +152,16 @@ B=\begin{bmatrix}0\\ I_n\end{bmatrix},
 \(\lvert e_i(0)\rvert<\rho_{i0}\)，\(i=1,\dots,n\)。
 \end{assumption}
 
-\begin{assumption}[理想实现]\label{as:ideal}
-精确结论要求同时满足：\textup{(i)} 连续时间实现；\textup{(ii)} 无执行器饱和；\textup{(iii)} 模型补偿精确；\textup{(iv)} PTDO 按假设~\ref{as:observer}~收敛。
+\begin{assumption}[精确归零]\label{as:ideal}
+阶段 II 的精确结论要求同时满足：\textup{(i)} 连续时间实现；\textup{(ii)} 无执行器饱和；\textup{(iii)} 模型补偿精确；\textup{(iv)} PTDO 存在注~\ref{rem:certificate_gap}~中的收敛证书 \((\star)\)。前三条不满足时结论退化为命题~\ref{prop:approx}~的显式有界性。
 \end{assumption}
 
-\begin{assumption}[观测器可设计性]\label{as:observer}
-给定 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，需另行提供针对实际观测器 \eqref{eq:ptdo} 的收敛证书：在假设~\ref{as:d} 所允许的扰动导数及所选初值范围内，存在全局有界的 Filippov 解，且 \(\eta_1(t)=\eta_2(t)=0\) 对所有 \(t\ge T_c\) 成立。仅知 \(\dot\Delta_a\) 有界、但未知上界时，本文不宣称任意给定 \(T_c,\eta,\sigma\) 都能满足此条件；证书须给出适用扰动类及增益选择依据。
+\begin{assumption}[观测器条件]\label{as:observer}
+对所选 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)，需分别核验两个层次：
+\textup{(A)} 误差系统 \eqref{eq:observer_errordyn} 在 \([0,T_o]\) 上存在一致有界的 Filippov 解（等价于无有限时刻逃逸，可由不变集或仿真监控核验）；
+\textup{(B)} 增益条件 \(\lvert\dot\Delta_{a,i}\rvert\le\kappa_i<\pi/(\eta T_c)\)。
+这两条足以支撑阶段 I 的包络与进带结论（定理~\ref{thm:ptdo_core}、定理~\ref{thm:algo}~(ii)(iii)），且不需任何额外假设。若还要阶段 II 的\emph{精确}补偿，则需另提供针对 \eqref{eq:ptdo}--\eqref{eq:phi} 的收敛证书 \((\star)\)；本文不提供该证书，其缺失原因与可选修补见注~\ref{rem:certificate_gap}。
 \end{assumption}
 
 \begin{remark}\label{rem:assumption_cmp}
-与“扰动及其导数有界且\emph{上界已知}”的常规设计相比，假设~\ref{as:d}~只要求有界。后文将证明该弱化不削弱包络结论（定理~\ref{thm:funnel}），只削弱进带\emph{深度}的定量性（注~\ref{rem:unknown_w}）。
-\end{remark}
+与“扰动及其导数有界且\emph{上界已知}”的常规设计相比，假设~\ref{as:d}~只要求有界。后文将证明该弱化不削弱包络结论（定理~\ref{thm:funnel}），只削弱进带\emph{深度}的定量性（注~\ref{rem:unknown_w}）。\end{remark}
