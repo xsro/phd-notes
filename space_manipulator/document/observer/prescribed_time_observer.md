@@ -17,14 +17,34 @@ u_p:=\tau-C(q,\dot q)\dot q+\dot M(q,\dot q)\dot q.
 \]
 由乘积法则与 (1)，几乎处处有
 \[
-\dot y=\dot M\dot q+M\ddot q=\nu_p+d(t).
+\dot y=\dot M\dot q+M\ddot q=u_p+d(t).
 \tag{3}
 \]
 **因此被估计的量直接是原扰动力矩 $d(t)$，而不是 $M^{-1}(q)d(t)$。** 特别地，$d$ 为常值时不要求 $M$ 为常数。以下所有观测器运算逐分量进行；也可将增益乘以 $I_n$ 写为向量式。
 
 约定：这里“在预设时刻 $T_o$ 收敛”指对任何有限的观测器初值，$\lim_{t\uparrow T_o}\hat d(t)=d(T_o)$，且收敛时刻上界与初值无关。除非另行证明，不把“$T_o$ 时刻准确”理解为“以后对任意时变扰动永久准确”。
 
-## 2. 观测器
+## 文献回顾
+
+文献 `okb-883`(Remark 7) 使用观测器，实现了对常数扰动的估计
+
+$$
+M _ { i } ( q _ { i } ) \ddot { q } _ { i } + C ( q _ { i } , \dot { q } _ { i } ) \dot { q } _ { i } + g ( q _ { i } ) = u _ { i } + d _ { i }
+\tag{24 in okb-883}
+$$
+
+$$
+\begin{array} { r } { \left\{ \begin{array} { l } { \dot { z } _ { i } = - L _ { \mathrm { d } } ( q _ { i } , \dot { q } _ { i } ) z _ { i } + L _ { d } ( q _ { i } , \dot { q } _ { i } ) \big [ C _ { i } ( q _ { i } , \dot { q } _ { i } ) \dot { q } _ { i } + g ( q _ { i } ) } \\ { \qquad - \tau _ { i } - p _ { i } ( q _ { i } , \dot { q } _ { i } ) \big ] } \\ { \qquad \dot { d } _ { i } = z _ { i } + p _ { i } ( q _ { i } , \dot { q } _ { i } ) } \end{array} \right. } \end{array}
+\tag{25 in okb-883}
+$$
+
+where $z _ { i } \in \mathbb { R } ^ { n }$ is the internal auxiliary state. The auxiliary function $p _ { i } ( q _ { i } , \dot { q } _ { i } )$ and the observer gain matrix $L _ { i } ( q _ { i } , \dot { q } _ { i } )$ are designed to satisfy the relationship $L _ { i } ( q _ { i } , \dot { q } _ { i } ) M ( q _ { i } ) \ddot { q } _ { i } =$ $\begin{array} { r l } { \left[ \frac { \partial p ( q _ { i } , \dot { q } _ { i } ) } { q _ { i } } \right. } & { { } \left. \frac { \partial p ( q _ { i } , \dot { q } _ { i } ) } { \dot { q } _ { i } } \right] \left[ \dot { q } _ { i } \right] } \end{array}$ . It follows from the work of Chen et al. [8] and Mohammadi et al. [37] that, with appropriate gain selection, the disturbance estimation error converges exponentially to zero. 
+
+- `okb-883` Flexible distributed fencing control for Euler–Lagrange multi-agent systems with moving target
+- `okb-2985` W. H. Chen, D. J. Ballance, P. J. Gawthrop, and J. O’Reilly, A nonlinear disturbance observer for robotic manipulators, IEEE Trans. Ind. Electron. 47 (2000), no. 4, 932–938.
+- `okb-2985` A. Mohammadi, H. J. Marquez, and M. Tavakoli, Nonlinear disturbance observers: Design and applications to Euler? Lagrange systems, IEEE Control Syst. 37 (2017), no. 4, 50–72.
+
+## 2. 预设时间观测器
 
 给定任意 $T_o>0$，在 $0\le t<T_o$ 记 $s=T_o-t$。取 $r_1=3,r_2=4$，即 $a_1=r_1+r_2-1=6$、$a_2=r_1r_2-a_1=6$，定义
 \[
@@ -56,28 +76,7 @@ A=\begin{bmatrix}-6I_n&I_n\\-6I_n&-I_n\end{bmatrix}.
 \tag{7}
 \]
 
-## 3. 定理一：原扰动 $d$ 为常值
-
-**定理 1（常值扰动力矩的预设时刻精确估计及保持）。** 假设 (1)--(3) 成立，且 $d(t)\equiv d_0\in\mathbb R^n$（未知常向量）。观测器 (4) 对任意有限初值在每个紧区间 $[0,T_o-\epsilon]$ 上有唯一经典解，且
-\[
-\|y(t)-z_1(t)\|\le K\|x(0)\|\left(\frac{s}{T_o}\right)^3,
-\qquad
-\|d_0-z_2(t)\|\le\frac{K\|x(0)\|}{T_o}
-\left(\frac{s}{T_o}\right)^2.
-\tag{8}
-\]
-因此 $\lim_{t\uparrow T_o}z_1(t)=y(T_o)$、$\lim_{t\uparrow T_o}z_2(t)=d_0$。若在 $T_o$ 按极限初始化，并于 $t\ge T_o$ 采用
-\[
-\dot z_1=\nu_p+z_2,\qquad \dot z_2=0,
-\tag{9}
-\]
-则 $z_1(t)=y(t)$、$z_2(t)=d_0$ 对一切 $t\ge T_o$ 成立。
-
-**证明。** $\dot d=0$，故 (6) 退化为 $dx/d\rho=Ax$；由 (7) 有 $\|x(\rho)\|\le Ke^{-3\rho}\|x(0)\|$。因为 $e^{-\rho}=s/T_o$、$e_1=x_1$、$e_2=x_2/s$，即得 (8)。两误差趋零，故 (4) 在 $T_o$ 的左极限为正确的 $y,d_0$。对延拓律 (9)，结合 $\dot y=\nu_p+d_0$ 可得 $\dot e_1=e_2$、$\dot e_2=0$；以零误差为初值，唯一解恒为零。证毕。
-
-> **原扰动而非等效扰动常值。** 本定理并不需要 $M^{-1}(q)d_0$ 为常值，这正是使用动量通道 (3) 的理由。
-
-## 4. 定理二：确定性时变扰动 $d(t)$
+## 定理2：确定性时变扰动 $d(t)$
 
 **定理 2（有界变化率时变扰动的预设时刻精确估计）。** 假设 (1)--(3) 成立，$d:[0,T_o]\to\mathbb R^n$ 是**仅关于时间的确定性函数**，绝对连续，且存在有限常数 $L$ 使
 \[
