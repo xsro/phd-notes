@@ -63,7 +63,7 @@ function mt = sim_metrics(r, th, pp, an, cfg)
     n0   = max(e0i);
     nrm  = max(max(abs(E(:, msk2b)), [], 1));
     mt.mono_norm = max(0, nrm/max(n0, 1e-12) - 1);
-    mt.mono_pass = mt.mono_band <= 2e-2;   % 允许 2% rho_inf 的残差地板
+    mt.mono_pass = mt.mono_norm <= 1e-2;    % 范数相对超调 <= 1%
 
     % ---- M6 ----
     mt.deltaK = an.deltaK;

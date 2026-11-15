@@ -147,16 +147,16 @@ for ci = 1:nc
 end
 
 hdr = sprintf('%-44s %8s %8s %9s %9s %9s %8s %8s', ...
-    '算例', 'M1a', 'M1b', 'M2 ratio', 'M4 ratio', 'M5 ss', 'M7 sat%', 'M8 band');
+    '算例', 'M1a', 'M1b', 'M2 ratio', 'M4 ratio', 'M5 ss', 'M7 sat%', 'M8 norm');
 fprintf('%s\n%s\n', hdr, repmat('-', 1, 100));
 for ci = 1:nc
     x = R{ci}.met;
     fprintf('%-44s %8.3f %8.3f %9.4f %9.4f %9.2e %8.2f %8.2e\n', ...
         char(R{ci}.name), x.viol_time_p1, x.viol_time_p2, x.band_ratio, ...
-        x.stage2_ratio, x.ss_sup, 100*R{ci}.m.sat_ratio, R{ci}.met.mono_band);
+        x.stage2_ratio, x.ss_sup, 100*R{ci}.m.sat_ratio, R{ci}.met.mono_norm);
 end
 fprintf('说明: M1a/M1b = 观测阶段/PDF 阶段的包络违反时长 [s*joint]; M5 = t>=To+2h 的 sup||z||_inf\n');
-fprintf('      M8 = PDF 阶段 |e_i| 相对 e_i(To) 的最大增量 (以 rho_inf 为单位, 0 = 单调)\n');
+fprintf('      M8 = PDF 阶段 ||e||_inf 的相对超调 (0 = 范数单调)\n');
 fprintf('      归零精度由离散残差决定 (O(Ts)), 见论文第 5.4 节 (5) 的 Ts 扫描\n');
 
 % ---- 观测器诊断 ----

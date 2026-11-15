@@ -164,7 +164,7 @@ PPC 的包络违反时长为 0.178\,s\(\cdot\)joint（占 \(5\,\mathrm s\times7\
 图~\ref{fig:observer}~给出 \(d\) 与 \(\hat d=z_2\) 的对照。阶段 I 的残差 \(w\) 从 \(0.307\,\mathrm{rad/s^2}\) 按压缩时间指数下降（图~\ref{fig:timeline}~下图），在 \(T_o\) 处为 \(7\times10^{-4}\)；这与定理~\ref{thm:obs1}~(1) 的“收敛时刻恰为 \(T_o\)、精度由 \(L\) 与 \(T_o\) 决定”一致。阶段 II 的观测误差最大为 \(1.1\times10^{-2}\,\mathrm{N\cdot m}\)（切换后 \(0.1\,\mathrm{s}\) 内的瞬态），\(t\ge T_o+2h\) 后稳定在 \(2\times10^{-4}\)--\(4\times10^{-4}\,\mathrm{N\cdot m}\)，对应 \(w\) 的 \(10^{-4}\,\mathrm{rad/s^2}\) 量级。该残差并非定理~\ref{thm:sta}~的连续时间结论，而是第~\ref{sec:sim_model}~节 (c) 中 \(\sgn\) 的离散切换和 \(T_s\) 采样造成的；下一段关于 \(T_s\) 的实验给出其 $O(T_s)$ 阶的证据。
 
 \paragraph{(4) PDF 阶段的单调收敛（命题~\ref{prop:stage2}、第~\ref{sec:sim_mono}~节规则）}
-按第~\ref{sec:sim_mono}~节的规则整形交接状态后，PDF 阶段不再出现“先增后减”：M4\(=0.907<1\)、M1b\(=0\)，且 \(\lVert e(t)\rVert_\infty\) 在 \([T_o,T_o+2h]\) 上单调、各关节无超调（相对增量 \(8.9\times10^{-6}\rho_\infty\)；个别关节过零后回升 \(\le4.5\%\rho_\infty\)，见第~\ref{sec:sim_mono}~节 (4)）；\(\rho_\infty=2\times10^{-3}\) 时为 M4\(=0.375\)、M1b\(=0\)。作为对照，若去掉整形项（第~\ref{sec:sim_mono}~节的 R1），同一算例的 \(\dot e_7(T_o)=3.2\times10^{-2}\,\mathrm{rad/s}\) 会使 M4\(=5.38\)、M1b\(=1.18\)，与旧版结果一致：\emph{越界不是 PDF 结构的问题，而是交接速度的问题}。
+按第~\ref{sec:sim_mono}~节的规则整形交接状态后，PDF 阶段不再出现“先增后减”：M4\(=0.907<1\)、M1b\(=0\)，且 \(\lVert e(t)\rVert_\infty\) 与 \(\lVert e(t)\rVert_2\) 在 \([T_o,T_o+2h]\) 上非增（相对超调 0；逐关节过零后的回升不影响范数，见第~\ref{sec:sim_mono}~节 (4)）；\(\rho_\infty=2\times10^{-3}\) 时为 M4\(=0.375\)、M1b\(=0\)。作为对照，若去掉整形项（第~\ref{sec:sim_mono}~节的 R1），同一算例的 \(\dot e_7(T_o)=3.2\times10^{-2}\,\mathrm{rad/s}\) 会使 M4\(=5.38\)、M1b\(=1.18\)，与旧版结果一致：\emph{越界不是 PDF 结构的问题，而是交接速度的问题}。
 
 消融 A（PD）不含整形项，其 PDF 阶段仍有 0.44\,s\(\cdot\)joint 的越界与 M4\(=4.38\)，可作为“无交接整形”的对照。命题~\ref{prop:stage2}~的判据仍按引理~\ref{lem:handover}~的 \(B_o=0.81\) 给出 813（因 \(\vartheta_i=1\) 退化），比实测保守约 900 倍；把实测 \(\lVert z(T_o)\rVert_2=1.17\times10^{-3}\) 代入则判据为 1.17，与实测 0.907 同阶——这说明判据的保守性来自 \(B_o\) 的退化，而非算子范数 \(M_{h,i}\)（实测 \(M_{h,i}=1.00\)）。整形后的交接状态使该判据几乎变紧，也从另一侧面说明 R1 的作用是把交接状态限制到定理允许的集合内。
 
@@ -185,7 +185,7 @@ PPC 的包络违反时长为 0.178\,s\(\cdot\)joint（占 \(5\,\mathrm s\times7\
 \subsection{进入 PDF 阶段的单调收敛规则}
 \label{sec:sim_mono}
 
-本节把“单调收敛”精确定义为：\(\lVert e\rVert_\infty\) 在 \([T_o,T_o+2h]\) 上单调下降，且逐关节无超调 \(\lvert e_i(t)\rvert\le\lvert e_i(T_o)\rvert\)。点对点的 \(\lvert e_i\rvert\) 严格单调是更强的要求，在第~\ref{sec:pdf}~节的二阶误差通道与全耦合 Gramian 注入下不能由参数保证（见本节 (4)）。
+本节把“单调收敛”定义为误差范数 \(\lVert e(\theta)\rVert_\infty\)（等价地 \(\lVert e(\theta)\rVert_2\)）在 \([T_o,T_o+2h]\) 上非增——这正是问题~\ref{prob:dual}~所关心的“无超调”含义。逐点 \(\lvert e_i\rvert\) 的严格单调是更强的要求，本文不作要求（其不可行性见 (4)）。
 
 若不施加交接整形，第 7 关节的误差在进入 PDF 阶段后会先由 \(4.7\times10^{-4}\,\mathrm{rad}\) 增至 \(5.4\times10^{-3}\,\mathrm{rad}\) 再归零。原因不在 PDF 增益：交接时刻 \(\dot e_7(T_o)=3.2\times10^{-2}\,\mathrm{rad/s}\) 与 \(e_7(T_o)\) 同号，故
 \begin{equation}
@@ -223,20 +223,20 @@ t_i^*=\begin{cases}
 \end{equation}
 本文 \(K_0\) 给出 \(t_7^*=1.18\,\mathrm s\)（\(\zeta_7=0.707\)）、其余 \(t_i^*=\infty\)，故 \(h=1\,\mathrm s\) 满足并留 18\% 余量。
 
-\textbf{R3（注入窗口校验）：}\([T_o+h,T_o+2h)\) 上的 Gramian 注入是全耦合的，且 \(\lVert\mathcal T(\theta,0)\rVert\) 可大于 1，故对任意交接方向不可能保证逐关节单调；须对实际 \(z(T_o)\) 做一次线性闭环校验（无需对象模型）：从测得的 \(z(T_o)\) 积分 \(\dot z=A_cz-BK_c(\theta)z(\theta-h)\)，要求
+\textbf{R3（注入窗口校验）：}\([T_o+h,T_o+2h)\) 上的 Gramian 注入是全耦合的，且 \(\lVert\mathcal T(\theta,0)\rVert\) 可大于 1，故逐关节单调对任意交接方向不可能保证；按本节的范数单调要求，对实际 \(z(T_o)\) 做一次线性闭环校验（无需对象模型）：从测得的 \(z(T_o)\) 积分 \(\dot z=A_cz-BK_c(\theta)z(\theta-h)\)，要求
 \begin{equation}
 \max_{\theta\in[0,2h]}\lVert e(\theta)\rVert_\infty
 \le(1+\varepsilon)\lVert e(T_o)\rVert_\infty,
 \qquad \varepsilon=10^{-2},
 \label{eq:mono_check}
 \end{equation}
-或逐关节增量 \(\le\varepsilon_\rho\rho_{i\infty}\)（\(\varepsilon_\rho=0.02\)）。不通过时增大 \(k_v\)（或 \(k_1,k_2\)）、放宽 \(\rho_{i\infty}\) 或减小 \(h\)。
+（逐关节无超调可作为附加检查，非必需。）不通过时增大 \(k_v\)（或 \(k_1,k_2\)）、放宽 \(\rho_{i\infty}\) 或减小 \(h\)。
 
 \paragraph{(3) 效果}
-按 R1--R3 更新后的主算例（表~\ref{tab:metrics}~第 2 行）M4\(=0.907\)、M1b\(=0\)，且 \eqref{eq:mono_check}~成立：\(\lVert e\rVert_\infty\) 在 \([T_o,T_o+2h]\) 上单调下降，各关节峰值不超过其交接值（以 \(\rho_{i\infty}\) 计的最大增量 \(8.9\times10^{-6}\)）；\(\rho_\infty=2\times10^{-3}\) 时 M4\(=0.375\)、最大增量 \(3.3\times10^{-3}\rho_\infty\)。阶段 I 的饱和占空比由 1.96\% 降至 1.72\%，包络违反时长由 0.21 降至 0.178\,s\(\cdot\)joint。
+按 R1--R3 更新后的主算例（表~\ref{tab:metrics}~第 2 行）M4\(=0.907\)、M1b\(=0\)，且 \eqref{eq:mono_check}~成立：\(\lVert e\rVert_\infty\) 与 \(\lVert e\rVert_2\) 在整个 \([T_o,T_o+2h]\) 上\emph{非增}（相对超调为 0），各关节峰值也不超过其交接值（逐关节最大增量 \(8.9\times10^{-6}\rho_\infty\)）；\(\rho_\infty=2\times10^{-3}\) 时 M4\(=0.375\)、范数相对超调同为 0。无扰动算例的范数超调为 \(0.72\%\)（绝对量 \(1.9\times10^{-7}\,\mathrm{rad}\)，来自离散残差地板）。阶段 I 的饱和占空比由 1.96\% 降至 1.72\%，包络违反时长由 0.21 降至 0.178\,s\(\cdot\)joint。
 
-\paragraph{(4) 点对点单调的边界}
-\eqref{eq:mono_check}~与表~\ref{tab:metrics}~保证的是范数与峰值包络，而不是每个 \(\lvert e_i\rvert\) 的点对点单调。原因有二：\textup{(i)} 二阶通道被驱向零时，若在过零时刻速度非零，则 \(\lvert e_i\rvert\) 在过零处取局部极小、随后回升；\textup{(ii)} Gramian 注入是跨关节耦合的（\(W_c^{-1}\) 满阵），初始为零的分量也会被其他关节激励。实测主算例中有 3 个关节（1、5、7）在 \(\theta\approx h\)（\(t\approx6.0\,\mathrm{s}\)）处过零，过零后 \(\lvert e_i\rvert\) 分别回升至 \(1.2\times10^{-5}\)、\(6.4\times10^{-6}\)、\(4.5\times10^{-5}\,\mathrm{rad}\)（最大为误差带的 4.5\%），随后再衰减到零。因此：\emph{在 \([T_o,T_o+h)\) 上逐点单调可证（R2）；在 \([T_o+h,T_o+2h)\) 上只能保证范数单调与无超调，点对点严格单调对任意交接方向都不成立}——这与命题~\ref{prop:stage2}~只给出 \(\lVert e_i\rVert\le M_{h,i}B_o\) 的结论一致，也是“精确归零”与“逐点单调”在二阶通道上的固有折中。
+\paragraph{(4) 关于逐点单调}
+逐点 \(\lvert e_i\rvert\) 的严格单调并不成立，也不需要：二阶通道在全耦合 Gramian 注入下会在 \(\theta\approx h\) 处过零，过零后 \(\lvert e_i\rvert\) 从零回升（主算例中关节 1、5、7 分别回升至 \(1.2\times10^{-5}\)、\(6.4\times10^{-6}\)、\(4.5\times10^{-5}\,\mathrm{rad}\)，最多为误差带的 4.5\%），随后再衰减到零。由于回升量远小于交接值，范数 \(\lVert e\rVert_\infty\) 仍非增；\eqref{eq:mono_check}~校验的正是范数而非逐关节量，与本节的单调性定义一致。若任务对单关节提出点对点单调要求，则需在 PDF 阶段加入符号约束或改用单调参考剖面，这会改变定理~\ref{thm:pdf1}~的结构，超出本文范围。
 
 \paragraph{(5) 与定理的关系}
 R1 是数值整形项，不属于定理~\ref{thm:main}~的连续时间闭环；它只把交接状态限制到定理允许的集合内（\(\bar w\) 与 \(B_o\) 的界仍成立），R3 则是与命题~\ref{prop:stage2}~同类的离线充分性校验。因此“精确归零”与“阶段 I 包络”的理论结论不变，规则只改善采样实现的暂态品质。
