@@ -9,6 +9,7 @@
 \label{sec:structure}
 
 \begin{figure}
+  \centering
   \includegraphics[width=0.8\textwidth]{assets/ppc-pdf.drawio.pdf}
   \caption{完整算法流程框图}
 \end{figure}
@@ -71,7 +72,7 @@ K_0z(t)-K_c(t-T_o)z(t-h), & t\ge T_o,
 算法的每条结论都由下列条件支撑，其中 \textup{(C1)(C2)} 只服务阶段 I，\textup{(C3)(C4)} 服务阶段 II，\textup{(C5)} 只服务“精确归零”。它们在假设~\ref{as:inertia}--\ref{as:observer}~下被逐条核验，此处集中列出以便复现：
 
 \begin{enumerate}
-\item[\textup{(C1)}] \textbf{模型与量测}：\(M_e\) 对称、连续可微、一致正定（\(\exists\underline m>0:\ M_e\succeq\underline m I_n\)），\(C_e(q_m,\dot q_m)\dot q_m\) 与 \eqref{eq:momentum} 中的 \(\dot M_e\dot q_m\) 精确可算；\(q_m,\dot q_m\) 可测，\emph{实际施加}的 \(\tau\) 已知；不需要 \(\ddot q_m\)。
+\item[\textup{(C1)}] \textbf{模型与量测}：\(M_e\) 对称、连续可微、一致正定（\(\exists\underline m>0:\ M_e\succeq\underline m I_n\)），\(C_e(q_m,\dot q_m)\dot q_m\) 与 \eqref{eq:momentum} 中的 \(\dot M_e\dot q_m\) 精确可算；\(q_m,\dot q_m\) 可测，\emph{实际施加}的 \(\tau\) 已知。
 \item[\textup{(C2)}] \textbf{阶段 I 扰动正则性}：\(d\) 在 \([0,T_o]\) 上绝对连续，且存在有限常数 \(L\) 使
 \begin{equation}
 \|\dot d(t)\|\le L\quad\text{对几乎所有 }t\in[0,T_o].
