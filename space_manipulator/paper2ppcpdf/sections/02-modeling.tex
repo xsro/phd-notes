@@ -4,7 +4,19 @@
 \subsection{等效关节空间模型}
 \label{sec:modeling}
 
-设基座体坐标系中的广义速度 \(\dot x_b=[v_b^{\top},\omega_b^{\top}]^{\top}\in\R^{6}\)（此处 \(\dot x_b\) 仅记速度，不表示姿态坐标的普通导数），关节变量 \(q\in\R^{n}\)。以下惯性块与雅可比均在一致的基座体坐标系表达，并可依赖基座姿态 \(g_b\)；在该表达下若惯性块与姿态无关，才简记为 \(H(q)\)。系统动能为二次型
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{assets/manipulator.drawio.pdf}
+    \caption{空间抓取目标任务下的悬浮机械臂模型示意图}
+    \label{fig:manipulator}
+\end{figure}
+
+% （此处 \(\dot x_b\) 仅记速度，不表示姿态坐标的普通导数）
+如图\ref{fig:manipulator}所示，
+设基座体坐标系中的广义速度 \(\dot x_b=[v_b^{\top},\omega_b^{\top}]^{\top}\in\R^{6}\)，关节变量 \(q = [q_1,q_2,\cdots, q_n]\in\R^{n}\)。
+关节编号从基座向末端递增。
+广义速度取体坐标系下的速度分量而非姿态坐标的导数；一般情形下惯性块可依赖基座姿态 \(g_b\) ，本文的自由漂浮设定下该依赖消失，故简记为  \(H(q)\)。
+系统动能为二次型
 \begin{equation}
 T=\tfrac12\begin{bmatrix}\dot x_b^{\top}&\dot q^{\top}\end{bmatrix}
 \begin{bmatrix}H_b&H_{bm}\\ H_{bm}^{\top}&H_m\end{bmatrix}
@@ -58,27 +70,6 @@ z=\begin{bmatrix}e\\ \dot e\end{bmatrix}\in\R^{2n},
 \end{equation}
 其中 \(\nu\in\R^{n}\) 为辅助加速度输入，\(\hat d\) 为扰动补偿量。
 
-\begin{lemma}[误差通道解耦]\label{lem:linearization}
-在假设~\ref{as:inertia}~下，将 \eqref{eq:computed_torque} 代入 \eqref{eq:model} 得
-\begin{equation}
-\ddot e_i(t)=\nu_i(t)+w_i(t),\qquad i=1,\dots,n,
-\label{eq:decoupled_channel}
-\end{equation}
-其中 \(w=M_e^{-1}(q_m)(d-\hat d)\) 为残余加速度扰动。当 \(\hat d\equiv d\) 时 \(w\equiv0\)，误差通道化为 \(n\) 个解耦二阶积分器
-\begin{equation}
-\dot z=Az+B\nu,\quad
-A=\begin{bmatrix}0&I_n\\ 0&0\end{bmatrix},\quad
-B=\begin{bmatrix}0\\ I_n\end{bmatrix},
-\label{eq:linear_error}
-\end{equation}
-且 \((A,B)\) 可控。
-\end{lemma}
-
-\begin{proof}
-代入得 \(M_e\ddot q_m+C_e\dot q_m=M_e(\ddot q_d+\nu)+C_e\dot q_m-\hat d+d\)。由假设~\ref{as:inertia}~中 \(M_e\) 一致正定可左乘 \(M_e^{-1}\)，得 \(\ddot q_m=\ddot q_d+\nu+w\)，与 \eqref{eq:error_state} 相减即得 \eqref{eq:decoupled_channel}。可控性由 \(\operatorname{rank}[B,AB]=\operatorname{rank}\bigl[\begin{smallmatrix}0&I_n\\ I_n&0\end{smallmatrix}\bigr]=2n\) 保证。
-\end{proof}
-
-引理~\ref{lem:linearization}~是本结构的枢纽：它把强耦合的浮基跟踪问题化为逐关节标量二阶问题，使漏斗设计不需要反步、函数逼近与关节加速度测量，并使 PDF 理论可直接作用于 \eqref{eq:linear_error}。注意 \eqref{eq:decoupled_channel}~中的 \(w\) 并非待假设的上界：第~\ref{sec:ptdo}~节将证明 \(w\equiv\eta_2\)（PTDO 的第二误差分量），于是“\(t\ge T_o\) 后通道无扰动”是定理结论而非假设。
 
 \subsection{性能函数与误差变换}
 \label{sec:performance}
@@ -131,7 +122,6 @@ B=\begin{bmatrix}0\\ I_n\end{bmatrix},
 \textup{(i)} \textbf{包络} \(\lvert e_i(t)\rvert<\rho_i(t)\)，\(\forall t\ge0\)；
 \textup{(ii)} \textbf{进带} \(\lvert e_i(T_o)\rvert\le\rho_{i\infty}\)（预设时间 \(T_o\) 进入预设误差带）；
 \textup{(iii)} \textbf{归零} \(e(t)=\dot e(t)=0\)，\(\forall t\ge T_o+2h\)（再经预设时间 \(2h\) 精确归零）。
-理想条件下要求 (i)--(iii) 同时成立；当周期零化与补偿存在有界误差时，只在满足命题~\ref{prop:approx} 的递推条件下给出含初态瞬态项的有限时间界及最终界，不能把最终界写成全时域界。
 \end{problem}
 
 问题~\ref{prob:dual}~(ii)(iii) 分别由 PPC 与 PDF 承担，二者共享交接时刻 \(T_o\)，总预设时间 \(T_{\mathrm{pre}}=T_o+2h\)。
