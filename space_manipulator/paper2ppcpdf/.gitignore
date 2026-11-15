@@ -1,3 +1,5 @@
 figures
 *.pdf
 *.mat
+!assets/*.pdf
+assets/*.bkp
