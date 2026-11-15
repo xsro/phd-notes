@@ -81,6 +81,10 @@ for ki = 1:nk
         cfgi = cfg;  cfgi.To = To;
         pp = ppc_settings(To, e0, struct('rho_inf', cfg.rho_inf, 'm', 5, 'k1', 0.5, 'k2', 1.0));
         oprm = struct('To', To, 'kappa1', kappa1, 'kappa2', kappa2, 'nsub2', 5);
+        % 交接整形 (第 5.5 节规则 R1), 仅作用于 PPC 分支:
+        %   delta = min(0.4 s, 0.15*To),  kv = 8/delta
+        dl = min(0.4, 0.15*To);
+        oprm.damp = [8/dl, dl];
         cs = struct('name', sprintf('%s, To=%.1f', kname{ki}, To), ...
                     'kind', kinds{ki}, 'dist', true, 'rho_inf', cfg.rho_inf);
         x = sim_ppc_case(cfgi, P, ctrl, ref, cs, pp, oprm);

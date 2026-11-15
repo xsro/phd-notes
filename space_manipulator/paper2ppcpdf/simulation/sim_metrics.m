@@ -50,6 +50,21 @@ function mt = sim_metrics(r, th, pp, an, cfg)
     mt.Delta_r_bar = Dr;
     mt.eps_Delta = epsD;
 
+    % ---- M8: PDF 阶段的单调性 ----
+    %   mono_band: 相对初始值的最大增量, 以误差带为单位 (0 表示不增)
+    %   mono_norm: ||e||_inf 的相对超调 (0 表示范数单调)
+    msk2b = t >= To & t < To + 2*h;
+    [~, kTo] = min(abs(t - To));
+    e0i  = abs(E(:, kTo));
+    peak = max(abs(E(:, msk2b)), [], 2);
+    inc  = max(0, peak - e0i);
+    mt.mono_band = max(inc ./ pp.rho_inf);
+    mt.mono_each = (inc ./ pp.rho_inf).';
+    n0   = max(e0i);
+    nrm  = max(max(abs(E(:, msk2b)), [], 1));
+    mt.mono_norm = max(0, nrm/max(n0, 1e-12) - 1);
+    mt.mono_pass = mt.mono_band <= 2e-2;   % 允许 2% rho_inf 的残差地板
+
     % ---- M6 ----
     mt.deltaK = an.deltaK;
     mt.cond   = an.cond;

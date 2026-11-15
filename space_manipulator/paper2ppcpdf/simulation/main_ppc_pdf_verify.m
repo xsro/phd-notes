@@ -87,6 +87,11 @@ kappa1 = 4*sqrt(L_i);           % 论文建议取值 kappa1 = 4*sqrt(L_i)
 c4_ok  = (kappa2 > L_i) & (kappa1.^2 > 4*L_i.*(kappa2 + L_i)./(kappa2 - L_i));
 
 oprm = struct('To', cfg.To, 'kappa1', kappa1, 'kappa2', kappa2, 'nsub2', 5);
+% 交接整形 (第 5.x 节的单调收敛规则): 阶段 I 末段对速度误差加阻尼,
+% nu <- nu - kv*de,  t in [To-delta, To); 使 e_i(To)*de_i(To) <= 0 且
+% |de_i(To)| -> 0, 从而 PDF 阶段的位置误差不再先增后减。
+dl = min(0.4, 0.15*cfg.To);        % 规则 R1: delta = min(0.4 s, 0.15 To)
+oprm.damp = [8/dl, dl];            % k_v = 8/delta
 
 fprintf('==================== 设置 ====================\n');
 fprintf('对象: 文献 259 七自由度浮基机械臂, tau_max = %.0f Nm\n', P.tau_max(1));
@@ -141,16 +146,17 @@ for ci = 1:nc
     R{ci}.met = sim_metrics(r, th, r.pp, an, cfg);
 end
 
-hdr = sprintf('%-44s %8s %8s %9s %9s %9s %8s', ...
-    '算例', 'M1a', 'M1b', 'M2 ratio', 'M4 ratio', 'M5 ss', 'M7 sat%');
+hdr = sprintf('%-44s %8s %8s %9s %9s %9s %8s %8s', ...
+    '算例', 'M1a', 'M1b', 'M2 ratio', 'M4 ratio', 'M5 ss', 'M7 sat%', 'M8 band');
 fprintf('%s\n%s\n', hdr, repmat('-', 1, 100));
 for ci = 1:nc
     x = R{ci}.met;
-    fprintf('%-44s %8.3f %8.3f %9.4f %9.4f %9.2e %8.2f\n', ...
+    fprintf('%-44s %8.3f %8.3f %9.4f %9.4f %9.2e %8.2f %8.2e\n', ...
         char(R{ci}.name), x.viol_time_p1, x.viol_time_p2, x.band_ratio, ...
-        x.stage2_ratio, x.ss_sup, 100*R{ci}.m.sat_ratio);
+        x.stage2_ratio, x.ss_sup, 100*R{ci}.m.sat_ratio, R{ci}.met.mono_band);
 end
 fprintf('说明: M1a/M1b = 观测阶段/PDF 阶段的包络违反时长 [s*joint]; M5 = t>=To+2h 的 sup||z||_inf\n');
+fprintf('      M8 = PDF 阶段 |e_i| 相对 e_i(To) 的最大增量 (以 rho_inf 为单位, 0 = 单调)\n');
 fprintf('      归零精度由离散残差决定 (O(Ts)), 见论文第 5.4 节 (5) 的 Ts 扫描\n');
 
 % ---- 观测器诊断 ----

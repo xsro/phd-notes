@@ -74,6 +74,11 @@ function r = sim_ppc_case(cfg, P, ctrl, ref, cs, pp, oprm)
                     XI(:,k) = dg.xi;
                     nu_max = max(nu_max, dg.barrier_inf);
                     xiviol = xiviol || dg.xi_violation;
+                    % 可选的交接整形: 末段速度阻尼 (t in [To-delta, To))
+                    if isfield(oprm, 'damp') && ~isempty(oprm.damp) && ...
+                            tk >= To - oprm.damp(2)
+                        nu = nu - oprm.damp(1)*de;
+                    end
                 otherwise
                     nu = ctrl.K0*z;
                     XI(:,k) = e ./ rho;
