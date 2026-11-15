@@ -1,12 +1,62 @@
 \section{控制算法设计}
 \label{sec:controller}
 
-本节依次给出总体时序、预设时间扰动观测器、漏斗型预设性能律与 Gramian 型周期延迟反馈增益，并在第~\ref{sec:algo_proof}~小节把三者的闭环结论整合为\emph{单个}定理~\ref{thm:algo}，以分步证明一次给出。观测器小节按“可证部分／缺口”两层陈述：不依赖额外假设的结论（定理~\ref{thm:ptdo_core}、引理~\ref{lem:residual}）保留独立证明，而精确补偿所需的收敛证书在注~\ref{rem:certificate_gap}~中作为显式缺口记录；其余环节只陈述设计与其在定理证明中承担的角色。主定理的细化、包络校验与工程边界在第~\ref{sec:analysis}~节。
+本节按“先给算法、再作解释”的顺序组织：第~\ref{sec:structure}~小节一次性给出\emph{完整的}观测器与控制算法及其运行条件；第~\ref{sec:ptdo}~小节说明观测器为何取该结构，并把观测结论按阶段分为定理~\ref{thm:obs1}（\(T_o\) 前预设时间观测）与定理~\ref{thm:sta}（\(T_o\) 后滑模观测）；第~\ref{sec:ppc}、\ref{sec:pdf}~小节分别给出漏斗型预设性能律与 Gramian 型周期延迟反馈，并把对应的闭环结论整理为定理~\ref{thm:ppc}（\(T_o\) 前 PPC）与定理~\ref{thm:pdf1}（\(T_o\) 后 PDF）；第~\ref{sec:algo_proof}~小节说明四个分定理的依赖关系，其合成结论为第~\ref{sec:analysis}~节的总定理~\ref{thm:main}；参数约束见第~\ref{sec:algorithm}~小节。
 
-\subsection{总体结构与唯一力矩律}
+与把整个观测任务交给单一“预设时间观测器”的做法不同，本文把观测任务按 \(T_o\) 一分为二：\emph{\(T_o\) 之前}用奇异增益的二阶动量观测器完成预设时刻收敛，\emph{\(T_o\) 之后}切换为超螺旋滑模观测器完成精确保持。两段各自对应一个标准的收敛判据（前者为线性时变误差系统在压缩时间坐标下的指数收缩，后者为超螺旋误差系统的滑模不变性），因此“预设时刻收敛”与“此后零误差”是两个可分别核验的结论，不需要额外的收敛证书。
+
+\subsection{完整算法：观测器与控制律}
 \label{sec:structure}
 
-全时域力矩律统一取 \eqref{eq:computed_torque}，仅辅助输入按时段切换：
+\begin{figure}
+  \includegraphics[width=0.8\textwidth]{assets/ppc-pdf.drawio.pdf}
+  \caption{完整算法流程框图}
+\end{figure}
+
+\paragraph{(a) 可测的动量通道。}
+由 \eqref{eq:model}，定义
+\begin{equation}
+y:=M_e(q_m)\dot q_m,\qquad
+u_p:=\tau-C_e(q_m,\dot q_m)\dot q_m+\dot M_e(q_m,\dot q_m)\dot q_m,
+\label{eq:momentum}
+\end{equation}
+其中 \(\dot M_e=\sum_{j}(\partial M_e/\partial q_{m,j})\dot q_{m,j}\) 由解析模型与可测的 \(q_m,\dot q_m\) 算出。由乘积法则与 \eqref{eq:model}，几乎处处有
+\begin{equation}
+\dot y=u_p+d(t).
+\label{eq:momentum_channel}
+\end{equation}
+因此 \eqref{eq:momentum}--\eqref{eq:momentum_channel} 有两点用处：\textup{(i)} 观测不需要 \(\ddot q_m\)；\textup{(ii)} 被估计量直接是原扰动力矩 \(d\)，而不是 \(\Delta_a=M_e^{-1}d\)，故补偿量直接取 \(\hat d=z_2\) \eqref{eq:hatd}，不必再乘 \(M_e\)，且 \(d\) 为常值时并不要求 \(M_e\) 为常值。
+
+\paragraph{(b) 观测器。}
+取 \(\hat d=z_2\)，\(z_1,z_2\in\R^n\) 为观测器状态，\(\kappa_1,\kappa_2>0\) 为标量增益（逐分量可取不同值），\(\sig^{1/2}(s)=\lvert s\rvert^{1/2}\sgn(s)\) 逐分量定义：
+\begin{equation}
+\begin{cases}
+\begin{aligned}
+\dot z_1&=u_p+z_2+\dfrac{6}{T_o-t}\,(y-z_1),\\[2pt]
+\dot z_2&=\dfrac{6}{(T_o-t)^{2}}\,(y-z_1),
+\end{aligned}
+&0\le t<T_o,\\[10pt]
+\begin{aligned}
+z_1(T_o)&:=\lim_{t\uparrow T_o}z_1(t)=y(T_o),\\
+z_2(T_o)&:=\lim_{t\uparrow T_o}z_2(t)=d(T_o),
+\end{aligned}
+&t=T_o,\\[10pt]
+\begin{aligned}
+\dot z_1&=u_p+z_2+\kappa_1\sig^{1/2}(y-z_1),\\
+\dot z_2&=\kappa_2\sgn(y-z_1),
+\end{aligned}
+&t>T_o,
+\end{cases}
+\label{eq:ptdo}
+\end{equation}
+\begin{equation}
+\hat d(t)=z_2(t),\qquad t\ge0 .
+\label{eq:hatd}
+\end{equation}
+\(T_o\) 处的等式是解的连续延拓（左极限），\emph{不是}需要在线获取 \(d(T_o)\) 的初始化指令：数值实现只需按上行积分至 \(T_o\)，随后以同一组状态继续积分下行，状态不重置、不改写。分段的分工是：上行利用 \(6/(T_o-t)\)、\(6/(T_o-t)^2\) 的奇异增益把误差在 \(T_o\) 处压到零；下行利用超螺旋结构把已经为零的误差锁在零上，且分母不再出现奇异项。
+
+\paragraph{(c) 控制律。}
+全时域力矩律仍取 \eqref{eq:computed_torque}（补偿量改为 \eqref{eq:hatd}），辅助输入按时段切换：
 \begin{equation}
 \nu(t)=
 \begin{cases}
@@ -15,150 +65,222 @@ K_0z(t)-K_c(t-T_o)z(t-h), & t\ge T_o,
 \end{cases}
 \label{eq:nu_schedule}
 \end{equation}
-其中 \(\nu^{\mathrm{PPC}}\) 由 \eqref{eq:nu_ppc} 给出，\(K_0\in\R^{n\times2n}\) 使 \(A_c=A+BK_0\) Hurwitz，\(K_c\) 为 \(2h\) 周期增益且在前半周期为零；扰动补偿取 \(\hat d=M_e(q_m)z_2\)，不需 \(d\) 的数值。分段分工为：\([0,T_o)\) 由 PTDO 收敛与漏斗律保证包络（定理~\ref{thm:algo} 第 1--4 步）；\([T_o,T_o+2h)\) 由 PDF 完成单周期零化（定理~\ref{thm:algo} 第 5 步）；\(t\ge T_o+2h\) 为稳态逆动力学（定理~\ref{thm:algo} 第 6 步）。
+其中 \(z=[e^{\top},\dot e^{\top}]^{\top}\) 由 \eqref{eq:error_state} 给出，\(\nu^{\mathrm{PPC}}\) 由 \eqref{eq:nu_ppc} 给出，\(\rho_i\) 由 \eqref{eq:rho} 给出，\(K_0\in\R^{n\times2n}\) 使 \(A_c=A+BK_0\) Hurwitz，\(K_c\) 为 \eqref{eq:Kc} 给出的 \(2h\) 周期增益且在前半周期为零。由于 \(K_c(\vartheta)\equiv0\) 于 \(\vartheta\in[0,h)\)，延迟项只在 \(\vartheta\in[h,2h)\) 被激活，故只需缓存 \(t\ge T_o\) 之后 \(h\) 秒的 \(z\)，\emph{不需要}观测阶段的任何历史数据。
 
-由于 \(K_c(\vartheta)\equiv0\) 于 \(\vartheta\in[0,h)\)，延迟项只在 \(\vartheta\in[h,2h)\) 被激活，故只需缓存 \(t\ge T_o\) 之后 \(h\) 秒的 \(z\)，\emph{不需要}观测阶段的任何历史数据。
+\paragraph{(d) 运行条件。}
+算法的每条结论都由下列条件支撑，其中 \textup{(C1)(C2)} 只服务阶段 I，\textup{(C3)(C4)} 服务阶段 II，\textup{(C5)} 只服务“精确归零”。它们在假设~\ref{as:inertia}--\ref{as:observer}~下被逐条核验，此处集中列出以便复现：
 
-\subsection{预设时间扰动观测器}
+\begin{enumerate}
+\item[\textup{(C1)}] \textbf{模型与量测}：\(M_e\) 对称、连续可微、一致正定（\(\exists\underline m>0:\ M_e\succeq\underline m I_n\)），\(C_e(q_m,\dot q_m)\dot q_m\) 与 \eqref{eq:momentum} 中的 \(\dot M_e\dot q_m\) 精确可算；\(q_m,\dot q_m\) 可测，\emph{实际施加}的 \(\tau\) 已知；不需要 \(\ddot q_m\)。
+\item[\textup{(C2)}] \textbf{阶段 I 扰动正则性}：\(d\) 在 \([0,T_o]\) 上绝对连续，且存在有限常数 \(L\) 使
+\begin{equation}
+\|\dot d(t)\|\le L\quad\text{对几乎所有 }t\in[0,T_o].
+\label{eq:cond_L}
+\end{equation}
+\(L\) 的数值\emph{不}需要预先知道，只要求有限。
+\item[\textup{(C3)}] \textbf{阶段 II 扰动正则性}：\(d\) 在 \([T_o,\infty)\) 上绝对连续，且逐分量存在有限常数 \(L_i,H_i\) 使
+\begin{equation}
+\lvert\dot d_i(t)\rvert\le L_i,\qquad
+\lvert\ddot d_i(t)\rvert\le H_i
+\quad\text{对几乎所有 }t\ge T_o,\ i=1,\dots,n .
+\label{eq:cond_sta}
+\end{equation}
+\item[\textup{(C4)}] \textbf{超螺旋增益条件}：逐分量
+\begin{equation}
+\kappa_{2i}>L_i,\qquad
+\kappa_{1i}^{2}>4L_i\,\frac{\kappa_{2i}+L_i}{\kappa_{2i}-L_i}.
+\label{eq:cond_gain}
+\end{equation}
+它要求 \(L_i\) 已知（用于选增益）；例如取 \(\kappa_{2i}=2L_i\)、\(\kappa_{1i}=4\sqrt{L_i}\) 即满足 \eqref{eq:cond_gain}。不同文献对超螺旋的归一化不同，实施前须以同一约定核对 \eqref{eq:cond_gain}。
+\item[\textup{(C5)}] \textbf{精确归零的理想前提}：连续时间实现、无执行器饱和、模型补偿精确（即假设~\ref{as:ideal}）。
+\end{enumerate}
+
+其中 \textup{(C2)} 只要求绝对连续且变化率有限，不要求概率模型、Lipschitz 常数已知或 \(d\) 逐点有界；\textup{(C3)} 是超螺旋保持零误差所需的正则性，比 \textup{(C2)} 强一阶，正是“\(T_o\) 前收敛、\(T_o\) 后保持”这一分段的代价。
+
+\paragraph{(e) 时序。}
+表~\ref{tab:schedule} 汇总完整算法的时间分段。总预设时间为 \(T_{\mathrm{pre}}=T_o+2h\)，只由设计参数给出。
+
+\begin{table}[H]
+\centering
+\caption{完整算法的时间分段（观测器 \eqref{eq:ptdo}，辅助输入 \eqref{eq:nu_schedule}）}
+\label{tab:schedule}
+\small\begin{tabular}{llll}
+\toprule
+时段 & 观测器 & 辅助输入 & 该段承担的任务 \\
+\midrule
+\([0,T_o)\) & 上行（奇异增益） & \(\nu^{\mathrm{PPC}}\) \eqref{eq:nu_ppc} & \(z_2\to d(T_o)\)，包络 \(\lvert e_i\rvert<\rho_i\) \\
+\(t=T_o\) & 左极限交接 & 允许跳变 & 进带 \(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}\) \\
+\([T_o,T_o+2h)\) & 下行（超螺旋） & \(K_0z-K_cz(t-h)\) & 单周期零化 \(z(T_o+2h)=0\) \\
+\([T_o+2h,\infty)\) & 下行，误差恒零 & \(K_0z\) & 精确归零 \(e=\dot e=0\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{观测器：预设时刻收敛与超螺旋保持}
 \label{sec:ptdo}
 
-将 \eqref{eq:model} 改写为加速度通道
+\paragraph{误差通道。}
+由 \eqref{eq:computed_torque}、\eqref{eq:hatd} 与 \eqref{eq:model} 得
 \begin{equation}
-\dot\chi=u_o+\Delta_a,\qquad
-\chi=\dot q_m,\quad
-u_o=M_e^{-1}(q_m)\bigl[\tau-C_e(q_m,\dot q_m)\dot q_m\bigr],
-\label{eq:observer_channel}
+\ddot e=\nu+w,\qquad
+w:=M_e^{-1}(q_m)\bigl[d-\hat d\bigr]=M_e^{-1}(q_m)\bigl[d-z_2\bigr],
+\label{eq:decoupled_channel}
 \end{equation}
-\(u_o\) 由已施加的 \(\tau\) 与可测的 \(\dot q_m\) 算出，\emph{不需}加速度信息。令 \(z_1,z_2\) 分别为 \(\chi\) 与 \(\Delta_a\) 的估计，定义复合误差与调节函数
+即 \(w\) 是误差通道中唯一的未知输入。记 \(z=[e^{\top},\dot e^{\top}]^{\top}\)，\eqref{eq:decoupled_channel} 等价于
 \begin{equation}
-\eta_1=\chi-z_1-\bar\xi(t),\qquad
-\bar\xi(t)=\bar\xi_0(T_o-t)^2\mathbb 1_{\{t<T_o\}},
-\label{eq:observer_error}
+\dot z=Az+B\bigl(\nu+w\bigr),\qquad
+A=\begin{bmatrix}0&I_n\\0&0\end{bmatrix},\quad B=\begin{bmatrix}0\\I_n\end{bmatrix}.
+\label{eq:linear_error}
 \end{equation}
-若取 \(\bar\xi_0=(\chi(0)-z_1(0))/T_o^2\)，则 \(\eta_1(0)=0\)；该选择要求已知初始化时的测量值与估计器状态。注意 \(\bar\xi\in C^{1}\) 且 \(\dot{\bar\xi}(T_o)=0\)。
-
-观测器取
+于是观测任务可精确地表述为：使 \(w\) 在 \([0,T_o]\) 上\emph{有界}（阶段 I 的漏斗律只用到这一点），并使
 \begin{equation}
-\dot z_1=z_2+\frac{\pi}{\eta T_c}\phi_1\Bigl(\frac{\eta_1}{\sigma}\Bigr)-\dot{\bar\xi}+u_o,\quad
-\dot z_2=\frac{\pi}{\sigma\eta T_c}\phi_2\Bigl(\frac{\eta_1}{\sigma}\Bigr),
-\label{eq:ptdo}
-\end{equation}
-\begin{equation}
-\phi_1(x)=\sig^{1-\eta/2}(x)+\sig^{1+\eta/2}(x),\qquad
-\phi_2(x)=\sig^{2-\eta}(x)+\sig^{2+\eta}(x)+\sigma\sgn(x),
-\label{eq:phi}
-\end{equation}
-其中 \(T_c\le T_o\)、\(\eta\in(0,1)\)、\(\sigma>0\)。记 \(\eta_2=\Delta_a-z_2\)，由 \eqref{eq:observer_channel}、\eqref{eq:ptdo} 得误差动态
-\begin{equation}
-\dot\eta_1=-\frac{\pi}{\eta T_c}\phi_1\Bigl(\frac{\eta_1}{\sigma}\Bigr)+\eta_2,\qquad
-\dot\eta_2=\dot\Delta_a-\frac{\pi}{\sigma\eta T_c}\phi_2\Bigl(\frac{\eta_1}{\sigma}\Bigr).
-\label{eq:observer_errordyn}
-\end{equation}
-两项不同幂次之和并非单一阶齐次函数，用它作为预设时间观测器需要针对 \eqref{eq:observer_errordyn} 及其 Filippov 解专门构造的收敛证书。而如下面注~\ref{rem:certificate_gap}~所核算，\eqref{eq:phi}~的幂次与 \eqref{eq:ptdo}~的增益组合不满足任何已知证书的结构前提（齐次性判据不成立、\(\sigma\) 无法作尺度分离、二次型证书只能给出 \(8T_c/\pi\)）。因此本节把观测器结论分成两层：\emph{可证部分}由定理~\ref{thm:ptdo_core}~给出且不含未证假设；\emph{精确补偿}只作为条件性结论保留——若存在注~\ref{rem:certificate_gap}~中的收敛证书 \eqref{eq:star}（下文简记为 \((\star)\)），则
-\begin{equation}
-z_2(t)=\Delta_a(t),\qquad \hat d(t)=M_e(q_m)z_2(t)=d(t),\qquad \forall t\ge T_o ,
-\label{eq:observer_converged}
-\end{equation}
-其中用到 \(T_c\le T_o\)（正式推导见定理~\ref{thm:ptdo_core}~(4)）。在原点驻留对逐点的 \(\lvert\dot\Delta_{a,i}\rvert\le\pi/(\eta T_c)\) 是\emph{充要}的，这一点在定理~\ref{thm:ptdo_core}~(1) 中证明，不再作“必要条件”的弱声明。文献~\cite{jiangPrescribedtimeDisturbanceObserver2024}~的结果只有在逐项核实其观测器形式、增益门槛、解的意义以及幂次配对适用于 \eqref{eq:phi} ~之后，才能充当 \((\star)\)。
-
-由 \(w=M_e^{-1}(d-\hat d)=\Delta_a-z_2=\eta_2\)，\eqref{eq:observer_converged} 等价于
-\begin{equation}
-w(t)\equiv0,\qquad \forall t\ge T_o ,
+w(t)\equiv0,\qquad \forall t\ge T_o
 \label{eq:w_zero}
 \end{equation}
-即“阶段 II 通道无扰动”是\emph{结论}而非假设。阶段 I 中 \(w=\eta_2\neq0\)，但包络结论只要求其幅度\emph{有限}（定理~\ref{thm:algo}~(ii)），而这一点已由定理~\ref{thm:ptdo_core}~(3)~在条件~\textup{(A)} 下\emph{证明}得到，不再作为假设：
+成立（阶段 II 的线性延迟结构只用到这一点）。
+
+\paragraph{阶段 I（\(0\le t<T_o\)）：奇异增益的预设时刻观测器。}
+记
 \begin{equation}
-\bar w:=\sup_{0\le t\le T_o}\lVert\eta_2(t)\rVert_\infty<\infty .
+e_1=y-z_1,\qquad e_2=d-z_2,\qquad
+x=\begin{bmatrix}e_1\\ (T_o-t)e_2\end{bmatrix},\qquad
+\rho=\log\frac{T_o}{T_o-t},
+\label{eq:obs_x}
+\end{equation}
+其中 \(\dd\rho/\dd t=1/(T_o-t)\)。由 \eqref{eq:momentum_channel} 与 \eqref{eq:ptdo} 上行得
+\begin{equation}
+\frac{\dd x}{\dd\rho}=A_o\,x+\begin{bmatrix}0\\ (T_o-t)^{2}\dot d\end{bmatrix},
+\qquad
+A_o=\begin{bmatrix}-6I_n&I_n\\-6I_n&-I_n\end{bmatrix},
+\label{eq:obs_rho_dyn}
+\end{equation}
+而 \(A_o\) 的每个标量块的特征值为 \(-3,-4\)。即：在压缩时间坐标 \(\rho\) 下误差系统是\emph{定常}的，收缩率恒为 \(3\)；换回原时间坐标后 \(\rho\to\infty\) 当且仅当 \(t\uparrow T_o\)，故增益 \(6,6\) 的作用是把“指数收敛”平移为“在 \(T_o\) 时刻恰好收敛”。这一结构不需要 \(\lvert\dot d\rvert\) 的上界数值，只需其有限，因此 \(T_o\) 时刻的精度不依赖于对扰动的任何定量先验。增益对 \(6,6\) 的取法并非唯一：一般地取 \(r_1=3,r_2=4\)，则上行增益为 \(a_1=r_1+r_2-1=6\)、下行为 \(a_2=r_1r_2-a_1=6\)；改变 \((r_1,r_2)\) 会改变 \(A_o\) 的谱，但预设时刻性质不变。
+
+\paragraph{阶段 II（\(t>T_o\)）：超螺旋滑模观测器。}
+由 \eqref{eq:ptdo} 下行与 \eqref{eq:momentum_channel}，\eqref{eq:obs_x} 中的估计误差 \(e_1,e_2\) 满足
+\begin{equation}
+\dot e_1=e_2-\kappa_1\sig^{1/2}(e_1),\qquad
+\dot e_2=\dot d-\kappa_2\sgn(e_1),
+\label{eq:observer_errordyn}
+\end{equation}
+即标准的超螺旋误差系统。与常增益线性二阶观测器（其残差只能做到 \(O(L_+/\lambda)\)）不同，\eqref{eq:observer_errordyn} 在增益满足 \eqref{eq:cond_gain} 时具有滑模面 \(e_1=e_2=0\)：在滑模面上 \(\sgn(e_1)\) 的 Filippov 等效值自动取 \(\dot d/\kappa_2\)，把扰动的\emph{变化}实时抵消，因此 \(d\) 在 \(T_o\) 之后继续时变时估计仍然精确，而不仅是“误差足够小”。由于交接点已经给出 \(e_1(T_o)=e_2(T_o)=0\)（左极限），阶段 II 不需要到达过程，零误差在 \(T_o\) 之后被直接保持。
+
+作为把观测结论接到控制结论上的桥，记阶段 I 的残差上界
+\begin{equation}
+\bar w:=\sup_{0\le t\le T_o}\bigl\lVert M_e^{-1}\bigl(d(t)-z_2(t)\bigr)\bigr\rVert_\infty<\infty ,
 \label{eq:wbar_finite}
 \end{equation}
-\begin{theorem}[观测器：可证部分]\label{thm:ptdo_core}
-设误差系统 \eqref{eq:observer_errordyn} 在 \([0,T_o]\) 上存在 Filippov 解且一致有界，即
-\begin{equation}
-\sup_{0\le t\le T_o}\bigl(\lvert\eta_1(t)\rvert+\lvert\eta_2(t)\rvert\bigr)=:M<\infty
-\qquad\text{(条件 \textup{(A)})},
-\label{eq:cond_A}
-\end{equation}
-并设扰动导数的增益条件
-\begin{equation}
-\lvert\dot\Delta_{a,i}(t)\rvert\le\kappa_i<\frac{\pi}{\eta T_c},\qquad t\in[0,T_o],\ i=1,\dots,n
-\qquad\text{(条件 \textup{(B)})}
-\label{eq:origin_cond}
-\end{equation}
-成立。则：
+它只度量阶段 I 的观测误差在加速度通道中的幅度，由定理~\ref{thm:ptdo_core}~(2) 给出显式上界。
+
+\begin{theorem}[阶段 I：预设时间观测器]\label{thm:obs1}%
+\label{thm:ptdo_core}\label{thm:ptdo}
+设 \textup{(C1)} 成立，观测器取 \eqref{eq:ptdo} 上行，初始状态 \((z_1(0),z_2(0))\) 任意有限，估计误差按 \eqref{eq:obs_x} 定义。则：
 \begin{enumerate}
-  \item[(1)] \textbf{原点不变性}：\(\eta_1=\eta_2=0\) 是 \eqref{eq:observer_errordyn}~的不变集，且 \(\{0\}\) 是落在 \(\{\eta_1=0\}\) 内的唯一不变子集；在原点驻留对逐点的 \(\lvert\dot\Delta_{a,i}\rvert\le\pi/(\eta T_c)\) 是\emph{充要}的。
-  \item[(2)] \textbf{到达即保持}：若某 \(t^\ast\) 有 \(\eta_1(t^\ast)=\eta_2(t^\ast)=0\)，则 \(\eta_1\equiv\eta_2\equiv0\) 于 \(t\ge t^\ast\)。
-  \item[(3)] \textbf{残差有界}：\eqref{eq:wbar_finite}~成立（\(\bar w\le M\)），且引理~\ref{lem:residual}~的显式界可用（取 \(\bar x=M/\sigma\)）；特别地 \(\bar w\) 的有限性不依赖任何收敛性假设。
-  \item[(4)] \textbf{精确补偿（条件性）}：若另有注~\ref{rem:certificate_gap}~中的证书 \((\star)\)，则 \eqref{eq:observer_converged}~成立。
+  \item[\textup{(1)}] \textbf{预设时刻收敛}（需 \textup{(C2)}）：存在只由 \(A_o\) 决定的常数 \(K\ge1\)，使
+\begin{equation}
+\begin{aligned}
+\|e_1(t)\|&\le K\|x(0)\|\Bigl(\frac{T_o-t}{T_o}\Bigr)^{3}
++KLT_o^{2}\Bigl[\Bigl(\frac{T_o-t}{T_o}\Bigr)^{2}-\Bigl(\frac{T_o-t}{T_o}\Bigr)^{3}\Bigr],\\
+\|e_2(t)\|&\le\frac{K\|x(0)\|}{T_o}\Bigl(\frac{T_o-t}{T_o}\Bigr)^{2}
++KL\Bigl[(T_o-t)-\frac{(T_o-t)^{2}}{T_o}\Bigr],
+\end{aligned}
+\label{eq:observer_bounds}
+\end{equation}
+从而 \(\lim_{t\uparrow T_o}z_1(t)=y(T_o)\)、\(\lim_{t\uparrow T_o}z_2(t)=d(T_o)\)。收敛时刻恰为 \(T_o\)：是否收敛只取决于 \(\lVert x(0)\rVert<\infty\) 与 \(L<\infty\)，与二者的数值无关（\eqref{eq:observer_bounds}~本身含二者的数值）。
+  \item[\textup{(2)}] \textbf{阶段 I 残差界}（需 \textup{(C1)(C2)}）：\eqref{eq:wbar_finite} 中的 \(\bar w\) 可显式取为
+\begin{equation}
+\bar w\le\frac{1}{\underline m}\Bigl[\frac{K\|x(0)\|}{T_o}+\frac{KLT_o}{4}\Bigr],
+\label{eq:residual_bound}
+\end{equation}
+其中 \(\underline m\) 为 \(M_e\) 的正定下界，\(x(0)\) 由 \eqref{eq:obs_x} 给出。
 \end{enumerate}
 \end{theorem}
 
 \begin{proof}
-\textbf{(1)} 由 \(\sig^{\alpha}(x)=\lvert x\rvert^{\alpha}\sgn x\to0\)（\(x\to0\)，\(\alpha>0\)）知 \(\phi_1\) 在 \(0\) 连续且 \(\phi_1(0)=0\)，故 Filippov 集 \(\mathcal F[\phi_1](0)=\{0\}\)；\(\phi_2\) 的两支幂项同样连续趋于 \(0\)，只剩 \(\sigma\sgn\) 项，故 \(\mathcal F[\phi_2](0)=\sigma[-1,1]\)。于是原点处的 Filippov 集为
+\textbf{(1)} 由 \eqref{eq:momentum_channel} 与 \eqref{eq:ptdo} 上行，
+\begin{equation}
+\dot e_1=e_2-\frac{6}{T_o-t}e_1,\qquad
+\dot e_2=\dot d(t)-\frac{6}{(T_o-t)^{2}}e_1 .
+\label{eq:obs_err_time}
+\end{equation}
+右端在 \([0,T_o)\) 上关于 \(t\) 局部有界（\(e_1,e_2\) 连续、\(\dot d\) 有界），故对任意有限初值，解在 \([0,T_o)\) 上存在唯一且绝对连续。以 \eqref{eq:obs_x} 的 \(x\) 与压缩时间 \(\rho=\log\frac{T_o}{T_o-t}\) 为坐标，注意 \(\dd t/\dd\rho=T_o-t\)，由 \eqref{eq:obs_err_time} 得 \eqref{eq:obs_rho_dyn}：其第一行为
 \[
-\mathcal F(0)=\{0\}\times\Bigl\{\dot\Delta_a-\frac{\pi}{\sigma\eta T_c}\,\sigma[-1,1]\Bigr\}
-=\{0\}\times\Bigl\{\dot\Delta_a-\frac{\pi}{\eta T_c}[-1,1]\Bigr\},
+\frac{\dd x_1}{\dd\rho}=(T_o-t)\dot e_1=(T_o-t)e_2-6e_1=x_2-6x_1 ,
 \]
-故 \(0\in\mathcal F(0)\iff\lvert\dot\Delta_a\rvert\le\pi/(\eta T_c)\)；充要性与 \eqref{eq:origin_cond}~的严格不等式给出余量。其次，若 \(\eta_1\equiv0\) 于某区间，则其上 \(0=\dot\eta_1=-\frac{\pi}{\eta T_c}\phi_1(0)+\eta_2=\eta_2\)，故落在 \(\{\eta_1=0\}\) 内的不变子集只能是 \(\{0\}\)。
+第二行对 \(x_2=(T_o-t)e_2\) 求导（注意 \(\dd(T_o-t)/\dd\rho=-(T_o-t)\)）得 \([-6,-1]\) 与强迫项 \((T_o-t)^{2}\dot d\)。\(A_o\) 的标量块 \(\begin{bmatrix}-6&1\\-6&-1\end{bmatrix}\) 的特征多项式为 \(\lambda^{2}+7\lambda+12=(\lambda+3)(\lambda+4)\)，两特征值互异，故 \(A_o\) 可对角化；存在 \(K\ge1\)（取 \(K=\lVert V\rVert\lVert V^{-1}\rVert\)，\(V\) 为特征向量矩阵）使
+\[
+\bigl\lVert e^{A_o\rho}\bigr\rVert\le Ke^{-3\rho}=K\Bigl(\frac{T_o-t}{T_o}\Bigr)^{3}.
+\]
+又 \(\bigl\lVert[0,\ (T_o-t)^{2}\dot d]^{\top}\bigr\rVert\le LT_o^{2}e^{-2\rho}\)。由 \eqref{eq:obs_rho_dyn} 的常数变易公式，
+\[
+\lVert x(\rho)\rVert\le Ke^{-3\rho}\lVert x(0)\rVert
++\int_0^{\rho}Ke^{-3(\rho-s)}LT_o^{2}e^{-2s}\dd s
+=K\lVert x(0)\rVert r^{3}+KLT_o^{2}(r^{2}-r^{3}),
+\]
+其中 \(r:=(T_o-t)/T_o=e^{-\rho}\in(0,1]\)，并用到 \(\int_0^{\rho}e^{-3(\rho-s)}e^{-2s}\dd s=e^{-2\rho}-e^{-3\rho}\)。再由 \(\lVert e_1\rVert=\lVert x_1\rVert\le\lVert x\rVert\) 与 \(\lVert e_2\rVert=\lVert x_2\rVert/(T_o-t)\) 即得 \eqref{eq:observer_bounds}。令 \(t\uparrow T_o\)（即 \(r\to0\)），两式右端均趋于零，故 \(e_1,e_2\to0\)，即 \(z_1\to y(T_o)\)、\(z_2\to d(T_o)\)。
 
-\textbf{(2)} Filippov 解绝对连续且 \(0\in\mathcal F(0)\)，由 (1) 的不变性即得。
-
-\textbf{(3)} 由 (A) 直接得 \(\bar w\le M<\infty\) 与 \(\sup\lVert\eta_1\rVert_\infty\le M=\sigma\bar x\)；代入 \eqref{eq:residual_bound} 的推导即得显式界（见引理~\ref{lem:residual}）。
-
-\textbf{(4)} 证书 \((\star)\) 的结论即 \(\eta_1(t)=\eta_2(t)=0\)（\(t\ge T_c\)）；结合 \(T_c\le T_o\) 与 \(\eta_2=\Delta_a-z_2\) 得 \eqref{eq:observer_converged}。
+\textbf{(2)} 由 \(w=M_e^{-1}(d-z_2)=M_e^{-1}e_2\) 与 \(\lVert M_e^{-1}\rVert_2\le1/\underline m\)，
+\[
+\lVert w(t)\rVert_2\le\frac{1}{\underline m}
+\Bigl[\frac{K\lVert x(0)\rVert}{T_o}r^{2}
++K\Bigl((T_o-t)-\frac{(T_o-t)^{2}}{T_o}\Bigr)L\Bigr].
+\]
+其中 \(r^{2}\le1\)，而 \(s(T_o-s)/T_o\)（\(s=T_o-t\in[0,T_o]\)）在 \(s=T_o/2\) 处取最大值 \(T_o/4\)。故 \eqref{eq:residual_bound} 成立（若 \(\bar w\) 按 \eqref{eq:wbar_finite} 的 \(\lVert\cdot\rVert_\infty\) 定义，则右端再乘一个仅依赖维数 \(n\) 的常数，结论不变）。
 \end{proof}
 
-\begin{lemma}[预设时间的算术]\label{lem:arctan}
-设 \(V\ge0\) 绝对连续且 \(\dot V\le-\mu(V^{1-a}+V^{1+a})\)，\(\mu,a>0\)。则 \(V(t)=0\) 对一切 \(t\ge T^\ast\)，且
+\begin{remark}[交接点与残差的含义]\label{rem:handover_obs}
+定理~\ref{thm:ptdo_core}~(1) 的界依赖于 \(\|x(0)\|\)，其中 \(e_2(0)=d(0)-z_2(0)\) 含未知的 \(d(0)\)；该量只用于给出\emph{界}，实现时并不需要知道它——观测器初值可由 \(z_2(0)=0\) 任意取定，界随之变松但不影响“在 \(T_o\) 收敛”这一结论。定理~\ref{thm:ptdo_core}~(2) 是把该界换算到加速度通道 \(w\) 的结果，它给出阶段 I 漏斗律所需的 \(\bar w\)：\eqref{eq:residual_bound} 关于 \(T_o\) 呈 \(A/T_o+BT_o\) 形，存在折中最优，这与第~\ref{sec:algorithm}~节关于 \(T_o\) 的整定讨论一致。
+\end{remark}
+
+\begin{lemma}[超螺旋有限时间收敛]\label{lem:sta}
+考虑标量误差系统
 \begin{equation}
-T^\ast\le\frac{2}{a\mu}\arctan\bigl(V(0)^{a}\bigr)<\frac{\pi}{2a\mu}.
-\label{eq:arctan_time}
+\dot e_1=e_2-\kappa_1\lvert e_1\rvert^{1/2}\sgn(e_1),\qquad
+\dot e_2=\rho(t)-\kappa_2\sgn(e_1),
+\label{eq:sta_scalar}
 \end{equation}
+其中 \(\rho\) 可测且逐点满足 \(\lvert\rho(t)\rvert\le L\)。若
+\begin{equation}
+\kappa_2>L,\qquad \kappa_1^{2}>4L\,\frac{\kappa_2+L}{\kappa_2-L},
+\label{eq:sta_gain}
+\end{equation}
+则 \eqref{eq:sta_scalar} 的每个 Filippov 解在有限时间内到达原点并此后保持；特别地，若 \(e_1(t_0)=e_2(t_0)=0\)，则 \(e_1(t)=e_2(t)=0\) 对一切 \(t\ge t_0\)。
 \end{lemma}
 
 \begin{proof}
-\(V>0\) 时令 \(u=V^{a}\ge0\)，得 \(\dot u=aV^{a-1}\dot V\le-a\mu(1+u^{2})\)；比较原理给出 \(u(t)\le\tan\bigl(\arctan u(0)-a\mu t\bigr)^{+}\)。故 \(u\) 至迟在 \(T^\ast=\arctan\bigl(u(0)\bigr)/(a\mu)\) 处归零，且 \(\arctan<\pi/2\)；归零后由 \(\dot V\le0\) 与 \(V\ge0\) 保持 \(V\equiv0\)。
+取强 Lyapunov 函数\cite{moreno2012strict}
+\[
+\zeta=\begin{bmatrix}\lvert e_1\rvert^{1/2}\sgn(e_1)\\ e_2\end{bmatrix},\qquad
+P=\frac12\begin{bmatrix}4\kappa_2+\kappa_1^{2}&-\kappa_1\\-\kappa_1&2\end{bmatrix},\qquad
+V=\zeta^{\top}P\zeta .
+\]
+由 \(\kappa_2>L\ge0\) 知 \(P\succ0\)，且存在 \(0<a\le b\) 使 \(a\lVert\zeta\rVert^{2}\le V\le b\lVert\zeta\rVert^{2}\)。沿 \eqref{eq:sta_scalar} 在 \(e_1\ne0\) 处求导并利用 \(\lvert\rho\rvert\le L\)，直接计算得
+\[
+\dot V\le-\frac{1}{\lvert e_1\rvert^{1/2}}\,\zeta^{\top}Q\,\zeta ,
+\]
+其中对称阵 \(Q\) 正定当且仅当 \eqref{eq:sta_gain} 成立（Moreno--Osorio 判据）。于是存在 \(c>0\) 使 \(\dot V\le-cV^{1/2}\)，从而
+\[
+V^{1/2}(t)\le V^{1/2}(t_0)-\frac{c}{2}(t-t_0),
+\]
+解在 \(T\le t_0+2V^{1/2}(t_0)/c\) 内到达 \(V=0\)，即 \(e_1=e_2=0\)。在原点处 Filippov 集包含零：由 \(\lvert\rho\rvert\le L<\kappa_2\) 可取 \(\sgn(0)=\rho/\kappa_2\in[-1,1]\)，故原点是 Filippov 解的不变集。于是若 \(V(t_0)=0\)，上式给出 \(V(t)\equiv0\) 于 \(t\ge t_0\)。
 \end{proof}
 
-取 \(a=\eta/2\)、\(\mu=\pi/(\eta T_c)\)，则 \(a\mu=\pi/(2T_c)\)，\(T^\ast\le(2T_c/\pi)\arctan\bigl(V(0)^{\eta/2}\bigr)<T_c\)，对 \(V(0)\to\infty\) 紧。这说明证书 \((\star)\) 中的指数\emph{必须}是 \(1\mp\eta/2\)：若改用二次型 \(V=\tfrac12(\eta_1^{2}+\eta_2^{2})\)，由 \(\lvert\eta_1\rvert^{2\mp\eta/2}=(2V)^{1\mp\eta/4}\) 知指数退化为 \(1\mp\eta/4\)，同一算术只给 \(T^\ast\le 2\big/\big((\eta/4)\cdot\pi/(\eta T_c)\big)=8T_c/\pi\approx2.55\,T_c\)。
-
-\begin{lemma}[阶段 I 残差的显式估计]\label{lem:residual}
-在定理~\ref{thm:ptdo_core}~的条件~\textup{(A)} 下（即 \eqref{eq:cond_A}，记 \(\bar x=M/\sigma\)），
-\eqref{eq:wbar_finite}~可显式化为
+\begin{theorem}[阶段 II：超螺旋滑模观测器]\label{thm:obs2}%
+\label{thm:sta}
+设 \textup{(C1)(C3)(C4)} 成立，\(t\ge T_o\) 的观测器取 \eqref{eq:ptdo} 下行，且 \(T_o\) 处的初值取定理~\ref{thm:obs1}~(1) 的左极限，即 \(e_1(T_o)=e_2(T_o)=0\)。则对一切 \(t\ge T_o\)
 \begin{equation}
-\bar w:=\sup_{0\le t\le T_o}\lVert\eta_2(t)\rVert_\infty
-\le\min\Bigl\{M,\; 2\lVert\Delta_a\rVert_\infty+\lVert\eta_2(0)\rVert_\infty
-+\frac{\pi}{\sigma\eta T_c}\Bigl[(1+\bar x)^{2-\eta}+(1+\bar x)^{2+\eta}+\sigma\Bigr]T_o\Bigr\}.
-\label{eq:residual_bound}
+e_1(t)=e_2(t)=0,\qquad z_2(t)=d(t),\qquad \hat d(t)=d(t),
+\label{eq:observer_converged}
 \end{equation}
-\end{lemma}
+等价地 \eqref{eq:w_zero} 成立；即阶段 II 的通道无扰动，且该结论对 \(t\ge T_o\) 上继续时变的 \(d\) 同样成立。若交接处存在有界失配 \(e_1(T_o),e_2(T_o)\neq0\)，误差仍在有限时间内到达零并保持。
+\end{theorem}
 
 \begin{proof}
-由 \eqref{eq:ptdo}~积分并代入 \(\eta_2=\Delta_a-z_2\) 得
-\(\eta_2(t)=\eta_2(0)+\Delta_a(t)-\Delta_a(0)-\frac{\pi}{\sigma\eta T_c}\int_0^t\phi_2(\eta_1/\sigma)\dd s\)。取 \(\ell_\infty\) 范数；因 \(\lvert\eta_1\rvert\le\sigma\bar x\) 时 \(\lvert\sig^{\alpha}(x)\rvert=\lvert x\rvert^{\alpha}\le(1+\bar x)^{\alpha}\)，得 \(\lvert\phi_2\rvert\le(1+\bar x)^{2-\eta}+(1+\bar x)^{2+\eta}+\sigma\)，合并即得。
+由 \eqref{eq:ptdo} 下行与 \eqref{eq:momentum_channel} 得 \eqref{eq:observer_errordyn}，其逐分量为 \eqref{eq:sta_scalar} 的形式，不确定项为 \(\rho=\dot d_i\)，由 \textup{(C3)} 有 \(\lvert\dot d_i\rvert\le L_i\)。\textup{(C4)} 的 \eqref{eq:cond_gain} 逐分量给出引理~\ref{lem:sta} 的条件 \eqref{eq:sta_gain}。由交接条件 \(e_1(T_o)=e_2(T_o)=0\)，引理~\ref{lem:sta} 给出 \(e_1=e_2=0\) 于 \([T_o,\infty)\)；代入 \(e_2=d-z_2\) 及 \eqref{eq:hatd}、\eqref{eq:decoupled_channel} 即得 \eqref{eq:observer_converged} 与 \eqref{eq:w_zero}。时变扰动只通过界 \(L_i\) 进入增益条件，故对 \(t\ge T_o\) 上继续时变的 \(d\) 同样成立；若交接失配非零，引理~\ref{lem:sta} 的有限时间收敛部分给出到达时刻 \(T_o+2\max_iV_i^{1/2}(T_o)/c_i\)（\(V_i,c_i\) 为引理~\ref{lem:sta} 证明中的 Lyapunov 量与收缩常数），此后保持为零。
 \end{proof}
 
-该界关于 \(T_o\) 线性增长且含峰值 \(\bar x=M/\sigma\)，通常远大于 \(M\) 本身，故实际取两者较小者。它不能再反向用来证明 \(\eta_1\) 有界：\(\eta_1\) 由 \(\eta_2\) 驱动、二者互为依赖，条件~\textup{(A)} 才是有界性的来源。由定理~\ref{thm:algo}~(ii)，\(\bar w\) 的取值\emph{只影响进带深度而不影响包络成立性}。
-
-\begin{remark}[缺口：为何现设计没有现成证书]\label{rem:certificate_gap}
-把 \eqref{eq:observer_converged}~从条件变成结论，唯一缺口是下面的\emph{严格 Lyapunov 证书}（下记 \((\star)\)）：
-\begin{equation}
-\text{存在绝对连续 }V(\eta_1,\eta_2)\text{，正定、径向无界、}V=0\iff(\eta_1,\eta_2)=0,\text{ 使 }\dot V\le-c\bigl(V^{1-\eta/2}+V^{1+\eta/2}\bigr),
-\label{eq:star}
-\end{equation}
-%
-其中指数必须是 \(1\mp\eta/2\)（引理~\ref{lem:arctan}~后的算术）。三项结构性障碍说明 \eqref{eq:star}~对现 \eqref{eq:phi} 不成立：
-
-\textbf{(E1) 齐次性。}若 \eqref{eq:phi} 要成为权重 \((r_1,r_2)\)、次 \(d\) 的齐次向量场的两个分量，需同时满足 \(1-\eta/2=d+r_1\)、\(2-\eta=d+r_2\) 与 \(r_2=d+r_1\)（交叉项 \(\eta_2\) 的权）；三式联立给出 \(r_1=0\)、\(r_2=d=1-\eta/2\)，即唯一解是退化权重（\(\eta_1\) 不被缩放，\(\sigma\) 归一化随之失去意义）。\(\sigma\sgn\) 项为 \(0\) 次而需 \(d+r_2=2-\eta\neq0\)，进一步破坏同质性。超扭转自洽性要求二阶通道幂次为 \(2\alpha-1\)；此处 \(\alpha=1-\eta/2\) 给 \(1-\eta\)，实际为 \(2-\eta\)，差 \(1\)，故也不对应任何（广义）超扭转配对。
-
-\textbf{(E2) \(\sigma\) 的非一致性。}把注入项写回 \(\eta_1\) 的幂：
-\(c_1\phi_1(\eta_1/\sigma)=c_1\bigl[\sigma^{-(1-\eta/2)}\lvert\eta_1\rvert^{1-\eta/2}+\sigma^{-(1+\eta/2)}\lvert\eta_1\rvert^{1+\eta/2}\bigr]\sgn\eta_1\)，
-\(c_2\phi_2(\eta_1/\sigma)=c_2\bigl[\sigma^{-(2-\eta)}\lvert\eta_1\rvert^{2-\eta}+\sigma^{-(2+\eta)}\lvert\eta_1\rvert^{2+\eta}+\sigma\sgn\eta_1\bigr]\)。
-四支幂项带 \(\sigma^{-(1\mp\eta/2)},\sigma^{-(2\mp\eta)}\) 四种尺度，而 \(\sgn\) 项带 \(\sigma^{+1}\)；“\(\sigma\to0\) 退化为低阶支”的小增益论证要求两支共享同一 \(\sigma\) 幂次，此处相差 \(\sigma^{\mp\eta}\) 且方向相反。
-
-\textbf{(E3) 时间常数。}即使忽略耦合项，二次型 \(V=\tfrac12(\eta_1^{2}+\eta_2^{2})\) 下的指数为 \(1\mp\eta/4\)，引理~\ref{lem:arctan}~只能给出 \(T^\ast\le 8T_c/\pi\approx2.55\,T_c\)；要保住 \(T_c\) 必须用 \(1\)-齐次证书，或把增益提高到 \(8/(\eta T_c)\)。
-
-三处可选修补：\textbf{(i)} 把 \(\phi_2\) 的幂次改为 \(2\mp2\eta\)（与权重 \(r=(2,2\mp\eta)\)、次 \(d=\mp\eta\) 自洽，\(\eta\to0\) 时退化为线性系统），此时 \eqref{eq:star}~可由广义超扭转的 Lyapunov 函数构造；\textbf{(ii)} 保留 \(\pi/(\eta T_c)\) 但把预设时间改记为 \(T_c'=8T_c/\pi\)；\textbf{(iii)} 把 \(\sigma\sgn\) 改为 \(\sigma^{2-2\eta}\sgn\)，使四支共享同一 \(\sigma\) 幂次族。在采用其中之一之前，本文只用定理~\ref{thm:ptdo_core}~的可证结论。
+\begin{remark}[为何不在 \(T_o\) 后继续用线性观测器]\label{rem:sta_vs_linear}
+若把 \eqref{eq:ptdo} 的下行换成常增益线性结构 \(\dot z_1=u_p+z_2+2\lambda(y-z_1)\)、\(\dot z_2=\lambda^{2}(y-z_1)\)，则由 \eqref{eq:observer_errordyn} 的线性对应可得 \(\|e_2(t)\|\le (L_+/\lambda)[2-(2+\lambda h)e^{-\lambda h}]\)，即只有 \(O(L_+/\lambda)\) 的残差，\(d\) 时变时\emph{不能}保持零误差；增大 \(\lambda\) 虽缩小残差，却同时放大噪声与离散抖振。超螺旋结构的价值正在于把这一“残差随 \(L_+\) 线性恶化”的结论替换为“在 \eqref{eq:cond_gain} 下严格为零”，代价是要求 \(d\) 的二阶导数有界 \textup{(C3)} 与 \(\sgn\) 带来的抖振（第~\ref{sec:infeasible}~节）。
 \end{remark}
 
 \subsection{阶段 I：漏斗型预设性能律}
@@ -178,7 +300,7 @@ s_i=\dot\xi_i+k_{1i}\xi_i,\qquad k_{1i}>0 ,
 \end{equation}
 方括号内为漏斗反步项，其中 \(-\xi_i/(1-\xi_i^2)\) 是障碍项，其系数必须取 \(1\) 才能与 \(\xi\) 动力学中的交叉项精确相消；\(\ddot\rho_i\xi_i\) 与 \(2\dot\rho_i\dot\xi_i\) 是时变归一化引起的虚拟强迫项。由引理~\ref{lem:rho_smooth}，\(\rho_i,\dot\rho_i,\ddot\rho_i\) 均为已知时间函数，故 \eqref{eq:xi_s}、\eqref{eq:nu_ppc} 仅依赖测量。
 
-该律的闭环性质由定理~\ref{thm:algo}~(ii)(iii) 给出（证明见第 2--4 步）。为此只需引入以下量：由 \eqref{eq:decoupled_channel} 降阶后的候选 Lyapunov 函数，以及由引理~\ref{lem:residual}~的 \(\bar w\) 决定的常数
+该律的闭环性质由定理~\ref{thm:ppc} 给出。为此只需引入以下量：由 \eqref{eq:decoupled_channel} 降阶后的候选 Lyapunov 函数，以及由 \eqref{eq:residual_bound} 的 \(\bar w\) 决定的常数
 \begin{equation}
 V_i=\tfrac12\ln\frac{1}{1-\xi_i^{2}}+\tfrac12 s_i^{2},\quad
 \bar V_i=\tfrac12\ln\frac{c_i+k_{1i}}{k_{1i}}+\frac{c_i}{k_{2i}},\quad
@@ -186,7 +308,49 @@ c_i=\frac{\sigma_i^{2}}{2k_{2i}},\quad
 \sigma_i=\frac{\bar w}{\rho_{i\infty}} ;
 \label{eq:V_c}
 \end{equation}
-定理~\ref{thm:algo} 将证明 \(V_i(t)\le\max\{V_i(0),\bar V_i\}\)，并由此得到进带深度 \(\vartheta_i<1\)。障碍增益取 \(1\) 的必要性在于：它使 \eqref{eq:s_dyn} 的交叉项 \(\xi_is_i/(1-\xi_i^2)\) 在 \(\dot V_i\) 中\emph{精确}相消，故包络的结构性成立不依赖 \(\bar w\) 的数值。
+\begin{theorem}[阶段 I：漏斗型预设性能控制]\label{thm:ppc}\label{thm:funnel}
+设 \textup{(C1)(C2)} 成立，\(\bar w\) 由 \eqref{eq:residual_bound} 取定（有限），性能函数取 \eqref{eq:rho}，辅助输入取 \eqref{eq:nu_ppc}，初值满足假设~\ref{as:ic}（即 \(\lvert\xi_i(0)\rvert<1\)）。则闭环在 \([0,T_o]\) 上无有限时刻逃逸，且
+\begin{enumerate}
+  \item[\textup{(1)}] \textbf{一致界与包络}：
+\begin{equation}
+\lvert e_i(t)\rvert\le\vartheta_i\rho_i(t)<\rho_i(t),\qquad
+\vartheta_i=\sqrt{1-e^{-2\max\{V_i(0),\bar V_i\}}}<1,
+\label{eq:funnel_bound}
+\end{equation}
+对一切 \(t\in[0,T_o]\) 与 \(i=1,\dots,n\)，其中 \(V_i,\bar V_i\) 由 \eqref{eq:V_c} 给出；\(\vartheta_i<1\) 对任意\emph{有限} \(\bar w\) 成立，与 \(\bar w\) 的数值无关。
+  \item[\textup{(2)}] \textbf{进带}（第一预设时间）：\(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}<\rho_{i\infty}\)。
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\textbf{第 1 步（降阶）。}由 \(\dot e_i=\dot\rho_i\xi_i+\rho_i\dot\xi_i\)、\(\ddot e_i=\ddot\rho_i\xi_i+2\dot\rho_i\dot\xi_i+\rho_i\ddot\xi_i\) 与 \eqref{eq:decoupled_channel} 得 \(\ddot\xi_i=(\nu_i+w_i-\ddot\rho_i\xi_i-2\dot\rho_i\dot\xi_i)/\rho_i\)。对其与 \eqref{eq:xi_s} 求导后代入 \eqref{eq:nu_ppc}，前馈项精确相消，得
+\begin{equation}
+\dot\xi_i=s_i-k_{1i}\xi_i,\qquad
+\dot s_i=-k_{2i}s_i-\frac{\xi_i}{1-\xi_i^{2}}+\frac{w_i}{\rho_i}.
+\label{eq:s_dyn}
+\end{equation}
+
+\textbf{第 2 步（Lyapunov 一致界）。}沿 \eqref{eq:s_dyn}，
+\begin{equation}
+\dot V_i=\frac{\xi_i\dot\xi_i}{1-\xi_i^{2}}+s_i\dot s_i
+=-\frac{k_{1i}\xi_i^{2}}{1-\xi_i^{2}}-k_{2i}s_i^{2}+\frac{s_iw_i}{\rho_i},
+\label{eq:Vdot}
+\end{equation}
+交叉项 \(\xi_is_i/(1-\xi_i^2)\) 精确相消。由 \(\rho_i\ge\rho_{i\infty}\)、\(\lvert w_i\rvert\le\bar w\) 得 \(\lvert w_i\rvert/\rho_i\le\sigma_i=\bar w/\rho_{i\infty}\)，用 Young 不等式 \(\lvert s_i\rvert\sigma_i\le\frac12k_{2i}s_i^2+\frac{\sigma_i^2}{2k_{2i}}\) 得
+\begin{equation}
+\dot V_i\le-\frac{k_{1i}\xi_i^{2}}{1-\xi_i^{2}}-\frac{k_{2i}}{2}s_i^{2}+c_i .
+\label{eq:Vdot_bound}
+\end{equation}
+记 \(\Omega_i=\{(\xi_i,s_i):\dot V_i\ge0\}\)。由 \eqref{eq:Vdot_bound}，在 \(\Omega_i\) 上 \(k_{1i}\xi_i^2/(1-\xi_i^2)\le c_i\) 且 \(\frac{k_{2i}}{2}s_i^2\le c_i\)，前者等价于 \(\lvert\xi_i\rvert\le\bar\xi_i=\sqrt{c_i/(c_i+k_{1i})}<1\)，即 \(\Omega_i\) 严格位于开集 \(\{\lvert\xi_i\rvert<1\}\) 内。于是 \(\Omega_i\) 上 \(V_i\le\frac12\ln\frac{1}{1-\bar\xi_i^2}+\frac{c_i}{k_{2i}}=\bar V_i\)，从而 \(\dot V_i\le0\) 与 \(V_i\le\bar V_i\) 同时成立。在 \(V_i\) 首次超过 \(\max\{V_i(0),\bar V_i\}\) 的时刻取反证，得
+\begin{equation}
+V_i(t)\le V_i^{\max}:=\max\{V_i(0),\bar V_i\},\qquad\forall t\in[0,T_o]\ \text{（只要解存在）}.
+\label{eq:Vmax}
+\end{equation}
+
+\textbf{第 3 步（无逃逸与进带）。}\eqref{eq:nu_ppc} 右端在开集 \(\{\lvert\xi_i\rvert<1\}\times\R\) 上局部 Lipschitz（\(\rho_i^{(\cdot)}\) 连续，\(\lvert\xi_i\rvert<1\) 时 \(1-\xi_i^2>0\)），故局部解存在唯一。设 \(t^\ast\) 为首次满足 \(\lvert\xi_i\rvert=1\) 的时刻，则在 \([0,t^\ast)\) 上由 \eqref{eq:Vmax} 得 \(\frac12\ln\frac{1}{1-\xi_i^2}\le V_i^{\max}\)，即 \(\lvert\xi_i\rvert\le\sqrt{1-e^{-2V_i^{\max}}}<1\)，与 \(\lvert\xi_i(t^\ast)\rvert=1\) 矛盾，故 \(t^\ast=+\infty\) 且 \eqref{eq:funnel_bound} 成立，此即 (1)。代入 \(t=T_o\)、\(\rho_i(T_o)=\rho_{i\infty}\) 得 (2)。又 \(c_i<\infty\) 蕴含 \(\bar V_i<\infty\) 与 \(\vartheta_i<1\)，故 (1)(2) 与 \(\bar w\) 的取值无关。
+\end{proof}
+
+障碍增益取 \(1\) 的必要性在于：它使 \eqref{eq:s_dyn} 的交叉项 \(\xi_is_i/(1-\xi_i^2)\) 在 \(\dot V_i\) 中\emph{精确}相消，故包络的结构性成立不依赖 \(\bar w\) 的数值。
 
 \subsection{阶段 II：Gramian 型周期延迟反馈}
 \label{sec:pdf}
@@ -202,7 +366,7 @@ K_c(\vartheta)=0\ (\vartheta\in[0,h)),
 W_c=\int_h^{2h}e^{-A_cs}BR_h(s)B^{\top}e^{-A_c^{\top}s}\dd s\succ0 .
 \label{eq:Wc}
 \end{equation}
-由引理~\ref{lem:linearization}~的可控性与 \(K_0\) 的极点配置知 \((A_c,B)\) 可控，结合 \(R_h\) 的支撑条件得 \(W_c\succ0\)。增益取
+由 \(\vartheta\ge0\) 上通道 \eqref{eq:linear_error} 中 \((A,B)\) 的可控性（\(\operatorname{rank}[B,AB]=2n\)）与 \(K_0\) 的极点配置知 \((A_c,B)\) 可控，结合 \(R_h\) 的支撑条件得 \(W_c\succ0\)。增益取
 \begin{equation}
 K_c(\vartheta)=
 \begin{cases}
@@ -211,82 +375,59 @@ R_h(\vartheta)B^{\top}e^{-A_c^{\top}\vartheta}W_c^{-1}e^{A_c(h-\vartheta)}, & \v
 \end{cases}
 \label{eq:Kc}
 \end{equation}
-并以 \(2h\) 周期延拓。设计目标是使闭环单周期状态转移矩阵精确为零，即 \(\Delta_K(h)=0\)；其证明与由此得到的永久零化在定理~\ref{thm:algo}~(iv) 中作为第 5--6 步给出。
+并以 \(2h\) 周期延拓。记闭环 \(\dot z=A_cz(\vartheta)-BK_c(\vartheta)z(\vartheta-h)\) 在 \([0,2h]\) 上的单周期状态转移矩阵为 \(\Delta_K(h)\)；设计目标是使 \(\Delta_K(h)=0\)，它与由此得到的永久零化由下面的定理~\ref{thm:pdf1} 给出。
 
-\subsection{算法正确性：分步证明}
-\label{sec:algo_proof}
-
-以下把观测器、漏斗律与 Gramian 增益的结论合并为一个定理。为便于对照正文，定理沿用三处设计的编号（\texttt{thm:ptdo}、\texttt{thm:funnel}、\texttt{thm:pdf}）作为同一结论的别名，交叉引用与第~\ref{sec:analysis}~节的表格因此保持有效。
-
-\begin{theorem}[算法正确性]\label{thm:algo}%
-\label{thm:ptdo}\label{thm:funnel}\label{thm:pdf}
-设假设~\ref{as:inertia}--\ref{as:observer}~成立（即含假设~\ref{as:ideal}~的连续时间、无饱和与精确补偿），取力矩律 \eqref{eq:computed_torque}、补偿项 \(\hat d=M_ez_2\)、观测器 \eqref{eq:ptdo}--\eqref{eq:phi}、辅助输入 \eqref{eq:nu_schedule}（\(\nu^{\mathrm{PPC}}\) 由 \eqref{eq:nu_ppc}、\(K_c\) 由 \eqref{eq:Kc} 给出）与性能函数 \eqref{eq:rho}。若假设~\ref{as:observer}~的条件 \textup{(A)} 与定理~\ref{thm:ptdo_core}~的条件 \textup{(B)} 成立，则 (ii)(iii) 无条件成立；若另有证书 \((\star)\)（注~\ref{rem:certificate_gap}），则 (i)(iv) 也成立，具体为：
+\begin{theorem}[阶段 II：预设时间 PDF 控制]\label{thm:pdf1}\label{thm:pdf}
+设 \(\vartheta\ge0\) 上通道严格为 \eqref{eq:linear_error}（即 \(w\equiv0\)，见 \eqref{eq:w_zero}），辅助输入取 \eqref{eq:pdf_input}，\(K_c\) 由 \eqref{eq:Kc} 给出，\(R_h\) 满足支撑条件且 \(W_c\succ0\)。则
 \begin{enumerate}
-  \item[(i)] \textbf{观测（阶段 I 通道）}：在证书 \((\star)\) 下 \eqref{eq:observer_converged}~成立，即 \(z_2(t)=\Delta_a(t)\)、\(\hat d(t)=d(t)\)；等价地 \(w(t)\equiv0\) 于 \(t\ge T_o\)，见 \eqref{eq:w_zero}。
-  \item[(ii)] \textbf{包络}（阶段 I）：闭环在 \([0,T_o]\) 上无有限时刻逃逸，且
-\begin{equation}
-\lvert e_i(t)\rvert\le\vartheta_i\rho_i(t)<\rho_i(t),\qquad
-\vartheta_i=\sqrt{1-e^{-2\max\{V_i(0),\bar V_i\}}}<1,
-\label{eq:funnel_bound}
-\end{equation}
-对一切 \(t\in[0,T_o]\) 与 \(i=1,\dots,n\) 成立；其中 \(V_i,\bar V_i\) 由 \eqref{eq:V_c} 给出，\(\vartheta_i<1\) 对任意\emph{有限} \(\bar w\) 成立，与 \(\bar w\) 的数值无关。
-  \item[(iii)] \textbf{进带}（第一预设时间）：\(\lvert e_i(T_o)\rvert\le\vartheta_i\rho_{i\infty}<\rho_{i\infty}\)。
-  \item[(iv)] \textbf{归零}（第二预设时间）：在证书 \((\star)\) 下通道严格线性，单周期状态转移矩阵满足 \(\Delta_K(h)=0\)，从而对任意有界交接状态 \(z(T_o)\)，闭环解 \(z(\vartheta)=0\) 于 \(\vartheta\ge2h\)，即 \(e(t)=\dot e(t)=0\) 于 \(t\ge T_o+2h\)；总预设时间 \(T_{\mathrm{pre}}=T_o+2h\)，与 \(z(0)\) 及扰动幅值无关。
+  \item[\textup{(1)}] \textbf{单周期零化}：\(\Delta_K(h)=0\)；
+  \item[\textup{(2)}] \textbf{永久零化}（第二预设时间）：对任意有界初值 \(z(T_o)\)，闭环解满足
+\[
+z(\vartheta)=0,\quad\forall\vartheta\ge2h,
+\qquad\text{即}\quad e(t)=\dot e(t)=0,\quad\forall t\ge T_o+2h .
+\]
 \end{enumerate}
+结论不要求 \(\nu\) 在 \(T_o\) 处连续：切换跳变只改变 \(\nu\) 的取值，不改变以 \(z(T_o)\) 为初值的线性系统的解。
 \end{theorem}
 
 \begin{proof}
-\textbf{第 1 步（观测器误差通道）。}误差动态即 \eqref{eq:observer_errordyn}。由定理~\ref{thm:ptdo_core}~(1)--(3)：在条件 \textup{(A)} 下原点不变性、到达即保持与 \eqref{eq:wbar_finite}~成立，且引理~\ref{lem:residual}~给出显式界 \(\bar w\le M\)，故第 2--4 步\emph{不含}任何未证假设。精确补偿 \eqref{eq:observer_converged} 则需要证书 \((\star)\)：由注~\ref{rem:certificate_gap} 的 \((\star)\) 与 \(T_c\le T_o\)，定理~\ref{thm:ptdo_core}~(4) 给出 \(z_2(t)=\Delta_a(t)\)（\(t\ge T_o\)），再由 \(w=M_e^{-1}(d-\hat d)=\Delta_a-z_2=\eta_2\) 得 \eqref{eq:w_zero}，故 (i) 成立。
-
-\textbf{第 2 步（阶段 I 降阶）。}由 \(\dot e_i=\dot\rho_i\xi_i+\rho_i\dot\xi_i\)、\(\ddot e_i=\ddot\rho_i\xi_i+2\dot\rho_i\dot\xi_i+\rho_i\ddot\xi_i\) 与 \eqref{eq:decoupled_channel}~得 \(\ddot\xi_i=(\nu_i+w_i-\ddot\rho_i\xi_i-2\dot\rho_i\dot\xi_i)/\rho_i\)。对其与 \eqref{eq:xi_s} 求导后代入 \eqref{eq:nu_ppc}，前馈项精确相消，得
-\begin{equation}
-\dot\xi_i=s_i-k_{1i}\xi_i,\qquad
-\dot s_i=-k_{2i}s_i-\frac{\xi_i}{1-\xi_i^{2}}+\frac{w_i}{\rho_i}.
-\label{eq:s_dyn}
-\end{equation}
-
-\textbf{第 3 步（Lyapunov 一致界）。}沿 \eqref{eq:s_dyn}，
-\begin{equation}
-\dot V_i=\frac{\xi_i\dot\xi_i}{1-\xi_i^{2}}+s_i\dot s_i
-=-\frac{k_{1i}\xi_i^{2}}{1-\xi_i^{2}}-k_{2i}s_i^{2}+\frac{s_iw_i}{\rho_i},
-\label{eq:Vdot}
-\end{equation}
-交叉项 \(\xi_is_i/(1-\xi_i^2)\) 精确相消。由 \(\rho_i\ge\rho_{i\infty}\)、\(\lvert w_i\rvert\le\bar w\) 得 \(\lvert w_i\rvert/\rho_i\le\sigma_i\)，用 Young 不等式 \(\lvert s_i\rvert\sigma_i\le\frac12k_{2i}s_i^2+\frac{\sigma_i^2}{2k_{2i}}\) 得
-\begin{equation}
-\dot V_i\le-\frac{k_{1i}\xi_i^{2}}{1-\xi_i^{2}}-\frac{k_{2i}}{2}s_i^{2}+c_i .
-\label{eq:Vdot_bound}
-\end{equation}
-记 \(\Omega_i=\{(\xi_i,s_i):\dot V_i\ge0\}\)。由 \eqref{eq:Vdot_bound}，在 \(\Omega_i\) 上 \(k_{1i}\xi_i^2/(1-\xi_i^2)\le c_i\) 且 \(\frac{k_{2i}}{2}s_i^2\le c_i\)，前者等价于 \(\lvert\xi_i\rvert\le\bar\xi_i=\sqrt{c_i/(c_i+k_{1i})}<1\)，即 \(\Omega_i\) 严格位于开集 \(\{\lvert\xi_i\rvert<1\}\) 内。于是 \(\Omega_i\) 上
-\(V_i\le\frac12\ln\frac{1}{1-\bar\xi_i^2}+\frac{c_i}{k_{2i}}=\bar V_i\)，从而 \(\dot V_i\le0\) 与 \(V_i\le\bar V_i\) 同时成立。在 \(V_i\) 首次超过 \(\max\{V_i(0),\bar V_i\}\) 的时刻取反证，得
-\begin{equation}
-V_i(t)\le V_i^{\max}:=\max\{V_i(0),\bar V_i\},\qquad\forall t\in[0,T_o]\ \text{（只要解存在）}.
-\label{eq:Vmax}
-\end{equation}
-
-\textbf{第 4 步（无逃逸与进带）。}\eqref{eq:nu_ppc}~右端在开集 \(\{\lvert\xi_i\rvert<1\}\times\R\) 上局部 Lipschitz（\(\rho_i^{(\cdot)}\) 连续，\(\lvert\xi_i\rvert<1\) 时 \(1-\xi_i^2>0\)），故局部解存在唯一。设 \(t^\ast\) 为首次满足 \(\lvert\xi_i\rvert=1\) 的时刻，则在 \([0,t^\ast)\) 上由 \eqref{eq:Vmax} 得 \(\frac12\ln\frac{1}{1-\xi_i^2}\le V_i^{\max}\)，即 \(\lvert\xi_i\rvert\le\sqrt{1-e^{-2V_i^{\max}}}<1\)，与 \(\lvert\xi_i(t^\ast)\rvert=1\) 矛盾，故 \(t^\ast=+\infty\) 且 \eqref{eq:funnel_bound}~成立，此即 (ii)。代入 \(t=T_o\)、\(\rho_i(T_o)=\rho_{i\infty}\) 得 \eqref{eq:funnel_bound}~在 \(T_o\) 的取值，即 (iii)。又 \(c_i<\infty\) 蕴含 \(\bar V_i<\infty\) 与 \(\vartheta_i<1\)，故 (ii)(iii) 与 \(\bar w\) 的取值无关。
-
-\textbf{第 5 步（阶段 II 单周期零化）。}由 (i) 知 \(\vartheta\ge0\) 上通道严格为 \eqref{eq:linear_error}，故 \eqref{eq:pdf_input}~给出 \(\dot z=A_cz(\vartheta)-BK_c(\vartheta)z(\vartheta-h)\)。前段 \(\vartheta\in[0,h]\)：\(K_c=0\)，\(z(\vartheta)=e^{A_c\vartheta}z(0)\)，故 \(z(h)=e^{A_ch}z(0)\) 且 \(\vartheta\in[h,2h]\) 时 \(z(\vartheta-h)=e^{A_c(\vartheta-h)}z(0)\)。后段由变分公式
-\(z(2h)=e^{A_c2h}z(0)-\int_h^{2h}e^{A_c(2h-s)}BK_c(s)e^{A_c(s-h)}\dd s\,z(0)\)。注意 \(e^{A_c(h-s)}e^{A_c(s-h)}=I_{2n}\) 与 \(e^{A_c(2h-s)}=e^{A_c2h}e^{-A_cs}\)，代入 \eqref{eq:Kc}~得
+\textbf{(1)} 前段 \(\vartheta\in[0,h]\)：\(K_c=0\)，\(z(\vartheta)=e^{A_c\vartheta}z(0)\)，故 \(z(h)=e^{A_ch}z(0)\) 且 \(\vartheta\in[h,2h]\) 时 \(z(\vartheta-h)=e^{A_c(\vartheta-h)}z(0)\)。后段由变分公式
+\[
+z(2h)=e^{A_c2h}z(0)-\int_h^{2h}e^{A_c(2h-s)}BK_c(s)e^{A_c(s-h)}\dd s\,z(0).
+\]
+注意 \(e^{A_c(h-s)}e^{A_c(s-h)}=I_{2n}\) 与 \(e^{A_c(2h-s)}=e^{A_c2h}e^{-A_cs}\)，代入 \eqref{eq:Kc} 得
 \[
 \int_h^{2h}e^{A_c(2h-s)}BK_c(s)e^{A_c(s-h)}\dd s
 =e^{A_c2h}\int_h^{2h}e^{-A_cs}BR_hB^{\top}e^{-A_c^{\top}s}\dd s\,W_c^{-1}=e^{A_c2h},
 \]
-故单周期状态转移矩阵 \(\Delta_K(h)=0\)。（此处 \(z(0)\) 指局部时间起点处的状态，即 \(z(T_o)\)；切换处 \(\nu\) 允许跳变，本步只把 \(z(T_o)\) 当作初值，不要求 \(\nu\) 连续。）
+故 \(\Delta_K(h)=0\)。（此处 \(z(0)\) 指局部时间起点处的状态，即 \(z(T_o)\)。）
 
-\textbf{第 6 步（永久零化与总预设时间）。}\(\vartheta\in[2h,3h)\) 时 \(K_c=0\)，\(\dot z=A_cz\) 且 \(z(2h)=0\)，故 \(z\equiv0\)；\(\vartheta\in[3h,4h)\) 时 \(K_c\neq0\) 但 \(z(\vartheta-h)=0\)，仍为 \(\dot z=A_cz\) 且 \(z(3h)=0\)。逐周期归纳得 \(z(\vartheta)=0\) 于 \(\vartheta\ge2h\)；由 \eqref{eq:linear_error}~回代 \(t=T_o+\vartheta\) 得 \(e(t)=\dot e(t)=0\) 于 \(t\ge T_o+2h\)，此即 (iv)。四段时长为 \(T_o\)（观测与包络）、\(h\)（纯 \(A_c\) 传播）与 \(h\)（注入—抵消），故 \(T_{\mathrm{pre}}=T_o+2h\)，且该值只由设计参数给出，与 \(z(0)\)、\(\bar w\) 及扰动幅值无关。
+\textbf{(2)} \(\vartheta\in[2h,3h)\) 时 \(K_c=0\)，\(\dot z=A_cz\) 且 \(z(2h)=0\)，故 \(z\equiv0\)；\(\vartheta\in[3h,4h)\) 时 \(K_c\neq0\) 但 \(z(\vartheta-h)=0\)，仍为 \(\dot z=A_cz\) 且 \(z(3h)=0\)。逐周期归纳得 \(z(\vartheta)=0\) 于 \(\vartheta\ge2h\)；由 \eqref{eq:linear_error} 回代 \(t=T_o+\vartheta\) 即得 \(e(t)=\dot e(t)=0\) 于 \(t\ge T_o+2h\)。
 \end{proof}
 
+\subsection{四个分定理及其合成}
+\label{sec:algo_proof}
+
+按时间轴，上面四个分定理各管一段，其依赖关系如下：
+\begin{itemize}
+  \item 定理~\ref{thm:obs1}（\(T_o\) 前预设时间观测）：\textup{(C1)(C2)} \(\Rightarrow\) \eqref{eq:observer_bounds} 与残差界 \eqref{eq:residual_bound}；
+  \item 定理~\ref{thm:sta}（\(T_o\) 后滑模观测）：\textup{(C3)(C4)} 与左极限交接 \(\Rightarrow\) \eqref{eq:observer_converged}，即 \(w\equiv0\) 于 \(t\ge T_o\)；
+  \item 定理~\ref{thm:ppc}（\(T_o\) 前 PPC）：\textup{(C1)(C2)} 与 \eqref{eq:residual_bound} 的 \(\bar w\) \(\Rightarrow\) 包络 \eqref{eq:funnel_bound} 与进带；
+  \item 定理~\ref{thm:pdf1}（\(T_o\) 后 PDF）：\(w\equiv0\) 与 \(\Delta_K(h)=0\) \(\Rightarrow\) \(z(\vartheta)=0\) 于 \(\vartheta\ge2h\)。
+\end{itemize}
+四个分定理的合成给出第~\ref{sec:analysis}~节的\emph{总定理}（定理~\ref{thm:main}）：\textup{(C1)(C2)} 承担包络、进带与阶段 I 观测；\textup{(C3)(C4)} 把阶段 II 的通道化为无扰动；\textup{(C5)} 与 \(\Delta_K(h)=0\) 完成精确归零。合成只需要一个连接量——交接状态界 \(\lVert z(T_o)\rVert\le B_o\)（引理~\ref{lem:handover}），它把定理~\ref{thm:ppc}~(1) 的包络估计接到定理~\ref{thm:pdf1} 的线性算子上。四段时长为 \(T_o\)（观测与包络）、\(h\)（纯 \(A_c\) 传播）与 \(h\)（注入—抵消），故总预设时间 \(T_{\mathrm{pre}}=T_o+2h\)，只由设计参数给出。
+
 \begin{remark}[“不需要扰动上界”的确切含义]\label{rem:unknown_w}
-定理~\ref{thm:algo}~(ii)(iii) 的结论分两层：\emph{包络成立性}只要求 \(\bar w\) 有限（第 3 步中 \(c_i<\infty\)），故即便不知 \(\bar w\) 包络也不破；\emph{贴合深度} \(\vartheta_i\) 的数值依赖 \(\bar w\)（\(c_i\propto\bar w^2\)，\(\bar w\to\infty\) 时 \(\vartheta_i\to1\)）。即未知扰动幅度只消耗误差带内部余量，不破坏结构保证；但整定与验收仍需一个保守估计（可由引理~\ref{lem:residual}~给出）。
+定理~\ref{thm:ppc}~(1)(2) 的结论分两层：\emph{包络成立性}只要求 \(\bar w\) 有限（定理~\ref{thm:ppc} 第 2 步中 \(c_i<\infty\)），故即便不知 \(\bar w\) 包络也不破；\emph{贴合深度} \(\vartheta_i\) 的数值依赖 \(\bar w\)（\(c_i\propto\bar w^2\)，\(\bar w\to\infty\) 时 \(\vartheta_i\to1\)）。即未知扰动幅度只消耗误差带内部余量，不破坏结构保证；但整定与验收仍需一个保守估计（可由 \eqref{eq:residual_bound} 给出，其中 \(L\) 可离线估计而无需在线测量）。
 \end{remark}
 
 \begin{remark}[障碍增益与饱和]\label{rem:barrier}
-障碍项在 \(\lvert\xi_i\rvert\to1\) 时发散，这是包络\emph{结构性}成立的原因（第 4 步的反证），也使初始点靠近包络时力矩峰值增大；若改用纯误差变换实现（不加障碍项），输入保持有界但有界性论证需引入 \(S'\) 的下界估计、鲁棒性变差。故保留障碍型实现，饱和下的降级见第~\ref{sec:infeasible}~节。
+障碍项在 \(\lvert\xi_i\rvert\to1\) 时发散，这是包络\emph{结构性}成立的原因（定理~\ref{thm:ppc} 证明第 3 步的反证），也使初始点靠近包络时力矩峰值增大；若改用纯误差变换实现（不加障碍项），输入保持有界但有界性论证需引入 \(S'\) 的下界估计、鲁棒性变差。故保留障碍型实现，饱和下的降级见第~\ref{sec:infeasible}~节。
 \end{remark}
 
 \subsection{完整算法与参数约束}
 \label{sec:algorithm}
 
-实现流程为：\textbf{(1)} 选定 \(T_o\)、\(\rho_{i0}>\rho_{i\infty}>0\)（本文固定五次多项式）；\textbf{(2)} 选定 \(k_{1i},k_{2i}\) 并按推论~\ref{cor:exponential}~校验 \(2\underline k_iT_o\gtrsim\ln(\rho_{i0}/\rho_{i\infty})\)；\textbf{(3)} 选定 \(T_c\le T_o,\eta,\sigma,\bar\xi_0\)，核验定理~\ref{thm:ptdo_core}~的条件 \textup{(A)} 与 \textup{(B)}；若还需阶段 II 的精确补偿，须另提供证书 \((\star)\)（注~\ref{rem:certificate_gap}），否则只使用阶段 I 结论（定理~\ref{thm:algo}~(ii)(iii) 与引理~\ref{lem:residual}）；\textbf{(4)} 选定 \(K_0,h,R_h\)，数值积分 \(W_c\)（正则化求逆只给近似零化，不满足定理~\ref{thm:algo}~(iv) 的精确归零前提）；\textbf{(5)} \textbf{校验} \(\lVert\Delta_K(h)\rVert\) 与 \(\operatorname{cond}(W_c)\)，若不达标返回 (4)；\textbf{(6)} 由命题~\ref{prop:stage2}~算 \(M_h\) 并校验包络交接。第 (5) 步是算法可靠性的必要环节：若数值精度使 \(\Delta_K(h)\neq0\)，结论退化为命题~\ref{prop:approx}；若 \(\lVert\Delta_K(h)\rVert\ge1\)，连有界性都无法由该递推得到（第~\ref{sec:infeasible}~节）。
+实现流程为：\textbf{(1)} 选定 \(T_o\)、\(\rho_{i0}>\rho_{i\infty}>0\)（本文固定五次多项式）；\textbf{(2)} 选定 \(k_{1i},k_{2i}\) 并按推论~\ref{cor:exponential}~校验 \(2\underline k_iT_o\gtrsim\ln(\rho_{i0}/\rho_{i\infty})\)；\textbf{(3)} 选定超螺旋增益 \(\kappa_{1i},\kappa_{2i}\) 并核验 \textup{(C3)(C4)}，即 \eqref{eq:cond_sta}--\eqref{eq:cond_gain}（\(L_i\) 须先由扰动包络离线估计）；同时核验 \textup{(C2)} 的 \(L<\infty\)，并由 \eqref{eq:residual_bound} 算出阶段 I 的 \(\bar w\)，用于 \eqref{eq:V_c} 与 \eqref{eq:B_o}；\textbf{(4)} 选定 \(K_0,h,R_h\)，数值积分 \(W_c\)（正则化求逆只给近似零化，不满足定理~\ref{thm:main}~(iv) 的精确归零前提）；\textbf{(5)} \textbf{校验} \(\lVert\Delta_K(h)\rVert\) 与 \(\operatorname{cond}(W_c)\)，若不达标返回 (4)；\textbf{(6)} 由命题~\ref{prop:stage2}~算 \(M_h\) 并校验包络交接。第 (5) 步是算法可靠性的必要环节：若数值精度使 \(\Delta_K(h)\neq0\)，结论退化为命题~\ref{prop:approx}；若 \(\lVert\Delta_K(h)\rVert\ge1\)，连有界性都无法由该递推得到（第~\ref{sec:infeasible}~节）。
 
-参数耦合须成对检查：增益增大使 \(\vartheta_i\) 减小但力矩峰值上升；误差带收窄使 \(\sigma_i=\bar w/\rho_{i\infty}\) 增大、\(\vartheta_i\to1\)，边际收益递减；\(T_o\) 减小使 \(\dot\rho_i\propto1/T_o\) 增大而力矩上升、增大则残差界（引理~\ref{lem:residual}）线性增大，故存在折中最优；\(h\) 减小使归零更快但 \(W_c\) 条件数恶化。
+参数耦合须成对检查：增益增大使 \(\vartheta_i\) 减小但力矩峰值上升；误差带收窄使 \(\sigma_i=\bar w/\rho_{i\infty}\) 增大、\(\vartheta_i\to1\)，边际收益递减；\(T_o\) 减小使 \(\dot\rho_i\propto1/T_o\) 增大而力矩上升、增大则残差界 \eqref{eq:residual_bound} 中的 \(KLT_o/4\) 项增大，故存在折中最优；\(h\) 减小使归零更快但 \(W_c\) 条件数恶化；\(\kappa_{1i},\kappa_{2i}\) 只能由 \(L_i\) 从下方约束（\eqref{eq:cond_gain}），取得过大虽仍保持零误差，却会放大 \(\sgn\) 的离散抖振与力矩峰值。
