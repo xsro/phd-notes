@@ -1,19 +1,21 @@
-%% main_ppc_tc_sweep.m
+%% main_ppc_to_sweep.m
 % =========================================================================
-% 预设观测时间 T_c 的扫描: 定量刻画式 (42) 的"三角约束"
+% 预设观测/进带时间 T_o 的扫描: 定量刻画 (C2)(C4) 与执行器约束之间的折中
 %
-%   T_c <= T_o (理论前提, 假设 2.6)
-%   pi/(eta*T_c), pi/(sigma*eta*T_c) 为观测器时变增益 (抖振来源)
-%   ||tau|| <= tau_max (执行器约束)
+% 观测器为论文式 (eq:ptdo) 的分段结构, 其唯一的"时间"设计量就是 T_o:
+%   - T_o 越小, 性能函数 rho 收缩越快 (|rho_dot| ~ 1/T_o), 力矩需求越大;
+%   - T_o 越大, 阶段 I 的残差 e2 ~ d_dot*s_min 与积分误差累积越久,
+%     进带前留给 PDF 的"干净"时间越少 (总预设时间 T_o+2h 也随之增大);
+%   - (C4) 的 kappa1,kappa2 只由 L_i 决定, 与 T_o 无关。
 %
-% 对每个 T_c/T_o 比值, 分别运行
+% 对每个 T_o, 分别运行
 %   (A) PPC + PTDO + PDF  (本文)
 %   (B) PD  + PTDO + PDF  (消融, 阶段 I 仅用基准反馈)
-% 并记录: 观测器峰值 ||eps_2||_inf, 阶段 I 饱和占空比, 稳态残差 sup||z||_inf,
-%         终端误差 |e(T_f)|, 包络违反时长 M1a/M1b, 进带深度 M2.
+% 并记录: 阶段 I 残差峰值 sup|w|, 阶段 I 饱和占空比, 稳态残差 sup||z||_inf,
+%         终端误差 |e(T_f)|, 包络违反时长 M1a/M1b, 进带深度 M2, PDF 越界比 M4.
 %
-% 输出: 终端表格 + figures/ppc_tc_sweep.png + results_ppc_tc_sweep.mat
-% 运行: matlab -batch "main_ppc_tc_sweep"   (约 2 min)
+% 输出: 终端表格 + figures/ppc_to_sweep.png + results_ppc_to_sweep.mat
+% 运行: matlab -batch "main_ppc_to_sweep"   (约 2 min)
 % =========================================================================
 clear; clc; close all;
 
@@ -23,17 +25,12 @@ addpath(script_dir);
 %% ---------------- 1. 与主验证脚本一致的设置 ----------------
 cfg.Ts   = 2e-3;   cfg.Tf = 20.0;   cfg.Tref = 8.0;   cfg.n = 7;
 cfg.To   = 5.0;    cfg.h  = 1.0;
-% ---- 性能包络设计 (两套, 由 cfg.env 选择) ----
-cfg.env      = 'feasible';    % 'tight' : rho0 = 2|e0|, rho_inf = 1e-3 (与第 5.4 节一致)
-                           % 'feasible': rho0 = 6e-2, rho_inf = 5e-3 (与观测器瞬态相容)
-cfg.rho_inf  = 5e-3;
-cfg.margin   = 1.0;
-cfg.rho0_min = 6e-2;
-cfg.eta  = 0.3;    cfg.sigma = 0.4;
+% 包络取与观测器瞬态相容的宽包络 (第 5.6 节): rho0 = 2|e0|, rho_inf = 2e-3
+cfg.rho_inf  = 2e-3;
 cfg.save_figures = true;
 cfg.t = 0:cfg.Ts:cfg.Tf;   cfg.N = numel(cfg.t);
 cfg.figure_dir  = fullfile(script_dir, '..', 'figures');
-cfg.result_file = fullfile(script_dir, sprintf('results_ppc_tc_sweep_%s.mat', cfg.env));
+cfg.result_file = fullfile(script_dir, 'results_ppc_to_sweep.mat');
 if cfg.save_figures && ~exist(cfg.figure_dir, 'dir'), mkdir(cfg.figure_dir); end
 set(0, 'DefaultFigureVisible', 'off');
 
@@ -55,52 +52,56 @@ Kd = diag([12, 12, 12, 10, 10,  9, 4]);
 ctrl.K0  = [-Kp, -Kd];
 ctrl.h   = cfg.h;
 ctrl.pdf = build_pdf_gain(ctrl.K0, n, ctrl.h);
-pp = ppc_settings(cfg.To, e0, struct('rho_inf', cfg.rho_inf, 'm', 5, 'k1', 0.5, 'k2', 1.0, ...
-                                     'margin', cfg.margin, 'rho0_min', cfg.rho0_min));
 
-fprintf('==================== T_c 扫描 ====================\n');
-fprintf('T_o = %.1f s, h = %.1f s, tau_max = %.0f Nm, 包络方案 = %s (rho0=max(%.0e|e0|,%.0e), rho_inf=%.0e)\n', ...
-    cfg.To, cfg.h, P.tau_max(1), cfg.env, cfg.margin, cfg.rho0_min, cfg.rho_inf);
+% 观测器增益 (由 (C3)(C4) 离线确定, 与 T_o 无关)
+[~, ddot_ref] = dou_yue_259_disturbance(cfg.t, n);
+L_i = max(abs(ddot_ref), [], 2);
+kappa2 = 2*L_i;  kappa1 = 4*sqrt(L_i);
+
+fprintf('==================== T_o 扫描 ====================\n');
+fprintf('h = %.1f s, tau_max = %.0f Nm, rho_inf = %.0e, rho0 = 2|e0|\n', ...
+    cfg.h, P.tau_max(1), cfg.rho_inf);
 an = pdf_periodian(ctrl.pdf, 1e-3, 41);
 fprintf('(离线判据不变: ||Delta_K(h)|| = %.2e, Gamma_h = %.3f, M_h^ap = %.2f)\n\n', ...
     an.deltaK, an.Gamma, an.M_h);
 
 %% ---------------- 2. 扫描 ----------------
-ratios = [0.2 0.3 0.45 0.6 0.8 1.0 1.5 2.0 3.0 5.0];
+To_list = [1.0 1.5 2.0 3.0 4.0 5.0 6.0 8.0];
 kinds  = {'ppc', 'pd'};
 kname  = {'PPC+PTDO+PDF', 'PD+PTDO+PDF '};
-nr = numel(ratios);  nk = numel(kinds);
+nr = numel(To_list);  nk = numel(kinds);
 RES = cell(nk, nr);
 
-fprintf('%-6s %-13s %10s %8s %8s %10s %10s %8s %8s %8s\n', ...
-    'Tc/To', '控制器', 'peak|e2|', 'sat1%', 'sat%', 'ss||z||inf', '|e(Tf)|', 'M1a', 'M1b', 'M2');
-fprintf('%s\n', repmat('-', 1, 104));
+fprintf('%-6s %-12s %10s %8s %8s %10s %10s %8s %8s %8s\n', ...
+    'To', '控制器', 'peak|w|', 'sat1%', 'sat%', 'ss||z||inf', '|e(Tf)|', 'M1a', 'M2', 'M4');
+fprintf('%s\n', repmat('-', 1, 108));
 for ki = 1:nk
     for ri = 1:nr
-        r  = ratios(ri);
-        oprm = struct('T_o', cfg.To, 'T_c', r*cfg.To, 'eta', cfg.eta, ...
-                      'sigma', cfg.sigma, 'xi0', zeros(n, 1));
-        cs = struct('name', sprintf('%s, Tc/To=%.2f', kname{ki}, r), ...
+        To = To_list(ri);
+        cfgi = cfg;  cfgi.To = To;
+        pp = ppc_settings(To, e0, struct('rho_inf', cfg.rho_inf, 'm', 5, 'k1', 0.5, 'k2', 1.0));
+        oprm = struct('To', To, 'kappa1', kappa1, 'kappa2', kappa2, 'nsub2', 5);
+        cs = struct('name', sprintf('%s, To=%.1f', kname{ki}, To), ...
                     'kind', kinds{ki}, 'dist', true, 'rho_inf', cfg.rho_inf);
-        x = sim_ppc_case(cfg, P, ctrl, ref, cs, pp, oprm);
+        x = sim_ppc_case(cfgi, P, ctrl, ref, cs, pp, oprm);
         th = ppc_theory(pp, e0, de0, x.m.w_bar);
         x.th = th;
-        x.met = sim_metrics(x, th, pp, an, cfg);
+        x.met = sim_metrics(x, th, pp, an, cfgi);
         RES{ki, ri} = x;
-        fprintf('%-6.2f %-13s %10.3e %8.2f %8.2f %10.3e %10.3e %8.3f %8.3f %8.4f\n', ...
-            r, kname{ki}, x.m.w_bar, 100*x.m.sat_ratio_p1, 100*x.m.sat_ratio, ...
-            x.met.ss_sup, x.m.e_end, x.met.viol_time_p1, x.met.viol_time_p2, x.met.band_ratio);
+        fprintf('%-6.1f %-12s %10.3e %8.2f %8.2f %10.3e %10.3e %8.3f %8.3f %8.3f\n', ...
+            To, kname{ki}, x.m.w_bar, 100*x.m.sat_ratio_p1, 100*x.m.sat_ratio, ...
+            x.met.ss_sup, x.m.e_end, x.met.viol_time_p1, x.met.band_ratio, x.met.stage2_ratio);
     end
 end
 
-save(cfg.result_file, 'cfg', 'P', 'ctrl', 'pp', 'an', 'ratios', 'kinds', 'kname', 'RES', 'ref', 'e0');
+save(cfg.result_file, 'cfg', 'P', 'ctrl', 'an', 'To_list', 'kinds', 'kname', 'RES', ...
+     'ref', 'e0', 'L_i', 'kappa1', 'kappa2');
 fprintf('\n结果已保存: %s\n', cfg.result_file);
 
 %% ---------------- 3. 绘图 ----------------
 if cfg.save_figures
-    f = fullfile(cfg.figure_dir, sprintf('ppc_tc_sweep_%s.png', cfg.env));
-    plot_sweep(cfg, RES, ratios, kname, f);
-    fprintf('图已保存: %s\n', f);
+    f = fullfile(cfg.figure_dir, 'ppc_to_sweep.pdf');
+    plot_sweep(cfg, RES, To_list, kname, f);
 end
 
 %% ========================================================================
@@ -108,7 +109,8 @@ function plot_sweep(cfg, RES, ratios, kname, fname)
     nk = size(RES, 1);  nr = numel(ratios);
     cols = [0.85 0.33 0.10; 0.00 0.45 0.74];      % PPC / PD
     sat1 = zeros(nk, nr);  sat = zeros(nk, nr);  peak = zeros(nk, nr);
-    ss   = zeros(nk, nr);  ein = zeros(nk, nr);  m1a = zeros(nk, nr);  m2 = zeros(nk, nr);
+    ss   = zeros(nk, nr);  ein = zeros(nk, nr);  m1a = zeros(nk, nr);
+    m2   = zeros(nk, nr);  m4  = zeros(nk, nr);
     for ki = 1:nk
         for ri = 1:nr
             x = RES{ki, ri};
@@ -119,6 +121,7 @@ function plot_sweep(cfg, RES, ratios, kname, fname)
             ein(ki,ri)  = x.m.e_end;
             m1a(ki,ri)  = x.met.viol_time_p1;
             m2(ki,ri)   = x.met.band_ratio;
+            m4(ki,ri)   = x.met.stage2_ratio;
         end
     end
 
@@ -126,42 +129,40 @@ function plot_sweep(cfg, RES, ratios, kname, fname)
     set(fig, 'DefaultAxesFontSize', 10, 'DefaultTextFontSize', 10);
     tl = tiledlayout(fig, 3, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
 
-    % ---- (a) 观测器峰值 + 阶段 I 饱和 ----
+    % ---- (a) 阶段 I 残差 + 饱和 ----
     ax1 = nexttile(tl); hold on; grid on;
     yyaxis(ax1, 'left');
     for ki = 1:nk
         semilogy(ax1, ratios, peak(ki,:), 'o-', 'Color', cols(ki,:), 'LineWidth', 1.4, ...
             'MarkerFaceColor', cols(ki,:), 'MarkerSize', 5);
     end
-    set(ax1, 'YScale', 'log'); ylabel(ax1, '||\epsilon_2||_\infty 峰值 [rad/s^2]');
+    set(ax1, 'YScale', 'log'); ylabel(ax1, 'sup||w||_\infty  [rad/s^2]');
     yyaxis(ax1, 'right');
     for ki = 1:nk
         plot(ax1, ratios, sat1(ki,:), 's--', 'Color', cols(ki,:), 'LineWidth', 1.1, 'MarkerSize', 5);
     end
     ylabel(ax1, '阶段 I 饱和占空比 [%]');
-    xlabel('T_c / T_o');
-    title(sprintf('(a) 观测器峰值与阶段 I 饱和（T_o = %.1f s；竖虚线右側 T_c > T_o 破坏假设 2.6）', cfg.To));
-    xline(ax1, 1.0, 'k--', 'LineWidth', 1.2);
+    xlabel('T_o [s]');
+    title(sprintf('(a) 阶段 I 观测残差峰值与饱和（h = %.1f s）', cfg.h));
     legend(ax1, {sprintf('%s: 峰值', kname{1}), sprintf('%s: 峰值', kname{2}), ...
                  sprintf('%s: 饱和', kname{1}), sprintf('%s: 饱和', kname{2})}, ...
            'Location', 'east', 'FontSize', 8);
 
     % ---- (b) 稳态残差与终端误差 ----
-    ax2 = nexttile(tl); hold on; grid on;
+    ax2 = nexttile(tl); hold on; grid on; box on;
     for ki = 1:nk
         semilogy(ax2, ratios, ss(ki,:), 'o-', 'Color', cols(ki,:), 'LineWidth', 1.4, ...
             'MarkerFaceColor', cols(ki,:), 'MarkerSize', 5);
         semilogy(ax2, ratios, ein(ki,:), 'd--', 'Color', cols(ki,:), 'LineWidth', 1.0, 'MarkerSize', 5);
     end
     set(ax2, 'YScale', 'log');
-    xlabel('T_c / T_o'); ylabel('||e|| [rad]');
+    xlabel('T_o [s]'); ylabel('||e|| [rad]');
     title('(b) 稳态残差 sup||z||_\infty（实线）与终端误差 |e(T_f)|（虚线）');
-    xline(ax2, 1.0, 'k--', 'LineWidth', 1.2);
     legend(ax2, {[kname{1} ' ss'], [kname{2} ' ss'], [kname{1} ' |e(T_f)|'], [kname{2} ' |e(T_f)|']}, ...
            'Location', 'east', 'FontSize', 8);
 
     % ---- (c) 包络指标 ----
-    ax3 = nexttile(tl); hold on; grid on;
+    ax3 = nexttile(tl); hold on;
     yyaxis(ax3, 'left');
     plot(ax3, ratios, m1a(1,:), 'o-', 'Color', cols(1,:), 'LineWidth', 1.4, ...
         'MarkerFaceColor', cols(1,:), 'MarkerSize', 5);
@@ -169,22 +170,19 @@ function plot_sweep(cfg, RES, ratios, kname, fname)
     ylabel(ax3, 'M1a 包络违反时长 [s\cdotjoint]');
     yyaxis(ax3, 'right');
     semilogy(ax3, ratios, m2(1,:), 'd-', 'Color', [0.2 0.6 0.2], 'LineWidth', 1.2, 'MarkerSize', 6);
-    set(ax3, 'YScale', 'log'); ylabel(ax3, 'M2 进带深度 / \rho_\infty');
-    xlabel('T_c / T_o');
-    title('(c) 阶段 I 包络违反时长（左）与进带深度（右，PPC）');
-    xline(ax3, 1.0, 'k--', 'LineWidth', 1.2);
-    legend(ax3, {[kname{1} ' M1a'], [kname{2} ' M1a'], 'M2（PPC）'}, ...
+    semilogy(ax3, ratios, m4(1,:), '^-', 'Color', [0.5 0.2 0.6], 'LineWidth', 1.1, 'MarkerSize', 5);
+    set(ax3, 'YScale', 'log'); ylabel(ax3, 'M2 / M4（相对 \rho_\infty）');
+    xlabel('T_o [s]');
+    title('(c) 阶段 I 包络违反时长（左）与进带深度 M2 / PDF 越界比 M4（右）');
+    yyaxis(ax3, 'left'); ylim([0, 12]);
+    legend(ax3, {[kname{1} ' M1a'], [kname{2} ' M1a'], 'M2（PPC）', 'M4（PPC）'}, ...
            'Location', 'east', 'FontSize', 8);
 
-    % 横轴取对数, 使 0.2--1 的敏感区可辨
     for ax = [ax1 ax2 ax3]
-        set(ax, 'XScale', 'log');
         set(ax, 'XTick', ratios);
-        set(ax, 'XTickLabel', arrayfun(@(v) sprintf('%.2g', v), ratios, 'UniformOutput', false));
-        xlim(ax, [min(ratios)*0.85, max(ratios)*1.2]);
+        xlim(ax, [min(ratios)*0.9, max(ratios)*1.1]);
     end
-
-    saveas(fig, fname);
+    export_pdf(fig, fname);
 end
 
 % ------------------------------------------------------------------------

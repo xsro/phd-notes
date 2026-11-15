@@ -24,13 +24,17 @@
 | `ffsm259_model.m` | 7-DOF 浮基机械臂动力学：DH 正解 + 质心雅可比求和惯性 + Schur 补 + 科里奥利 + 广义雅可比 |
 | `fonsm259_init.m` / `fonsm259_step.m` | FONTSM / FOSM 控制器（滑模面 Eq 15、77；观测器与补偿器接口） |
 | `ftdob_step.m` | 有限时间扰动观测器 **Eq (35)(36)** |
-| `ptdo_step.m` | 本文的预设时间扰动观测器 **PTDO（论文 Eq 19-22）** |
+| `ptdo_step.m` | 本文的分段预设时间动量观测器（论文式 **(eq:ptdo)**）：阶段 I 奇异增益、阶段 II 超螺旋，输入 `y=M_e*dq`、`u_p=tau-C_e*dq+Mdot_e*dq`，输出 `d_hat=z2`（力矩单位） |
+| `ppc_settings.m` / `perf_rho.m` / `ppc_step.m` / `ppc_theory.m` | 漏斗型 PPC：性能函数 (eq:rho)、式 (eq:nu_ppc) 与定理 (eq:V_c) 的理论贴合系数 |
+| `sim_ppc_case.m` / `sim_metrics.m` | 三段时序仿真内核与验收指标 M1–M6（供验证脚本与扫描脚本共用） |
+| `main_ppc_pdf_verify.m` | **论文第 5 节主验证脚本**（4 个算例、表 4 与图 4–7） |
+| `main_ppc_to_sweep.m` | **$T_o$ 扫描**（16 次运行，表 5 与图 8） |
+| `make_base_motion_figure.m` | 由 `results_ppc_pdf.mat` 重建两张独立子图（图 3a：惯性系构型；图 3b：基座位置），各导出 PDF |
 | `main_dou_yue_259_compare.m` | **主对比脚本**（12 个算例 × 2 种增益标定） |
 | `make_paper_figures.m` | **生成论文第 6 节图 1-3** 并打印表 2 全部数值 |
 | `validate_ffsm259_model.m` | 模型校核（对称性、正定性、Robotics Toolbox 对比、性质 2） |
 | `dou_yue_259_check_consistency.m` | Table 1 内部一致性核查 |
 | `calib_kappa.m` | 增益标定系数 κ 的扫描（见 §5.3） |
-| `tune_ptdo.m` | PTDO 参数 (T_c, eta, sigma) 扫描（见 §5.6） |
 | `build_pdf_gain.m` / `pdf_gain_at.m` | Gramian 型 PDF 增益离线构造与在线查表 |
 
 ### 1.2 已删除的旧文件（基于严宇新表 2-1）
@@ -75,7 +79,9 @@ matlab -batch "main_dou_yue_259_compare"
 matlab -batch "validate_ffsm259_model"        # 动力学/运动学校核
 matlab -batch "dou_yue_259_check_consistency" # Table 1 一致性核查
 matlab -batch "calib_kappa"                   # 增益标定扫描（约 2 min）
-matlab -batch "tune_ptdo"                     # PTDO 参数扫描（约 3 min）
+matlab -batch "main_ppc_pdf_verify"           # 论文第 5 节主验证（约 40 s）
+matlab -batch "main_ppc_to_sweep"             # T_o 扫描（约 2 min）
+matlab -batch "make_base_motion_figure"       # 惯性系基座/构型图（约 20 s，读 results_ppc_pdf.mat）
 ```
 
 ### 2.3b 生成论文图片（约 1 min）
@@ -84,7 +90,7 @@ matlab -batch "tune_ptdo"                     # PTDO 参数扫描（约 3 min）
 matlab -batch "make_paper_figures"
 ```
 
-按论文版心宽（6.3 in）、300 dpi 导出三张图，并打印表 2 所需的全部指标：
+（注：论文第 5 节的插图统一由 `export_pdf.m` 导出为**矢量 PDF**；本节 `make_paper_figures.m` 仍按 PNG 导出，用于早期对比图的复现。）
 
 - `../figures/end_effector_joint_position_trajectory.png`（论文图 1）
 - `../figures/joint_tracking_error_torque_summary.png`（论文图 2）
@@ -341,25 +347,30 @@ DH 行 右移一位                     : [0.22 0.20 1.224 1.22 0.20 0.30]   ←
 的局部函数（该脚本已删除，见 §1.2），现为独立文件，默认 `n_grid = 4001`，
 `W_c` 条件数 `cond(W_c) = 4.9e11`。
 
-### 5.6 PTDO 参数整定
+### 5.6 分段观测器的参数整定
 
-本工程方法的预设时间扰动观测器（`ptdo_step.m`，论文 Eq (19)-(22)）参数：
-`T_o = 1 s`、`η = 0.3`、`σ = 0.4`，内部时间常数 `T_c` 需与被控对象的时间尺度匹配。
-`tune_ptdo.m` 的扫描结果（PDF+PTDO，其余设置同主脚本）：
+`ptdo_step.m` 按论文式 (eq:ptdo) 实现，没有旧版的内部时间常数 `T_c`：
+阶段 I 的收敛时刻就是 `T_o`，阶段 II 的增益只由扰动导数上界 `L_i` 决定
+（`kappa2 = 2 L_i`、`kappa1 = 4 sqrt(L_i)`，`L_i` 由 Eq (74) 的解析导数取上界）。
+采样实现另有两个参数（见 `ptdo_step.m` 头注释）：
 
-| `T_c` | `η` | `σ` | \|e(T)\| [rad] | 饱和率 | 观测误差 RMS |
-|---|---|---|---|---|
-| 1.0 | 0.3 | 0.4 | 5.98e−05 | 17.0 % | 1.81e−02 |
-| 3.0 | 0.3 | 0.4 | 9.48e−06 | 8.7 % | 7.1e−03 |
-| 5.0 | 0.3 | 0.4 | **3.96e−06** | 7.2 % | 4.7e−03 |
-| 3.0 | 0.1 | 0.4 | 3.43e−04 | 52.0 % | 4.8e−02 |
-| 5.0 | 0.5 | 0.8 | 1.74e−06 | 6.9 % | 2.9e−03 |
+- `s_min`（默认 0.02 s）：阶段 I 奇异增益在 `T_o-t < s_min` 处冻结，避免
+  步内 `y` 预测误差被 `1/(T_o-t)` 放大；
+- `nsub2`（默认 5）：阶段 II 每个采样步内的子步数，用于压低 `sgn` 的离散切换误差。
 
-⇒ 主脚本取 `T_c = 5 s`；`T_c = 1 s` 作为"未整定"对照保留在算例表中。
+`main_ppc_to_sweep.m` 给出了 `T_o` 的扫描（`rho_inf = 2e-3`，PPC 与纯 PD 对照）：
+`T_o = 1 s` 时阶段 I 饱和 53%、闭环失效；`T_o >= 2 s` 后稳态残差稳定在
+`4.4–5.0e-5`（`O(Ts)` 离散地板，与 `T_o` 无关），阶段 I 饱和占空比随 `T_o`
+单调下降（53% → 1.1%）。详见论文第 5.6 节。
 
 ---
 
 ## 6. 结果
+
+> 说明：本节表格来自 `results_dou_yue_259.mat`（由 `main_dou_yue_259_compare`
+> 在**旧版观测器**下生成）。`main_dou_yue_259_compare.m` 已更新为论文式
+> (eq:ptdo) 的分段观测器，重新运行即可刷新下列数值；论文第 5 节的主结果
+> 不依赖本节，而由 `main_ppc_pdf_verify.m` / `main_ppc_to_sweep.m` 生成。
 
 运行 `main_dou_yue_259_compare`（Ts = 2 ms，Tf = 20 s，Tref = 8 s，
 初始误差 0.5°，扰动 Eq (74)，τmax = 20 Nm）。
@@ -402,10 +413,9 @@ FONTSM 各变体全程饱和（100 %）并发散：`|e(T)|` 分别为 9.83、4.3
 3. **有扰动**：无观测器时 PD/PDF 残留 ~5e−02 rad。加上本文 PTDO（`T_c=5 s`）
    后达到 **3.96e−06 rad / 4.81e−06 rad（稳态）**，饱和率 7.2 %、`t_s=3.50 s`；
    加上 259 的 FTDOB 为 1.24e−04 rad。两者都优于 FONTSM 族（1.3e−03 ~ 2.0e−03）。
-4. **PTDO 参数敏感性**：`T_c=1 s` 时观测器增益 `π/(ηT_c)`、`π/(σηT_c)` 过大，
-   在 2 ms 步长下抖振明显（饱和率 17 %、`t_s=8.0 s`、终端 5.98e−05 rad）；
-   观测误差（t≥2 s）的 RMS 从 `T_c=1` 时的 1.8e−02 降到 `T_c=5` 时的 4.8e−03。
-   见 §5.6 / `tune_ptdo.m`。
+4. **观测器参数**：上表的 `T_c` 是旧版（`T_c, η, σ`）实现的整定参数；
+   现行 `ptdo_step.m` 已改为论文式 (eq:ptdo) 的分段结构，参数只有 `T_o`
+   与由 `L_i` 决定的 `(κ1, κ2)`，其整定见 §5.6 / `main_ppc_to_sweep.m`。
 5. **FONTSM vs FOSM**：同等条件下 FONTSM 稳态误差 1.20e−02，FOSM 3.39e−02，
    约 2.8 倍，与原文"非线性项加速收敛、提高精度"的结论方向一致。
 6. **三种补偿器**：本工况饱和占空比仅 ~4.6 %，FTASC 与无补偿结果几乎相同；

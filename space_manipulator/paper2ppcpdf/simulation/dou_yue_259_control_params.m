@@ -63,18 +63,16 @@ function C = dou_yue_259_control_params()
     C.fosm.xi = C.fonsm.xi;
     C.fosm.b  = C.fonsm.b;
 
-    % ---- 本工程方法：预设时间扰动观测器 PTDO (论文 Eq (19)-(22)) ----
-    % 用于在文献 259 的被控对象上验证本文第 4 节的 PTDO / PDF 结构
-    % T_c 需与被控对象的时间尺度匹配: T_c = 1 s 时观测器增益 pi/(eta*T_c)
-    % 与 pi/(sigma*eta*T_c) 过大, 在 Ts = 2 ms 离散下产生高频抖振
-    % (见 tune_ptdo.m); 整定后取 T_c = 5 s。
-    C.ptdo.T_o   = 1.0;      % 预设观测时间 [s]
-    C.ptdo.T_c   = 5.0;      % 观测器内部收敛时间常数 [s]（整定值）
-    C.ptdo.eta   = 0.3;      % eta in (0,1)
-    C.ptdo.sigma = 0.4;      % 边界层参数 sigma > 0
-    C.ptdo.xi0   = zeros(n, 1);
+    % ---- 本工程方法：分段预设时间动量观测器 (论文式 (eq:ptdo)) ----
+    % 阶段 I: 奇异增益 6/(T_o-t), 6/(T_o-t)^2 (压缩时间精确离散);
+    % 阶段 II: 超螺旋. 增益只由扰动导数上界 L_i 决定 (论文 (C4)):
+    %   kappa2 = 2 L_i,  kappa1 = 4 sqrt(L_i).
+    % 与旧版 (T_c, eta, sigma) 实现不同, 这里估计的是力矩扰动 d 本身。
+    tL = 0:0.01:20;
+    [~, ddot] = dou_yue_259_disturbance(tL, n);
+    L_i = max(abs(ddot), [], 2);
+    C.ptdo = struct('To', 5.0, 'kappa1', 4*sqrt(L_i), 'kappa2', 2*L_i, 'nsub2', 5);
 
-    % 未整定对照 (原设定 T_c = 1 s)
-    C.ptdo_tc1 = C.ptdo;
-    C.ptdo_tc1.T_c = 1.0;
+    % 增益偏大对照 (kappa x 5): 用于展示 sgn 离散切换的抖振代价
+    C.ptdo_hi = struct('To', 5.0, 'kappa1', 20*sqrt(L_i), 'kappa2', 10*L_i, 'nsub2', 5);
 end

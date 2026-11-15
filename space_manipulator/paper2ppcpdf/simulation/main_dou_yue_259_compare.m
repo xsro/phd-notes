@@ -103,7 +103,7 @@ cases(end+1) = mk("PDF, 无扰动",               'pdf',    false, 'none',  fals
 cases(end+1) = mk("PD, 有扰动",                'pd',     false, 'none',  true,  false);
 cases(end+1) = mk("PDF, 有扰动",               'pdf',    false, 'none',  true,  false);
 cases(end+1) = mk("PDF+PTDO[本文], 有扰动",    'pdfptdo',false, 'none',  true,  false);
-cases(end+1) = mk("PDF+PTDO(T_c=1), 有扰动",   'pdfptdo1',false,'none',  true,  false);
+cases(end+1) = mk("PDF+PTDO(κ×5), 有扰动",     'pdfptdo1',false,'none',  true,  false);
 cases(end+1) = mk("PDF+FTDOB[259], 有扰动",    'pdfdob', true,  'none',  true,  false);
 cases(end+1) = mk("FONTSM+FTDOB, 无补偿",      'fonsm',  true,  'none',  true,  false);
 cases(end+1) = mk("FONTSM+FTDOB+FTAC[29]",     'fonsm',  true,  'ftac',  true,  false);
@@ -220,6 +220,7 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
         else
             Sa = ffsm259_model(P, q, dq);
             Ma = Sa.Me;  Caqd = Sa.Ce_qd;   Mn = Ma;  Cn = Sa.Cmat;
+            Sn = Sa;
             pe = Sa.pe;
         end
 
@@ -238,15 +239,13 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
                 tau_cmd = Cn*dq + Mn*(ref.ddqd(:,k) + nu);
 
             case {'pdfptdo','pdfptdo1'}
-                % 本文方法: PDF + 预设时间扰动观测器 (Eq 19-22)
-                if strcmp(cs.kind, 'pdfptdo1'), oprm = CP.ptdo_tc1; else, oprm = CP.ptdo; end
+                % 本文方法: PDF + 分段预设时间动量观测器 (论文式 (eq:ptdo))
                 z = [q - ref.qd(:,k); dq - ref.dqd(:,k)];
                 z_hist = [z, z_hist(:,1:end-1)];
                 nu = ctrl.K0*z - pdf_gain_at(ctrl.pdf, tk)*z_hist(:,end);
-                u_o = Mn \ (tau_act_prev - Cn*dq);
-                [ost, da_hat] = ptdo_step(ost, dq, u_o, tk, Ts, oprm);
-                tau_cmd = Cn*dq + Mn*(ref.ddqd(:,k) + nu - da_hat);
-                DAH(:,k) = da_hat;
+                d_hat = ost.z2;                 % 已推进到 t_k 的估计 (力矩单位)
+                tau_cmd = Cn*dq + Mn*(ref.ddqd(:,k) + nu) - d_hat;
+                DAH(:,k) = d_hat;
 
             case 'pdfdob'
                 z = [q - ref.qd(:,k); dq - ref.dqd(:,k)];
@@ -266,6 +265,14 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
         tau_act = min(max(tau_cmd, P.tau_min), P.tau_max);
         SAT(k)  = any(abs(tau_cmd) > P.tau_max);
 
+        % ---------- 观测器: 由 t_k 推进到 t_k+Ts (论文式 (eq:ptdo)) ----------
+        if any(strcmp(cs.kind, {'pdfptdo','pdfptdo1'}))
+            if strcmp(cs.kind, 'pdfptdo1'), oprm = CP.ptdo_hi; else, oprm = CP.ptdo; end
+            y   = Mn*dq;                          % 动量通道
+            u_s = -Sn.Ce_qd + Sn.Mdot_qd;         % u_p - tau (名义模型)
+            ost = ptdo_step(ost, y, tau_act, u_s, tk, Ts, oprm);
+        end
+
         % ---------- 扰动 (Eq 74) ----------
         if cs.dist
             d = dou_yue_259_disturbance(tk, n);
@@ -273,7 +280,7 @@ function r = run_one(cfg, P, CP, ctrl, ref, cs, kappa)
             d = zeros(n, 1);
         end
         DST(:,k) = d;
-        DDA(:,k) = Ma \ d;
+        DDA(:,k) = d;
 
         % ---------- 记录 + 半隐式积分 ----------
         TAU(:,k) = tau_act;

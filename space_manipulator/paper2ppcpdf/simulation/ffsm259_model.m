@@ -20,6 +20,8 @@ function out = ffsm259_model(P, q, dq)
 %   Hb,Hbm,Hm            分块
 %   Me       [n x n] 等效关节空间惯性 (Schur 补, 原文 Eq (8))
 %   Ce_qd    [n x 1] 等效科里奥利项 C_theta_m*dq
+%   Mdot_qd  [n x 1] 惯性矩阵的实质导数 Mdot_e(q,dq)*dq (动量通道 u_p 需要)
+%   Cmat     [n x n] 等效科里奥利矩阵 C_theta_m
 %   pe       [3 x 1] 末端位置 (基座标系)
 %   J        广义雅可比 [3 x n] (原文 Eq (4), 仅位置行)
 %   T        1 x (n+1) 元胞, 各体系相对基座系的齐次变换
@@ -116,17 +118,19 @@ function out = ffsm259_model(P, q, dq)
     %   C_ij = 0.5 * sum_k ( dM_ij,k + dM_ik,j - dM_jk,i ) * dq_k
     % dM 用中心差分逐列求取, 与全模型共享同一 Me 求值函数。
     if nargin >= 3 && ~isempty(dq)
-        [Cmat, Ce_qd] = reduced_coriolis(P, q, dq);
+        [Cmat, Ce_qd, Mdot_qd] = reduced_coriolis(P, q, dq);
         out.Cmat  = Cmat;
         out.Ce_qd = Ce_qd;
+        out.Mdot_qd = Mdot_qd;
     else
         out.Cmat  = [];
         out.Ce_qd = [];
+        out.Mdot_qd = [];
     end
 end
 
 % ------------------------------------------------------------------------
-function [C, c] = reduced_coriolis(P, q, dq)
+function [C, c, Mdot_qd] = reduced_coriolis(P, q, dq)
     n = P.n;
     h = 1e-6;
     dM = zeros(n, n, n);
@@ -145,6 +149,7 @@ function [C, c] = reduced_coriolis(P, q, dq)
     end
     C = 0.5*(Mdot + v - v.');        % C(i,j) = 0.5*(Mdot_ij + v_j(i) - v_i(j))
     c = C*dq;
+    Mdot_qd = Mdot*dq;               % d/dt(M_e)*dq, 动量通道 u_p 的第三项
 end
 
 % ------------------------------------------------------------------------
