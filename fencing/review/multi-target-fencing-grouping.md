@@ -15,6 +15,8 @@ params:
 - **[D]** *Multi-robot systems: Coordinated fencing control and applications*（专著），OKB `id=1976`
 - 本目录 `chen2019/`：单目标 fencing 的 singleton（共线退化）问题
 
+> OKB 中其余可用的分组/分簇编队文献见 **§7**（按机制分了五类，并给出与 [A]/[B] 的关系）。
+
 ---
 
 ## 0. 结论先行
@@ -429,3 +431,268 @@ $$
 - 避碰 CBF：$\phi^c_{i,j}=\frac{1}{\|x_i-x_j\|-r}-\frac{1}{\rho-r}$
 - 代价：$b\|\mathbf{1}_N^\top\alpha-(n+1)\mathbf{1}_M\|^2+c\sum(\delta^r)^2+c\sum(\delta^c)^2+\sum_k\alpha_{i,k}\|u_i-v_k\|^2$
 - 保证：每簇 $\ge n+1$、无无限切换、目标入包、速度一致、子群内避碰
+
+---
+
+## 7. OKB 中其他"分组 / 分簇编队"文献（补充调研）
+
+先给结论：**OKB 里没有第二篇与 [A]/[B] 完全同题的工作**，但有若干篇从不同侧面处理了"分组编队"：
+
+- 最接近的是 **7299**（cluster formation containment：按目标位置 + 优先级把 leader 分成互不重叠的簇，follower 再填入各簇凸包）和 **663**（检测到目标分离后触发子群重组）；
+- 其余可分成"分组编队控制"、"分组触发与任务分配"、"分组的图论/聚类根据"、"编队拆分/合并"、"多目标围合但不显式分组"五类。
+
+### 7.1 总览表
+
+| 类别 | ID | 年 / 期刊 | 分组机制（一句话） | 与 fencing 的关系 / 可借鉴点 |
+|---|---|---|---|---|
+| **分组编队** | 7299 | 2021, IEEE T-RO | leader 按**目标位置 + 优先级**用博弈规则分成互不重叠簇；各簇在对应目标周围成编队；follower 收敛到各簇 leader 张成的凸包 | 与 fencing 最接近：leader 围目标、follower 填凸包；分组同时用了几何与优先级 |
+| 分组编队 | 3397 | 2026, Automatica | **双层**：簇内成指定形状，簇质心之间再成指定几何图案；多簇聚合博弈 + NE 寻求 | 可约束"多个包围圈之间"的相对布局，避免包与包重叠 |
+| 分组编队 | 3078 | 2026, Automatica | 分层 cluster formation：估计层 + 局部最优控制层；预定义时间；混合零和博弈；含欺骗攻击 | 分组编队的抗攻击/预定义时间版本 |
+| 分组编队 | 2835 | 2023, IEEE T-IV | 多组时变编队跟踪（MGFTC）+ 预定义时间 + 估计器分层（NMSV） | 多组 + 时变队形 + 预设收敛时间 |
+| 分组编队 | 6228 | 2023, IEEE TCAS-II | 事件触发时变**分组编队**（TVGF），有向图、自适应、省通信 | 分组编队的通信效率版本 |
+| 分组编队 | 2885 | 2025, IEEE TIE | 组间博弈（组领导者收敛到 NE）+ 组内 follower 相对组领导者做 TVFT；UAV+UGV 实验 | 组间竞争 + 组内合作，适合对抗/多任务 |
+| 分组编队 | 1135 | 2022, IEEE TAES | clustered quadrotors 输出反馈编队跟踪（簇结构给定） | 多簇工程实现参考；不含分组算法 |
+| **触发/重构** | 663 | 2026, Aerospace Sci. Tech. | 持续监测目标 cohesion；目标分离 → 资源重分配 + 目标-子群分配；时间戳更新 + 时延补偿预测 | 与 [A] 的 S1→S2 触发几乎同构，但跨域 UAV-USV、含通信约束 |
+| 触发/重构 | 1015 | 2026, IEEE TASE | 按**通信连通性**把团队分成子群；连通子群做部分集中优化，失联机器人独立优化 | 与 [A] 的失效规则互补：按连通性而非任务分组 |
+| 触发/重构 | 4266 | 2022, IEEE TAC | agent 动态合并成 coalition/cluster；簇内协调、簇外当不确定性；tube-based MPC | "分组本身是决策变量"的严格 MPC 版本 |
+| 触发/重构 | 523 | 2012, IEEE TASE | 资源约束下的 coalition formation：在线 sequential + 离线 holistic | 分组 = 资源约束下的组队，可替换 [A] 的拍卖 |
+| 触发/重构 | 1181 | 2019, Automatica | 竞争式动态任务分配，只有赢家被激活追目标；含目标更快时的围捕策略 | 与拍卖/竞争分配直接可比 |
+| 触发/重构 | 7411 | 2025, Robotics and Autonomous Systems | 多目标 k-WTA 分配 + obstacle-aware particle model | 连续时间竞争分配，适合大规模 |
+| **分组机理** | 5693 | 2022, Automatica | 簇数 = 通信图 **almost equitable partition** 的 cell 数；同 cell 受同一 mean-field 影响 | 分组由**通信拓扑**决定，可作为分组可辨识性依据 |
+| 分组机理 | 5998 | 2022, IEEE TAC | 一般划分下有向图 cluster consensus 的充要条件（nonvicious circle condition） | 分组后组内一致性是否可达的判据 |
+| 分组机理 | 6510 | 2017, IEEE TAC | 交互簇的 H∞ group consensus，给出簇间耦合结构/强度条件 | 组间干扰抑制 |
+| 分组机理 | 4817 | 2011, IEEE TAC | agent 自行分成固定数量子群，并对每组的 "gain" 达成一致；量化感知/运动/通信受限对收敛速率的影响 | 自组织分组的收敛速率分析 |
+| 分组机理 | 7278 | 2016, IEEE T-RO | 层次聚类识别不同分辨率下空间凝聚且分离的 robot groups | 用层次聚类动态定组，替代固定簇数的 K-means |
+| **拆分/合并** | 513 | 2026, Automatica | 三角形**角刚性**编队的 merge/split：内角约束，两个子编队可合并/拆分以通过障碍 | 编队级"分组/合并"的几何操作，适合窄通道 |
+| **单包基线** | 852 | 2025, Unmanned Systems | 多移动目标 constrained fencing：观测目标中心，equal fencing（等角分布）围绕多目标凸包；输出反馈 + 自适应神经动力学优化 | 单包 + 等角，和 [C] 3116 同类；可作 [A] S1 的对比 |
+| 单包基线 | 3113 | 2026, IEEE RA-L | 与目标群凸包保持 social safety distance，同时保持平衡几何分布；unicycle 实物 | 单包 + 社会约束 |
+| 单包基线 | 284 | 2025, 中国舰船研究 | USV 编队预定义时间多目标协同包围：位置层跟踪目标位置凸组合 + 速度层滑模；RBFNN 干扰估计 | 单包 + 编队 + 预定义时间（中文） |
+| 不显式分组 | 2688 | 2020, ACC | ring-coupled unicycles：每辆车只与一个邻居交互，各自绕自己的目标指定半径，形成指定分布 | 隐式"一机一目标"，拓扑极轻（严格说不是单包） |
+| 不显式分组 | 2318 | 2023, IEEE/CAA JAS | signed graph 结构平衡产生 **bipartite clustering**，agent 从两侧包围目标 | "聚类"来自符号图，不是任务分组 |
+| 不显式分组 | 2605 | 2021, Automatica | 单 agent 绕多目标凸包的安全 convex-circumnavigation（bearing-only） | 单 agent 几何基线，凸包围合的几何基础 |
+| 不显式分组 | 7294 | 2026, IEEE T-RO | 分布式 feedback optimization 做"监控 + 包围 + 巡逻"，触发通信，ROS 2 实物 | 包围与巡逻的多目标优化，工程化程度高 |
+| 综述/专著 | 1976 | 2025, Springer | *Multi-Robot Systems: Coordinated Fencing Control and Applications* | fencing 背景与章节索引（含邻角排斥、ISS 等） |
+| 中文/学位 | 1897 | 2022, 华中科技大学博士 | USV 集群协同合围：相角排斥、ISS、输出调节；多目标/方位约束 | 单包/多目标合围的系统性中文工作 |
+| 中文/学位 | 626 | 2023, 江苏科技大学 | 多四旋翼分布式合围控制 | 中文硕士工作，可作背景 |
+| 中文/学位 | 224 | 2026, 自动化学报 | 社会化协同无人机集群目标合围：层级交互、拓扑切换/丢包、一致性目标观测器 | 受限通信下的合围 |
+
+### 7.2 逐类说明
+
+#### (1) 分组 / 分簇编队控制
+
+**[7299] 2021 T-RO — A Decentralized Cluster Formation Containment Framework for Multirobot Systems**
+
+这是除 [A]/[B] 外最值得精读的一篇。它的两层结构与 fencing 的"围 + 填"天然对应：
+
+1. **分组**：leader 机器人根据**目标的位置和优先级**，用博弈规则分配到一组**互不重叠**的簇（每个簇对应一个目标）；
+2. **组内编队**：各簇 leader 在对应目标周围形成期望编队；
+3. **组间 containment**：follower 收敛到各簇 leader 张成的凸包内。
+
+可借鉴之处：
+
+- 分组依据同时含**几何（目标位置）和优先级**，比 [A] 的纯 K-means 多了一个"目标价值/威胁度"维度；
+- leader/follower 分层：leader 负责围合形状，follower 负责填充凸包（增加包围密度/冗余），这正好对应 fencing 中"包的大小"与"包内密度"两个可分开设计的量；
+- 有实物实验（微型移动机器人），工程可信度较高。
+
+局限：簇数/分组规则是博弈规则给定，未处理目标分裂/合并、机器人失效后的在线重构；也未讨论凸包退化。
+
+**[3397] 2026 Automatica — Distributed optimal double-layer formation control for multi-cluster systems**
+
+把"分组编队"写成**双层优化**：
+
+- 内层：每个 cluster 内 agent 形成期望形状；
+- 外层：各 cluster 的**质心**再按指定几何图案排列；
+- 用多簇聚合博弈（multi-cluster aggregative game）+ 分布式 NE 寻求求解；
+- 仿真示例就是**多目标包围**。
+
+对多目标 fencing 的启发：多个包围圈不应各自为政，**圈与圈之间的相对位置**（质心图案）可以显式约束，从而避免两个包重叠或互相挤压。这正是 [A]/[B] 都没有处理的"簇间几何"。
+
+**[3078] 2026 Automatica — Hierarchical distributed optimal cluster formation control**
+
+- 估计层：每个 follower 预定义时间重构组 leader 的位置；
+- 局部最优控制层：混合零和博弈（协作 + 欺骗攻击）。
+
+价值：给出了 cluster formation 在**预定义时间 + 对抗/攻击**下的分层设计模板。如果我们的 fencing 需要考虑通信攻击或收敛时间保证，这是可直接套用的结构。
+
+**[2835] 2023 T-IV — Prescribed-Time Time-Varying Multi-Group Formation Tracking (NMSV)**
+
+- 多组（multi-group）+ 时变编队 + 预定义时间；
+- 估计器层 + 局部控制层的分层结构；
+- 组内按相对组 leader 的时变偏移定义队形。
+
+价值："多组"的组内队形可以**随时间变化**，对应 fencing 中包围圈随目标尺寸/速度变化而伸缩的需求。
+
+**[6228] 2023 TCAS-II — Distributed Adaptive Event-Triggered TVGF**
+
+- 时变分组编队（time-varying grouping formation）；
+- 事件触发 + 自适应，去掉对全局网络信息的依赖。
+
+价值：如果分组/编队更新频率高，通信是瓶颈；这篇给出了"只在必要时通信"的分组编队版本。
+
+**[2885] 2025 TIE — Adaptive Group Time-Varying Formation Tracking via Networked Game**
+
+- 组间：group leader 收敛到 intergroup game 的 Nash 均衡；
+- 组内：follower 相对 group leader 做 TVFT；
+- UAV + UGV 实验验证。
+
+价值：把"组间竞争"显式建模。若多目标 fencing 中存在目标优先级/威胁度差异，可以用组间博弈分配"谁来围哪个目标"，而不是只用距离/负载。
+
+**[1135] 2022 TAES — Clustered Quadrotors Formation Tracking**
+
+- 多簇四旋翼在无速度/角速度测量下跟踪参考轨迹并保持队形；
+- 簇结构是**给定**的，不研究如何分组。
+
+价值：作为"分组确定后，单组工程实现"的参考（输出反馈、饱和、级联控制）。
+
+#### (2) 分组触发与动态重构（多目标任务）
+
+**[663] 2026 Aerospace Science and Technology — Cross-domain UAV-USV multi-target tracking**
+
+与 [A] 的相似度最高：
+
+- 持续监测 target cohesion（目标聚集程度）；
+- 目标**分离**时触发动态响应：**(1) 资源重分配 + (2) 目标-子群分配**；
+- 每个子群跟踪一个特定目标；
+- 时间戳更新协议 + 时延补偿预测，处理受限通信下的过期信息；
+- 还包括 UAV 返航、USV 接力、待机 UAV 接管等全任务周期管理。
+
+与 [A] 的差异：跨域异构（UAV 感知 + USV 续航）、强调通信时延与能量；分组触发用 cohesion 而不是 [A] 的"速度方向角 + 间距"双阈值。可以把它作为 [A] 的"通信受限版本"对照。
+
+**[1015] 2026 TASE — Failure-Aware Multi-Robot Coordination**
+
+- 把 failure 分成**临时**（感知/通信间歇丢失）与**永久**（不可逆失联）；
+- 永久失联时按**通信连通性**把团队分成子群：连通子群做部分集中优化，失联机器人独立优化；
+- 目标仍是 resilient target tracking。
+
+价值：与 [A] 的"按任务/数量"分组互补——当通信被打断时，**分组的第一约束是连通性而不是目标数**。多目标 fencing 若在通信受限环境，需要同时考虑这两种分组依据。
+
+**[4266] 2022 TAC — Coalitional Clustering MPC**
+
+- agent 动态 merge 成 coalition/cluster；
+- 簇内协调输入最大化集体性能，簇外耦合当不确定性；
+- tube-based MPC 保证可行性/稳定性，即使 clustering 变化。
+
+价值：这是"分组数量与成员**本身就是决策变量**"的严格版本，和 [B] 的 $\alpha$ 优化思想相近，但用 MPC/tube 而非 CBF；可作为 [B] 在"约束/鲁棒性"方向的对照。
+
+**[523] 2012 TASE — Coalition-Based Task Allocation with Resource Constraints**
+
+- 机器人因资源限制必须组队（coalition）；
+- 在线：sequential coalition；离线：holistic 全局优化。
+
+价值：如果 UAV 有能量/载荷约束，"每簇至少 $n+1$ 架"不够，还要满足资源可行性；coalition 形成是比拍卖更一般的分配框架。
+
+**[1181] 2019 Automatica — Dynamic task allocation for moving target tracking**
+
+- 竞争式分配：只有 competition 的 winner 被激活去追目标；
+- 分布式协调模型 + 稳定性证明；
+- 目标速度高于追踪者时的"besieging"策略。
+
+价值：与 [A] 的拍卖、[B] 的 $\alpha$ 并列的第三种分配机制（winner-take-all 式），适合"目标数 > 可用机器人"的稀疏场景。
+
+**[7411] 2025 RAS — k-WTA multi-target pursuit and encirclement**
+
+- 多目标 k-winners-take-all（MK-WTA）做任务分配；
+- obstacle-aware particle model 做避障；
+- 仿真 + 差速轮实物。
+
+价值：k-WTA 是连续时间、可并行实现的竞争分配，规模大时比拍卖更合适；但它是" pursuit/encirclement"而非严格的 convex hull fencing。
+
+#### (3) 分组形成的图论 / 聚类根据
+
+**[5693] 2022 Automatica — Cluster partitioning of heterogeneous multi-agent systems**
+
+- 证明 agent 的动态会"聚类"成与通信图 **almost equitable partition** 的 cell 数相同的子群；
+- 同一 cell 内的 agent 受同一个 mean-field 动态影响。
+
+价值：给出了"分组不是任意选的"这一结构性结论。如果我们的分组与通信拓扑不一致，组内一致性可能无法实现；反之，可以**利用**拓扑的 equitable partition 来设计分组。
+
+**[5998] 2022 TAC — Cluster Consensus under General Partition**
+
+- 研究一般划分（含 cyclic partition）下 cluster consensus 的可实现性；
+- 提出 **nonvicious circle condition**，并证明是充要条件。
+
+价值：分组后组内共识的可达性判据；可用于检查"K-means/拍卖得到的分组"是否可被底层通信图支撑。
+
+**[6510] 2017 TAC — Robust H∞ Group Consensus for Interacting Clusters**
+
+- 单积分器 + 模型不确定性 + 外部干扰；
+- 给出组间耦合结构与强度的充分条件，保证 H∞ group consensus。
+
+价值：组间干扰抑制；多目标 fencing 中不同包围圈之间的相互影响可以建模为"interacting clusters"。
+
+**[4817] 2011 TAC — Local Agent Requirements for Stable Emergent Group Distributions**
+
+- agent 自行分成**固定数量**子群，并对每组的 "gain" 达成一致；
+- 量化感知、运动、通信能力受限对分布收敛速率的影响；
+- 应用于协同监视。
+
+价值：自组织分组的收敛速率分析；如果分组是涌现的（而非集中分配的），这篇给了"局部能力 → 全局分布"的定量关系。
+
+**[7278] 2016 T-RO — Coordinated Robot Navigation via Hierarchical Clustering**
+
+- 用层次聚类在不同分辨率上识别"空间凝聚且分离"的 robot groups；
+- 把连续构型空间映射到树，做反应式导航。
+
+价值：**替代固定簇数的 K-means**。多目标 fencing 中目标数/簇数会变，层次聚类可以自动给出不同分辨率的组结构，并支持"组内/组间"两种导航模式。
+
+#### (4) 编队拆分 / 合并
+
+**[513] 2026 Automatica — Merging and splitting triangularly angle rigid formations**
+
+- 用**内角约束**描述队形（比距离/方位刚性多自由度）；
+- 研究两个角刚性子编队如何**合并**、一个编队如何**拆分**以通过复杂障碍；
+- 给出分布式 vertex sequential reduction 算法与稳定性控制律。
+
+价值：多目标 fencing 中"一个包分裂成两个"或"两个包合并"的几何操作，可以直接借用它的角刚性拆分/合并条件；比 [A] 的阈值切换更有几何保证。
+
+#### (5) 多目标围合但不显式分组（单包 / 一机一目标 / 单 agent 几何基线）
+
+这一类的共同点：**没有把机器人划分成若干子群**。多数把所有目标视为一个凸包/一个虚拟目标；个别是一机一目标或单 agent。
+
+- **[852] 2025 Unmanned Systems**：多移动目标的 constrained fencing；分布式观测目标中心，**equal fencing**（等角分布）围绕多目标凸包；输出反馈 + 自适应神经动力学优化；ISS 稳定性。
+- **[3113] 2026 RA-L**：与目标群凸包保持 **social safety distance**，同时保持平衡几何分布；unicycle 实物验证。
+- **[284] 2025 中国舰船研究**：USV 编队预定义时间多目标协同包围；位置层跟踪目标位置的**凸组合**，速度层滑模；RBFNN 干扰估计。
+- **[2688] 2020 ACC**：ring-coupled unicycles；每辆车只与一个邻居交互，各自绕自己的目标指定半径，形成指定分布。**隐式"一机一目标"**，但没有显式分组/凸包包含判据（放在本节是因为它同样无子群划分，并非单包）。
+- **[2318] 2023 JAS**：signed graph 的结构平衡产生 **bipartite clustering**，agent 从两侧包围动态目标。"聚类"来自符号图，不是任务分配。
+- **[2605] 2021 Automatica**：单 agent 绕多目标凸包的**安全 convex-circumnavigation**（bearing-only），不碰撞凸包。这是凸包围合最干净的几何基础。
+- **[7294] 2026 T-RO**：分布式 feedback optimization 做"监控 + 包围 + 巡逻"，异步触发通信，ROS 2 实物。工程化程度最高。
+- **[3116] 2026**（见 §0）：GUT 的 fencing center + 动态半径 + 等角分布，plug-and-play。
+
+### 7.3 分组机制的四种类型学
+
+把上面的文献按"分组是怎么来的"归类，便于写 related work 时定位：
+
+| 类型 | 代表 | 分组依据 | 优点 | 缺点 |
+|---|---|---|---|---|
+| **任务驱动** | [A] 2896, [B] 1954, 7299, 663, 1181, 7411 | 目标位置/速度/优先级/竞争 | 直接服务任务，簇数可随目标变化 | 需要目标状态估计；分配可能抖动 |
+| **图结构驱动** | 5693, 5998, 6510, 1015 | 通信图的 equitable partition / 连通性 | 组内一致性有理论保证 | 分组受拓扑限制，可能不符合任务需求 |
+| **几何/聚类驱动** | 7278, 513, [A] 的 K-means | 空间凝聚性、角刚性、内角约束 | 几何解释清晰，支持拆分/合并 | 对目标运动方向不敏感 |
+| **决策/博弈驱动** | 4266, 523, 3397, 3078, 2885 | coalition/博弈均衡 | 可显式建模资源、竞争、攻击 | 计算重，需要迭代求解 |
+| **隐式/涌现** | 4817, 2318, 2688 | 局部规则/符号图/环耦合 | 分布式、轻量 | 无显式分组变量，难保证任务指标 |
+
+> 注：[B] 的 $\alpha$ 优化同时属于"任务驱动"和"决策驱动"——它是把分组写成**决策变量**而非外部规则，这是它和 [A] 的本质区别。
+
+### 7.4 对 related work 写作的建议
+
+可以把"多目标 fencing"的文献综述拆成三条线，避免把分组编队和多目标围合混在一起：
+
+1. **分组/分簇编队控制**：7299, 3397, 3078, 2835, 6228, 2885, 1135
+   - 共同假设：簇结构/组数通常给定，或由通信图决定；
+   - 少有针对"目标分裂/合并"的在线分组。
+2. **多目标任务分配与重构**：663, 1181, 7411, 523, 4266, 1015
+   - 共同目标：决定"谁去哪个目标"；
+   - 与 fencing 的差别：多数只要求"到达/跟踪"，不要求形成**凸包包含**。
+3. **多目标围合 / fencing**：852, 3113, 284, 2688, 2318, 2605, 3116, 7294
+   - 多数把所有目标当成**一个凸包/一个虚拟目标**；
+   - 只有 [A]/[B] 同时处理"目标分组 + 机器人分配 + 凸包包含"。
+
+可以直接使用的 gap 表述：
+
+> 现有分组编队工作 [7299, 3397, 3078] 多假定簇结构给定或由通信拓扑决定；多目标围合工作 [852, 3113, 284] 多将所有目标视为一个凸包；仅有 [A, B]（以及双层结构的 7299）同时处理目标分组与机器人分配。但 [A] 缺乏凸包退化与切换迟滞的理论保证，[B] 要求目标间距远大于感知半径且每步求解含二值变量的优化，7299 则未处理目标分裂/合并与机器人失效后的在线重构。
+
+### 7.5 OKB 数据质量提示
+
+- **3615**（ICRA 2022, Multi-Target Encirclement with Collision Avoidance via DRL）在 OKB 中的摘要/正文抽取明显错位（内容变成了分布式学习），引用前必须核对原文；本笔记未采用其内容。
+- **6223**（Specified-Time Formation-Containment）的 TOC 与实际标题不一致（TOC 显示 affine formation maneuver），可能是元数据错配，暂不引用。
+- **7299 / 6228 / 4817 / 5693 / 4266** 在 OKB 中有 Markdown 链接，但 `read_markdown` 返回空内容，目前只能使用摘要与元数据；引用具体公式/定理前需查原文。
+- **1976** 是专著（Cognitive Intelligence and Robotics 系列），TOC 包含多章 fencing 内容，可作为背景引用而非单篇论文。
