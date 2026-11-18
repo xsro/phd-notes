@@ -616,7 +616,8 @@ $k_2\omega=k_3/\omega$ 给出上述关系。其二，$k_2=0$ 是奇异情形：�
 
 前几节回答的是“围捕控制器\emph{为什么}会绕目标旋转”。但在多智能体编队控制里，“整个编队持续
 转动”本身是一个独立的研究主题，既有“如何把它设计出来”，也有“为什么它会不受控地冒出来”。
-本节对照三类机制，并说明它们与本文对象的关系。
+本节先对照三类机制（\S\ref{sec:meth_maneuver}--\S\ref{sec:meth_table}），再按“旋转在控制器里以什么
+形式出现”列出文献中三种典型做法及其代表工作（\S\ref{sec:meth_impl}），最后说明它们与本文对象的关系。
 
 \subsection{一条主线：编队机动（maneuvering）}
 \label{sec:meth_maneuver}
@@ -895,6 +896,55 @@ $\dot w_i=-k_3e_i$ 自己就制造了切向驱动力，转速由力矩平衡钉�
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{文献中“让编队转起来”的三种实现方式}
+\label{sec:meth_impl}
+
+表~\ref{tab:methods} 的三类划分回答的是“旋转\emph{从哪里来}”。换一个轴看，按“旋转在控制器里以
+什么形式出现”，文献中的做法可以归为三种：把旋转写进\emph{航向/朝向}环；把转速写成\emph{角速度指令}
+并跟踪它；让旋转成为闭环的\emph{极限环}（吸引子）。三者的共同点是设计者都\emph{显式知道}要转多快，
+因而都与本报告“转速被闭环钉死”的机制正相对照（\S\ref{sec:meth_relation}）。
+
+\paragraph{(i) 航向控制：转速由恒定速度与半径隐式决定。}
+非完整平台（独轮车、固定翼）速度恒定或受限，唯一可用的连续输入是朝向，于是旋转通过“朝向误差
+$\to$ 角速度”实现。\cite{sun2019circular} 在\emph{非一致恒定速度}约束下把\emph{朝向}作为控制量，
+用圆周运动的\emph{圆心}充当虚拟位置来定义期望队形，只靠朝向协同就得到稳定的圆运动；
+\cite{yu2016circular} 在\emph{有向环图}上、以各自局部坐标系为量测，设计分布式动态控制律；
+\cite{tripathy2024cyclic} 把线速度固定、\emph{角速度}取作唯一输入，用非线性循环追踪生成绕目标点的
+圆编队并给出收敛条件。这类方案里没有独立的转速自由度：稳态角速度为常量线速度除以半径。
+
+\paragraph{(ii) 角速度跟踪：$\omega_d$ 是显式的设计量。}
+另一条路线干脆把转速写成指令再用内环跟踪。\cite{wang2024gps} 在 GPS 拒止条件下直接令
+$\omega_d=\alpha=U_d/\rho_d$（期望线速度除以期望半径），由动态输出反馈实现；
+\cite{shao2023encircling} 先由制导律算出角速度指令 $\bar{\mathbf W}(t)$，再以
+$e_\omega=\mathbf W-\bar{\mathbf W}$ 跟踪，构成“角速度指令 $+$ 姿态内环”的串级结构；
+\cite{mei2024elliptical} 把 $(\nu_i,\varphi_i,w_i)$（线速度、航向、惯性系角速度）一并作为被控状态，
+做固定时间椭圆环绕。由于 $\omega_d$ 出现在控制器里，它既\emph{可以调大}也\emph{可以置零}——
+这类文献天然带一个“抑制旋转”的旋钮，本报告没有。
+
+\paragraph{(iii) 极限环/振荡子：旋转是闭环的吸引子。}
+第三种做法不跟踪任何给定轨迹，而是把旋转设计成\emph{轨道稳定的极限环}。
+\cite{wang2020limitcycle} 明确按极限环设计控制器，把任务拆成“目标环绕/相对静止”与队形保持两个
+子目标，智能体只测相对信息与目标加速度，半径与转速由极限环本身决定；
+\cite{liu2017oscillator} 从轨迹发生器层面设计耦合谐波振荡器，用 Floquet 理论与平均法生成
+“指定振荡波形”的轨道稳定极限环；\cite{ranjan2024enclosing} 在三维包围中用向量场刻意造出期望
+形状的极限环/周期轨道，并附带碰撞规避。这一支的好处是无须时变参考、有明确的收敛域与轨道稳定性，
+代价是频率与形状被振荡器结构锁定，且吸引性必须逐个证明。
+
+\paragraph{注记（第四种：时变前馈）。}
+还有一类介于其间、在包围类文献里很常见的做法：把旋转直接写成\emph{时变参考}，由稳定反馈去追。
+如二阶多智能体对目标群的旋转包围\cite{shi2017rotary}，其参考在极坐标下为
+$(\varrho_i\sqrt{\omega^4-\omega^2+1},\ \vartheta_i+\omega t)$，闭环则是带阻尼的线性回路对
+$\mathrm e^{\mathrm j\omega t}$ 的\emph{稳态强迫响应}：$\sqrt{\omega^4-\omega^2+1}$ 只是把
+$1/(s^2+s+1)$ 在 $\mathrm j\omega$ 处的增益补偿回来。这里 $\omega$ 同样是设计参数，闭环\emph{没有}
+极限集，只有一条被外部强制出来的闭合轨迹。
+
+\paragraph{与本报告机制的关系。}
+三种实现都要求设计者先\emph{知道}并\emph{写入}“要转多快”：(i) 由恒速与半径隐式给定，(ii) 由
+$\omega_d$ 显式给定，(iii) 由振荡器结构给定。而本报告的 $\abs{\omega}=\sqrt{k_2}$ 既不能被写入
+也不能调参改变（命题~\ref{prop:omega}）；旋转也不是吸引子，而是\emph{非双曲}方向（中性相位模）上
+唯一的自洽解。反过来，(iii) 的工具对本报告有两处用处：把\S\ref{sec:stab} 的共旋线性化升级为
+Floquet/轨道稳定性分析，以及判定\S\ref{sec:trichotomy} 的“呼吸”分支是否为严格吸引的极限环。
 
 \subsection{与围捕控制器的结构对应}
 \label{sec:meth_relation}
@@ -1328,6 +1378,67 @@ doi:10.1016/j.sysconle.2010.06.015.
 H.~Garcia de Marina, B.~Jayawardhana, and M.~Cao,
 ``Distributed rotational and translational maneuvering of rigid formations and their applications,''
 \emph{IEEE Transactions on Robotics}, vol.~32, no.~3, pp.~684--697, Jun.~2016.
+
+% ---- 航向控制型旋转 ----
+\bibitem{sun2019circular}
+Z.~Sun, H.~Garcia de Marina, G.~S.~Seyboth, B.~D.~O.~Anderson, and C.~Yu,
+``Circular formation control of multiple unicycle-type agents with nonidentical constant speeds,''
+\emph{IEEE Transactions on Control Systems Technology}, vol.~27, no.~1, pp.~192--205, Jan.~2019,
+doi:10.1109/TCST.2017.2763938.
+
+\bibitem{yu2016circular}
+X.~Yu and L.~Liu,
+``Distributed circular formation control of ring-networked nonholonomic vehicles,''
+\emph{Automatica}, vol.~68, pp.~92--99, Jun.~2016, doi:10.1016/j.automatica.2016.01.056.
+
+\bibitem{tripathy2024cyclic}
+T.~Tripathy and T.~Shima,
+``On convergence results for nonlinear cyclic pursuit strategies,''
+\emph{Automatica}, vol.~159, p.~111315, Jan.~2024, doi:10.1016/j.automatica.2023.111315.
+
+% ---- 角速度跟踪型旋转 ----
+\bibitem{wang2024gps}
+J.~Wang, B.~Ma, and Y.~He,
+``Target circumnavigation of mobile robots in GPS-denied environments,''
+\emph{IEEE Robotics and Automation Letters}, vol.~9, no.~4, pp.~3530--3537, Apr.~2024,
+doi:10.1109/LRA.2024.3368295.
+
+\bibitem{shao2023encircling}
+X.~Shao, X.~Yue, and W.~Zhang,
+``Target encircling control possessing decreased sampling load for quadrotors with experimental
+verification,''
+\emph{Mechatronics}, vol.~96, p.~103090, Dec.~2023, doi:10.1016/j.mechatronics.2023.103090.
+
+\bibitem{mei2024elliptical}
+Z.~Mei, X.~Shao, Y.~Xia, and J.~Liu,
+``Enhanced fixed-time collision-free elliptical circumnavigation coordination for UAVs,''
+\emph{IEEE Transactions on Aerospace and Electronic Systems}, vol.~60, no.~4, pp.~4257--4270,
+Aug.~2024, doi:10.1109/TAES.2024.3374708.
+
+% ---- 极限环/振荡子型旋转 ----
+\bibitem{wang2020limitcycle}
+C.~Wang, W.~Xia, and G.~Xie,
+``Limit-cycle-based design of formation control for mobile agents,''
+\emph{IEEE Transactions on Automatic Control}, vol.~65, no.~8, pp.~3530--3543, Aug.~2020,
+doi:10.1109/TAC.2019.2946338.
+
+\bibitem{liu2017oscillator}
+X.~Liu and T.~Iwasaki,
+``Design of coupled harmonic oscillators for synchronization and coordination,''
+\emph{IEEE Transactions on Automatic Control}, vol.~62, no.~8, pp.~3877--3889, Aug.~2017,
+doi:10.1109/TAC.2017.2650567.
+
+\bibitem{ranjan2024enclosing}
+P.~K.~Ranjan, A.~Sinha, and Y.~Cao,
+``3D guidance law for flexible target enclosing with inherent safety,''
+arXiv:2404.16312, 2024, doi:10.48550/arXiv.2404.16312.
+
+% ---- 时变前馈型旋转（供对照） ----
+\bibitem{shi2017rotary}
+Y.~J.~Shi, R.~Li, and K.~L.~Teo,
+``Rotary enclosing control of second-order multi-agent systems for a group of targets,''
+\emph{International Journal of Systems Science}, vol.~48, no.~1, pp.~13--21, 2017,
+doi:10.1080/00207721.2016.1144226.
 \end{thebibliography}
 
 \end{document}
