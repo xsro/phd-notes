@@ -85,3 +85,23 @@ sy = cache("dir_symmetric")
 L = np.sum(sy["xi"][...,0]*sy["vt"][...,1]-sy["xi"][...,1]*sy["vt"][...,0], axis=1)
 ws = M.omega_trace(sy["xi"], sy["vt"], K1)
 print(f"  symmetric: |L| start={abs(L[0]):.2e} end={abs(L[-1]):.2f}, omega_end={ws[-1].mean():.6f}, spread_end={ws[-1].max()-ws[-1].min():.1e}")
+
+print("== Floquet multipliers ==")
+fd = cache("floquet")
+for k2 in fd["k2s"]:
+    tag = f"{k2:g}"
+    mu = fd[f"mu_{tag}"]
+    triv = mu[np.abs(mu - 1.0) < 1e-4]
+    rest = mu[np.abs(mu - 1.0) >= 1e-4]
+    pred = np.exp(2*np.pi*fd[f"lambda_lead_{tag}"]/abs(fd[f"omega_{tag}"]))
+    print(f"  k2={k2:4.2f}: T={fd[f'T_{tag}']:.4f}s  mismatch={fd[f'mismatch_{tag}']:.1e}  "
+          f"#mu=1: {len(triv)}  |mu|lead={np.max(np.abs(rest)):.6f}  "
+          f"exp(2pi*lam/omega)={pred:.6f}")
+mb = fd["mu_breath"]
+trb = mb[np.abs(mb - 1.0) < 1e-4]
+rsb = mb[np.abs(mb - 1.0) >= 1e-4]
+print(f"  breathing: T={fd['br_T']:.6f}s  omega_bar={fd['br_omega']:+.6f}  "
+      f"dtheta={fd['br_dtheta']:+.6f}  dtheta/2pi={fd['br_dtheta']/(2*np.pi):.4f}")
+print(f"    shape return residual={fd['br_shape_return']:.1e}  monodromy mismatch={fd['br_mismatch']:.1e}  "
+      f"#mu=1: {len(trb)}  |mu|lead(transverse)={np.max(np.abs(rsb)):.4f}")
+print(f"    omega_eff=2pi/T={2*np.pi/fd['br_T']:.4f}  omega_eff/sqrt(k2)={2*np.pi/fd['br_T']/np.sqrt(K2):.4f}")

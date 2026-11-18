@@ -27,8 +27,10 @@ from numpy.fft import rfft, rfftfreq
 from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 
-from fencing_lib import (distances, integrate_double, integrate_single,
-                         repulsion, repulsion_hessian, style, velocity)
+from fencing_lib import (corotation_rhs, distances, integrate_double,
+                         integrate_single, jac_corotation, jac_single,
+                         monodromy, repulsion, repulsion_hessian, rhs_single,
+                         rotation_between, style, trivial_split, velocity)
 
 FIG = os.path.join(HERE, "..", "figures")
 CACHE = os.path.join(HERE, "cache")
@@ -368,6 +370,203 @@ def fig2d_degenerate(force=False):
     plt.close(fig)
 
 
+# --------------------------------------------------------------------------- #
+# Floquet multipliers along the periodic orbits
+# --------------------------------------------------------------------------- #
+def polish_orbit(rhs, z0, T, tol=1e-9, iters=40):
+    """Shooting on (z0, T): iterate until z0 is *exactly* T-periodic.
+
+    Each sweep replaces z0 by Phi_T(z0) and then shifts T by the component of
+    the mismatch that lies along the flow, which is the only part caused by a
+    slightly wrong period (the transverse part contracts geometrically).
+    """
+    z = np.asarray(z0, float)
+    gap = np.inf
+    for _ in range(iters):
+        sol = solve_ivp(rhs, (0.0, T), z, method="LSODA", rtol=1e-11, atol=1e-13)
+        if not sol.success:
+            raise RuntimeError(sol.message)
+        znew = sol.y[:, -1]
+        d = znew - z
+        f = rhs(0.0, z)
+        T = T - float(np.dot(d, f) / np.dot(f, f))     # phase gauge
+        gap = np.linalg.norm(d) / max(np.linalg.norm(z), 1e-30)
+        z = znew
+        if gap < tol:
+            break
+    return z, float(T), gap
+
+
+def floquet_rotating(k2, force=False):
+    """Monodromy of the rotating branch: a periodic orbit with T = 2*pi/|omega|."""
+    r = rot_run(k2, force)
+    n = r["xi"].shape[1]
+    sl = tail_slice(r["t"], 0.25)
+    w = omega_trace(r["xi"][sl], r["vt"][sl], K1)
+    omega = float(np.nanmean(w))
+    T = 2 * np.pi / abs(omega)
+    rhs = rhs_single(n, 2, D, MU, K1, k2)
+    jac = jac_single(n, 2, D, MU, K1, k2)
+    z0 = np.concatenate([r["xi"][-1].ravel(), r["vt"][-1].ravel()])
+    z0, T, gap = polish_orbit(rhs, z0, T)
+    out = monodromy(rhs, jac, z0, T)
+    out["polish"] = gap
+    out["omega"] = omega
+    ev = corot_eig(z0[:2 * n].reshape(n, 2), K1, k2, 2 * np.pi / T)
+    mask = np.abs(ev) > 1e-4
+    out["lambda_lead"] = float(np.max(ev.real[mask]))
+    out["ev_corot"] = ev
+    return out
+
+
+def floquet_breathing(k1=K1, k2=K2, tag="cc", force=False):
+    """Monodromy of the breathing branch in the co-rotating shape space.
+
+    In the lab frame the breathing trajectory comes back to itself only up to a
+    rotation, i.e. it is a torus; removing the best-fit rotation of one
+    breathing period gives an autonomous system with a genuine periodic orbit.
+    """
+    r = breathing_run(k1=k1, k2=k2, tag=tag, force=force)
+    n = r["xi"].shape[1]
+    z_end = np.concatenate([r["xi"][-1].ravel(), r["vt"][-1].ravel()])
+    rhs = rhs_single(n, 2, D, MU, k1, k2)
+    sol = solve_ivp(rhs, (0.0, 40.0), z_end, method="LSODA",
+                    rtol=1e-11, atol=1e-13, dense_output=True)
+    npair = n * (n - 1) // 2
+
+    def pos(z):
+        return z[:2 * n].reshape(n, 2)
+
+    def shape(z):
+        p = pos(z)
+        return p - p.mean(0)
+
+    tt = np.linspace(0.0, 40.0, 4001)
+    gs = np.array([distances(pos(sol.sol(x))) for x in tt])      # (T, npair)
+    amps = gs.max(0) - gs.min(0)
+    j = int(np.argmax(amps))          # fundamental frequency lives on this pair
+    level = float(gs[:, j].mean())
+    sig = gs[:, j] - level
+    idx = np.where((sig[:-1] < 0) & (sig[1:] >= 0))[0]
+    cross = np.array([brentq(lambda x: distances(pos(sol.sol(x)))[j] - level,
+                             tt[i], tt[i + 1], xtol=1e-13) for i in idx])
+    t1, t2 = float(cross[-2]), float(cross[-1])
+    T = t2 - t1
+    z1, z2 = sol.sol(t1), sol.sol(t2)
+    dth = float(rotation_between(shape(z1), shape(z2)))
+    omega = dth / T
+    g1, g2 = distances(pos(z1)), distances(pos(z2))
+    out = monodromy(corotation_rhs(n, 2, D, MU, k1, k2, omega),
+                    jac_corotation(n, 2, D, MU, k1, k2, omega), z1, T)
+    out.update({"T": T, "omega": omega, "dtheta": dth, "pair": j,
+                "amp": float(amps[j]),
+                "shape_return": float(np.linalg.norm(g2 - g1) / np.linalg.norm(g1))})
+    return out
+
+
+def floquet_data(force=False):
+    """Floquet multipliers of both branches (cached)."""
+    k2s = [0.1, 0.2, 0.5, 1.0]
+
+    def build():
+        out = {"k2s": np.array(k2s)}
+        for k2 in k2s:
+            r = floquet_rotating(k2, force)
+            tag = f"{k2:g}"
+            out[f"mu_{tag}"] = r["multipliers"]
+            for key in ("T", "omega", "lambda_lead", "mismatch", "polish"):
+                out[f"{key}_{tag}"] = np.array(r[key])
+        br = floquet_breathing(force=force)
+        out["mu_breath"] = br["multipliers"]
+        for key in ("T", "omega", "dtheta", "shape_return", "mismatch",
+                    "pair", "amp"):
+            out[f"br_{key}"] = np.array(br[key])
+        return out
+
+    return cached_run("floquet", build, force)
+
+
+def fig2d_floquet(force=False):
+    """Floquet multipliers: rotating branch sweep and breathing branch."""
+    dat = floquet_data(force)
+    k2s = dat["k2s"]
+    rows = []
+    for k2 in k2s:
+        tag = f"{k2:g}"
+        mu = dat[f"mu_{tag}"]
+        triv, rest = trivial_split(mu, tol=1e-4)
+        mu_lead = float(np.max(np.abs(rest)))
+        pred = float(np.exp(2 * np.pi * dat[f"lambda_lead_{tag}"]
+                            / abs(dat[f"omega_{tag}"])))
+        rows.append((k2, mu, len(triv), mu_lead, pred))
+        print(f"  k2={k2}: T={dat[f'T_{tag}']:.4f} "
+              f"polish={dat[f'polish_{tag}']:.1e} "
+              f"mismatch={dat[f'mismatch_{tag}']:.1e} #triv={len(triv)} "
+              f"|mu|lead={mu_lead:.6f} exp(2pi*lam/omega)={pred:.6f} "
+              f"rel={abs(mu_lead / pred - 1):.1e}")
+
+    mu_br = dat["mu_breath"]
+    triv_b, rest_b = trivial_split(mu_br, tol=1e-4)
+    print(f"  breathing: T={dat['br_T']:.6f} omega_bar={dat['br_omega']:+.6f} "
+          f"dtheta={dat['br_dtheta']:+.6f} pair={int(dat['br_pair'])} "
+          f"amp={dat['br_amp']:.2f} shape_return={dat['br_shape_return']:.1e} "
+          f"mismatch={dat['br_mismatch']:.1e} #triv={len(triv_b)} "
+          f"|mu|lead={np.max(np.abs(rest_b)):.4f}")
+
+    fig, ax = plt.subplots(1, 3, figsize=(7.4, 2.45))
+    th = np.linspace(0, 2 * np.pi, 400)
+
+    mu = rows[2][1]
+    mu = mu[np.abs(mu) > 1e-3]
+    ax[0].plot(np.cos(th), np.sin(th), "k--", lw=0.7)
+    ax[0].plot(mu.real, mu.imag, "o", ms=3.5, color="tab:blue")
+    ax[0].plot([1.0], [0.0], "o", ms=6, mfc="none", mec="tab:red", mew=1.2)
+    ax[0].annotate("$\\mu=1$\n(time shift)", xy=(1.0, 0.0), xytext=(0.05, 0.55),
+                   fontsize=6.5, arrowprops=dict(arrowstyle="->", lw=0.7))
+    ax[0].set_aspect("equal")
+    ax[0].set_xlabel("Re $\\mu$")
+    ax[0].set_ylabel("Im $\\mu$")
+    ax[0].set_title("(a) rotating branch, $k_2=0.5$", fontsize=9)
+
+    ax[1].plot([r[0] for r in rows], [r[3] for r in rows], "o", ms=5,
+               label="monodromy")
+    ax[1].plot([r[0] for r in rows], [r[4] for r in rows], "k-", lw=0.8,
+               label="$e^{2\\pi\\lambda/\\omega}$")
+    ax[1].set_xscale("log")
+    ax[1].set_yscale("log")
+    ax[1].set_xlabel("$k_2$")
+    ax[1].set_ylabel("leading $|\\mu|$ per turn")
+    ax[1].set_title("(b) transverse damping per turn", fontsize=9)
+    ax[1].legend(fontsize=6.5)
+
+    mub = mu_br[np.abs(mu_br) > 1e-3]
+    ax[2].plot(np.cos(th), np.sin(th), "k--", lw=0.7)
+    ax[2].plot(mub.real, mub.imag, "o", ms=3.5, color="tab:green")
+    ax[2].plot([1.0], [0.0], "o", ms=6, mfc="none", mec="tab:red", mew=1.2)
+    ax[2].annotate("2$\\times\\mu=1$\n(2 phases)", xy=(1.0, 0.0), xytext=(-0.95, 0.30),
+                   fontsize=6.5, arrowprops=dict(arrowstyle="->", lw=0.7))
+    ax[2].set_aspect("equal")
+    ax[2].set_xlabel("Re $\\mu$")
+    ax[2].set_title(f"(c) breathing, $T={dat['br_T']:.2f}$ s", fontsize=9)
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "fig2d-floquet.pdf"))
+    plt.close(fig)
+
+
+def corot_eig(xi, k1, k2, omega):
+    """Eigenvalues of the co-rotating linearisation DF at a shape snapshot."""
+    n = xi.shape[0]
+    H = repulsion_hessian(xi, D, MU) - k1 * np.eye(2 * n)
+    Jn = np.kron(np.eye(n), np.array([[0.0, -1.0], [1.0, 0.0]]))
+    B = plane_basis(n)
+    m = B.shape[1]
+    Hr = B.T @ H @ B
+    Jr = B.T @ Jn @ B
+    DF = np.block([[Hr - omega * Jr, np.eye(m)],
+                   [-k2 * np.eye(m), -omega * Jr]])
+    return np.linalg.eigvals(DF)
+
+
 def fig2d_spectrum(force=False):
     """Co-rotating linearisation: one neutral phase mode, rest strictly stable."""
     k2s = [0.1, 0.2, 0.5, 1.0]
@@ -483,6 +682,11 @@ def fig2d_breathing(force=False):
     r = breathing_run(force=force)
     t, xi = r["t"], r["xi"]
     g = pairdist_trace(r)
+    # the fundamental period lives on the largest-amplitude pair; the nearly
+    # rigid pairs are dominated by their second harmonic
+    sl_tail = tail_slice(t, 0.5)
+    j = int(np.argmax(g[sl_tail].max(0) - g[sl_tail].min(0)))
+    Tsec = floquet_breathing(tag="cc")["T"]        # section-refined period
 
     fig = plt.figure(figsize=(7.2, 2.5))
     gs = fig.add_gridspec(1, 3, width_ratios=[1.15, 1, 1])
@@ -490,10 +694,10 @@ def fig2d_breathing(force=False):
     sl = t > t[-1] - 20.0
     for k in range(g.shape[1]):
         ax0.plot(t[sl], g[sl, k], lw=0.8)
-    f, rel, ff, P = dominant_freq(t[tail_slice(t, 0.5)], g[tail_slice(t, 0.5), 0])
+    f, rel, ff, P = dominant_freq(t[sl_tail], g[sl_tail, j])
     ax0.set_xlabel("$t$ (last 20 s)")
     ax0.set_ylabel("$\\|x_{ij}\\|$")
-    ax0.set_title(f"(a) gaps oscillate, $T\\approx{1 / f:.2f}$ s")
+    ax0.set_title(f"(a) gaps oscillate, $T\\approx{Tsec:.2f}$ s")
     ax1 = fig.add_subplot(gs[1])
     ax1.semilogy(ff[1:], P[1:] / P.max(), lw=0.8)
     ax1.axvline(f, ls=":", color="k", lw=0.8)
@@ -516,7 +720,8 @@ def fig2d_breathing(force=False):
     plt.close(fig)
 
     w = omega_trace(xi[tail_slice(t, 0.5)], r["vt"][tail_slice(t, 0.5)], K1)
-    print(f"  breathing: f={f:.4f} Hz, T={1/f:.3f}s, "
+    print(f"  breathing: pair={j} (tail amp {g[sl_tail][:, j].max() - g[sl_tail][:, j].min():.2f}) "
+          f"f_fft={f:.4f} Hz, T_fft={1 / f:.3f}s, T_section={Tsec:.4f}s, "
           f"omega_mean={np.nanmean(w):.3f}, spread={np.nanmax(w) - np.nanmin(w):.3f}")
 
 
@@ -963,7 +1168,7 @@ def fig_rotation_methods(force=False):
 # driver
 # --------------------------------------------------------------------------- #
 ORDER = ["fig1d", "fig2d-rotation", "fig2d-omega-sweep", "fig2d-shape-branch",
-         "fig2d-degenerate", "fig2d-spectrum", "fig2d-direction",
+         "fig2d-degenerate", "fig2d-spectrum", "fig2d-floquet", "fig2d-direction",
          "fig2d-breathing", "fig2d-bistability", "fig3d-breathing",
          "fig-nscaling", "fig-alpha", "fig-double", "fig-jam",
          "fig-rotation-methods"]

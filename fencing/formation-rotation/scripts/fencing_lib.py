@@ -157,6 +157,122 @@ def project_shape(M, n, dim=2):
     return Q.T @ M @ Q
 
 
+# --------------------------------------------------------------------------- #
+# Floquet / orbital stability
+# --------------------------------------------------------------------------- #
+#
+# The rotating branch is a *periodic orbit* of the closed loop in the target
+# frame, with period T = 2*pi/|omega|.  Linearising along it and integrating the
+# variational equation over one period gives the monodromy matrix Phi(T); its
+# eigenvalues mu_j are the Floquet multipliers.  Exactly one multiplier equals 1
+# (time shift along the orbit, the former "neutral phase mode"); all the others
+# inside the unit disc mean the orbit is asymptotically orbitally stable.
+#
+# For the co-rotating (autonomous) system the same object is obtained by
+# conjugating with the rotation, which gives the exact dictionary
+#
+#       mu_j = exp(2*pi*lambda_j/omega_s),      omega_s = sqrt(k2),
+#
+# between the co-rotating eigenvalues lambda_j (fencing_lib/corotation
+# linearisation) and the Floquet multipliers.  The trivial lambda = 0 becomes
+# mu = 1 automatically.
+
+def jac_single(N, dim, d, mu, k1, k2):
+    """Jacobian of rhs_single (in the target frame)."""
+    m = N * dim
+
+    def jac(t, z):
+        xi = z[:m].reshape(N, dim)
+        A = np.zeros((2 * m, 2 * m))
+        A[:m, :m] = repulsion_hessian(xi, d, mu) - k1 * np.eye(m)
+        A[:m, m:] = np.eye(m)
+        A[m:, :m] = -k2 * np.eye(m)
+        return A
+    return jac
+
+
+def corotation_rhs(N, dim, d, mu, k1, k2, omega):
+    """Closed loop in the frame rotating at constant `omega`.
+
+    xi = exp(-omega J t) xi_lab (target frame), giving the autonomous system
+
+        dxi_i/dt = phi_i - k1 xi_i - omega J xi_i + w_i,
+        dw_i/dt = -k2 xi_i      - omega J w_i .
+    """
+    m = N * dim
+    Jn = np.kron(np.eye(N), np.array([[0.0, -1.0], [1.0, 0.0]]))
+
+    def rhs(t, z):
+        xi = z[:m].reshape(N, dim)
+        w = z[m:].reshape(N, dim)
+        phi = repulsion(xi, d, mu)
+        return np.concatenate([(phi - k1 * xi + w).ravel() - omega * (Jn @ xi.ravel()),
+                               (-k2 * xi).ravel() - omega * (Jn @ w.ravel())])
+    return rhs
+
+
+def jac_corotation(N, dim, d, mu, k1, k2, omega):
+    m = N * dim
+    Jn = np.kron(np.eye(N), np.array([[0.0, -1.0], [1.0, 0.0]]))
+
+    def jac(t, z):
+        xi = z[:m].reshape(N, dim)
+        A = np.zeros((2 * m, 2 * m))
+        A[:m, :m] = repulsion_hessian(xi, d, mu) - k1 * np.eye(m) - omega * Jn
+        A[:m, m:] = np.eye(m)
+        A[m:, :m] = -k2 * np.eye(m)
+        A[m:, m:] = -omega * Jn
+        return A
+    return jac
+
+
+def monodromy(rhs, jac, z0, T, method="BDF", rtol=1e-10, atol=1e-12):
+    """Monodromy matrix over one period and its multipliers.
+
+    Integrates the variational equation  dPhi/dt = A(t) Phi,  Phi(0) = I  along
+    the orbit started at z0 for a duration T.  Returns a dict with the monodromy
+    Phi, the multipliers sorted by modulus (descending), the endpoint mismatch
+    (a small value confirms z0 sits on a T-periodic orbit) and the orbit itself.
+    """
+    z0 = np.asarray(z0, float)
+    nz = len(z0)
+
+    def aug(t, y):
+        z = y[:nz]
+        Phi = y[nz:].reshape(nz, nz)
+        return np.concatenate([rhs(t, z), (jac(t, z) @ Phi).ravel()])
+
+    y0 = np.concatenate([z0, np.eye(nz).ravel()])
+    sol = solve_ivp(aug, (0.0, T), y0, method=method, rtol=rtol, atol=atol)
+    if not sol.success:
+        raise RuntimeError(sol.message)
+    yT = sol.y[:, -1]
+    Phi = yT[nz:].reshape(nz, nz)
+    zT = yT[:nz]
+    mult = np.linalg.eigvals(Phi)
+    mult = mult[np.argsort(-np.abs(mult))]
+    mismatch = np.linalg.norm(zT - z0) / max(np.linalg.norm(z0), 1e-30)
+    return {"Phi": Phi, "multipliers": mult, "zT": zT,
+            "mismatch": float(mismatch), "T": float(T)}
+
+
+def trivial_split(mult, tol=1e-6):
+    """Separate the trivial multiplier mu=1 from the transverse spectrum."""
+    mult = np.asarray(mult)
+    triv = mult[np.abs(mult - 1.0) < tol]
+    rest = mult[np.abs(mult - 1.0) >= tol]
+    return triv, rest
+
+
+def rotation_between(A, B):
+    """Best-fit angle of the planar rotation taking A onto B (K = 2 columns)."""
+    A = np.asarray(A, float)
+    B = np.asarray(B, float)
+    s = np.sum(A[:, 0] * B[:, 1] - A[:, 1] * B[:, 0])
+    c = np.sum(A[:, 0] * B[:, 0] + A[:, 1] * B[:, 1])
+    return float(np.arctan2(s, c))
+
+
 def double_integrator_rhs(N, d, mu, k1, k2, k3):
     def rhs(t, z):
         e = z[: 2 * N].reshape(N, 2)
